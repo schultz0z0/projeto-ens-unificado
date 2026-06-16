@@ -14,6 +14,8 @@ mkdir -p \
   data/designer/temp/uploads \
   logs
 
+chmod -R u+rwX,g+rwX data logs 2>/dev/null || true
+
 if [ ! -f .env ]; then
   cp .env.example .env
   echo "Criado: $ROOT/.env — preencha os valores reais antes de subir serviços dependentes de secrets."
@@ -31,3 +33,4 @@ fi
 chmod +x scripts/**/*.sh scripts/*.sh 2>/dev/null || true
 
 echo "Bootstrap concluído em: $ROOT"
+echo "Para producao VPS: docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --build"

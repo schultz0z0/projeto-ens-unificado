@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      build-essential curl ca-certificates \
+      build-essential curl ca-certificates gosu \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
@@ -20,8 +20,10 @@ RUN mkdir -p /app/outputs /app/tmp /app/temp/uploads && \
     useradd --create-home --shell /usr/sbin/nologin appuser && \
     chown -R appuser:appuser /app
 
-USER appuser
+COPY docker-entrypoint.sh /usr/local/bin/designer-api-entrypoint.sh
+RUN chmod +x /usr/local/bin/designer-api-entrypoint.sh
 
 EXPOSE 8090
 
+ENTRYPOINT ["/usr/local/bin/designer-api-entrypoint.sh"]
 CMD ["sh", "-c", "uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8090}"]
