@@ -132,9 +132,7 @@ _TELEGRAM_RE = re.compile(
     r"(bot)?(\d{8,}):([-A-Za-z0-9_]{30,})",
 )
 
-# Private key blocks: -----BEGIN TEST PRIVATE KEY-----
-REDACTED
------END TEST PRIVATE KEY-----
+# Private key blocks: -----BEGIN TEST PRIVATE KEY----- ... -----END TEST PRIVATE KEY-----
 _PRIVATE_KEY_RE = re.compile(
     r"-----BEGIN[A-Z ]*PRIVATE KEY-----[\s\S]*?-----END[A-Z ]*PRIVATE KEY-----"
 )
