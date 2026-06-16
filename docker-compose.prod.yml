@@ -1,67 +1,55 @@
-# Production override for Hostinger VPS behind Traefik.
+# Production override for Hostinger VPS behind the existing standalone Traefik.
+#
+# IMPORTANT:
+# - Do NOT run a second Traefik in this project.
+# - The VPS Traefik is managed by a separate Compose stack with network_mode: host
+#   and Docker provider enabled (/var/run/docker.sock mounted read-only).
+# - Therefore this project only adds Docker labels. It does not require or create
+#   an external Docker network named "traefik".
+#
 # Usage on VPS:
 #   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build
 #   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# The base docker-compose.yml keeps localhost port bindings for SSH/debug.
-# This override adds Traefik routing and the external Traefik network.
+# The base docker-compose.yml keeps localhost port bindings for SSH/debug; Traefik
+# discovers the containers through the Docker provider and routes by labels.
 
 services:
   app-frontend:
-    networks:
-      - ens-internal
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${NEXUS_TRAEFIK_NETWORK:-traefik}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-frontend.rule=Host(`${NEXUS_PUBLIC_APP_HOST:-app.solucoes-nexus.tech}`)
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-frontend.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-frontend.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-frontend.loadbalancer.server.port=8080
 
   app-bridge:
-    networks:
-      - ens-internal
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${NEXUS_TRAEFIK_NETWORK:-traefik}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.rule=Host(`${NEXUS_PUBLIC_BRIDGE_HOST:-bridge.solucoes-nexus.tech}`)
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.loadbalancer.server.port=8080
 
   designer-api:
-    networks:
-      - ens-internal
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${NEXUS_TRAEFIK_NETWORK:-traefik}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.rule=Host(`${NEXUS_PUBLIC_DESIGNER_HOST:-designer.solucoes-nexus.tech}`)
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.loadbalancer.server.port=${NEXUS_DESIGNER_API_PORT:-8090}
 
   hermes-api:
-    networks:
-      - ens-internal
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${NEXUS_TRAEFIK_NETWORK:-traefik}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-api.rule=Host(`${NEXUS_PUBLIC_HERMES_API_HOST:-api-hermes.solucoes-nexus.tech}`)
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-api.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-api.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-api.loadbalancer.server.port=${NEXUS_HERMES_API_PORT:-8652}
 
   hermes-kanban:
-    networks:
-      - ens-internal
-      - traefik
     labels:
       - traefik.enable=true
-      - traefik.docker.network=${NEXUS_TRAEFIK_NETWORK:-traefik}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.rule=Host(`${NEXUS_PUBLIC_HERMES_DASHBOARD_HOST:-hermes.solucoes-nexus.tech}`)
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
@@ -69,12 +57,8 @@ services:
       - traefik.http.middlewares.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard-auth.basicauth.users=${NEXUS_HERMES_KANBAN_AUTH_USER:-NexusAI}:${NEXUS_HERMES_KANBAN_AUTH_PASSWORD_HASH:-CHANGE_ME_HTPASSWD_HASH_ESCAPED}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.loadbalancer.server.port=${NEXUS_HERMES_KANBAN_PORT:-9119}
 
-  # RAG MCP remains internal-only; Hermes reaches it over ens-internal at http://rag-mcp:8000/mcp.
+  # RAG MCP remains internal-only; Hermes reaches it over the project internal
+  # Docker network at http://rag-mcp:8000/mcp. It is intentionally not public.
   rag-mcp:
     labels:
       - traefik.enable=false
-
-networks:
-  traefik:
-    name: ${NEXUS_TRAEFIK_NETWORK:-traefik}
-    external: true
