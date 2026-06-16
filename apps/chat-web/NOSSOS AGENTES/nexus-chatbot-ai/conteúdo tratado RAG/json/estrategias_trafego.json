@@ -1,0 +1,107 @@
+[
+  {
+    "page_content": "# Estratégias de Tráfego Pago para Setor de Educação (Seguros)\n\n## Estrutura de Funil \"Ampulheta\"\n\n### 1. Topo de Funil (Consciência) - \"O Despertar\"\n- **Objetivo:** Tráfego frio para conteúdo de alto valor (Blog/Vídeo).\n- **Criativos:** Cortes de podcast sobre tendências, notícias de sinistros grandes, curiosidades sobre apólices.\n- **Métrica:** CTR (Taxa de Clique) e Video View 50%.\n- **Dica Técnica:** Use o Pixel para criar público de \"Visualizou 50% do vídeo\".\n\n### 2. Meio de Funil (Consideração) - \"A Troca\"\n- **Objetivo:** Captura de Lead (CPL).\n- **Oferta (Lead Magnet):**\n  - E-book: \"Guia de Riscos Cibernéticos para Corretores\".\n  - Checklist: \"Como auditar uma apólice empresarial\".\n  - Masterclass Gravada: Aula magna gratuita de um curso pago.\n- **Tracking:** Evento `Lead` no servidor (CAPI) é crucial aqui para otimizar o algoritmo.\n\n### 3. Fundo de Funil (Conversão) - \"A Oferta\"\n- **Objetivo:** Venda / Matrícula (ROAS).\n- **Público:** Remarketing de quem baixou o E-book ou visitou a página do curso (Checkout Abandonado).\n- **Copy (PAS):** \"Você baixou o guia, mas ainda não domina a técnica...\"\n- **Oferta:** Desconto condicional, Bônus exclusivo, Garantia de satisfação.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 1
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é a estrutura de funil apresentada no documento?\nResposta: Uma estrutura de funil “Ampulheta”.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 2
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais são as 3 etapas do funil “Ampulheta”?\nResposta: Topo de Funil (Consciência) “O Despertar”, Meio de Funil (Consideração) “A Troca” e Fundo de Funil (Conversão) “A Oferta”.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 3
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o objetivo do Topo de Funil?\nResposta: Tráfego frio para conteúdo de alto valor (Blog/Vídeo).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 4
+    }
+  },
+  {
+    "page_content": "Pergunta: Que tipo de criativos o documento sugere no Topo de Funil?\nResposta: Cortes de podcast sobre tendências, notícias de sinistros grandes e curiosidades sobre apólices.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 5
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais métricas o documento cita para o Topo de Funil?\nResposta: CTR (Taxa de Clique) e Video View 50%.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 6
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual dica técnica específica aparece no Topo de Funil?\nResposta: Usar o Pixel para criar público de “Visualizou 50% do vídeo”.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 7
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o objetivo do Meio de Funil?\nResposta: Captura de Lead (CPL).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 8
+    }
+  },
+  {
+    "page_content": "Pergunta: Que tipos de lead magnet são sugeridos no Meio de Funil?\nResposta: E-book “Guia de Riscos Cibernéticos para Corretores”, checklist “Como auditar uma apólice empresarial” e masterclass gravada (aula magna gratuita).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 9
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o documento diz sobre tracking no Meio de Funil?\nResposta: Que o evento `Lead` no servidor (CAPI) é crucial para otimizar o algoritmo.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 10
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o objetivo do Fundo de Funil?\nResposta: Venda / Matrícula (ROAS).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 11
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual público é sugerido no Fundo de Funil?\nResposta: Remarketing de quem baixou o e-book ou visitou a página do curso (checkout abandonado).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 12
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual framework de copy é citado para o Fundo de Funil?\nResposta: PAS (Problema, Agitação, Solução).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 13
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual frase exemplo de PAS aparece no documento?\nResposta: “Você baixou o guia, mas ainda não domina a técnica...”",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 14
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais exemplos de ofertas aparecem no Fundo de Funil?\nResposta: Desconto condicional, bônus exclusivo e garantia de satisfação.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 15
+    }
+  }
+]

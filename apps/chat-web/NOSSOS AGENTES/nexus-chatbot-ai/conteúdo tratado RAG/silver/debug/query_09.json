@@ -1,0 +1,62 @@
+{
+  "query": "Quando o bot deve fazer handoff para humano, segundo o material?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.39528470752104744,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 22,
+      "chunk_index": 27,
+      "preview": "Pergunta: Quando o bot deve passar para um humano no conversational marketing?\nResposta: Quando houver pedido de condição, dúvidas específicas, urgência ou objeção forte."
+    },
+    {
+      "score": 0.2572478777137633,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 15,
+      "chunk_index": 20,
+      "preview": "Pergunta: Como o documento descreve o padrão vencedor de omnichannel?\nResposta: Autoatendimento inteligente + handoff rápido para humano quando necessário."
+    },
+    {
+      "score": 0.24618298195866553,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 48,
+      "chunk_index": 58,
+      "preview": "Pergunta: Parece que ninguém vê o que eu vejo...\nResposta: Visão à frente do tempo assusta mesmo. Mas continua. Quem precisa ver, vai ver. E quando isso acontecer, sua constância já vai ter te preparado."
+    },
+    {
+      "score": 0.21320071635561044,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 16,
+      "chunk_index": 21,
+      "preview": "Pergunta: Como o JTBD é estruturado no documento?\nResposta: “Quando eu (contexto), quero (ação), para (resultado)”."
+    },
+    {
+      "score": 0.21213203435596426,
+      "source": "Conteúdo para RAG/Nexus AI Identidade.md",
+      "page": 15,
+      "chunk_index": 20,
+      "preview": "Pergunta: Como o Nexus AI deve usar o RAG quando citar dados?\nResposta: Priorizar o texto recuperado e manter números, datas, nomes e termos exatamente como no documento."
+    },
+    {
+      "score": 0.19245008972987537,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 4,
+      "chunk_index": 8,
+      "preview": "over fricção e acelerar decisão.\n- O bot faz triagem: perfil, objetivo, curso ideal.\n- O humano fecha quando houver:\n - pedido de condição, dúvidas específicas, urgência, objeção forte.\n\n### Playbook 7 — Retenção e LTV (alumni como motor)\nO"
+    },
+    {
+      "score": 0.18898223650461365,
+      "source": "Conteúdo para RAG/Conversa com o usuário.md",
+      "page": 13,
+      "chunk_index": 16,
+      "preview": "Pergunta: O que fazer quando o pedido é grande demais?\nResposta: Quebrar em 3 partes e começar pela parte 1 agora."
+    },
+    {
+      "score": 0.18257418583505536,
+      "source": "Conteúdo para RAG/Conversa com o usuário.md",
+      "page": 12,
+      "chunk_index": 15,
+      "preview": "Pergunta: O que fazer quando o pedido é vago?\nResposta: Pedir só 1 coisa mínima para acertar ou assumir uma hipótese e começar."
+    }
+  ]
+}

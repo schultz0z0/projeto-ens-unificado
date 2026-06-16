@@ -1,0 +1,184 @@
+{
+  "generated_at": "2026-01-09T19:19:30.947Z",
+  "source_dir": "C:\\Users\\raphaeloliveira\\Desktop\\Projetos Saas\\Chatbot IA\\Conteúdo para RAG",
+  "treated_dir": "C:\\Users\\raphaeloliveira\\Desktop\\Projetos Saas\\Chatbot IA\\conteúdo tratado RAG",
+  "totals": {
+    "md_files": 10,
+    "csv_found": 10,
+    "json_found": 10
+  },
+  "documents": [
+    {
+      "source_md": "Conexão Emocional ENS.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\conexao_emocional_ens.csv",
+      "json_path": "conteúdo tratado RAG\\json\\conexao_emocional_ens.json",
+      "qa": {
+        "total": 20,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 25,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Conversa com o usuário.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\conversa_com_o_usuario.csv",
+      "json_path": "conteúdo tratado RAG\\json\\conversa_com_o_usuario.json",
+      "qa": {
+        "total": 17,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 21,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Estrategias Trafego.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\estrategias_trafego.csv",
+      "json_path": "conteúdo tratado RAG\\json\\estrategias_trafego.json",
+      "qa": {
+        "total": 14,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 15,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Exemplos de Comunicação Humanizada.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\exemplos_comunicacao_humanizada.csv",
+      "json_path": "conteúdo tratado RAG\\json\\exemplos_de_comunicacao_humanizada.json",
+      "qa": {
+        "total": 50,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 61,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Frameworks Copywriting ENS.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\frameworks_copywriting_ens.csv",
+      "json_path": "conteúdo tratado RAG\\json\\frameworks_copywriting_ens.json",
+      "qa": {
+        "total": 18,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 24,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Futuro do Marketing em seguros.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\futuro_marketing_seguros.csv",
+      "json_path": "conteúdo tratado RAG\\json\\futuro_do_marketing_em_seguros.json",
+      "qa": {
+        "total": 18,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 25,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Influencia das Redes sociais 2026.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\influencia_redes_sociais_2026.csv",
+      "json_path": "conteúdo tratado RAG\\json\\influencia_das_redes_sociais_2026.json",
+      "qa": {
+        "total": 18,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 22,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Marketing H2H.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\marketing_h2h.csv",
+      "json_path": "conteúdo tratado RAG\\json\\marketing_h2h.json",
+      "qa": {
+        "total": 15,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 20,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Nexus AI Identidade.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\nexus_ai_identidade.csv",
+      "json_path": "conteúdo tratado RAG\\json\\nexus_ai_identidade.json",
+      "qa": {
+        "total": 18,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 23,
+        "invalid_items": 0
+      },
+      "issues": []
+    },
+    {
+      "source_md": "Relacionamento Marca.md",
+      "csv_path": "conteúdo tratado RAG\\csv\\relacionamento_marca.csv",
+      "json_path": "conteúdo tratado RAG\\json\\relacionamento_marca.json",
+      "qa": {
+        "total": 17,
+        "dupQuestions": 0,
+        "shortQuestions": 0,
+        "shortAnswers": 0,
+        "longAnswers": 0
+      },
+      "json": {
+        "items": 22,
+        "invalid_items": 0
+      },
+      "issues": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

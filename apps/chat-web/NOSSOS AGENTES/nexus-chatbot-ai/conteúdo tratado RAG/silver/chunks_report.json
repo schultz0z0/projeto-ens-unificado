@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-01-09T19:19:39.462Z",
+  "bronze_dir": "conteúdo tratado RAG\\json",
+  "silver_dir": "conteúdo tratado RAG\\silver",
+  "config": {
+    "maxChars": 1000,
+    "overlapChars": 120
+  },
+  "totals": {
+    "docs": 10,
+    "chunks": 303
+  },
+  "docs": [
+    {
+      "file": "conexao_emocional_ens.json",
+      "chunks": 30
+    },
+    {
+      "file": "conversa_com_o_usuario.json",
+      "chunks": 24
+    },
+    {
+      "file": "estrategias_trafego.json",
+      "chunks": 16
+    },
+    {
+      "file": "exemplos_de_comunicacao_humanizada.json",
+      "chunks": 71
+    },
+    {
+      "file": "frameworks_copywriting_ens.json",
+      "chunks": 29
+    },
+    {
+      "file": "futuro_do_marketing_em_seguros.json",
+      "chunks": 30
+    },
+    {
+      "file": "influencia_das_redes_sociais_2026.json",
+      "chunks": 25
+    },
+    {
+      "file": "marketing_h2h.json",
+      "chunks": 24
+    },
+    {
+      "file": "nexus_ai_identidade.json",
+      "chunks": 28
+    },
+    {
+      "file": "relacionamento_marca.json",
+      "chunks": 26
+    }
+  ]
+}

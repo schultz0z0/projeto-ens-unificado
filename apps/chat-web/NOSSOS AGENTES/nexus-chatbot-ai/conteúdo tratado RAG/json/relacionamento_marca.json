@@ -1,0 +1,156 @@
+[
+  {
+    "page_content": "# Relacionamento da Marca (ENS)\n\n## Contexto\n- ENS é uma escola de negócios e seguros com mais de 50 anos.\n- O “produto” é educação, mas a decisão do aluno depende de confiança, prova e clareza.\n- O relacionamento começa antes da matrícula e continua no pós-curso (alumni, comunidade, próximos níveis).\n\n## Princípios de relacionamento (ENS)\n1. **Ética e transparência:** comunicação responsável, sem promessas absolutas.\n2. **Clareza operacional:** o aluno entende o caminho (trilha), o esforço e o próximo passo.\n3. **Prova > promessa:** estrutura, docentes, calendário, requisitos, ecossistema e histórico.\n4. **Proximidade didática:** linguagem humana, orientação prática e suporte acessível.\n5. **Integração com o mercado:** conectar aluno ao ecossistema (conteúdo, eventos, iniciativas).\n6. **Consistência omnicanal:** mesma mensagem e padrão de atendimento em site, WhatsApp, e-mail e redes.\n7. **Aprendizado contínuo:** usar feedback para evoluir experiência e comunicação.\n\n## O que o relacionamento precisa entregar (resultado por fase)\n\n### 1) Descoberta (antes do lead)\n- Reduzir incerteza sobre carreira e trilha de formação.\n- Aumentar percepção de autoridade (sem arrogância).\n\n### 2) Consideração (lead)\n- Diagnosticar rapidamente o perfil e indicar a melhor trilha.\n- Responder dúvidas com precisão e sem enrolar.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 1
+    }
+  },
+  {
+    "page_content": "### 3) Decisão (pré-matrícula)\n- Tirar fricções: requisitos, valores/condições, calendário, modalidade, suporte.\n- Provar seriedade: ética, privacidade/cookies, canais oficiais.\n\n### 4) Onboarding (matriculou)\n- Dar direção: como acessar ambiente, agenda, materiais, regras.\n- Reduzir ansiedade e aumentar taxa de presença nas primeiras aulas.\n\n### 5) Progresso (durante o curso)\n- Sustentar engajamento com marcos, lembretes e apoio.\n- Transformar teoria em aplicação (projetos, exercícios, prática guiada).\n\n### 6) Conclusão (certificação / final do programa)\n- Fechar ciclo com clareza: certificação, próximos passos, como usar o aprendizado.\n\n### 7) Pós (alumni)\n- Manter vínculo com conteúdo, eventos e trilhas de evolução.\n- Incentivar indicação de forma simples e ética.\n\n## Canais e papéis (como a ENS aparece)\n\n### Site (ponto de verdade)\n- Onde a comunicação precisa ser mais objetiva: trilhas, cursos, requisitos, datas, condições.\n\n### Conteúdo (autoridade e relacionamento)\n- Hub editorial (“Tudo Sobre Seguros”) como mecanismo de confiança e retorno.\n- Newsletter como régua contínua de relacionamento.\n\n### Atendimento (conversão e suporte)\n- WhatsApp + telefone + e-mail como canais de resolução rápida.\n- Padrão: uma pergunta por vez, resposta específica, encaminhamento claro.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 2
+    }
+  },
+  {
+    "page_content": "## Segmentação (personalização sem invadir privacidade)\nUse perguntas de intenção (zero-party data):\n- Perfil: iniciante, corretor, seguradora, gestor, estudante.\n- Objetivo: habilitar, começar carreira, especializar, liderar, atualizar.\n- Preferência: ao vivo, horários, intensidade.\n\n## “Régua” de relacionamento (mensagens por objetivo)\n\n### Régua 1 — Captação (lead novo)\n1. Boas-vindas + pergunta de diagnóstico (perfil/objetivo)\n2. Indicação de trilha + 1 prova\n3. Conteúdo útil (aula curta, guia, checklist)\n4. Prova social (depoimento/estrutura/docentes)\n5. CTA de decisão (datas/condições)\n\n### Régua 2 — Pré-matrícula (quebra de objeção)\n- Falta de tempo → sugerir formato/ritmo e destacar marcos.\n- Medo de ser básico/avançado → nivelamento por perfil e trilha.\n- Insegurança → detalhar pré-requisitos, modalidade e suporte.\n\n### Régua 3 — Onboarding (primeira semana)\n1. Como acessar e se organizar\n2. Checklist da primeira aula\n3. Como pedir ajuda (canais oficiais)\n4. Marco 1: “primeira aplicação prática”\n\n### Régua 4 — Retenção e evolução (pós-curso)\n1. Recap aplicado (3 aprendizados + como usar)\n2. Convite para conteúdo/evento\n3. Próximo nível (trilha recomendada)\n4. Indicação simples (1 ação)\n\n## Playbooks prontos (para o agente usar)",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 3
+    }
+  },
+  {
+    "page_content": "### Playbook A — Diagnóstico em 60 segundos (WhatsApp/Chat)\n1. “Você é iniciante, corretor ou seguradora?”\n2. “Seu objetivo é habilitar, especializar ou liderar?”\n3. “Você prefere aula ao vivo e qual horário?”\n4. “Perfeito. Minha recomendação é X por causa de Y. Próximo passo: Z.”\n\n### Playbook B — Resposta padrão para dúvidas (sem perder conversão)\n- Responder objetivamente.\n- Confirmar entendimento.\n- Oferecer próximo passo (link, inscrição, atendimento).\n\n### Playbook C — Recuperação de lead frio\n- “Posso te indicar a trilha certa em 1 pergunta: hoje você está mais para {iniciante/corretor/seguradora}?”\n\n### Playbook D — Transformar conteúdo em relacionamento\n- Publicar conteúdo útil.\n- Convidar para newsletter.\n- Reengajar com trilha e próximo passo.\n\n## Métricas (para medir relacionamento, não só aquisição)\n- Tempo até primeira resposta no WhatsApp.\n- Taxa de resolução no primeiro contato.\n- Taxa de presença na primeira aula.\n- Conclusão do curso.\n- NPS (promotores/detratores) e temas de feedback.\n- Indicações e retorno (recompra/trilha seguinte).\n\n## Qualidade do relacionamento (checklist de revisão)\n- A mensagem é consistente com ética e transparência?\n- Existe prova clara (estrutura, requisitos, calendário, suporte)?\n- O aluno entende o próximo passo sem esforço?\n- A personalização depende de perguntas simples (sem pedir dados demais)?\n- O canal escolhido é adequado (site para detalhes, WhatsApp para destravar)?",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 4
+    }
+  },
+  {
+    "page_content": "## Palavras-chave e sinônimos (para recuperação no RAG)\n- relacionamento de marca, fidelização, retenção, comunidade\n- régua de relacionamento, jornada do aluno, onboarding\n- omnicanal, WhatsApp, atendimento, suporte\n- confiança, prova, autoridade, ética, compliance, transparência\n- conteúdo, newsletter, hub, Tudo Sobre Seguros, eventos",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 5
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o contexto do documento “Relacionamento da Marca (ENS)”?\nResposta: ENS tem mais de 50 anos; o produto é educação e a decisão depende de confiança, prova e clareza; o relacionamento vai de antes da matrícula ao pós-curso.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 6
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais são os princípios de relacionamento listados?\nResposta: Ética e transparência, clareza operacional, prova > promessa, proximidade didática, integração com o mercado, consistência omnicanal e aprendizado contínuo.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 7
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar na fase de Descoberta?\nResposta: Reduzir incerteza sobre carreira e trilha e aumentar percepção de autoridade sem arrogância.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 8
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar na fase de Consideração (lead)?\nResposta: Diagnosticar rápido o perfil e indicar a melhor trilha, respondendo com precisão.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 9
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar na fase de Decisão (pré-matrícula)?\nResposta: Tirar fricções (requisitos, valores/condições, calendário, modalidade, suporte) e provar seriedade (ética/privacidade/canais).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 10
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar no Onboarding?\nResposta: Dar direção de acesso/agenda/materiais/regras e reduzir ansiedade para aumentar presença nas primeiras aulas.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 11
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar durante o curso (Progresso)?\nResposta: Sustentar engajamento com marcos e apoio e transformar teoria em aplicação (projetos/exercícios/prática guiada).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 12
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar na Conclusão?\nResposta: Fechar ciclo com clareza (certificação, próximos passos e como usar o aprendizado).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 13
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o relacionamento precisa entregar no Pós (alumni)?\nResposta: Manter vínculo com conteúdo/eventos/trilhas e incentivar indicação de forma simples e ética.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 14
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o papel do site na comunicação?\nResposta: Ser o ponto de verdade, com comunicação mais objetiva sobre trilhas, cursos, requisitos, datas e condições.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 15
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais são os canais de atendimento citados?\nResposta: WhatsApp, telefone e e-mail para resolução rápida, com padrão de uma pergunta por vez e encaminhamento claro.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 16
+    }
+  },
+  {
+    "page_content": "Pergunta: Como segmentar sem invadir privacidade, segundo o documento?\nResposta: Usar perguntas de intenção (zero-party data): perfil, objetivo e preferência (ao vivo/horários/intensidade).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 17
+    }
+  },
+  {
+    "page_content": "Pergunta: Como é a régua de captação (lead novo) em 5 passos?\nResposta: Boas-vindas + diagnóstico, indicação de trilha + prova, conteúdo útil, prova social, CTA de decisão.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 18
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais objeções aparecem na régua pré-matrícula?\nResposta: Falta de tempo, medo de ser básico/avançado e insegurança.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 19
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais são as 4 perguntas do Playbook “Diagnóstico em 60 segundos”?\nResposta: Perguntar se é iniciante/corretor/seguradora; objetivo (habilitar/especializar/liderar); preferência por aula ao vivo e horário; e então recomendar X por Y e dar próximo passo Z.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 20
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais métricas o documento sugere acompanhar?\nResposta: Tempo até primeira resposta no WhatsApp, resolução no primeiro contato, presença na primeira aula, conclusão, NPS, indicações e retorno (recompra).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 21
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais itens o checklist de qualidade do relacionamento inclui?\nResposta: Consistência com ética/transparência, prova clara, próximo passo sem esforço, personalização por perguntas simples e canal adequado.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 22
+    }
+  }
+]

@@ -1,0 +1,62 @@
+{
+  "query": "Quais frameworks de copywriting são citados no material da ENS?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.4040610178208844,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 8,
+      "chunk_index": 13,
+      "preview": "Pergunta: Quais valores declarados da ENS são citados?\nResposta: Ética, foco nas metas, respeito, inovação e excelência."
+    },
+    {
+      "score": 0.3144854510165756,
+      "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+      "page": 8,
+      "chunk_index": 13,
+      "preview": "Pergunta: Quais são os pilares emocionais aplicáveis à ENS?\nResposta: Segurança, direção, competência, pertencimento e reconhecimento."
+    },
+    {
+      "score": 0.2750095491084634,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 17,
+      "chunk_index": 22,
+      "preview": "Pergunta: Quais são exemplos de ICPs citados?\nResposta: Corretores/assessorias, profissionais de seguradoras, gestores/comercial, especialistas (subscrição/sinistros/riscos)."
+    },
+    {
+      "score": 0.24743582965269675,
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 16,
+      "chunk_index": 20,
+      "preview": "Pergunta: Quais são os canais de atendimento citados?\nResposta: WhatsApp, telefone e e-mail para resolução rápida, com padrão de uma pergunta por vez e encaminhamento claro."
+    },
+    {
+      "score": 0.20365326999063926,
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 20,
+      "chunk_index": 24,
+      "preview": "Pergunta: Quais são as 4 perguntas do Playbook “Diagnóstico em 60 segundos”?\nResposta: Perguntar se é iniciante/corretor/seguradora; objetivo (habilitar/especializar/liderar); preferência por aula ao vivo e horário; e então recomendar X por"
+    },
+    {
+      "score": 0.19518001458970666,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 17,
+      "chunk_index": 20,
+      "preview": "Pergunta: Quais formatos funcionam para Consideração?\nResposta: Carrossel com checklists/frameworks e vídeo médio com estudo de caso/análise/comparativo."
+    },
+    {
+      "score": 0.18333969940564226,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 23,
+      "chunk_index": 28,
+      "preview": "Pergunta: Quais frases de “Segurança/ética” o documento sugere?\nResposta: “Comunicação com responsabilidade e foco em transparência.” e “Consentimento e privacidade são parte do padrão.”"
+    },
+    {
+      "score": 0.17817416127494962,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 21,
+      "chunk_index": 26,
+      "preview": "Pergunta: Como funciona o template de WhatsApp de triagem?\nResposta: Perguntar perfil, objetivo e preferência de formato/horário e então dar recomendação + próximos passos."
+    }
+  ]
+}

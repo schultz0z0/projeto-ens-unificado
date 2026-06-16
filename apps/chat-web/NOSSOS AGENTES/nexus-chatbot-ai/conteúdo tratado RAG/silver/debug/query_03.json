@@ -1,0 +1,62 @@
+{
+  "query": "O que é Marketing H2H e por que isso é crucial para a ENS?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.49386479832479485,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 31,
+      "chunk_index": 41,
+      "preview": "Pergunta: Será que isso que vivi serve de conteúdo?\nResposta: Com certeza. Experiência real tem poder. A forma de contar é que muda tudo. Quer que eu te ajude a moldar isso em uma história com propósito?"
+    },
+    {
+      "score": 0.4879500364742668,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 1,
+      "chunk_index": 1,
+      "preview": "# Marketing H2H (Human to Human)\n\n## Definição\n\nMarketing H2H é a prática de comunicar e vender lembrando que, independentemente de ser B2B ou B2C, **sempre existe uma pessoa do outro lado**: com contexto, emoções, limitações, crenças, obje"
+    },
+    {
+      "score": 0.45184805705753217,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 8,
+      "chunk_index": 12,
+      "preview": "Pergunta: Por que isso é crucial para a ENS?\nResposta: Porque a compra é decisão humana de risco (carreira, reputação, dinheiro, tempo) e H2H reduz ansiedade, aumenta clareza e conecta promessa e realidade."
+    },
+    {
+      "score": 0.42905816516051665,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 26,
+      "chunk_index": 36,
+      "preview": "Pergunta: Falaram mal do que eu postei...\nResposta: Crítica vem e às vezes construtiva, às vezes só barulho. O que importa é: faz sentido pra você? Quer destrinchar isso comigo pra separar o que agrega do que não?"
+    },
+    {
+      "score": 0.427617987059879,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 15,
+      "chunk_index": 19,
+      "preview": "Pergunta: Quais elementos uma landing page H2H deve ter?\nResposta: Hero “o que é/para quem”, por que agora (sem exagero), o que aprende (aplicação), como funciona, prova, FAQ de objeções reais e CTA único."
+    },
+    {
+      "score": 0.40451991747794525,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 6,
+      "chunk_index": 10,
+      "preview": "Pergunta: O que é Marketing H2H segundo o documento?\nResposta: É comunicar e vender lembrando que sempre existe uma pessoa do outro lado, com contexto, emoções e objetivos."
+    },
+    {
+      "score": 0.39513166445890513,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 4,
+      "chunk_index": 7,
+      "preview": "**Pergunta:** Falaram mal do que eu postei...\n\n**Resposta:** Crítica vem e às vezes construtiva, às vezes só barulho. O que importa é: faz sentido pra você? Quer destrinchar isso comigo pra separar o que agrega do que não?\n\n---\n\n# Bloco 16\n"
+    },
+    {
+      "score": 0.372677996249965,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 29,
+      "chunk_index": 39,
+      "preview": "Pergunta: Será que o que eu faço realmente ajuda alguém?\nResposta: Já parou pra pensar que até uma ideia compartilhada pode acender a luz pra alguém? Às vezes o que é “óbvio” pra você, é revolução pra outro. Continua. Você impacta mais do q"
+    }
+  ]
+}

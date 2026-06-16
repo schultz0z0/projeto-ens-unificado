@@ -1,0 +1,8 @@
+data/
+bakcup/
+__pycache__/
+*.log
+.env
+.env.clementino
+.env.ens
+.env.default

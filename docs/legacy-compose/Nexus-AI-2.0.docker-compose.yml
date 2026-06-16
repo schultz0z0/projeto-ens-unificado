@@ -1,0 +1,102 @@
+name: app-nexus-ai
+
+services:
+  frontend:
+    container_name: app-nexus-ai-frontend
+    image: app-nexus-ai-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?VITE_SUPABASE_URL obrigatoria}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?VITE_SUPABASE_ANON_KEY obrigatoria}
+        VITE_CHATBOT_PROXY_URL: ${VITE_CHATBOT_PROXY_URL:-}
+        NEXT_PUBLIC_CHATBOT_PROXY_URL: ${NEXT_PUBLIC_CHATBOT_PROXY_URL:-}
+        VITE_CHAT_STREAM_FILE_HOSTS: ${VITE_CHAT_STREAM_FILE_HOSTS:-}
+        VITE_CHAT_ATTACHMENTS_BUCKET: ${VITE_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
+        NEXT_PUBLIC_CHAT_ATTACHMENTS_BUCKET: ${NEXT_PUBLIC_CHAT_ATTACHMENTS_BUCKET:-}
+        VITE_IMAGE_GENERATOR_API_URL: ${VITE_IMAGE_GENERATOR_API_URL:-}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - nexus-hermes-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=nexus-hermes-net
+      - traefik.http.routers.app-nexus-ai.rule=Host(`chat.solucoes-nexus.tech`)
+      - traefik.http.routers.app-nexus-ai.entrypoints=websecure
+      - traefik.http.routers.app-nexus-ai.tls=true
+      - traefik.http.routers.app-nexus-ai.tls.certresolver=letsencrypt
+      - traefik.http.routers.app-nexus-ai.middlewares=app-nexus-ai-compress@docker,app-nexus-ai-security@docker
+      - traefik.http.services.app-nexus-ai.loadbalancer.server.port=8080
+      - traefik.http.middlewares.app-nexus-ai-compress.compress=true
+      - traefik.http.middlewares.app-nexus-ai-security.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.app-nexus-ai-security.headers.referrerPolicy=no-referrer-when-downgrade
+      - traefik.http.middlewares.app-nexus-ai-security.headers.stsSeconds=31536000
+      - traefik.http.middlewares.app-nexus-ai-security.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.app-nexus-ai-security.headers.stsPreload=true
+
+  bridge:
+    container_name: app-nexus-ai-bridge
+    image: app-nexus-ai-bridge:latest
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      BRIDGE_PORT: "8080"
+      BRIDGE_ALLOWED_ORIGINS: ${BRIDGE_ALLOWED_ORIGINS:-https://chat.solucoes-nexus.tech}
+      BRIDGE_DATA_DIR: /app/data
+      SUPABASE_URL: ${VITE_SUPABASE_URL:?VITE_SUPABASE_URL obrigatoria}
+      SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?VITE_SUPABASE_ANON_KEY obrigatoria}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY obrigatoria}
+      CHAT_ATTACHMENTS_BUCKET: ${VITE_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
+      HERMES_API_BASE_URL: ${HERMES_API_BASE_URL:?HERMES_API_BASE_URL obrigatoria}
+      HERMES_API_KEY: ${HERMES_API_KEY:-}
+      HERMES_MODEL_NAME: ${HERMES_MODEL_NAME:-hermes-agent}
+      HERMES_SESSIONS_API_ENABLED: ${HERMES_SESSIONS_API_ENABLED:-true}
+      HERMES_RUN_POLL_MS: ${HERMES_RUN_POLL_MS:-2000}
+    expose:
+      - "8080"
+    volumes:
+      - bridge-data:/app/data
+    networks:
+      - nexus-hermes-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=nexus-hermes-net
+      - traefik.http.routers.app-nexus-ai-bridge.rule=Host(`chat-api.solucoes-nexus.tech`)
+      - traefik.http.routers.app-nexus-ai-bridge.entrypoints=websecure
+      - traefik.http.routers.app-nexus-ai-bridge.tls=true
+      - traefik.http.routers.app-nexus-ai-bridge.tls.certresolver=letsencrypt
+      - traefik.http.routers.app-nexus-ai-bridge.middlewares=app-nexus-ai-bridge-compress@docker,app-nexus-ai-bridge-security@docker
+      - traefik.http.services.app-nexus-ai-bridge.loadbalancer.server.port=8080
+      - traefik.http.middlewares.app-nexus-ai-bridge-compress.compress=true
+      - traefik.http.middlewares.app-nexus-ai-bridge-security.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.app-nexus-ai-bridge-security.headers.referrerPolicy=no-referrer-when-downgrade
+      - traefik.http.middlewares.app-nexus-ai-bridge-security.headers.stsSeconds=31536000
+      - traefik.http.middlewares.app-nexus-ai-bridge-security.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.app-nexus-ai-bridge-security.headers.stsPreload=true
+
+volumes:
+  bridge-data:
+
+networks:
+  nexus-hermes-net:
+    name: nexus-hermes-net
+    driver: bridge

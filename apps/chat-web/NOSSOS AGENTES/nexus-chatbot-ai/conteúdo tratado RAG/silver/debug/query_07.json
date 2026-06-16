@@ -1,0 +1,62 @@
+{
+  "query": "Qual é o padrão de turn-taking recomendado no WhatsApp?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.3583993668480911,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "## Perguntas de diagnóstico (para o agente conduzir conversas)\n1. Qual o objetivo (matrículas, marca, parceria, retenção)?\n2. Qual curso/oferta e para qual perfil?\n3. Qual ticket e condição de pagamento?\n4. Quais provas existem (ementa, pro"
+    },
+    {
+      "score": 0.34050261230349954,
+      "source": "Conteúdo para RAG/Conversa com o usuário.md",
+      "page": 17,
+      "chunk_index": 20,
+      "preview": "Pergunta: Qual é o “padrão WhatsApp” recomendado?\nResposta: Uma resposta boa costuma ter 2–6 linhas; se ficar longo, quebrar em 2–3 parágrafos; terminar com 1 pergunta simples."
+    },
+    {
+      "score": 0.27372166045202145,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 4,
+      "chunk_index": 7,
+      "preview": "## Perguntas de diagnóstico (para orientar estratégia)\n1. Quem é o público e qual a próxima ação desejada?\n2. Qual objeção principal hoje?\n3. Qual prova mais forte (docente, case, aula, comunidade)?\n4. Qual canal fecha melhor (WhatsApp, DM,"
+    },
+    {
+      "score": 0.25537695922762466,
+      "source": "Conteúdo para RAG/Conversa com o usuário.md",
+      "page": 5,
+      "chunk_index": 8,
+      "preview": "Pergunta: Qual é o objetivo do guia “Conversa com o usuário”?\nResposta: Definir como o Nexus AI conversa no dia a dia: ritmo, tom, turnos, perguntas, fallbacks e encerramento."
+    },
+    {
+      "score": 0.2500000000000001,
+      "source": "Conteúdo para RAG/Conversa com o usuário.md",
+      "page": 8,
+      "chunk_index": 11,
+      "preview": "Pergunta: Qual é a recomendação de turn-taking?\nResposta: Evitar mandar várias perguntas; usar “pergunta → pausa” e quebrar em etapas (objetivo, contexto, restrições) quando precisar de muitas infos."
+    },
+    {
+      "score": 0.2132007163556105,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "Pergunta: Qual é o contexto e tom institucional da ENS descritos no documento?\nResposta: A ENS atua há mais de 50 anos, mapeia necessidades, arquiteta soluções de ensino e conecta alunos ao ecossistema; o tom é direto, confiante e voltado à"
+    },
+    {
+      "score": 0.19802950859533489,
+      "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+      "page": 9,
+      "chunk_index": 14,
+      "preview": "Pergunta: Qual é o modelo simples recomendado para criar peças de comunicação?\nResposta: Emoção-alvo → Tensão real → Prova concreta → CTA único."
+    },
+    {
+      "score": 0.19802950859533489,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 15,
+      "chunk_index": 20,
+      "preview": "Pergunta: Como o documento descreve o padrão vencedor de omnichannel?\nResposta: Autoatendimento inteligente + handoff rápido para humano quando necessário."
+    }
+  ]
+}

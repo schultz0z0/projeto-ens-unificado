@@ -1,0 +1,16 @@
+server:
+  host: "127.0.0.1"
+  port: 8123
+
+supabase:
+  url_env: "SUPABASE_URL"
+  service_role_key_env: "SUPABASE_SERVICE_ROLE_KEY"
+
+policy:
+  common_tenant: "nexusai"
+  admin_profiles:
+    - "ceo"
+    - "default"
+  default_limit: 8
+  max_limit: 20
+

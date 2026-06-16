@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$ROOT/scripts/env/load-root-env.sh"
+
+export BRIDGE_PORT="${NEXUS_CHAT_BRIDGE_PORT:-8081}"
+export BRIDGE_ALLOWED_ORIGINS="${NEXUS_CHAT_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}"
+export BRIDGE_DATA_DIR="$ROOT/data/bridge"
+export SUPABASE_URL="${NEXUS_APP_SUPABASE_URL:-}"
+export SUPABASE_ANON_KEY="${NEXUS_APP_SUPABASE_ANON_KEY:-}"
+export SUPABASE_SERVICE_ROLE_KEY="${NEXUS_APP_SUPABASE_SERVICE_ROLE_KEY:-}"
+export CHAT_ATTACHMENTS_BUCKET="${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}"
+export HERMES_API_BASE_URL="${NEXUS_HERMES_API_BASE_URL:-http://127.0.0.1:8652}"
+export HERMES_API_KEY="${NEXUS_HERMES_API_KEY:-}"
+export HERMES_MODEL_NAME="${NEXUS_HERMES_MODEL_NAME:-hermes-agent}"
+export HERMES_SESSIONS_API_ENABLED="${NEXUS_HERMES_SESSIONS_API_ENABLED:-true}"
+export HERMES_RUN_POLL_MS="${NEXUS_HERMES_RUN_POLL_MS:-2000}"
+export HERMES_STREAM_TIMEOUT_MS="${NEXUS_HERMES_STREAM_TIMEOUT_MS:-120000}"
+export HERMES_REQUEST_TIMEOUT_MS="${NEXUS_HERMES_REQUEST_TIMEOUT_MS:-120000}"
+export RUN_SESSION_PREFIX="${NEXUS_RUN_SESSION_PREFIX:-}"
+
+cd "$ROOT/services/chat-bridge"
+if [ ! -d node_modules ]; then
+  npm install
+fi
+npm start

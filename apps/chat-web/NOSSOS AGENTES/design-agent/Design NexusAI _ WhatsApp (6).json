@@ -1,0 +1,1878 @@
+{
+  "name": "Design NexusAI | WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "template_id_placid",
+              "value": "b3du1neubtmvf",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "titulo",
+              "value": "={{ $json.body.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "frase",
+              "value": "={{ $json.body.frase }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "text-box1",
+              "value": "={{ $json.body['text-box1'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "text-box2",
+              "value": "={{ $json.body['text-box2'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a8e2df18-77e1-41d6-8c03-112bdf4a2667",
+              "name": "persona_image",
+              "value": "={{ $json.body.persona_image }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4823688d-7849-45e8-a64c-28937b44450a",
+      "name": "Config Template - Graduação",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.placid.app/api/rest/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template_uuid\": \"{{ $json.template_id_placid }}\",\n  \"layers\": {\n    \"titulo\": {\n      \"text\": \"{{ $json.titulo }}\"\n    },\n    \"frase\": {\n      \"text\": \"{{ $json.frase }}\"\n    },\n    \"text-box1\": {\n      \"text\": \"{{ $json['text-box1'] }}\"\n    },\n    \"text-box2\": {\n      \"text\": \"{{ $json['text-box2'] }}\"\n    },\n    \"persona\": {\n      \"image\": \"{{ $json.persona_image }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "57ea394c-80ac-48a8-a22d-c38e1d35e8c1",
+      "name": "Placid - Gerar Imagem (Produção)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -208,
+        80
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "3d5352cc-a0b6-41df-800f-0c9dc466af52",
+      "name": "Aguardar 3s (Produção)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        80
+      ],
+      "webhookId": "7ea365b2-4cef-4fe2-8462-b1d07683a633"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Placid - Gerar Imagem (Produção)').item.json.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "options": {}
+      },
+      "id": "234a56f5-e3cb-469b-8357-7a6b8fd88b0d",
+      "name": "Polling (Produção)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        80
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.image_url }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bea4f667-98cf-4f1d-b921-5e1f0f2f965c",
+      "name": "Imagem Pronta? (Produção)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "a41b9b7e-7661-4271-aee4-e8dbdacd8055",
+      "name": "Aguardar Mais 2s (Produção)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        272
+      ],
+      "webhookId": "0d9c09ae-ca36-4a24-a358-f1e154ca4903"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "status",
+              "value": "imagem_gerada",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "polling_url",
+              "value": "={{ $json.polling_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a012fb89-1b47-49ad-a812-adb2cefdf5bc",
+      "name": "Preparar Resposta - Imagem Gerada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "02c62089-8d28-4cfa-b900-ff5e79e0b2ef",
+      "name": "Responder Webhook - Imagem Gerada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1136,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "graduação-whatsapp",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": true
+        }
+      },
+      "id": "cd72de36-ab40-4645-9568-db115b8d444a",
+      "name": "Webhook - Graduação (Produção)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -864,
+        80
+      ],
+      "webhookId": "3e7e6d50-d5e2-4a7e-bcbd-7d20699109d0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pMDnmFy1OtCGdnIg",
+          "name": "Nexus Auth Security"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## GRADUAÇÃO - CENTRALIZADO",
+        "height": 512,
+        "width": 2320,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -16
+      ],
+      "id": "6a8ad4b6-af9a-425d-816d-2c49eb757214",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.placid.app/api/rest/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template_uuid\": \"{{ $json.template_id_placid }}\",\n  \"layers\": {\n    \"titulo\": {\n      \"text\": \"{{ $json.titulo }}\"\n    },\n    \"disclaimer\": {\n      \"text\": \"{{ $json.disclaimer }}\"\n    },\n    \"text-box1\": {\n      \"text\": \"{{ $json['text-box1'] }}\"\n    },\n    \"text-box2\": {\n      \"text\": \"{{ $json['text-box2'] }}\"\n    },\n    \"persona\": {\n      \"image\": \"{{ $json.persona_image }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "f7580789-0710-40ac-803c-d9558d5af9d0",
+      "name": "Placid - Gerar Imagem (Produção)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -208,
+        640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "73668e56-9dfc-41cf-be5a-fc8d541d38b5",
+      "name": "Aguardar 3s (Produção)1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        640
+      ],
+      "webhookId": "7ea365b2-4cef-4fe2-8462-b1d07683a633"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Placid - Gerar Imagem (Produção)1').item.json.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "options": {}
+      },
+      "id": "df3c6d48-25fc-4a8a-b154-4b8c763443ac",
+      "name": "Polling (Produção)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.image_url }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a0ed1a86-d801-4305-92ec-a955c3bf2319",
+      "name": "Imagem Pronta? (Produção)1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "22976851-4b77-480a-8790-895116f10fbe",
+      "name": "Aguardar Mais 2s (Produção)1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        832
+      ],
+      "webhookId": "0d9c09ae-ca36-4a24-a358-f1e154ca4903"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "status",
+              "value": "imagem_gerada",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "polling_url",
+              "value": "={{ $json.polling_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "49ed0092-d42d-4c16-9ff6-ca268f27be55",
+      "name": "Preparar Resposta - Imagem Gerada1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## CHCS - ALINHADO A ESQUERDA",
+        "height": 512,
+        "width": 2320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        544
+      ],
+      "id": "65ef9efe-1c0c-4928-9da7-1784493553f2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chcs-whatsapp",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": true
+        }
+      },
+      "id": "019861c5-08d0-4cd1-92b0-7e20ef02cd70",
+      "name": "Webhook - CHCS (Produção)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -880,
+        640
+      ],
+      "webhookId": "3e7e6d50-d5e2-4a7e-bcbd-7d20699109d0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pMDnmFy1OtCGdnIg",
+          "name": "Nexus Auth Security"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d0d696c4-ed07-4a83-aff9-e8018d2a48e0",
+      "name": "Responder Webhook - Imagem Gerada2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1136,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "template_id_placid",
+              "value": "fhgclnbsydns9",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "titulo",
+              "value": "={{ $json.body.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "disclaimer",
+              "value": "={{ $json.body.disclaimer }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "text-box1",
+              "value": "={{ $json.body['text-box1'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "text-box2",
+              "value": "={{ $json.body['text-box2'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a8e2df18-77e1-41d6-8c03-112bdf4a2667",
+              "name": "persona_image",
+              "value": "={{ $json.body.persona_image }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4171613a-46c0-4b58-be89-848b3132deb2",
+      "name": "Config Template - CHCS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.placid.app/api/rest/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template_uuid\": \"{{ $json.template_id_placid }}\",\n  \"layers\": {\n    \"etiqueta\": {\n      \"text\": \"{{ $json.body.etiqueta }}\"\n    },\n    \"titulo\": {\n      \"text\": \"{{ $json.titulo }}\"\n    },\n    \"frase\": {\n      \"text\": \"{{ $json.frase }}\"\n    },\n    \"text-box1\": {\n      \"text\": \"{{ $json['text-box1'] }}\"\n    },\n    \"text-box2\": {\n      \"text\": \"{{ $json['text-box2'] }}\"\n    },\n    \"persona\": {\n      \"image\": \"{{ $json.persona_image }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "659bbd37-4965-4a72-8a8b-33e3963c0b44",
+      "name": "Placid - Gerar Imagem (Produção)2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -208,
+        1200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "5364d8a4-0809-41df-98e5-9b6c853c6347",
+      "name": "Aguardar 3s (Produção)2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        1200
+      ],
+      "webhookId": "7ea365b2-4cef-4fe2-8462-b1d07683a633"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Placid - Gerar Imagem (Produção)2').item.json.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "options": {}
+      },
+      "id": "98b54c4e-e251-4946-b34f-282dd7091d3b",
+      "name": "Polling (Produção)2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        288,
+        1200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.image_url }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cf13e0b3-19f1-4f14-a9f5-a17296cb1be8",
+      "name": "Imagem Pronta? (Produção)2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "a27c0169-d9fa-466b-9f17-f6e277076215",
+      "name": "Aguardar Mais 2s (Produção)2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        1392
+      ],
+      "webhookId": "0d9c09ae-ca36-4a24-a358-f1e154ca4903"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "status",
+              "value": "imagem_gerada",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "polling_url",
+              "value": "={{ $json.polling_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f580d4e-123c-48b7-8de9-f1e038ca0b30",
+      "name": "Preparar Resposta - Imagem Gerada2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "dc4b87bb-3d60-458e-8ee9-8941bf528378",
+      "name": "Responder Webhook - Imagem Gerada1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1136,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## MBA/PÓS/EXTENSÃO - CENTRALIZADO (SÓ COM A LOGO DA ENS)",
+        "height": 512,
+        "width": 2320,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        1104
+      ],
+      "id": "781bffab-073a-423a-9c6a-b49db4cdddec",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mba-whatsapp",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": true
+        }
+      },
+      "id": "fdf71c9c-eed2-4815-a8d9-e980a7e7abeb",
+      "name": "Webhook - MBA (Produção)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -864,
+        1200
+      ],
+      "webhookId": "3e7e6d50-d5e2-4a7e-bcbd-7d20699109d0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pMDnmFy1OtCGdnIg",
+          "name": "Nexus Auth Security"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        80
+      ],
+      "id": "b924b9f9-3fb5-490f-8af0-8578b6a3e6c0",
+      "name": "Validação Edge Function",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        640
+      ],
+      "id": "d3b21733-b9cd-436f-a1a4-f7fec89e6642",
+      "name": "Validação Edge Function1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        1200
+      ],
+      "id": "1c7d7a8f-e454-499a-af97-5615d9aac072",
+      "name": "Validação Edge Function2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "template_id_placid",
+              "value": "9uvnuimwhzlg9",
+              "type": "string"
+            },
+            {
+              "id": "2a8f45c4-ea35-42b6-b83a-13a279769af1",
+              "name": "etiqueta",
+              "value": "={{ $json.body.etiqueta }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "titulo",
+              "value": "={{ $json.body.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "frase",
+              "value": "={{ $json.body.frase }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "text-box1",
+              "value": "={{ $json.body['text-box1'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "text-box2",
+              "value": "={{ $json.body['text-box2'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a8e2df18-77e1-41d6-8c03-112bdf4a2667",
+              "name": "persona_image",
+              "value": "={{ $json.body.persona_image }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ea37c2f5-d793-4672-8e31-b92bdde598a6",
+      "name": "Config Template - MBA/Pós",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6cb9a5ae-47ec-4594-b1f8-21e343f65989",
+      "name": "Responder Webhook - Imagem Gerada3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1408,
+        1744
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## QUALIFICAÇÕES - CENTRALIZADO (SÓ COM A LOGO DA ENS)",
+        "height": 1088,
+        "width": 2720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        1680
+      ],
+      "id": "a0db8927-8f59-476e-9f82-24bd09bd8d1b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        2048
+      ],
+      "id": "b2145b20-e4dd-44cf-b160-9e41eeb7800e",
+      "name": "Validação Edge Function3",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "qualificacoes-whatsapp",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": true
+        }
+      },
+      "id": "5b50faf0-2264-44cf-a07a-7bd6e8ae4a94",
+      "name": "Webhook - QUALIFICAÇÕES (Produção)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        2048
+      ],
+      "webhookId": "3e7e6d50-d5e2-4a7e-bcbd-7d20699109d0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pMDnmFy1OtCGdnIg",
+          "name": "Nexus Auth Security"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "polling_url",
+              "value": "={{ $json.polling_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "template_id",
+              "value": "={{ $('Config Template - Qualificações1').item.json.template_id_placid }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "original_layers",
+              "value": "={{ JSON.stringify($('Config Template - Qualificações1').item.json) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "632845ad-b103-4267-aea9-24afca9ea4bf",
+      "name": "Preparar Dados para IA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        2224
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.linhas_titulo_reais }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    },
+                    "id": "55c80afc-bc17-44dc-bee5-291c9d50c4ff"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Menor"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f407a033-41dc-4a4f-a05b-511c1533b29f",
+                    "leftValue": "={{ $json.linhas_titulo_reais }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Maior"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        2048
+      ],
+      "id": "d0aad7d7-6939-4933-8f4d-503166aa69a9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- CONFIGURAÇÃO DE LARGURA ---\n// Aumentei para 17 para \"caber\" mais palavras na mesma linha\n// e evitar contagem falsa de linhas extras.\nconst MAX_CHARS_POR_LINHA = 17; \n\n// Pega o texto do node anterior\nconst texto = $('Config Template - Qualificações1').item.json.titulo || \"\";\n\n// --- O SIMULADOR DE QUEBRA (WORD WRAP) ---\nconst palavras = texto.split(' ');\nlet linhas = 1;\nlet charsNaLinhaAtual = 0;\n\nfor (let i = 0; i < palavras.length; i++) {\n  const palavra = palavras[i];\n  \n  // Se é a primeira palavra da linha, só adiciona\n  if (charsNaLinhaAtual === 0) {\n    charsNaLinhaAtual = palavra.length;\n  } \n  // Se a palavra + espaço cabe na linha atual, adiciona\n  else if ((charsNaLinhaAtual + 1 + palavra.length) <= MAX_CHARS_POR_LINHA) {\n    charsNaLinhaAtual += (1 + palavra.length);\n  } \n  // Se não cabe, QUEBRA A LINHA e começa a contar na próxima\n  else {\n    linhas++;\n    charsNaLinhaAtual = palavra.length;\n  }\n}\n\n// --- RESULTADO ---\nreturn {\n  json: {\n    ...items[0].json, // Passa todos os dados pra frente\n    linhas_titulo_reais: linhas // O número mágico calculado\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        2048
+      ],
+      "id": "ec964ec0-6496-473e-90d4-45e4aaaa92c0",
+      "name": "Contador de Linhas"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "polling_url",
+              "value": "={{ $json.polling_url }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "template_id",
+              "value": "={{ $('Config Template - Qualificações1').item.json.template_id_placid }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "original_layers",
+              "value": "={{ JSON.stringify($('Config Template - Qualificações1').item.json) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bdaf0631-0e38-4422-a5c6-bbccf7e2bd30",
+      "name": "Preparar Dados para IA1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        1744
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.placid.app/api/rest/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n(() => {\n  const data = $json;\n  \n  // --- 📏 CONFIGURAÇÕES (TITULO LONGO) ---\n  const CANVAS_HEIGHT = 1080; \n  const MARGEM_ESQUERDA = \"96px\";\n  const LARGURA_CAMADA = \"456px\"; \n  \n  // GAPS (Mais respirados para muito texto)\n  const GAP_PADRAO = 30;       // Aumentei para 30\n  const GAP_BOTAO_EXTRA = 40;  // Afasta bem o botão\n  \n  // ALTURAS\n  const H_ETIQUETA = 52;\n  const H_BOTAO = 60;\n  const H_LINHA_TITULO = 50; \n  const H_LINHA_FRASE = 35;  \n  \n  // QUEBRA DE LINHA\n  const CHARS_TITULO = 12; \n  const CHARS_FRASE = 30; \n\n  // --- CÁLCULOS ---\n  const tTitulo = data.titulo || \"\";\n  const tFrase = data.frase || \"\";\n\n  const linTitulo = Math.max(1, Math.ceil(tTitulo.length / CHARS_TITULO));\n  const linFrase = Math.max(1, Math.ceil(tFrase.length / CHARS_FRASE));\n  \n  const hTituloTotal = linTitulo * H_LINHA_TITULO;\n  const hFraseTotal = linFrase * H_LINHA_FRASE;\n\n  // --- CENTRALIZAÇÃO VERTICAL ---\n  const alturaBlocoInteiro = \n      H_ETIQUETA + GAP_PADRAO + \n      hTituloTotal + GAP_PADRAO + \n      hFraseTotal + GAP_PADRAO + GAP_BOTAO_EXTRA + \n      H_BOTAO;\n\n  let y_atual = (CANVAS_HEIGHT - alturaBlocoInteiro) / 2;\n  \n  // IMPORTANTE: Texto longo sobe mais, mas nunca passa do teto (80px)\n  if (y_atual < 80) y_atual = 80;\n\n  // --- EMPILHAMENTO (CASCATA) ---\n  \n  // 1. Etiqueta\n  const pos_etiqueta = y_atual;\n  \n  // 2. Título\n  y_atual += H_ETIQUETA + GAP_PADRAO;\n  const pos_titulo = y_atual;\n  \n  // 3. Frase\n  y_atual += hTituloTotal + GAP_PADRAO;\n  const pos_frase = y_atual;\n  \n  // 4. Botão\n  y_atual += hFraseTotal + GAP_PADRAO + GAP_BOTAO_EXTRA;\n  const pos_botao = y_atual;\n\n  // --- JSON FINAL ---\n  return {\n    \"template_uuid\": data.template_id_placid,\n    \"layers\": {\n      \"etiqueta\": { \"text\": data.etiqueta, \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_etiqueta + 'px', \"width\": LARGURA_CAMADA },\n      \"titulo\":   { \"text\": data.titulo,   \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_titulo + 'px',   \"width\": LARGURA_CAMADA },\n      \"frase\":    { \"text\": data.frase,    \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_frase + 'px',    \"width\": LARGURA_CAMADA },\n      \"text-box\": { \"text\": data['text-box'], \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_botao + 'px' },\n      \"box1\":     { \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_botao + 'px' },\n      \"persona\":  { \"image\": data.persona_image }\n    }\n  };\n})()\n}}",
+        "options": {}
+      },
+      "id": "b013d1f6-a5c0-4477-9232-363bd264883b",
+      "name": "Placid - Gerar Imagem (Produção)4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        192,
+        2352
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "a23d41e3-ea0c-4f96-82c2-6933d1f14e58",
+      "name": "Aguardar 3s (Produção)4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        2352
+      ],
+      "webhookId": "7ea365b2-4cef-4fe2-8462-b1d07683a633"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Placid - Gerar Imagem (Produção)4').item.json.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "options": {}
+      },
+      "id": "cbc1f6e6-5b6c-429e-8d20-a65cdbb95e02",
+      "name": "Polling (Produção)4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        736,
+        2352
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.image_url }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f049e5c1-cdec-4a5c-ba53-40d87b3d5ceb",
+      "name": "Imagem Pronta? (Produção)4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        2272
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "0d782bf2-c1d3-4ebe-98bd-836bdb37b83d",
+      "name": "Aguardar Mais 2s (Produção)4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        2448
+      ],
+      "webhookId": "0d9c09ae-ca36-4a24-a358-f1e154ca4903"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "template_id_placid",
+              "value": "0gxvehjljyvqb",
+              "type": "string"
+            },
+            {
+              "id": "2a8f45c4-ea35-42b6-b83a-13a279769af1",
+              "name": "etiqueta",
+              "value": "={{ $json.body.etiqueta }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "titulo",
+              "value": "={{ $json.body.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "frase",
+              "value": "={{ $json.body.frase }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "text-box",
+              "value": "={{ $json.body['text-box'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a8e2df18-77e1-41d6-8c03-112bdf4a2667",
+              "name": "persona_image",
+              "value": "={{ $json.body.persona_image }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "efb86ffa-5833-41f4-982f-85470b002945",
+      "name": "Config Template - Qualificações1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        2048
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.placid.app/api/rest/images",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n(() => {\n  const data = $json;\n  \n  // --- 📏 CONFIGURAÇÕES (TITULO CURTO) ---\n  const CANVAS_HEIGHT = 1080; \n  const MARGEM_ESQUERDA = \"96px\";\n  const LARGURA_CAMADA = \"456px\"; \n  \n  // GAPS (Mais fechadinhos para pouco texto)\n  const GAP_PADRAO = 15;       // Espaço igual entre todas as layers\n  const GAP_BOTAO_EXTRA = 40;  // Um respiro extra antes do botão\n  \n  // ALTURAS\n  const H_ETIQUETA = 52;\n  const H_BOTAO = 80;\n  const H_LINHA_TITULO = 60; // Altura segura para 1 ou 2 linhas\n  const H_LINHA_FRASE = 50;  \n  \n  // QUEBRA DE LINHA\n  const CHARS_TITULO = 12; \n  const CHARS_FRASE = 30; \n\n  // --- CÁLCULOS ---\n  const tTitulo = data.titulo || \"\";\n  const tFrase = data.frase || \"\";\n\n  const linTitulo = Math.max(1, Math.ceil(tTitulo.length / CHARS_TITULO));\n  const linFrase = Math.max(1, Math.ceil(tFrase.length / CHARS_FRASE));\n  \n  const hTituloTotal = linTitulo * H_LINHA_TITULO;\n  const hFraseTotal = linFrase * H_LINHA_FRASE;\n\n  // --- CENTRALIZAÇÃO VERTICAL ---\n  const alturaBlocoInteiro = \n      H_ETIQUETA + GAP_PADRAO + \n      hTituloTotal + GAP_PADRAO + \n      hFraseTotal + GAP_PADRAO + GAP_BOTAO_EXTRA + \n      H_BOTAO;\n\n  let y_atual = (CANVAS_HEIGHT - alturaBlocoInteiro) / 2;\n  if (y_atual < 100) y_atual = 100; // Margem de segurança\n\n  // --- EMPILHAMENTO (CASCATA) ---\n  \n  // 1. Etiqueta\n  const pos_etiqueta = y_atual;\n  \n  // 2. Título (Pega pos anterior + altura anterior + gap)\n  y_atual += H_ETIQUETA + GAP_PADRAO;\n  const pos_titulo = y_atual;\n  \n  // 3. Frase\n  y_atual += hTituloTotal + GAP_PADRAO;\n  const pos_frase = y_atual;\n  \n  // 4. Botão\n  y_atual += hFraseTotal + GAP_PADRAO + GAP_BOTAO_EXTRA;\n  const pos_botao = y_atual;\n\n  // --- JSON FINAL ---\n  return {\n    \"template_uuid\": data.template_id_placid,\n    \"layers\": {\n      \"etiqueta\": { \"text\": data.etiqueta, \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_etiqueta + 'px', \"width\": LARGURA_CAMADA },\n      \"titulo\":   { \"text\": data.titulo,   \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_titulo + 'px',   \"width\": LARGURA_CAMADA },\n      \"frase\":    { \"text\": data.frase,    \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_frase + 'px',    \"width\": LARGURA_CAMADA },\n      \"text-box\": { \"text\": data['text-box'], \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_botao + 'px' },\n      \"box1\":     { \"position_x_absolute\": MARGEM_ESQUERDA, \"position_y_absolute\": pos_botao + 'px' },\n      \"persona\":  { \"image\": data.persona_image }\n    }\n  };\n})()\n}}",
+        "options": {}
+      },
+      "id": "7f47ef58-4587-425a-8243-ad1c670d6a0f",
+      "name": "Placid - Gerar Imagem (Produção)5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        192,
+        1872
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "b22bee65-ce19-4040-8d46-3db49255c6bc",
+      "name": "Aguardar 3s (Produção)5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        1872
+      ],
+      "webhookId": "7ea365b2-4cef-4fe2-8462-b1d07683a633"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Placid - Gerar Imagem (Produção)5').item.json.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "options": {}
+      },
+      "id": "a6961b27-686b-4897-8688-82cca7cb0dba",
+      "name": "Polling (Produção)5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        736,
+        1872
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2tzp4AvPYSPiZ2BI",
+          "name": "Placid"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.image_url }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e6cf534e-dbce-4ca1-8024-af5fe0bab9a3",
+      "name": "Imagem Pronta? (Produção)5",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        1792
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "1c64e98b-0f18-4408-a42f-d060d4f66219",
+      "name": "Aguardar Mais 2s (Produção)5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        1968
+      ],
+      "webhookId": "0d9c09ae-ca36-4a24-a358-f1e154ca4903"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "228c2a00-d2d9-47b2-b0ce-54ea9f304889",
+      "name": "Responder Webhook - Imagem Gerada4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1392,
+        2224
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Config Template - Graduação": {
+      "main": [
+        [
+          {
+            "node": "Placid - Gerar Imagem (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Placid - Gerar Imagem (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 3s (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 3s (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Imagem Pronta? (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagem Pronta? (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resposta - Imagem Gerada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar Mais 2s (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Mais 2s (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resposta - Imagem Gerada": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook - Imagem Gerada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Graduação (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Config Template - Graduação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Placid - Gerar Imagem (Produção)1": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 3s (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 3s (Produção)1": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling (Produção)1": {
+      "main": [
+        [
+          {
+            "node": "Imagem Pronta? (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagem Pronta? (Produção)1": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resposta - Imagem Gerada1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar Mais 2s (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Mais 2s (Produção)1": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resposta - Imagem Gerada1": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook - Imagem Gerada2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - CHCS (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Config Template - CHCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Template - CHCS": {
+      "main": [
+        [
+          {
+            "node": "Placid - Gerar Imagem (Produção)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Placid - Gerar Imagem (Produção)2": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 3s (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 3s (Produção)2": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling (Produção)2": {
+      "main": [
+        [
+          {
+            "node": "Imagem Pronta? (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagem Pronta? (Produção)2": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resposta - Imagem Gerada2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar Mais 2s (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Mais 2s (Produção)2": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resposta - Imagem Gerada2": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook - Imagem Gerada1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - MBA (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Config Template - MBA/Pós",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Edge Function": {
+      "main": [
+        [
+          {
+            "node": "Config Template - Graduação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Edge Function1": {
+      "main": [
+        [
+          {
+            "node": "Config Template - CHCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Edge Function2": {
+      "main": [
+        [
+          {
+            "node": "Config Template - MBA/Pós",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Template - MBA/Pós": {
+      "main": [
+        [
+          {
+            "node": "Placid - Gerar Imagem (Produção)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Edge Function3": {
+      "main": [
+        [
+          {
+            "node": "Config Template - Qualificações1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - QUALIFICAÇÕES (Produção)": {
+      "main": [
+        [
+          {
+            "node": "Config Template - Qualificações1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Dados para IA": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook - Imagem Gerada4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Placid - Gerar Imagem (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Placid - Gerar Imagem (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contador de Linhas": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Dados para IA1": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook - Imagem Gerada3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Placid - Gerar Imagem (Produção)4": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 3s (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 3s (Produção)4": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling (Produção)4": {
+      "main": [
+        [
+          {
+            "node": "Imagem Pronta? (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagem Pronta? (Produção)4": {
+      "main": [
+        [
+          {
+            "node": "Preparar Dados para IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar Mais 2s (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Mais 2s (Produção)4": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Template - Qualificações1": {
+      "main": [
+        [
+          {
+            "node": "Contador de Linhas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Placid - Gerar Imagem (Produção)5": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 3s (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 3s (Produção)5": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling (Produção)5": {
+      "main": [
+        [
+          {
+            "node": "Imagem Pronta? (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imagem Pronta? (Produção)5": {
+      "main": [
+        [
+          {
+            "node": "Preparar Dados para IA1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aguardar Mais 2s (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Mais 2s (Produção)5": {
+      "main": [
+        [
+          {
+            "node": "Polling (Produção)5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "377c1bb1-f0f0-41dc-8670-04f2516988ff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63dbfee99e7db46636912ea02f6284c665c3cc754411fa1f0eb04a3eeeaecdf7"
+  },
+  "id": "BwBqWIDWlU5JGNJA",
+  "tags": [
+    {
+      "updatedAt": "2025-12-11T01:22:00.969Z",
+      "createdAt": "2025-12-11T01:22:00.969Z",
+      "id": "lWEiteEvFinQCBp4",
+      "name": "NexusAI"
+    }
+  ]
+}

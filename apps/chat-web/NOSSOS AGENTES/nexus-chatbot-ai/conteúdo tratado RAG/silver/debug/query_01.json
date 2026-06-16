@@ -1,0 +1,62 @@
+{
+  "query": "Qual é a regra prática que liga emoção, prova e próximo passo?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.669438681395203,
+      "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "Pergunta: Qual é a regra prática que liga emoção, prova e ação?\nResposta: Emoção cria atenção, prova cria confiança e próximo passo cria movimento."
+    },
+    {
+      "score": 0.3592106040535498,
+      "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+      "page": 17,
+      "chunk_index": 22,
+      "preview": "Pergunta: Qual é o SOP de mensagem emocional (passo a passo)?\nResposta: Definir público/momento; escolher 1 emoção-alvo; nomear 1 tensão real; trazer 2–3 provas; dar um próximo passo simples (CTA único)."
+    },
+    {
+      "score": 0.3268602252303067,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 24,
+      "chunk_index": 29,
+      "preview": "Pergunta: Qual é o checklist rápido antes de publicar uma peça?\nResposta: Deixar claro o que é/para quem/como funciona/próximo passo, ter prova explícita, revisar promessas absolutas e respeitar privacidade/consentimento."
+    },
+    {
+      "score": 0.32338083338177726,
+      "source": "Conteúdo para RAG/Nexus AI Identidade.md",
+      "page": 11,
+      "chunk_index": 16,
+      "preview": "Pergunta: Qual é a promessa de experiência (3 pontos)?\nResposta: Fluidez (conversa natural), controle (usuário entende o próximo passo) e adaptabilidade/consistência de tom."
+    },
+    {
+      "score": 0.31923475378704885,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "## Perguntas de diagnóstico (para o agente conduzir conversas)\n1. Qual o objetivo (matrículas, marca, parceria, retenção)?\n2. Qual curso/oferta e para qual perfil?\n3. Qual ticket e condição de pagamento?\n4. Quais provas existem (ementa, pro"
+    },
+    {
+      "score": 0.31773541587959886,
+      "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+      "page": 1,
+      "chunk_index": 1,
+      "preview": "# Conexão Emocional na Comunicação de Marketing da ENS\n\n## Objetivo\nUsar conexão emocional para aumentar clareza, confiança e conversão na comunicação de marketing da ENS, sem perder rigor, prova e ética.\n\n## Princípio central\nConexão emoci"
+    },
+    {
+      "score": 0.291729982995789,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 6,
+      "chunk_index": 11,
+      "preview": "## Checklist rápido antes de publicar qualquer peça\n- O texto deixa claro: o que é, para quem é, como funciona, qual o próximo passo?\n- Existe prova explícita (estrutura, corpo docente, tradição, ecossistema)?\n- Existe alguma promessa absol"
+    },
+    {
+      "score": 0.2909571869813231,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 9,
+      "chunk_index": 14,
+      "preview": "Pergunta: Qual é a regra “Prova > promessa” no documento?\nResposta: Priorizar prova e evidência em vez de promessas: estrutura, duração, modalidade, requisitos, corpo docente e ecossistema."
+    }
+  ]
+}

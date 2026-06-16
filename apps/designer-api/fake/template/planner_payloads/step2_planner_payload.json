@@ -1,0 +1,43 @@
+{
+  "template_id": "fake/template",
+  "output_contract": {
+    "status": "OK|BLOCK",
+    "goal": "string",
+    "allowed_changes": [
+      "..."
+    ],
+    "forbidden_changes": [
+      "..."
+    ],
+    "edit_prompt_final": "prompt curto e executável",
+    "confidence": 0.0,
+    "notes": "string"
+  },
+  "context_json_compacto": {
+    "template_id": "fake/template",
+    "kv_guidelines": [],
+    "overlay_rules": [],
+    "background_rules": [],
+    "do_not_change_zones": [],
+    "hard_locks": {
+      "logos": [
+        "ENS",
+        "AIDA_BRASIL"
+      ],
+      "must_preserve": [
+        "logo_ens_assinatura",
+        "logo_aida_brasil",
+        "rodape",
+        "degrade_principal",
+        "overlays_organicos"
+      ]
+    }
+  },
+  "context_json_raw_path": "C:\\Users\\raphaeloliveira\\Desktop\\Projetos Saas\\Agência NexusAI\\nexus-designer-v3-main\\fake\\template\\template_context.json",
+  "reference_images": [],
+  "step": "step2_persona",
+  "hard_constraints": [
+    "Não alterar textos, boxes, logos, rodapé, degradê e overlays.",
+    "Trocar somente persona/fundo na área de persona."
+  ]
+}

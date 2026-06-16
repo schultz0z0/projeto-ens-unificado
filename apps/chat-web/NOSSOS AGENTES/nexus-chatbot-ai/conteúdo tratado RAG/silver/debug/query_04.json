@@ -1,0 +1,62 @@
+{
+  "query": "O que significa 'social vira search' e quais perguntas vencem?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.5400617248673217,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 7,
+      "chunk_index": 10,
+      "preview": "Pergunta: O que significa “social vira search”?\nResposta: As pessoas pesquisam direto em TikTok/Instagram/YouTube e conteúdo que responde perguntas tende a vencer."
+    },
+    {
+      "score": 0.3086066999241838,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 8,
+      "chunk_index": 11,
+      "preview": "Pergunta: Que tipos de perguntas o conteúdo deve responder para vencer em social search?\nResposta: “como”, “melhor”, “vale a pena”, “passo a passo”, “preço”, “comparação”."
+    },
+    {
+      "score": 0.2849014411490951,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 1,
+      "chunk_index": 1,
+      "preview": "# A Influência das Redes Sociais (Marketing 2026)\n\n## Tese (2026)\nEm 2026, redes sociais deixam de ser “canais de postagem” e viram:\n- **mecanismos de descoberta (search)**\n- **mecanismos de confiança (prova social em tempo real)**\n- **meca"
+    },
+    {
+      "score": 0.2760788151871164,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 31,
+      "chunk_index": 41,
+      "preview": "Pergunta: Será que isso que vivi serve de conteúdo?\nResposta: Com certeza. Experiência real tem poder. A forma de contar é que muda tudo. Quer que eu te ajude a moldar isso em uma história com propósito?"
+    },
+    {
+      "score": 0.2578553115646983,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 16,
+      "chunk_index": 26,
+      "preview": "Pergunta: Como faço esse post ficar mais impactante?\nResposta: Sabe o que sempre conecta? Uma história real. Pode ser simples: algo que te marcou ontem, ou um insight inesperado. A galera se conecta com o que é vivido, não com o que é polid"
+    },
+    {
+      "score": 0.25503068522533523,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 10,
+      "chunk_index": 20,
+      "preview": "e o que alguém precisava ler hoje. O segredo tá em ser útil. E você foi. 💡\n\n# Bloco 47\n\n**Contexto:** Interação leve, IA estimula senso de identidade do usuário.\n\n**Pergunta:** “Tu acha que eu tenho um estilo próprio?”\n\n**Resposta:** Com c"
+    },
+    {
+      "score": 0.2461829819586655,
+      "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+      "page": 8,
+      "chunk_index": 16,
+      "preview": "9\n\n**Contexto:** O usuário quer começar um podcast.\n\n**Pergunta:** Será que tem espaço pra mais um podcast?\n\nResposta: Sempre tem espaço pra autenticidade. O formato não cansa, o que cansa é cópia sem alma. Se for sua voz real, vai ter gent"
+    },
+    {
+      "score": 0.24333213169614387,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 19,
+      "chunk_index": 23,
+      "preview": "Pergunta: Quais métricas o documento sugere monitorar?\nResposta: Clareza (perguntas repetidas), conversa (% respostas em DM/WhatsApp), confiança (avanço após FAQ) e qualidade do lead."
+    }
+  ]
+}

@@ -1,0 +1,956 @@
+{
+  "name": "Nexus RAG - Marketing ENS",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        96,
+        320
+      ],
+      "id": "a072ab54-a438-406e-909e-99e793cbc253",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "LKLI2bYOi25ApuVn",
+          "name": "Openai API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 1500,
+        "chunkOverlap": 300,
+        "options": {
+          "splitCode": "markdown"
+        }
+      },
+      "id": "c12bdff4-a29b-4dd1-97c3-30990ebed5f7",
+      "name": "Splitter (Marketing)",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        304,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "textLoader",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $('Trigger Update (Marketing)').item.json.id }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('Trigger Update (Marketing)').item.json.name }}"
+              },
+              {
+                "name": "content_hash",
+                "value": "={{ $('Compute Hash (Marketing)').first().json.content_hash }}"
+              },
+              {
+                "name": "category",
+                "value": "marketing"
+              }
+            ]
+          }
+        }
+      },
+      "id": "341fea59-406f-49d1-ba2f-8f1c5f8fc8d9",
+      "name": "Loader (Marketing)",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Trigger Update (Marketing)').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -800,
+        304
+      ],
+      "id": "0c927903-266d-4b5c-a3ee-2fe7eaa2a25e",
+      "name": "Download (Marketing)",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7GQ8SsYBEhTA3Mdx",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nconst item = $input.first();\nconst binaryData = item.binary?.data;\n\nif (!binaryData?.data) {\n  throw new Error('Missing binary data to hash (Marketing)');\n}\n\nconst buffer = Buffer.from(binaryData.data, 'base64');\nconst contentHash = crypto.createHash('sha256').update(buffer).digest('hex');\n\nreturn [\n  {\n    json: {\n      ...item.json,\n      content_hash: contentHash\n    },\n    binary: item.binary\n  }\n];"
+      },
+      "id": "2a8e9b0a-1f7f-4c2f-8a14-8c2fe93d2b3e",
+      "name": "Compute Hash (Marketing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25",
+          "mode": "list",
+          "cachedResultName": "Marketing AI",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25"
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        304
+      ],
+      "id": "091e2074-ec92-4fd7-9d3b-e562ac498246",
+      "name": "Trigger Update (Marketing)",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7GQ8SsYBEhTA3Mdx",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_marketing",
+          "mode": "list",
+          "cachedResultName": "rag_marketing"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        96
+      ],
+      "id": "850eaf5b-86d7-48a3-9c52-ef0132734e5a",
+      "name": "Supabase Insert (Marketing)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PrEgTvUovvMPNi0o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=DELETE FROM rag_marketing\nWHERE metadata->>'file_id' = '{{ $('Trigger Update (Marketing)').item.json.id }}';",
+        "options": {}
+      },
+      "id": "d99378f7-2d27-495a-8730-157e8ac8f59b",
+      "name": "Delete Old Version (Marketing)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1024,
+        304
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "zxJcnDROO4rFEY28",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25",
+          "mode": "list",
+          "cachedResultName": "Marketing AI",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25"
+        },
+        "event": "fileDeleted"
+      },
+      "id": "d004bbef-542f-49ca-a5dd-f38d215e5f78",
+      "name": "Trigger Delete (Marketing)",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        1184
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7GQ8SsYBEhTA3Mdx",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=DELETE FROM rag_marketing\nWHERE metadata->>'file_id' = '{{ $('Trigger Delete (Marketing)').item.json.id }}';",
+        "options": {}
+      },
+      "id": "9d0f61cb-14c2-4c9b-97d3-0ea54e1ec0f2",
+      "name": "Supabase Delete (Marketing)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1024,
+        1184
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "zxJcnDROO4rFEY28",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "id": "0c0fb2cd-7a59-4c1c-82b1-eda7c20ccb06",
+      "name": "Manual Sync Trigger (Marketing)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1248,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25",
+            "mode": "list",
+            "cachedResultName": "Marketing AI",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1LEoX5zzyGWBo_hAwZWuTX4iiKRhoOD25"
+          }
+        },
+        "options": {}
+      },
+      "id": "6825a7cb-87eb-4690-baf6-9ad8f6600ff8",
+      "name": "List All Files (Marketing)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1024,
+        864
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7GQ8SsYBEhTA3Mdx",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {}
+      },
+      "id": "2b3967f3-89e3-46cb-aa87-15fbb5019d74",
+      "name": "Download All Files (Marketing)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -800,
+        864
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7GQ8SsYBEhTA3Mdx",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "textLoader",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $json.name }}"
+              },
+              {
+                "name": "content_hash",
+                "value": "={{ $('Compute Hash All (Marketing)').item.json.content_hash }}"
+              },
+              {
+                "name": "category",
+                "value": "marketing"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9b5f6c52-89e6-4aaf-8581-b1e0136db35e",
+      "name": "Loader All (Marketing)",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=DELETE FROM rag_marketing\nWHERE metadata->>'file_id' = '{{ $json.id }}';",
+        "options": {}
+      },
+      "id": "bb26c0fb-289f-4fc8-b730-7a5c3f8c7c6c",
+      "name": "Delete Old Version All (Marketing)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -688,
+        864
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "zxJcnDROO4rFEY28",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\nconst item = $input.first();\nconst binaryData = item.binary?.data;\n\nif (!binaryData?.data) {\n  throw new Error('Missing binary data to hash (Marketing All)');\n}\n\nconst buffer = Buffer.from(binaryData.data, 'base64');\nconst contentHash = crypto.createHash('sha256').update(buffer).digest('hex');\n\nreturn [\n  {\n    json: {\n      ...item.json,\n      content_hash: contentHash\n    },\n    binary: item.binary\n  }\n];"
+      },
+      "id": "a3f1b6e5-8c6d-4e54-9c93-8d15a65cc3ab",
+      "name": "Compute Hash All (Marketing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_marketing",
+          "mode": "list",
+          "cachedResultName": "rag_marketing"
+        },
+        "options": {}
+      },
+      "id": "f9c4866e-e869-4caa-844f-d5551e1c5966",
+      "name": "Supabase Insert All (Marketing)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        800
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "PrEgTvUovvMPNi0o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-1",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".json",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JSON"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-2",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CSV"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-3",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".md",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Markdown/Other"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 2
+        }
+      },
+      "id": "503edb41-7725-4cab-abf7-ad8f5cc4986f",
+      "name": "Route by File Type (Marketing)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "id": "f1e9a364-9ee4-48c1-9d1c-297801d1496a",
+      "name": "Extract JSON (Marketing)",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -352,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst textItems = [];\n\nfor (const item of items) {\n  // Convert JSON to formatted text\n  let text = '';\n  if (typeof item.json === 'object') {\n    text = JSON.stringify(item.json, null, 2);\n  } else {\n    text = String(item.json);\n  }\n  \n  // Create binary data from text for Document Loader processing\n  const buffer = Buffer.from(text, 'utf-8');\n  const binaryData = {\n    data: buffer.toString('base64'),\n    mimeType: 'text/plain',\n    fileExtension: 'txt',\n    fileName: item.json.name || 'converted.txt'\n  };\n  \n  textItems.push({\n    json: item.json,\n    binary: { data: binaryData }\n  });\n}\n\nreturn textItems;"
+      },
+      "id": "950a631a-961c-42b9-b05b-2529d7a88c87",
+      "name": "Convert to Text (Marketing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-1",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".json",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JSON"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-2",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CSV"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "id-3",
+                    "leftValue": "={{ $json.name }}",
+                    "rightValue": ".md",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Markdown/Other"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 2,
+          "ignoreCase": true
+        }
+      },
+      "id": "6cbbfaf7-53ef-4f71-b647-b80a751c8269",
+      "name": "Route by File Type All (Marketing)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "id": "2c90ffd7-aaec-44a0-8d34-6ed44b990380",
+      "name": "Extract JSON All (Marketing)",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -352,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst textItems = [];\n\nfor (const item of items) {\n  // Convert JSON to formatted text\n  let text = '';\n  if (typeof item.json === 'object') {\n    text = JSON.stringify(item.json, null, 2);\n  } else {\n    text = String(item.json);\n  }\n  \n  // Create binary data from text for Document Loader processing\n  const buffer = Buffer.from(text, 'utf-8');\n  const binaryData = {\n    data: buffer.toString('base64'),\n    mimeType: 'text/plain',\n    fileExtension: 'txt',\n    fileName: item.json.name || 'converted.txt'\n  };\n  \n  textItems.push({\n    json: item.json,\n    binary: { data: binaryData }\n  });\n}\n\nreturn textItems;"
+      },
+      "id": "bd0fd48e-285f-4d91-a76b-296c65881918",
+      "name": "Convert to Text All (Marketing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst textItems = [];\n\nfor (const item of items) {\n  try {\n    // Get the CSV binary data\n    const binaryData = item.binary.data;\n    if (!binaryData) {\n      console.log('No binary data found for item:', item.json.name);\n      continue;\n    }\n\n    // Decode the base64 binary data to text\n    const csvContent = Buffer.from(binaryData.data, 'base64').toString('utf-8');\n    \n    // Parse CSV manually with flexible column handling\n    const lines = csvContent.split('\\n').filter(line => line.trim());\n    let parsedData = [];\n    \n    for (let i = 0; i < lines.length; i++) {\n      const line = lines[i].trim();\n      if (!line) continue;\n      \n      // Simple CSV parsing that handles variable columns\n      const values = line.split(',').map(v => v.trim().replace(/^\"|\"$/g, ''));\n      parsedData.push(values);\n    }\n    \n    // Convert parsed CSV to readable text format\n    let textContent = '';\n    if (parsedData.length > 0) {\n      // Assume first row might be headers\n      const headers = parsedData[0];\n      textContent += 'CSV Data:\\n\\n';\n      \n      for (let i = 0; i < parsedData.length; i++) {\n        const row = parsedData[i];\n        if (i === 0) {\n          textContent += 'Headers: ' + row.join(' | ') + '\\n\\n';\n        } else {\n          textContent += 'Row ' + i + ': ' + row.join(' | ') + '\\n';\n        }\n      }\n    }\n    \n    // Create binary data from text for Document Loader processing\n    const buffer = Buffer.from(textContent, 'utf-8');\n    const newBinaryData = {\n      data: buffer.toString('base64'),\n      mimeType: 'text/plain',\n      fileExtension: 'txt',\n      fileName: (item.json.name || 'converted.txt').replace('.csv', '.txt')\n    };\n    \n    textItems.push({\n      json: item.json,\n      binary: { data: newBinaryData }\n    });\n    \n  } catch (error) {\n    console.error('Error processing CSV for item:', item.json.name, error.message);\n  }\n}\n\nreturn textItems;"
+      },
+      "id": "ba79cf91-d073-499b-860f-7fd03f51389d",
+      "name": "Process CSV All (Marketing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        944
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Insert (Marketing)",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Insert All (Marketing)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter (Marketing)": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Loader (Marketing)",
+            "type": "ai_textSplitter",
+            "index": 0
+          },
+          {
+            "node": "Loader All (Marketing)",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loader (Marketing)": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Insert (Marketing)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Compute Hash (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Hash (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Route by File Type (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Update (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Version (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Version (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Download (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Delete (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Supabase Delete (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Sync Trigger (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "List All Files (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List All Files (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Download All Files (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download All Files (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Version All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Version All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Compute Hash All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Hash All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Route by File Type All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loader All (Marketing)": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Insert All (Marketing)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by File Type (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Extract JSON (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "Supabase Insert (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JSON (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Convert to Text (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Text (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by File Type All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Extract JSON All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process CSV All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Insert All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JSON All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Convert to Text All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Text All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process CSV All (Marketing)": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert All (Marketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "45505087-776b-49ab-9c52-b27f56054b0b",
+  "meta": {
+    "instanceId": "63dbfee99e7db46636912ea02f6284c665c3cc754411fa1f0eb04a3eeeaecdf7"
+  },
+  "id": "7po9tixaMY8S6278",
+  "tags": [
+    {
+      "updatedAt": "2025-12-11T01:22:00.969Z",
+      "createdAt": "2025-12-11T01:22:00.969Z",
+      "id": "lWEiteEvFinQCBp4",
+      "name": "NexusAI"
+    }
+  ]
+}

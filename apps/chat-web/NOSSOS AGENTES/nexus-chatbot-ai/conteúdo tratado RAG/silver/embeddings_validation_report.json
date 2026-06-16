@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-01-09T19:19:47.873Z",
+  "totals": {
+    "chunks": 303,
+    "embeddings_rows": 303,
+    "embeddings_unique_ids": 303
+  },
+  "quality": {
+    "missing_id_rows": 0,
+    "duplicate_id_rows": 0,
+    "invalid_embedding_rows": 0,
+    "embedding_dimension": 1024
+  },
+  "coverage": {
+    "missing_embeddings_count": 0,
+    "missing_embeddings_sample": []
+  },
+  "files": {
+    "chunks": "conteúdo tratado RAG\\silver\\chunks.json",
+    "embeddings": "conteúdo tratado RAG\\silver\\embeddings_local\\embeddings.jsonl",
+    "report": "conteúdo tratado RAG\\silver\\embeddings_validation_report.json"
+  }
+}

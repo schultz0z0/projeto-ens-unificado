@@ -1,0 +1,29 @@
+# Local/runtime artifacts should not be sent to Docker builds.
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+*.pyc
+*.pyo
+*.log
+*.sqlite
+*.db
+*.backup-*/
+
+# The vendored source is intentionally included, but nested git metadata is not.
+vendor/hermes-agent/.git/
+vendor/hermes-agent/.venv/
+vendor/hermes-agent/venv/
+vendor/hermes-agent/node_modules/

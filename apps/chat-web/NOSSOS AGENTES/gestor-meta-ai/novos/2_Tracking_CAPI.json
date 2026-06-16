@@ -1,0 +1,97 @@
+{
+  "name": "2. Tracking & CAPI (App -> Meta)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "conversion-event",
+        "options": {}
+      },
+      "name": "Webhook App",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": false,
+        "filters": {
+          "conditions": [
+            {
+              "key": "email",
+              "value": "={{ $json.body.email }}",
+              "operator": "eq"
+            }
+          ]
+        }
+      },
+      "name": "Buscar Lead Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [200, 0],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pixelId": "YOUR_PIXEL_ID",
+        "events": [
+          {
+            "name": "Purchase",
+            "time": "={{ $now }}",
+            "userData": {
+              "email": "={{ $json.email }}",
+              "phone": "={{ $json.phone }}",
+              "fbp": "={{ $json.fbp }}",
+              "fbc": "={{ $json.fbclid }}"
+            },
+            "customData": {
+              "value": "={{ $json.value }}",
+              "currency": "BRL"
+            }
+          }
+        ]
+      },
+      "name": "Meta Conversions API",
+      "type": "n8n-nodes-base.facebookConversionsApi",
+      "typeVersion": 1,
+      "position": [400, 0],
+      "credentials": {
+        "facebookConversionsApi": {
+          "id": "YOUR_CAPI_CREDENTIAL_ID",
+          "name": "Meta CAPI account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook App": {
+      "main": [
+        [
+          {
+            "node": "Buscar Lead Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Lead Supabase": {
+      "main": [
+        [
+          {
+            "node": "Meta Conversions API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

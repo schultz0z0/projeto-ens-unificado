@@ -1,0 +1,12 @@
+# Template inicial para /opt/data/config.yaml dentro do container.
+# Copie para data/hermes/config.yaml na VPS e ajuste via SSH com:
+#   docker compose exec hermes-api bash
+#   hermes setup
+#   hermes model
+#   hermes tools
+#
+# MCPs não entram neste compose agora. Quando formos adicionar, configuraremos
+# diretamente na VPS via SSH e reiniciaremos hermes-api/hermes-kanban.
+
+# Exemplo futuro de estrutura, sem ativar nada agora:
+# mcp_servers: {}

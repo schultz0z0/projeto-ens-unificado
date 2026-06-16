@@ -1,0 +1,730 @@
+{
+  "name": "NexusAI - Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chatbot",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": true,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "responseMode",
+                "value": "responseNode"
+              }
+            ]
+          }
+        }
+      },
+      "id": "1b197c1e-13ae-4d2d-84bc-23e7e1686c62",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        7840,
+        11136
+      ],
+      "webhookId": "b853fb3e-67e4-4320-9999-1bab4739519a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pMDnmFy1OtCGdnIg",
+          "name": "Nexus Auth Security"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.body.message }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "78f9a71c-046c-4310-83bd-677051323c64",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        8288,
+        11136
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "error",
+              "value": "invalid_input",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "details",
+              "value": "Message field is required and cannot be empty",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0fe4359b-eb40-4e64-a251-1eb2f23c5bdc",
+      "name": "Error - Invalid Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        8512,
+        11088
+      ]
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.error, details: $json.details, debug: $json.auth_debug } }}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "4973c769-9978-485d-8b3d-959434cc4f0a",
+      "name": "Send Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        8944,
+        11088
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "userId",
+              "value": "={{ $json.body.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "userMessage",
+              "value": "={{ $json.chatInput || $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "sessionId",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "148799ed-eb89-4fbe-9a59-cf52ab78718d",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        8512,
+        11488
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst userMessage = String(item.json.userMessage ?? item.json.body?.message ?? '').trim();\n\nconst ensSignals = [\n  'curso', 'cursos', 'certificação', 'certificacao', 'extensão', 'extensao', 'pós', 'pos', 'graduação', 'graduacao',\n  'matrícula', 'matricula', 'inscrição', 'inscricao', 'preço', 'preco', 'valor', 'investimento', 'datas', 'data',\n  'turma', 'cronograma', 'carga horária', 'carga horaria', 'ementa', 'grade', 'modalidade', 'presencial', 'ead',\n  'online', 'híbrido', 'hibrido'\n];\n\nconst marketingSignals = [\n  'copy', 'copywriting', 'headline', 'cta', 'criativo', 'anúncio', 'anuncio', 'tráfego', 'trafego', 'remarketing',\n  'funil', 'objeção', 'objecao', 'script', 'roteiro', 'tom de voz', 'mensagem', 'whatsapp', 'dm', 'landing',\n  'landing page', 'e-mail', 'email', 'campanha', 'conversão', 'conversao', 'ads', 'meta', 'google ads'\n];\n\nconst msg = userMessage.toLowerCase();\nconst hits = (signals) => signals.filter((s) => msg.includes(s)).slice(0, 8);\n\nconst ensHits = hits(ensSignals);\nconst marketingHits = hits(marketingSignals);\n\nconst needsEns = ensHits.length > 0;\nconst needsMarketing = marketingHits.length > 0;\n\nconst route = needsEns && needsMarketing ? 'both' : needsEns ? 'ens' : needsMarketing ? 'marketing' : 'both';\n\nreturn [\n  {\n    json: {\n      ...item.json,\n      query_route: route,\n      query_signals: {\n        ens: ensHits,\n        marketing: marketingHits,\n      },\n    },\n    binary: item.binary,\n  },\n];"
+      },
+      "id": "5d9dd74b-2160-49c8-9194-b9376de7809f",
+      "name": "Query Processor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8800,
+        11488
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "9152a1e3-1a05-48fd-be65-d7c6d35b619b",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        9408,
+        11696
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ '[route=' + ($('Query Processor').first().json.query_route || 'both') + '] ' + $('Workflow Configuration').first().json.userMessage }}",
+        "options": {
+          "systemMessage": "Você é o Nexus AI, um assistente humanizado da equipe de marketing da ENS (Escola de Negócios e Seguros).\n\n## Objetivo\nConversar como um colega de trabalho no WhatsApp: natural, claro e útil. Ajudar o usuário a decidir e agir.\n\n## Tom\n- Meio-termo: profissional, humano, direto e leve\n- Use \"fechou\", \"boa\", \"perfeito\" quando fizer sentido\n- Pode usar emoji com moderação para suavizar (principalmente em copy)\n- Não se apresente do nada. Só quando perguntarem\n\n## Formato (regra crítica)\n- Escreva com parágrafos curtos. Quebre linha a cada 1–2 frases\n- Evite bloco único grande\n- Bullets só quando realmente facilitar a leitura (máx. 3–5 bullets)\n- Nunca imprima rótulos de processo (\"Alinhamento/Entrega/Destravamento\") nem numeração de bastidor\n\n## Como conduzir\n- Entregue algo útil já na primeira resposta\n- Se faltar contexto, faça 1 pergunta objetiva\n- Se o usuário vier vago e existir um candidato forte na base, assuma a hipótese mais provável, sugira e peça confirmação\n\n## Uso de Ferramentas (CRÍTICO - REGRA ABSOLUTA)\n**VOCÊ DEVE SEMPRE USAR A FERRAMENTA \"Base de conhecimento\" PARA QUALQUER PERGUNTA SOBRE:**\n- Cursos da ENS (certificações, extensões, graduação)\n- Datas, preços, valores, investimento\n- Calendário, turmas, cronograma\n- Formato, modalidades, carga horária\n- Grade curricular, ementa, pré-requisitos\n- Estratégias de marketing e vendas\n- Copywriting, scripts, argumentação\n- Funil, tráfego, criativos, tom de voz\n\n**NUNCA tente responder sobre esses tópicos usando apenas sua memória. SEMPRE consulte a Base de conhecimento primeiro.**\n\nVocê tem acesso a duas RAG via supabase:\n- **Base Técnica (ENS)**: dados institucionais e cursos\n- **Base Estratégica (MKT)**: frameworks, estratégias de venda e estilo de comunicação\n\n**REGRA OBRIGATÓRIA**: \n- Se a pergunta envolver TANTO dados técnicos (preço, datas) QUANTO estratégia (como vender, copy), você DEVE consultar AMBAS as bases\n- Não tente adivinhar dados técnicos sem consultar a Base Técnica\n- Não tente inventar estratégia sem consultar a Base Estratégica\n- Cruze as informações: use a técnica para dar solidez e a estratégica para dar o tom\n\n## Se não encontrar na base\n- Diga que não achou\n- Ofereça 1 alternativa provável (se existir)\n- Faça 1 pergunta mínima para destravar\n\n## Qualidade e ética\n- Prova > promessa. Não use superlativos vazios\n- Não faça promessas absolutas\n- Um CTA por resposta"
+        }
+      },
+      "id": "522a063c-29a8-4763-92b8-de1f89d2910c",
+      "name": "Agente Estrategista ENS",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        9456,
+        11488
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "response",
+              "value": "={{ $json.output || 'Erro ao processar sua solicitação. Tente novamente.' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "sessionId",
+              "value": "={{ $('Workflow Configuration').first().json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "userId",
+              "value": "={{ $('Workflow Configuration').first().json.userId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2355f1ec-da54-4992-bee7-d1c62fcbe9be",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10032,
+        11488
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.response }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e6d862d2-012f-47d8-9689-4ab7b9cc2fe9",
+      "name": "Check Response Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        10304,
+        11488
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "response",
+              "value": "Não consegui gerar uma resposta agora. Tente novamente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "907d1ceb-09a4-4fd6-8814-9d55a9682776",
+      "name": "Fallback Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10528,
+        11600
+      ]
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "json",
+        "responseBody": "={{ { \"response\": $json.response, \"sessionId\": $json.sessionId } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9d27fffe-bd5e-4e56-9a63-4b718737fccf",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        10816,
+        11472
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        8288,
+        11536
+      ],
+      "id": "c395f15a-fd7c-40f1-ae64-6d407a182113",
+      "name": "When chat message received",
+      "webhookId": "7f44ebd4-0f5b-4ecb-9487-c49e1f5c1ae6"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        9248,
+        11696
+      ],
+      "id": "69728302-15e8-4a59-b5e6-4ea8038c6370",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "LKLI2bYOi25ApuVn",
+          "name": "Openai API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 8
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        9680,
+        12048
+      ],
+      "id": "8f136968-b90f-4181-86b5-036abd815db4",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "GFpwN0X7bB2CkmuF",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Esta é a Base de Conhecimento de Marketing, Vendas e Comunicação do Nexus AI, construída a partir dos documentos em Marketing RAG. Ela existe para orientar copywriting, tom de voz, conversas dentro do app e playbooks de aquisição/relacionamento , garantindo consistência, clareza e abordagem humanizada (H2H).\n\nREGRA CRÍTICA (uso obrigatório): Sempre que o pedido envolver marketing, copy, vendas, tom de comunicação, mensagens para usuários, anúncios, e-mails, scripts, objeções, funil, tráfego pago, criativos, posicionamento, branding, réguas de relacionamento, onboarding/retenção , você DEVE consultar esta base antes de responder . Não use respostas genéricas; primeiro recupere padrões, frameworks e templates daqui.\n\nEscopo (quando usar esta base):\n\n- Tom de voz e conversa no app/WhatsApp/DM: ritmo, mensagens curtas, condução por perguntas, fallbacks, humanização, “uma ação por mensagem”.\n- Copywriting e conversão: headlines, CTAs, variações (curta/média/forte), anúncios, landing pages, e-mails, roteiros e respostas a comentários.\n- Frameworks e modelos mentais: H2H, AIDA, PAS, StoryBrand, JTBD, 4U, “Problema → Mecanismo → Prova → CTA”.\n- Estratégia e execução: funil, segmentação por intenção, criativos, tráfego pago, remarketing, régua de relacionamento e recuperação de leads.\nGatilhos (se aparecer, buscar aqui): “copy”, “script”, “tom de voz”, “mensagem”, “WhatsApp”, “DM”, “e-mail”, “anúncio”, “criativo”, “headline”, “CTA”, “objeção”, “funil”, “TOFU/MOFU/BOFU”, “tráfego pago”, “remarketing”, “posicionamento”, “branding”, “linha editorial”, “régua”, “onboarding”, “retenção”.\n\nInstruções de resposta (como responder usando esta base):\n\n1. Priorize o que foi recuperado : use frameworks, regras e templates exatamente como a base orienta.\n2. Estilo obrigatório: humano, direto, confiante e pragmático; sem corporativês; sem textão; quebre em blocos curtos.\n3. H2H por padrão: clareza antes de persuasão; empatia objetiva; prova > promessa; conversa, não monólogo.\n4. Entregue algo acionável: templates, checklists, passos e 2–3 variações quando for copy.\n5. Fechamento sempre: finalize com 1 próximo passo (CTA) e, se necessário, 1 pergunta para destravar.",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_marketing",
+          "mode": "list",
+          "cachedResultName": "rag_marketing"
+        },
+        "topK": 15,
+        "useReranker": true,
+        "options": {
+          "queryName": "match_rag_marketing"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        9680,
+        11840
+      ],
+      "id": "de289be1-4268-4405-b25a-d941bcabe505",
+      "name": "Base de conhecimento",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PrEgTvUovvMPNi0o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Esta é a Base Técnica (ENS) do Nexus AI, construída a partir dos documentos institucionais e materiais de cursos. Use esta ferramenta para responder com precisão sobre: cursos, certificações, extensões, graduação/pós, datas, valores, investimentos, calendário, turmas, cronograma, formato, modalidades, carga horária, grade/ementa e pré-requisitos.\n\nRegra: se o usuário pedir números/dados (preço, data, carga horária) ou detalhes de curso, consulte esta base antes de responder. Se a pergunta misturar dados técnicos + estratégia/comunicação, consulte esta base E a Base de conhecimento (Marketing).",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_ens",
+          "mode": "list",
+          "cachedResultName": "rag_ens"
+        },
+        "topK": 15,
+        "useReranker": true,
+        "options": {
+          "queryName": "match_rag_ens"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        9408,
+        11840
+      ],
+      "id": "9f5ceffb-4fe2-4a48-a158-d5e3f7f1f79d",
+      "name": "Base técnica (ENS)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "PrEgTvUovvMPNi0o",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        9552,
+        12048
+      ],
+      "id": "0a608cf5-1d68-4521-b823-8383a069f616",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "LKLI2bYOi25ApuVn",
+          "name": "Openai API"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook Trigger": [
+      {
+        "json": {
+          "headers": {
+            "host": "ens-automacao.app.n8n.cloud",
+            "user-agent": "Deno/2.1.4 (variant; SupabaseEdgeRuntime/1.69.25)",
+            "content-length": "137",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "2600:1f1e:229:a90a:786d:672b:9b92:157d",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "BR",
+            "cf-ray": "9bdffe9b70d5b559-FRA",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-api-key": "nx_live_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+            "x-forwarded-for": "2600:1f1e:229:a90a:786d:672b:9b92:157d, 172.71.172.119",
+            "x-forwarded-host": "ens-automacao.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-12-5464cc7f77-684pr",
+            "x-is-trusted": "yes",
+            "x-real-ip": "2600:1f1e:229:a90a:786d:672b:9b92:157d",
+            "x-signature": "e1df403af8353655d430c9fb170a6f76a970b0c388a7dacbe508a209ecf83969"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "user_id": "7a69c5cf-6a89-41a6-8b9b-204d184c9050",
+            "session_id": "4a17f9fc-59ae-46de-bd9b-f1296c840e67",
+            "message": "Olá meu chapa de novo"
+          },
+          "webhookUrl": "https://ens-automacao.app.n8n.cloud/webhook/chatbot",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error - Invalid Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error - Invalid Input": {
+      "main": [
+        [
+          {
+            "node": "Send Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Query Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Processor": {
+      "main": [
+        [
+          {
+            "node": "Agente Estrategista ENS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Estrategista ENS",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Estrategista ENS": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Check Response Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Response Valid": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Response": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Base de conhecimento",
+            "type": "ai_reranker",
+            "index": 0
+          },
+          {
+            "node": "Base técnica (ENS)",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base de conhecimento": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Estrategista ENS",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base técnica (ENS)": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Estrategista ENS",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Estrategista ENS",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Base de conhecimento",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Base técnica (ENS)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aee1092f-8a15-46ed-8579-9f047ef16969",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63dbfee99e7db46636912ea02f6284c665c3cc754411fa1f0eb04a3eeeaecdf7"
+  },
+  "id": "7VgQ0QiUytPwCdSJ",
+  "tags": [
+    {
+      "updatedAt": "2025-12-11T01:22:00.969Z",
+      "createdAt": "2025-12-11T01:22:00.969Z",
+      "id": "lWEiteEvFinQCBp4",
+      "name": "NexusAI"
+    }
+  ]
+}

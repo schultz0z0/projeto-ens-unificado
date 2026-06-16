@@ -1,0 +1,94 @@
+services:
+  hermes-api:
+    build:
+      context: .
+      dockerfile: docker/hermes.Dockerfile
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/tini", "--", "/usr/local/bin/hermes-api-server.sh"]
+    # Traefik is the public entrypoint. The localhost bind is only for SSH/debug validation.
+    ports:
+      - "127.0.0.1:${HERMES_PUBLIC_PORT:-8652}:${HERMES_API_PORT_CORE:-8652}"
+    expose:
+      - "${HERMES_API_PORT_CORE:-8652}"
+    env_file:
+      - .env
+    volumes:
+      # VPS Linux path inside the container. We will configure skills/tools/MCP later via SSH.
+      - ./data/hermes:/opt/data
+    environment:
+      HERMES_HOME: "/opt/data"
+      HERMES_DATA_PATH: "/opt/data"
+      HERMES_API_PORT: "${HERMES_API_PORT_CORE:-8652}"
+      HERMES_API_KEY: "${HERMES_API_KEY_CORE:-change-me}"
+      GATEWAY_ALLOW_ALL_USERS: "${GATEWAY_ALLOW_ALL_USERS:-true}"
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      API_SERVER_PORT: "${HERMES_API_PORT_CORE:-8652}"
+      API_SERVER_KEY: "${HERMES_API_KEY_CORE:-change-me}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:${HERMES_API_PORT_CORE:-8652}/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}.rule=Host(`${HERMES_API_SUBDOMAIN:-api-hermes.solucoes-nexus.tech}`)
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}.entrypoints=websecure
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.services.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}.loadbalancer.server.port=${HERMES_API_PORT_CORE:-8652}
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.rule=Host(`${HERMES_API_SUBDOMAIN:-api-hermes.solucoes-nexus.tech}`)
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.entrypoints=web
+      - traefik.http.routers.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.middlewares=hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}-redirect
+      - traefik.http.middlewares.hermes-api-${COMPOSE_PROJECT_NAME:-nexus-hermes}-redirect.redirectscheme.scheme=https
+    networks:
+      - default
+      - traefik
+
+  hermes-kanban:
+    build:
+      context: .
+      dockerfile: docker/hermes.Dockerfile
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/tini", "--", "/usr/local/bin/hermes-kanban-dashboard.sh"]
+    # Traefik is the public entrypoint. The localhost bind is only for SSH/debug validation.
+    ports:
+      - "127.0.0.1:${HERMES_KANBAN_PUBLIC_PORT:-9119}:${HERMES_KANBAN_PORT:-9119}"
+    expose:
+      - "${HERMES_KANBAN_PORT:-9119}"
+    env_file:
+      - .env
+    volumes:
+      - ./data/hermes:/opt/data
+    environment:
+      HERMES_HOME: "/opt/data"
+      HERMES_DATA_PATH: "/opt/data"
+      HERMES_KANBAN_PORT: "${HERMES_KANBAN_PORT:-9119}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:${HERMES_KANBAN_PORT:-9119}/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}.rule=Host(`${HERMES_KANBAN_SUBDOMAIN:-hermes.solucoes-nexus.tech}`)
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}.entrypoints=websecure
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}.middlewares=hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-auth
+      - traefik.http.services.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}.loadbalancer.server.port=${HERMES_KANBAN_PORT:-9119}
+      - traefik.http.middlewares.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-auth.basicauth.users=${HERMES_KANBAN_AUTH_USER:-admin}:${HERMES_KANBAN_AUTH_PASSWORD_HASH:-changeme}
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.rule=Host(`${HERMES_KANBAN_SUBDOMAIN:-hermes.solucoes-nexus.tech}`)
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.entrypoints=web
+      - traefik.http.routers.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-http.middlewares=hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-redirect
+      - traefik.http.middlewares.hermes-kanban-${COMPOSE_PROJECT_NAME:-nexus-hermes}-redirect.redirectscheme.scheme=https
+    networks:
+      - default
+      - traefik
+
+networks:
+  traefik:
+    external: true
+    name: "${TRAEFIK_NETWORK:-traefik}"

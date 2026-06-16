@@ -1,0 +1,250 @@
+name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}
+
+services:
+  rag-mcp:
+    build:
+      context: ./services/rag-mcp
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXUSAI_RAG_MCP_CONFIG: /app/config/nexusai-rag-mcp.yaml
+      SUPABASE_URL: ${NEXUS_RAG_SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${NEXUS_RAG_SUPABASE_SERVICE_ROLE_KEY:-}
+      ENS_API_URL: ${NEXUS_ENS_API_URL:-}
+      ENS_API_KEY: ${NEXUS_ENS_API_KEY:-}
+      ENS_API_KEY_HEADER: ${NEXUS_ENS_API_KEY_HEADER:-x-api-key}
+      OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
+      OPENAI_EMBEDDING_MODEL: ${NEXUS_OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      OPENAI_EMBEDDING_BASE_URL: ${NEXUS_OPENAI_EMBEDDING_BASE_URL:-}
+      NEXUSAI_MANUAL_SEED_PATH: ${NEXUS_RAG_MANUAL_SEED_PATH:-}
+    volumes:
+      - ./services/rag-mcp/config:/app/config:ro
+    ports:
+      - "127.0.0.1:${NEXUS_RAG_MCP_PORT:-8000}:8000"
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ens-internal
+
+  hermes-api:
+    build:
+      context: ./services/hermes-runtime
+      dockerfile: docker/hermes.Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-api
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/tini", "--", "/usr/local/bin/hermes-api-server.sh"]
+    environment:
+      HERMES_HOME: /opt/data
+      HERMES_DATA_PATH: /opt/data
+      HERMES_API_PORT: ${NEXUS_HERMES_API_PORT:-8652}
+      HERMES_API_KEY: ${NEXUS_HERMES_API_KEY:-change-me}
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: ${NEXUS_HERMES_API_PORT:-8652}
+      API_SERVER_KEY: ${NEXUS_HERMES_API_KEY:-change-me}
+      GATEWAY_ALLOW_ALL_USERS: ${NEXUS_HERMES_GATEWAY_ALLOW_ALL_USERS:-true}
+      OPENROUTER_API_KEY: ${NEXUS_OPENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${NEXUS_ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${NEXUS_GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${NEXUS_GOOGLE_API_KEY:-}
+    volumes:
+      - ./data/hermes:/opt/data
+    ports:
+      - "127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}:${NEXUS_HERMES_API_PORT:-8652}"
+    expose:
+      - "${NEXUS_HERMES_API_PORT:-8652}"
+    depends_on:
+      rag-mcp:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - ens-internal
+
+  hermes-kanban:
+    build:
+      context: ./services/hermes-runtime
+      dockerfile: docker/hermes.Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-kanban
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/tini", "--", "/usr/local/bin/hermes-kanban-dashboard.sh"]
+    environment:
+      HERMES_HOME: /opt/data
+      HERMES_DATA_PATH: /opt/data
+      HERMES_KANBAN_PORT: ${NEXUS_HERMES_KANBAN_PORT:-9119}
+      OPENROUTER_API_KEY: ${NEXUS_OPENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${NEXUS_ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${NEXUS_GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${NEXUS_GOOGLE_API_KEY:-}
+    volumes:
+      - ./data/hermes:/opt/data
+    ports:
+      - "127.0.0.1:${NEXUS_HERMES_KANBAN_PORT:-9119}:${NEXUS_HERMES_KANBAN_PORT:-9119}"
+    expose:
+      - "${NEXUS_HERMES_KANBAN_PORT:-9119}"
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:${NEXUS_HERMES_KANBAN_PORT:-9119}/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - ens-internal
+
+  app-bridge:
+    build:
+      context: ./services/chat-bridge
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-app-bridge
+    restart: unless-stopped
+    environment:
+      BRIDGE_PORT: "8080"
+      BRIDGE_ALLOWED_ORIGINS: ${NEXUS_CHAT_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}
+      BRIDGE_DATA_DIR: /app/data
+      SUPABASE_URL: ${NEXUS_APP_SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${NEXUS_APP_SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${NEXUS_APP_SUPABASE_SERVICE_ROLE_KEY:-}
+      CHAT_ATTACHMENTS_BUCKET: ${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
+      HERMES_API_BASE_URL: http://hermes-api:${NEXUS_HERMES_API_PORT:-8652}
+      HERMES_API_KEY: ${NEXUS_HERMES_API_KEY:-change-me}
+      HERMES_MODEL_NAME: ${NEXUS_HERMES_MODEL_NAME:-hermes-agent}
+      HERMES_SESSIONS_API_ENABLED: ${NEXUS_HERMES_SESSIONS_API_ENABLED:-true}
+      HERMES_RUN_POLL_MS: ${NEXUS_HERMES_RUN_POLL_MS:-2000}
+      HERMES_STREAM_TIMEOUT_MS: ${NEXUS_HERMES_STREAM_TIMEOUT_MS:-120000}
+      HERMES_REQUEST_TIMEOUT_MS: ${NEXUS_HERMES_REQUEST_TIMEOUT_MS:-120000}
+      RUN_SESSION_PREFIX: ${NEXUS_RUN_SESSION_PREFIX:-}
+    volumes:
+      - ./data/bridge:/app/data
+    ports:
+      - "127.0.0.1:${NEXUS_CHAT_BRIDGE_PORT:-8081}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      hermes-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - ens-internal
+
+  designer-api:
+    build:
+      context: ./apps/designer-api
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer-api
+    restart: unless-stopped
+    environment:
+      PORT: ${NEXUS_DESIGNER_API_PORT:-8090}
+      ALLOWED_ORIGINS: ${NEXUS_DESIGNER_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}
+      OUTPUTS_DIR: /app/outputs
+      TMP_DIR: /app/tmp
+      GEMINI_API_KEY: ${NEXUS_GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${NEXUS_GOOGLE_API_KEY:-}
+      OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${NEXUS_DESIGNER_OPENAI_MODEL:-gpt-4o-mini}
+      IMAGEN_MODEL: ${NEXUS_DESIGNER_IMAGEN_MODEL:-imagen-4.0-generate-preview-06-06}
+      IMAGE_SIZE: ${NEXUS_DESIGNER_IMAGE_SIZE:-1024x1024}
+      IMAGE_ASPECT_RATIO: ${NEXUS_DESIGNER_IMAGE_ASPECT_RATIO:-1:1}
+      GEMINI_MODEL: ${NEXUS_DESIGNER_GEMINI_MODEL:-gemini-2.5-pro}
+      GEMINI_PLANNER_MODEL: ${NEXUS_DESIGNER_GEMINI_PLANNER_MODEL:-gemini-2.5-pro}
+      GEMINI_REFINER_MODEL: ${NEXUS_DESIGNER_GEMINI_REFINER_MODEL:-}
+      GEMINI_VALIDATOR_MODEL: ${NEXUS_DESIGNER_GEMINI_VALIDATOR_MODEL:-}
+      MAX_SAFETY_RETRIES: ${NEXUS_DESIGNER_MAX_SAFETY_RETRIES:-3}
+      ENABLE_STEP1_PLANNER: ${NEXUS_DESIGNER_ENABLE_STEP1_PLANNER:-true}
+      ENABLE_STEP2_PLANNER: ${NEXUS_DESIGNER_ENABLE_STEP2_PLANNER:-true}
+      ENABLE_STEP3_PLANNER: ${NEXUS_DESIGNER_ENABLE_STEP3_PLANNER:-true}
+      ENABLE_STEP3_PERSONA_LOCK_VALIDATION: ${NEXUS_DESIGNER_ENABLE_STEP3_PERSONA_LOCK_VALIDATION:-true}
+      EXECUTOR_SINGLE_IMAGE_MODE: ${NEXUS_DESIGNER_EXECUTOR_SINGLE_IMAGE_MODE:-true}
+      STEP3_MAX_CORRECTION_ROUNDS: ${NEXUS_DESIGNER_STEP3_MAX_CORRECTION_ROUNDS:-2}
+      DELIVERY_SHARPEN_RADIUS: ${NEXUS_DESIGNER_DELIVERY_SHARPEN_RADIUS:-1}
+      DELIVERY_SHARPEN_PERCENT: ${NEXUS_DESIGNER_DELIVERY_SHARPEN_PERCENT:-150}
+      DELIVERY_SHARPEN_THRESHOLD: ${NEXUS_DESIGNER_DELIVERY_SHARPEN_THRESHOLD:-3}
+      GENAI_MAX_RETRIES: ${NEXUS_DESIGNER_GENAI_MAX_RETRIES:-3}
+      GENAI_MAX_RETRIES_RESOURCE_EXHAUSTED: ${NEXUS_DESIGNER_GENAI_MAX_RETRIES_RESOURCE_EXHAUSTED:-6}
+      GENAI_RETRY_BASE_SECONDS: ${NEXUS_DESIGNER_GENAI_RETRY_BASE_SECONDS:-2}
+      WORKER_THREADS: ${NEXUS_DESIGNER_WORKER_THREADS:-2}
+      MIN_SECONDS_BETWEEN_PIECES: ${NEXUS_DESIGNER_MIN_SECONDS_BETWEEN_PIECES:-0}
+      SUPABASE_URL: ${NEXUS_DESIGNER_SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${NEXUS_DESIGNER_SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${NEXUS_DESIGNER_SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_OUTPUTS_BUCKET: ${NEXUS_SUPABASE_OUTPUTS_BUCKET:-image-gen-outputs}
+      SUPABASE_SIGNED_URL_EXPIRES_SECONDS: ${NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS:-604800}
+      SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
+      SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
+    volumes:
+      - ./data/designer/outputs:/app/outputs
+      - ./data/designer/tmp:/app/tmp
+      - ./data/designer/temp:/app/temp
+    ports:
+      - "127.0.0.1:${NEXUS_DESIGNER_API_PORT:-8090}:${NEXUS_DESIGNER_API_PORT:-8090}"
+    expose:
+      - "${NEXUS_DESIGNER_API_PORT:-8090}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:${NEXUS_DESIGNER_API_PORT:-8090}/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ens-internal
+
+  app-frontend:
+    build:
+      context: ./apps/chat-web
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${NEXUS_APP_SUPABASE_URL:-}
+        VITE_SUPABASE_ANON_KEY: ${NEXUS_APP_SUPABASE_ANON_KEY:-}
+        VITE_CHATBOT_PROXY_URL: ${NEXUS_PUBLIC_CHATBOT_PROXY_URL:-http://127.0.0.1:8081}
+        NEXT_PUBLIC_CHATBOT_PROXY_URL: ${NEXUS_PUBLIC_CHATBOT_PROXY_URL:-http://127.0.0.1:8081}
+        VITE_CHAT_STREAM_FILE_HOSTS: ${NEXUS_PUBLIC_CHAT_STREAM_FILE_HOSTS:-127.0.0.1,localhost}
+        VITE_CHAT_ATTACHMENTS_BUCKET: ${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
+        NEXT_PUBLIC_CHAT_ATTACHMENTS_BUCKET: ${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
+        VITE_IMAGE_GENERATOR_API_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
+        VITE_API_BASE_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-app-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${NEXUS_CHAT_WEB_PORT:-8088}:8080"
+    expose:
+      - "8080"
+    depends_on:
+      app-bridge:
+        condition: service_healthy
+      designer-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - ens-internal
+
+networks:
+  ens-internal:
+    name: ${NEXUS_INTERNAL_NETWORK:-projeto-ens-internal}
+    driver: bridge

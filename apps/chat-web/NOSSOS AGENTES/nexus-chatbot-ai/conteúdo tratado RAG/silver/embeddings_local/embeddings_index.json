@@ -1,0 +1,7 @@
+{
+  "generated_at": "2026-01-09T18:47:33.946Z",
+  "model": "local-hashing-1024",
+  "chunks_total": 303,
+  "embeddings_total": 303,
+  "out_jsonl": "conteúdo tratado RAG\\silver\\embeddings_local\\embeddings.jsonl"
+}

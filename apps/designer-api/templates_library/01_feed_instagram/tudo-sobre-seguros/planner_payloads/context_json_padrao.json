@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "version": 1,
+    "template_id": "01_feed_instagram/tudo-sobre-seguros",
+    "canal": "01_feed_instagram",
+    "kv": "tudo-sobre-seguros"
+  },
+  "planner_policy": {
+    "prefer_image_truth_over_json": true,
+    "max_prompt_chars": 1200,
+    "on_conflict": "block_or_fallback",
+    "color_lock_policy": {
+      "enabled": true,
+      "allow_exceptions": true,
+      "exceptions": ["box1_bg_white", "box2_text_white", "title_phrase_white"]
+    }
+  },
+  "hard_locks": {
+    "logos": ["ENS", "TSS"],
+    "must_preserve": [
+      "logo_tss_titulo",
+      "logo_ens_assinatura",
+      "rodape",
+      "grafismos_organicos_cantos",
+      "overlays_organicos"
+    ]
+  },
+  "soft_hints": {
+    "composition": "manter estrutura visual do template",
+    "distance": "evitar close extremo sem corte agressivo"
+  },
+  "editable_fields": {
+    "step1": ["etiqueta", "frase", "box1", "box2"],
+    "step2": ["persona"],
+    "step3": ["apenas critérios reprovados pelo validador"]
+  },
+  "kv_guidelines": [
+    "Preservar integralmente o key visual do template original.",
+    "Este template NÃO possui campo de título editável. A logo TSS é inviolável.",
+    "O fundo do KV é bege claro (#f4f1e1). Não alterar.",
+    "Textos (etiqueta e frase) em azul (#009db7). Não alterar a cor dos textos.",
+    "Preservar grafismos orgânicos (bolhas azuis) nos cantos."
+  ],
+  "overlay_rules": [
+    "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+    "Não alterar contraste, saturação ou matiz do KV.",
+    "Não aplicar filtros globais de nitidez, HDR ou color grading."
+  ],
+  "background_rules": [
+    "Permitir edição apenas na região de fundo/persona atrás do KV.",
+    "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+    "Manter iluminação compatível com o template para evitar recorte artificial."
+  ],
+  "do_not_change_zones": [
+    {
+      "zone_id": "logo_tss_titulo",
+      "description": "Logo TSS – Tudo Sobre Seguros. INVIOLÁVEL.",
+      "lock": true
+    },
+    {
+      "zone_id": "grafismos_organicos_cantos",
+      "description": "Bolhas e formas orgânicas azuis nos cantos.",
+      "lock": true
+    },
+    {
+      "zone_id": "logo_ens_rodape",
+      "description": "Assinatura ENS no rodapé.",
+      "lock": true
+    }
+  ]
+}

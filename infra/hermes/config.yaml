@@ -1,0 +1,10 @@
+# Config inicial local do Hermes no monorepo Projeto ENS.
+# scripts/bootstrap.sh copia para data/hermes/config.yaml se ainda não existir.
+
+mcp_servers:
+  nexus_rag:
+    url: "http://rag-mcp:8000/mcp"
+    timeout: 180
+    connect_timeout: 30
+    sampling:
+      enabled: false

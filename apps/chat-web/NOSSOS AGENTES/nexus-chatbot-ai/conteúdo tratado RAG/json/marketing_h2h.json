@@ -1,0 +1,142 @@
+[
+  {
+    "page_content": "# Marketing H2H (Human to Human)\n\n## Definição\n\nMarketing H2H é a prática de comunicar e vender lembrando que, independentemente de ser B2B ou B2C, **sempre existe uma pessoa do outro lado**: com contexto, emoções, limitações, crenças, objetivos e medos.\n\nO foco deixa de ser “segmento/demografia” e vira:\n\n- linguagem humana (simples, direta, sem jargão)\n- empatia e utilidade (ajudar antes de vender)\n- conversa (perguntas, escuta e personalização)\n- confiança (prova, consistência e verdade operacional)\n\n## Por que isso é crucial para a ENS\n\nNo contexto da ENS, quase toda compra é uma **decisão humana de risco** (carreira, reputação, dinheiro, tempo). H2H funciona porque:\n\n- reduz ansiedade (“vou conseguir acompanhar?”)\n- aumenta clareza (“para quem é, o que muda na prática?”)\n- conecta promessa e realidade (“o que vou aplicar na semana seguinte?”)\n\n## Princípios do H2H (checklist)\n\nUse este checklist para avaliar qualquer texto, anúncio, e-mail ou script.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 1
+    }
+  },
+  {
+    "page_content": "1. **Clareza antes de persuasão:** a pessoa entende em 10 segundos o que é e para quem é?\n2. **Linguagem humana:** menos siglas, menos corporativês, mais frases curtas.\n3. **Empatia explícita:** nomeie a dor/medo sem julgamentos.\n4. **Relevância contextual:** adapte ao nível (iniciante, intermediário, avançado) e ao momento (curioso vs pronto para comprar).\n5. **Prova e segurança:** mostre evidências (metodologia, certificação, coordenação, comunidade, aplicação prática).\n6. **Fricção mínima:** próximo passo simples e único (uma ação por mensagem).\n7. **Conversa, não monólogo:** convide a responder com uma pergunta objetiva.\n8. **Consistência:** o tom é o mesmo em anúncio, WhatsApp, landing page e suporte.\n\n## Anti-padrões (o que mata H2H)\n\n- Promessa vaga (“transformador”, “excelência”, “o melhor do mercado”) sem prova.\n- Linguagem corporativa (“sinergia”, “otimização 360”) que cria distância.\n- Texto centrado na instituição (\"nós\") em vez da pessoa (\"você\").\n- Respostas defensivas (quando alguém questiona preço, carga horária, validade etc.).\n- “Pitch pronto” sem diagnóstico (não perguntar nada e já empurrar oferta).\n\n## Framework H2H de resposta (para o agente seguir)\n\nQuando o usuário pedir copy, estratégia, roteiro ou abordagem, siga sempre:",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 2
+    }
+  },
+  {
+    "page_content": "1. **Contexto rápido (1 pergunta):** “Qual público e canal?”\n2. **Verdade humana:** identifique o que a pessoa realmente quer (status, segurança, autonomia, renda, pertencimento).\n3. **Valor prático:** transforme o tema em um ganho concreto (“o que muda na semana seguinte?”).\n4. **Prova:** amarre com evidência disponível (RAG ENS / RAG Marketing).\n5. **Linguagem simples:** corte jargões e abstrações.\n6. **Próximo passo único:** uma CTA clara (responder, clicar, agendar, entrar na lista).\n\n## Aplicação prática (playbooks)\n\n### 1) Copy de anúncio (H2H + AIDA)\n\nUse quando o usuário pedir anúncio, criativo, headline ou variações.\n\n**A (Atenção):** fale com o contexto humano\n- “Você está tentando sair do ‘seguro auto’ e ir para um produto mais consultivo?”\n\n**I (Interesse):** nomeie dor e desejo\n- “Quando o mercado muda, quem domina o novo tema vira referência — e para de competir por preço.”\n\n**D (Desejo):** promessa concreta + prova\n- “Você aprende X, aplica Y, e sai com Z (certificação/microcertificação), com aulas online e agenda compatível.”\n\n**A (Ação):** CTA única\n- “Quer que eu adapte para (iniciante/avançado) e para (Instagram/Meta Ads)?”\n\n### 2) Resposta a comentário (H2H em 4 linhas)\n\nFormato:\n\n1. **Reconhecer:** “Boa pergunta — faz sentido essa dúvida.”\n2. **Esclarecer:** 1 frase objetiva.\n3. **Direcionar:** 1 opção de próximo passo.\n4. **Perguntar:** 1 pergunta de diagnóstico.\n\nExemplo template:",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 3
+    }
+  },
+  {
+    "page_content": "- “Boa pergunta — isso é bem comum. Em geral, {resumo objetivo}. Se você me disser {pergunta}, eu te recomendo o caminho mais rápido.”\n\n### 3) WhatsApp/DM (3 mensagens)\n\nUse para abordagem sem parecer robô.\n\n1. **Abertura humana:**\n   - “Oi, {nome}! Vi que você se interessou por {tema}. Posso te fazer uma pergunta rápida pra te orientar melhor?”\n2. **Diagnóstico (1 pergunta):**\n   - “Hoje você está mais em {opção A} ou {opção B}?”\n3. **Recomendação curta + CTA:**\n   - “Perfeito. Para {contexto}, o melhor é {recomendação}. Quer que eu te mande um resumo em 30 segundos do que você aprende e como aplica?”\n\n### 4) Estrutura de landing page (H2H)\n\n- **Hero:** “O que é + para quem é” em linguagem simples\n- **Por que agora:** mercado/regulação/tendência (sem exagero)\n- **O que você aprende:** bullets curtos (aplicação)\n- **Como funciona:** modalidade, agenda, carga horária\n- **Prova:** coordenação, certificação, instituições parceiras, cases\n- **FAQ:** objeções reais (tempo, preço, pré-requisito)\n- **CTA:** uma única ação\n\n## Como segmentar H2H por intenção (RAG + conversa)\n\n### Intenção: “quero entender” (topo)\n\n- Entregue um resumo claro\n- Convide para uma pergunta\n- Evite empurrar oferta\n\n### Intenção: “quero escolher” (meio)\n\n- Compare 2 opções (tabela simples)\n- Traga critérios de decisão\n- Finalize com recomendação condicionada\n\n### Intenção: “quero comprar” (fundo)\n\n- Remova fricção\n- Reforce prova e logística\n- CTA único\n\n## Métricas (o que monitorar)",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 4
+    }
+  },
+  {
+    "page_content": "- **Clareza:** perguntas repetidas indicam copy confusa (ex.: “qual carga horária?” sempre aparece)\n- **Conversa:** % de respostas em DM/WhatsApp (H2H depende de diálogo)\n- **Confiança:** taxa de avanço para página/checkout após FAQ\n- **Qualidade do lead:** respostas mais detalhadas indicam alinhamento de promessa\n\n# Citações-chave de Marketing H2H\n1. “O marketing não é mais sobre as coisas que você vende, mas sobre as histórias que você conta.”\n2. “O foco deve estar nas pessoas, não apenas no produto.”\n3. “Personalização em massa é a chave da lealdade.”\n4. “Relacionamentos autênticos superam transações frias.”\n5. “Comunicação eficaz se conecta com os valores do público.”\n\n## Palavras-chave e sinônimos (para busca)\n\n- H2H, Human to Human, marketing humanizado\n- conversas, escuta ativa, empatia, autenticidade\n- linguagem simples, sem jargão, clareza\n- confiança, prova social, credibilidade\n- relacionamento, comunidade, pertencimento\n\n## Referências (base conceitual)\n\n- Bryan Kramer — “There is no more B2B or B2C: It’s Human to Human #H2H” (ideia central de humanizar a comunicação e evitar linguagem artificial): https://bryankramer.com/there-is-no-more-b2b-or-b2c-its-human-to-human-h2h/\n- The Cluetrain Manifesto — “Markets are conversations” (mercados como conversas humanas em voz genuína): https://www.cluetrain.com/",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 5
+    }
+  },
+  {
+    "page_content": "Pergunta: O que é Marketing H2H segundo o documento?\nResposta: É comunicar e vender lembrando que sempre existe uma pessoa do outro lado, com contexto, emoções e objetivos.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 6
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é a mudança de foco do H2H?\nResposta: Sai de “segmento/demografia” e vai para linguagem humana, empatia/utilidade, conversa, confiança e verdade operacional.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 7
+    }
+  },
+  {
+    "page_content": "Pergunta: Por que isso é crucial para a ENS?\nResposta: Porque a compra é decisão humana de risco (carreira, reputação, dinheiro, tempo) e H2H reduz ansiedade, aumenta clareza e conecta promessa e realidade.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 8
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais são 3 princípios do checklist H2H?\nResposta: Clareza antes de persuasão, linguagem humana, empatia explícita, prova e segurança, fricção mínima (CTA único), conversa e consistência.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 9
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais anti-padrões matam H2H?\nResposta: Promessa vaga sem prova, corporativês, texto centrado na instituição (“nós”), respostas defensivas e pitch pronto sem diagnóstico.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 10
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o framework H2H de resposta sugerido?\nResposta: Perguntar 1 coisa de contexto, identificar verdade humana, entregar valor prático, amarrar com prova, usar linguagem simples e finalizar com CTA único.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 11
+    }
+  },
+  {
+    "page_content": "Pergunta: Como aplicar H2H em copy de anúncio usando AIDA?\nResposta: Atenção com contexto humano, Interesse nomeando dor/desejo, Desejo com promessa concreta + prova, e Ação com CTA único.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 12
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual estrutura o documento sugere para resposta a comentário?\nResposta: Reconhecer, esclarecer em 1 frase, direcionar com próximo passo e fazer 1 pergunta de diagnóstico.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 13
+    }
+  },
+  {
+    "page_content": "Pergunta: Como é o playbook de WhatsApp/DM em 3 mensagens?\nResposta: Abertura humana, diagnóstico com 1 pergunta e recomendação curta com CTA.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 14
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais elementos uma landing page H2H deve ter?\nResposta: Hero “o que é/para quem”, por que agora (sem exagero), o que aprende (aplicação), como funciona, prova, FAQ de objeções reais e CTA único.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 15
+    }
+  },
+  {
+    "page_content": "Pergunta: Como segmentar por intenção “quero entender” (topo)?\nResposta: Dar resumo claro, convidar para pergunta e evitar empurrar oferta.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 16
+    }
+  },
+  {
+    "page_content": "Pergunta: Como segmentar por intenção “quero escolher” (meio)?\nResposta: Comparar 2 opções, trazer critérios e finalizar com recomendação condicionada.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 17
+    }
+  },
+  {
+    "page_content": "Pergunta: Como segmentar por intenção “quero comprar” (fundo)?\nResposta: Remover fricção, reforçar prova e logística, e CTA único.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 18
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais métricas o documento sugere monitorar?\nResposta: Clareza (perguntas repetidas), conversa (% respostas em DM/WhatsApp), confiança (avanço após FAQ) e qualidade do lead.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 19
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais palavras-chave aparecem para recuperação no RAG?\nResposta: H2H, marketing humanizado, conversas, escuta ativa, empatia, autenticidade, linguagem simples, confiança e prova.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 20
+    }
+  }
+]

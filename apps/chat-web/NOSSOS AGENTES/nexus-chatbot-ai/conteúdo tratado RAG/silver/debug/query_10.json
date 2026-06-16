@@ -1,0 +1,62 @@
+{
+  "query": "O que significa Prova > promessa e quais exemplos de prova usar?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.41403933560541245,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 9,
+      "chunk_index": 14,
+      "preview": "Pergunta: Qual é a regra “Prova > promessa” no documento?\nResposta: Priorizar prova e evidência em vez de promessas: estrutura, duração, modalidade, requisitos, corpo docente e ecossistema."
+    },
+    {
+      "score": 0.39562828403747224,
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 7,
+      "chunk_index": 11,
+      "preview": "Pergunta: Quais são os princípios de relacionamento listados?\nResposta: Ética e transparência, clareza operacional, prova > promessa, proximidade didática, integração com o mercado, consistência omnicanal e aprendizado contínuo."
+    },
+    {
+      "score": 0.34077710054823895,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 14,
+      "chunk_index": 17,
+      "preview": "Pergunta: Quais anti-patterns o documento lista que destroem confiança?\nResposta: Conteúdo perfeito e vazio, promessa agressiva sem prova, copiar tendência sem adequação, postar e sumir, e “personagem” que muda sempre."
+    },
+    {
+      "score": 0.337099931231621,
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 20,
+      "chunk_index": 25,
+      "preview": "Pergunta: O que o template de Hero de landing page inclui?\nResposta: Headline (resultado + nicho + mecanismo), sub (para quem + modalidade + prova), 3 bullets de prova/benefício e CTA."
+    },
+    {
+      "score": 0.3227486121839515,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 9,
+      "chunk_index": 13,
+      "preview": "Pergunta: Quais são 3 princípios do checklist H2H?\nResposta: Clareza antes de persuasão, linguagem humana, empatia explícita, prova e segurança, fricção mínima (CTA único), conversa e consistência."
+    },
+    {
+      "score": 0.32071349029490925,
+      "source": "Conteúdo para RAG/Marketing H2H.md",
+      "page": 15,
+      "chunk_index": 19,
+      "preview": "Pergunta: Quais elementos uma landing page H2H deve ter?\nResposta: Hero “o que é/para quem”, por que agora (sem exagero), o que aprende (aplicação), como funciona, prova, FAQ de objeções reais e CTA único."
+    },
+    {
+      "score": 0.31622776601683794,
+      "source": "Conteúdo para RAG/Relacionamento Marca.md",
+      "page": 22,
+      "chunk_index": 26,
+      "preview": "Pergunta: Quais itens o checklist de qualidade do relacionamento inclui?\nResposta: Consistência com ética/transparência, prova clara, próximo passo sem esforço, personalização por perguntas simples e canal adequado."
+    },
+    {
+      "score": 0.2901905000440051,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 2,
+      "chunk_index": 3,
+      "preview": "### 5) Prova social em tempo real\n- Comentários, respostas, lives, bastidores e prints (com cuidado) viram a “garantia” moderna.\n- A marca é o que ela publica e como ela responde.\n\n## Autenticidade (definição prática)\nAutenticidade não é “s"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "query": "Qual é a tese central do futuro do marketing em seguros (2025–2027)?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.4866642633922878,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 8,
+      "chunk_index": 13,
+      "preview": "Pergunta: Qual é a tese central sobre o “marketing do futuro” em seguros?\nResposta: É a soma de confiança + evidência, educação + clareza, experiência + conveniência, dados com permissão e IA com governança."
+    },
+    {
+      "score": 0.34874291623145764,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 1,
+      "chunk_index": 1,
+      "preview": "# Futuro do Marketing no Mercado de Seguros (Educação / Escola de Negócios)\n\n## Contexto rápido\n- **Nicho:** educação para seguros (formação, certificações, especializações e extensão).\n- **O que se vende:** confiança, transformação de carr"
+    },
+    {
+      "score": 0.33333333333333337,
+      "source": "Conteúdo para RAG/Nexus AI Identidade.md",
+      "page": 8,
+      "chunk_index": 13,
+      "preview": "Pergunta: Qual é o papel principal do Nexus AI?\nResposta: Copiloto estratégico e executor em Marketing para a Educação em Seguros (ENS), aplicado a negócios, produto, conteúdo e automação."
+    },
+    {
+      "score": 0.3125,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 6,
+      "chunk_index": 11,
+      "preview": "### “Não sei se vale o investimento.”\n- “Vamos comparar com o custo de oportunidade: qual meta você quer alcançar nos próximos 90 dias? Se eu entender isso, eu te digo se esse curso ajuda ou se outro caminho faz mais sentido.”\n\n### “Tenho m"
+    },
+    {
+      "score": 0.28216632399155017,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "## Perguntas de diagnóstico (para o agente conduzir conversas)\n1. Qual o objetivo (matrículas, marca, parceria, retenção)?\n2. Qual curso/oferta e para qual perfil?\n3. Qual ticket e condição de pagamento?\n4. Quais provas existem (ementa, pro"
+    },
+    {
+      "score": 0.23488808780588133,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 5,
+      "chunk_index": 9,
+      "preview": "## Checklist de campanha (matrícula)\n- Oferta: público-alvo, promessa realista, diferenciais.\n- Prova: credenciais, cases, depoimentos, amostra de aula.\n- Experiência: página mobile, checkout simples, suporte rápido.\n- Distribuição: LinkedI"
+    },
+    {
+      "score": 0.22613350843332278,
+      "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+      "page": 5,
+      "chunk_index": 8,
+      "preview": "Pergunta: Qual é a tese do documento sobre redes sociais em 2026?\nResposta: Redes deixam de ser canais de postagem e viram mecanismos de descoberta, confiança, relacionamento e conversão."
+    },
+    {
+      "score": 0.20412414523193154,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 11,
+      "chunk_index": 16,
+      "preview": "Pergunta: Qual é a regra sobre IA no setor de seguros?\nResposta: IA ajuda, humano valida (acurácia e reputação)."
+    }
+  ]
+}

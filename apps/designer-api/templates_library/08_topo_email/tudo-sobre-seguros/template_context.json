@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "version": 4,
+    "template_id": "08_topo_email/tudo-sobre-seguros",
+    "kv_name": "tudo-sobre-seguros",
+    "no_titulo": true,
+    "kv_palette": {
+      "primary": "#009db7",
+      "background": "#f4f1e1",
+      "text_on_kv": "#009db7",
+      "box1_bg": "#009db7",
+      "box1_text": "#f4f1e1",
+      "box2_border": "#009db7",
+      "box2_text": "#009db7"
+    },
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Este template NÃO possui campo de título editável. Em seu lugar há a logo 'TSS – Tudo Sobre Seguros', que deve ser tratada como elemento de logo inviolável — assim como a assinatura ENS.",
+      "Não remover, reposicionar, redesenhar, borrar ou alterar a logo TSS em qualquer hipótese.",
+      "O fundo do KV é bege claro (#f4f1e1). Não alterar a cor de fundo.",
+      "Os textos (etiqueta e frase) são na cor #009db7. Não alterar.",
+      "Template horizontal (formato topo de e-mail). Manter estrutura horizontal do layout.",
+      "Preservar os grafismos orgânicos nos cantos (bolhas/círculos decorativos azuis).",
+      "Não alterar enquadramento geral e hierarquia visual do KV."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV.",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "logo_tss_titulo",
+        "description": "Logo 'TSS – Tudo Sobre Seguros' posicionada onde normalmente estaria o título. INVIOLÁVEL — não alterar, reposicionar ou substituir.",
+        "lock": true
+      },
+      {
+        "zone_id": "grafismos_organicos_cantos",
+        "description": "Bolhas e formas orgânicas azuis nos cantos do template.",
+        "lock": true
+      },
+      {
+        "zone_id": "logo_ens_rodape",
+        "description": "Assinatura ENS – Escola de Negócios e Seguros no rodapé.",
+        "lock": true
+      }
+    ]
+  },
+  "etiqueta": {
+    "texto_atual": "Direito & Seguro",
+    "descricao_visual": "Etiqueta/badge com borda arredondada, texto em azul (#009db7), posicionada acima da logo TSS"
+  },
+  "frase": {
+    "texto_atual": "Construa um futuro sólido no mercado de seguros com a Graduação da Escola de Negócios e Seguros",
+    "descricao_visual": "Frase de apoio principal abaixo da logo TSS, texto em azul (#009db7)"
+  },
+  "box1": {
+    "texto_atual": "20% DE DESCONTO",
+    "descricao_visual": "Box informativo destaque com fundo sólido azul (#009db7) e texto bege (#f4f1e1), sem ícone"
+  },
+  "box2": {
+    "texto_atual": "ON-LINE | AO VIVO",
+    "descricao_visual": "Box informativo secundário com fundo vazado, sem preenchimento, borda arredondada azul (#009db7), texto azul (#009db7)"
+  },
+  "persona": {
+    "descricao": "jovem brasileiro olhando seu tablet caminhando em uma universidade"
+  }
+}

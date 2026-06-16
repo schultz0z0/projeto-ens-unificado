@@ -1,0 +1,1 @@
+-- Placeholder para sincronização de histórico remoto

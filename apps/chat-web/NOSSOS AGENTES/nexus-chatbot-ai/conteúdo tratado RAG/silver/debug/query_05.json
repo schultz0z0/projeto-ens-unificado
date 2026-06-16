@@ -1,0 +1,62 @@
+{
+  "query": "Qual é a estrutura do funil ampulheta e o objetivo de cada etapa?",
+  "model": "local-hashing-1024",
+  "top_k": [
+    {
+      "score": 0.58554004376912,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 2,
+      "chunk_index": 3,
+      "preview": "Pergunta: Qual é a estrutura de funil apresentada no documento?\nResposta: Uma estrutura de funil “Ampulheta”."
+    },
+    {
+      "score": 0.3779644730092273,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 8,
+      "chunk_index": 9,
+      "preview": "Pergunta: Qual é o objetivo do Meio de Funil?\nResposta: Captura de Lead (CPL)."
+    },
+    {
+      "score": 0.3779644730092273,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 11,
+      "chunk_index": 12,
+      "preview": "Pergunta: Qual é o objetivo do Fundo de Funil?\nResposta: Venda / Matrícula (ROAS)."
+    },
+    {
+      "score": 0.3394221166510654,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 3,
+      "chunk_index": 4,
+      "preview": "Pergunta: Quais são as 3 etapas do funil “Ampulheta”?\nResposta: Topo de Funil (Consciência) “O Despertar”, Meio de Funil (Consideração) “A Troca” e Fundo de Funil (Conversão) “A Oferta”."
+    },
+    {
+      "score": 0.331813337573719,
+      "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+      "page": 7,
+      "chunk_index": 12,
+      "preview": "## Perguntas de diagnóstico (para o agente conduzir conversas)\n1. Qual o objetivo (matrículas, marca, parceria, retenção)?\n2. Qual curso/oferta e para qual perfil?\n3. Qual ticket e condição de pagamento?\n4. Quais provas existem (ementa, pro"
+    },
+    {
+      "score": 0.3144854510165756,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 4,
+      "chunk_index": 5,
+      "preview": "Pergunta: Qual é o objetivo do Topo de Funil?\nResposta: Tráfego frio para conteúdo de alto valor (Blog/Vídeo)."
+    },
+    {
+      "score": 0.29277002188456,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 7,
+      "chunk_index": 8,
+      "preview": "Pergunta: Qual dica técnica específica aparece no Topo de Funil?\nResposta: Usar o Pixel para criar público de “Visualizou 50% do vídeo”."
+    },
+    {
+      "score": 0.27591270276823476,
+      "source": "Conteúdo para RAG/Estrategias Trafego.md",
+      "page": 1,
+      "chunk_index": 1,
+      "preview": "# Estratégias de Tráfego Pago para Setor de Educação (Seguros)\n\n## Estrutura de Funil \"Ampulheta\"\n\n### 1. Topo de Funil (Consciência) - \"O Despertar\"\n- **Objetivo:** Tráfego frio para conteúdo de alto valor (Blog/Vídeo).\n- **Criativos:** Co"
+    }
+  ]
+}

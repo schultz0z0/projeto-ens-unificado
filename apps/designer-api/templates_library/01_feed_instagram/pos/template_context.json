@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "version": 4,
+    "template_id": "01_feed_instagram/pos",
+    "kv_name": "pos",
+    "kv_palette": {
+      "primary": "#005563",
+      "text_on_kv": "#FFFFFF",
+      "boxes_light_bg": "#FFFFFF"
+    },
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Manter o degradê principal horizontal, com origem inferior e transição para cima.",
+      "Não alterar direção, intensidade, opacidade ou área de cobertura do degradê.",
+      "Não alterar enquadramento geral e hierarquia visual do KV."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV.",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Faixa de degradê verde-azulado na metade horizontal da peça",
+        "lock": true
+      }
+    ]
+  },
+  "etiqueta": {
+    "texto_atual": "FACULDADE ENS",
+    "descricao_visual": "Texto pequeno em destaque superior"
+  },
+  "titulo": {
+    "texto_atual": "Gestão de Seguros",
+    "descricao_visual": "Título grande em destaque central, cor do texto é branco"
+  },
+  "frase": {
+    "texto_atual": "Construa um futuro sólido no mercado de seguros com a Graduação da Escola de Negócios e Seguros",
+    "descricao_visual": "Frase de apoio abaixo do título, cor do texto é branco"
+  },
+  "box1": {
+    "texto_atual": "20% DE DESCONTO",
+    "descricao_visual": "Box informativo destaque com fundo branco sólido, ícone à esquerda antes do texto e dentro da box"
+  },
+  "box2": {
+    "texto_atual": "ON-LINE | AO VIVO",
+    "descricao_visual": "Box informativo secundário com fundo vazado, sem preenchimento, com borda branca arredondada, ícone à esquerda antes do texto e dentro da box"
+  },
+  "persona": {
+    "descricao": "jovem brasileiro olhando seu tablet caminhando em uma universidade"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "template_id": "05_AIDA_whatsapp/pos",
+  "step": "step3_validation",
+  "planner_overrides": {
+    "extra_system_rules": [
+      "Step3 planner apenas converte diagnostico do validador em correction_prompt_final curto.",
+      "Nao decidir APROVADO/CORRECAO por conta propria.",
+      "Nao alterar persona/fundo.",
+      "Nao regredir para template original ou versao anterior.",
+      "Corrigir apenas criterios reprovados pelo validador."
+    ],
+    "color_lock_policy": {
+      "enabled": true,
+      "allow_exceptions": false,
+      "exceptions": []
+    }
+  },
+  "output_contract": {
+    "status": "OK|BLOCK",
+    "goal": "string",
+    "allowed_changes": [
+      "..."
+    ],
+    "forbidden_changes": [
+      "..."
+    ],
+    "edit_prompt_final": "prompt curto e executavel",
+    "confidence": 0.0,
+    "notes": "string",
+    "correction_prompt_final": "prompt de correcao curto (quando aplicavel)"
+  },
+  "context_json_compacto": {
+    "template_id": "05_AIDA_whatsapp/pos",
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Manter o degradê principal horizontal, com origem inferior e transição para cima.",
+      "Não alterar direção, intensidade, opacidade ou área de cobertura do degradê.",
+      "Não alterar enquadramento geral e hierarquia visual do KV."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV.",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Faixa de degradê verde-azulado na metade horizontal da peça",
+        "lock": true
+      }
+    ],
+    "hard_locks": {
+      "logos": [
+        "ENS",
+        "AIDA_BRASIL"
+      ],
+      "must_preserve": [
+        "logo_ens_assinatura",
+        "logo_aida_brasil",
+        "rodape",
+        "degrade_principal",
+        "overlays_organicos"
+      ]
+    }
+  },
+  "context_json_raw_path": "C:\\Users\\raphaeloliveira\\Desktop\\Projetos Saas\\Agência NexusAI\\nexus-designer-v3-main\\templates_library\\05_AIDA_whatsapp\\pos\\template_context.json",
+  "reference_images": [
+    "Template (final).png",
+    "step2_persona.png"
+  ],
+  "hard_constraints": [
+    "Nao regredir para template original.",
+    "Nao alterar persona quando validando/corrigindo KV e boxes.",
+    "Nao alterar logos ENS/AIDA quando ja estiverem aprovadas pelo validador.",
+    "Etiqueta: fundo branco puro (#FFFFFF) e texto na cor principal do KV.",
+    "Box1: fundo branco puro (#FFFFFF) e texto na cor principal do KV.",
+    "Box2: texto branco puro (#FFFFFF).",
+    "Título e frase: sempre branco puro (#FFFFFF).",
+    "Se houver desvio de branco para creme/off-white, corrigir de volta para #FFFFFF.",
+    "Título e frase sem sombreamento: não aplicar shadow/drop shadow; texto deve permanecer chapado."
+  ]
+}

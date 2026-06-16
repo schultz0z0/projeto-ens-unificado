@@ -1,0 +1,58 @@
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# Runtime state / volumes
+data/
+**/data/
+logs/
+**/logs/
+outputs/
+**/outputs/
+tmp/
+**/tmp/
+temp/
+**/temp/
+
+# Local toolchains / virtualenvs
+.tools/
+.venv/
+venv/
+services/hermes-runtime/.venv/
+**/.venv/
+**/venv/
+
+# JS/Python build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+.turbo/
+**/.turbo/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+*.pyc
+*.pyo
+*.log
+*.sqlite
+*.db
+
+# Local editor/OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Keep vendored source tracked, but never nested git metadata.
+services/hermes-runtime/vendor/hermes-agent/.git/

@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-01-09T18:49:54.083Z",
+  "model": "local-hashing-1024",
+  "top_k": 8,
+  "outputs": [
+    {
+      "query": "Qual é a regra prática que liga emoção, prova e próximo passo?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_01.json",
+      "top1": {
+        "score": 0.669438681395203,
+        "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+        "page": 7
+      }
+    },
+    {
+      "query": "Quais são os pilares emocionais aplicáveis à ENS?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_02.json",
+      "top1": {
+        "score": 0.6793662204867575,
+        "source": "Conteúdo para RAG/Conexão Emocional ENS.md",
+        "page": 8
+      }
+    },
+    {
+      "query": "O que é Marketing H2H e por que isso é crucial para a ENS?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_03.json",
+      "top1": {
+        "score": 0.49386479832479485,
+        "source": "Conteúdo para RAG/Exemplos de Comunicação Humanizada.md",
+        "page": 31
+      }
+    },
+    {
+      "query": "O que significa 'social vira search' e quais perguntas vencem?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_04.json",
+      "top1": {
+        "score": 0.5400617248673217,
+        "source": "Conteúdo para RAG/Influencia das Redes sociais 2026.md",
+        "page": 7
+      }
+    },
+    {
+      "query": "Qual é a estrutura do funil ampulheta e o objetivo de cada etapa?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_05.json",
+      "top1": {
+        "score": 0.58554004376912,
+        "source": "Conteúdo para RAG/Estrategias Trafego.md",
+        "page": 2
+      }
+    },
+    {
+      "query": "Quais frameworks de copywriting são citados no material da ENS?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_06.json",
+      "top1": {
+        "score": 0.4040610178208844,
+        "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+        "page": 8
+      }
+    },
+    {
+      "query": "Qual é o padrão de turn-taking recomendado no WhatsApp?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_07.json",
+      "top1": {
+        "score": 0.3583993668480911,
+        "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+        "page": 7
+      }
+    },
+    {
+      "query": "Qual é a tese central do futuro do marketing em seguros (2025–2027)?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_08.json",
+      "top1": {
+        "score": 0.4866642633922878,
+        "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+        "page": 8
+      }
+    },
+    {
+      "query": "Quando o bot deve fazer handoff para humano, segundo o material?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_09.json",
+      "top1": {
+        "score": 0.39528470752104744,
+        "source": "Conteúdo para RAG/Futuro do Marketing em seguros.md",
+        "page": 22
+      }
+    },
+    {
+      "query": "O que significa Prova > promessa e quais exemplos de prova usar?",
+      "file": "conteúdo tratado RAG\\silver\\debug\\query_10.json",
+      "top1": {
+        "score": 0.41403933560541245,
+        "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+        "page": 9
+      }
+    }
+  ]
+}

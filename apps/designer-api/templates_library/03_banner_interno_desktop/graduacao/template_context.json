@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "version": 4,
+    "template_id": "03_banner_interno_desktop/graduacao",
+    "kv_name": "graduacao",
+    "format": "web_banner_desktop",
+    "usage": "Banner interno de site (desktop), estilo hero/cover com conteúdo à esquerda e persona à direita.",
+    "canvas": {
+      "target_aspect_ratio": "wide",
+      "notes": "Priorizar leitura acima da dobra; manter respiro lateral e evitar que textos invadam a área da persona."
+    },
+    "kv_palette": {
+      "primary": "#FF5722",
+      "text_on_kv": "#FFFFFF",
+      "boxes_light_bg": "#FFFFFF"
+    },
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Esta peça é um banner interno de site (desktop), com hierarquia de leitura em Z: selo (topo) → título → frase → badges (boxes).",
+      "Manter o degradê laranja (#FF5722) como camada principal de contraste para o bloco de conteúdo à esquerda.",
+      "Não alterar direção, intensidade, opacidade, ângulo ou área de cobertura do degradê.",
+      "Manter enquadramento geral (persona à direita) e hierarquia visual do KV.",
+      "Garantir alta legibilidade em desktop: fundo deve suportar texto branco sem perder contraste."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading.",
+      "Evitar adicionar novos efeitos que disputem atenção com o título (glow, outlines, sombras pesadas)."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV (lado direito e área de biblioteca/ambiente).",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial.",
+      "Manter desfoque/ruído naturais do fundo para reforçar profundidade e foco no conteúdo à esquerda."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Faixa de degradê laranja no centro vertical da peça",
+        "lock": true
+      },
+      {
+        "zone_id": "kv_content_left",
+        "description": "Coluna de conteúdo (selo, título, frase e badges) alinhada à esquerda",
+        "lock": true
+      },
+      {
+        "zone_id": "kv_persona_right",
+        "description": "Persona e laptop à direita (sem alterar posição/escala no recorte)",
+        "lock": true
+      },
+      {
+        "zone_id": "kv_organic_shapes",
+        "description": "Formas orgânicas decorativas no rodapé direito e canto superior esquerdo",
+        "lock": true
+      }
+    ]
+  },
+  "etiqueta": {
+    "texto_atual": "FACULDADE ENS",
+    "descricao_visual": "Selo/pílula no topo esquerdo, texto em caixa alta com alta legibilidade" 
+  },
+  "titulo": {
+    "texto_atual": "Gestão Financeira",
+    "descricao_visual": "Título principal grande (hero heading) alinhado à esquerda, prioridade máxima da peça"
+  },
+  "frase": {
+    "texto_atual": "Construa um futuro sólido no mercado de finanças e seguros com a Escola de Negócios e Seguros",
+    "descricao_visual": "Subtítulo/frase de apoio abaixo do título, largura confortável para leitura em desktop"
+  },
+  "box1": {
+    "texto_atual": "30% DE DESCONTO!",
+    "descricao_visual": "Box informativo destaque com fundo branco sólido, ícone à esquerda antes do texto e dentro da box"
+  },
+  "box2": {
+    "texto_atual": "OFERTA VÁLIDA ATÉ 28/08",
+    "descricao_visual": "Box informativo secundário com ícone à esquerda antes do texto e dentro da box"
+  },
+  "persona": {
+    "descricao": "Homem estudando com seu notebook e caderno numa biblioteca"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "target": "D:\\Projetos SaaS\\projeto-ens-unificado",
+  "source_root": "D:\\Projetos SaaS\\PROJETO ENS",
+  "copied": [
+    [
+      "D:\\Projetos SaaS\\PROJETO ENS\\Nexus-AI-2.0",
+      "D:\\Projetos SaaS\\projeto-ens-unificado\\apps\\chat-web"
+    ],
+    [
+      "D:\\Projetos SaaS\\PROJETO ENS\\Hermes-RAG-MCP",
+      "D:\\Projetos SaaS\\projeto-ens-unificado\\services\\rag-mcp"
+    ],
+    [
+      "D:\\Projetos SaaS\\PROJETO ENS\\nexus-ai-hermes",
+      "D:\\Projetos SaaS\\projeto-ens-unificado\\services\\hermes-runtime"
+    ],
+    [
+      "D:\\Projetos SaaS\\PROJETO ENS\\nexus-designer-v4",
+      "D:\\Projetos SaaS\\projeto-ens-unificado\\apps\\designer-api"
+    ]
+  ],
+  "bridge_split": {
+    "from": "apps/chat-web/bridge",
+    "to": "services/chat-bridge"
+  },
+  "git_policy": "Nested .git directories intentionally removed; original repos remain untouched as backups.",
+  "excluded": [
+    ".DS_Store",
+    ".cache",
+    ".env",
+    ".env.local",
+    ".env.production",
+    ".git",
+    ".mypy_cache",
+    ".next",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".turbo",
+    ".venv",
+    "Thumbs.db",
+    "__pycache__",
+    "build",
+    "coverage",
+    "data",
+    "dist",
+    "env",
+    "logs",
+    "node_modules",
+    "outputs",
+    "temp",
+    "tmp",
+    "venv"
+  ]
+}

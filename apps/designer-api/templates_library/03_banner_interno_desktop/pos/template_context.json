@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "version": 4,
+    "template_id": "03_banner_interno_desktop/pos",
+    "kv_name": "pos",
+    "format": "web_banner_desktop",
+    "usage": "Banner interno de site (desktop), estilo hero/cover com conteúdo à esquerda e persona à direita.",
+    "canvas": {
+      "target_aspect_ratio": "wide",
+      "notes": "Priorizar leitura acima da dobra; manter respiro lateral e evitar que textos invadam a área da persona."
+    },
+    "kv_palette": {
+      "primary": "#005563",
+      "text_on_kv": "#FFFFFF",
+      "boxes_light_bg": "#FFFFFF"
+    },
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Esta peça é um banner interno de site (desktop), com hierarquia de leitura em Z: selo (topo) → título → frase → badges (boxes).",
+      "Manter o degradê verde-azulado (#005563) como camada principal de contraste para o bloco de conteúdo à esquerda.",
+      "Não alterar direção, intensidade, opacidade, ângulo ou área de cobertura do degradê.",
+      "Manter enquadramento geral (persona à direita) e hierarquia visual do KV.",
+      "Garantir alta legibilidade em desktop: fundo deve suportar texto branco sem perder contraste."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading.",
+      "Evitar adicionar novos efeitos que disputem atenção com o título (glow, outlines, sombras pesadas)."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV (lado direito e área de biblioteca/ambiente).",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial.",
+      "Manter desfoque/ruído naturais do fundo para reforçar profundidade e foco no conteúdo à esquerda."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Faixa de degradê verde-azulado no centro vertical da peça",
+        "lock": true
+      },
+      {
+        "zone_id": "kv_content_left",
+        "description": "Coluna de conteúdo (etiqueta, título, frase e boxes) alinhada à esquerda",
+        "lock": true
+      },
+      {
+        "zone_id": "kv_organic_shapes",
+        "description": "Formas orgânicas decorativas no rodapé direito e canto superior esquerdo",
+        "lock": true
+      }
+    ]
+  },
+  "etiqueta": {
+    "texto_atual": "MBA",
+    "descricao_visual": "Texto pequeno em destaque superior"
+  },
+  "titulo": {
+    "texto_atual": "Finanças e Seguros",
+    "descricao_visual": "Título grande em destaque, cor do texto é branco"
+  },
+  "frase": {
+    "texto_atual": "Quem domina finanças e seguros não acompanha o mercado, lidera ele.",
+    "descricao_visual": "Frase de apoio abaixo do título, cor do texto é branco"
+  },
+  "box1": {
+    "texto_atual": "MÓDULO INTERNACIONAL OPTATIVO",
+    "descricao_visual": "Box informativo destaque com fundo branco sólido, ícone à esquerda antes do texto e dentro da box"
+  },
+  "box2": {
+    "texto_atual": "NIVELAMENTO GRATUITO EM MATEMÁTICA E ESTATÍSTICA",
+    "descricao_visual": "Box informativo secundário com fundo vazado, sem preenchimento, com borda branca arredondada, ícone à esquerda antes do texto e dentro da box"
+  },
+  "persona": {
+    "descricao": "Tablet com o mercado financeiro sendo exibido"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "version": 4,
+    "template_id": "06_banner_home_desktop/graduacao",
+    "kv_name": "graduacao",
+    "kv_palette": {
+      "primary": "#FF5722",
+      "text_on_kv": "#FFFFFF"
+    },
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Template horizontal de home sem bloco textual editável no PNG base.",
+      "Manter o degradê/overlay laranja amplo na área esquerda e central, preservando a persona à direita.",
+      "Não adicionar etiquetas, títulos, frases, boxes, logotipos ou rodapé que não existam no template base."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de persona/background atrás do KV.",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Degradê/overlay laranja horizontal cobrindo a área esquerda e central da peça; preservar cor, opacidade e cobertura.",
+        "lock": true
+      }
+    ]
+  },
+  "persona": {
+    "descricao": "jovem estudante universitária sorrindo em ambiente acadêmico/profissional"
+  }
+}

@@ -1,0 +1,20 @@
+services:
+  nexusai-rag-mcp:
+    build: .
+    container_name: nexusai-rag-mcp
+    env_file:
+      - .env
+    environment:
+      NEXUSAI_RAG_MCP_CONFIG: /app/config/nexusai-rag-mcp.yaml
+    volumes:
+      - ./config:/app/config:ro
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - nexus_network
+
+networks:
+  nexus_network:
+    name: nexus_network
+    external: true

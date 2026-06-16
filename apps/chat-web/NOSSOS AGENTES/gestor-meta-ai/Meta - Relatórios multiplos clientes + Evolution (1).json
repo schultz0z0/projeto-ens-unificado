@@ -1,0 +1,519 @@
+{
+  "name": "Meta - Relatórios multiplos clientes + Evolution",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": "={{ 1 }}",
+              "triggerAtHour": "={{ 7 }}",
+              "triggerAtMinute": "={{ 10 }}"
+            }
+          ]
+        }
+      },
+      "id": "895cb0af-a9d0-4500-83d5-7f89a6eedb2a",
+      "name": "Gatilho por Horário",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -480,
+        112
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v20.0",
+        "node": "=act_{{ $json['Conta_de_Anuncio'] }}",
+        "edge": "insights",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "time_increment",
+                "value": "1"
+              },
+              {
+                "name": "level",
+                "value": "ad"
+              },
+              {
+                "name": "fields",
+                "value": "=campaign_id,\ncampaign_name,\nadset_id,\nadset_name,\nad_id,\nad_name,\nspend,\nimpressions,\nclicks,\ncpc,\ncpm,\ncpp,\nctr,\nobjective,\nreach,\nactions"
+              },
+              {
+                "name": "limit",
+                "value": "3000"
+              },
+              {
+                "name": "date_preset",
+                "value": "yesterday"
+              }
+            ]
+          }
+        }
+      },
+      "id": "201bf4ee-2024-4583-9684-4fafbc29ae18",
+      "name": "Buscar Dados no Meta",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "position": [
+        592,
+        128
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "bebc53f1-2cde-4e6b-b4d0-78186d164ac6",
+      "name": "Desmembrar Dados",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        960,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "let totalSpend = 0;\nlet totalLeads = 0;\nlet sumCPM = 0;\nlet sumCPP = 0;\nlet sumCTR = 0;\nlet totalLinkClicks = 0;  // Variável para acumular o valor de link_click\nlet countCPM = 0;\nlet countCPP = 0;\nlet countCTR = 0;\n\n// Função para converter string de valores para float, considerando tanto ponto quanto vírgula\nfunction convertToFloat(value) {\n    return parseFloat(value.replace(',', '.'));\n}\n\n// Itera sobre cada item (que representa um conjunto de dados da campanha)\nitems.forEach(item => {\n    const jsonData = item.json;\n\n    // Acumula o valor de spend\n    if (jsonData.spend !== undefined) {\n        totalSpend += convertToFloat(jsonData.spend);\n    }\n\n    // Verifica se o campo 'actions' existe e é um array\n    if (Array.isArray(jsonData.actions)) {\n        jsonData.actions.forEach(action => {\n            // Acumula o valor de link_click\n            if (action.action_type === \"link_click\") {\n                totalLinkClicks += parseInt(action.value, 10);\n            }\n            // Acumula o valor de leads (exemplo de ação específica)\n            if (action.action_type ===  $item(\"0\").$node[\"Dados\"].json[\"Action_type\"]) {\n                totalLeads += parseInt(action.value, 10);\n            }\n        });\n    }\n\n    // Acumula os valores de cpm, cpp, ctr para calcular a média\n    if (jsonData.cpm !== undefined) {\n        sumCPM += convertToFloat(jsonData.cpm);\n        countCPM++;\n    }\n    if (jsonData.cpp !== undefined) {\n        sumCPP += convertToFloat(jsonData.cpp);\n        countCPP++;\n    }\n    if (jsonData.ctr !== undefined && convertToFloat(jsonData.ctr) > 0) {\n        sumCTR += convertToFloat(jsonData.ctr);\n        countCTR++;\n    }\n});\n\n// Calcula as médias\nconst avgCPC = totalLinkClicks > 0 ? (totalSpend / totalLinkClicks) : 0;\nconst avgCPM = countCPM > 0 ? (sumCPM / countCPM) : 0;\nconst avgCPP = countCPP > 0 ? (sumCPP / countCPP) : 0;\nconst avgCTR = countCTR > 0 ? (sumCTR / countCTR) : 0;\nconst cpl = totalLeads > 0 ? (totalSpend / totalLeads) : 0;  // Calcula o CPL\n\n// Retorna apenas os dados acumulados\nreturn [\n    {\n        json: {\n            totalSpend: totalSpend.toFixed(2).replace('.', ','),\n            totalLeads: totalLeads,\n            totalLinkClicks: totalLinkClicks,  // Inclui o total de link_click no resultado\n            avgCPC: avgCPC.toFixed(2).replace('.', ','),\n            avgCPM: avgCPM.toFixed(2).replace('.', ','),\n            avgCPP: avgCPP.toFixed(2).replace('.', ','),\n            avgCTR: avgCTR.toFixed(2).replace('.', ','),\n            cpl: cpl.toFixed(2).replace('.', ',')\n        }\n    }\n];\n"
+      },
+      "id": "985de2f6-885d-4546-ae06-7ea9e7f88832",
+      "name": "Script para Alterar Dados",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1152,
+        112
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c205cd77-4ae1-4938-af3f-8fe5d6bed909",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        208,
+        112
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {},
+      "id": "14185edf-9f55-44fd-8f22-6bc11075d2c1",
+      "name": "Replace Me",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1568,
+        336
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "bb5bbc07-cd20-4e37-8c46-35e501927d15",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        400,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1mzpJGdQ5M0wvwtss_OKKsimZLGpcbsHzsW7kn0Gdkzc"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mzpJGdQ5M0wvwtss_OKKsimZLGpcbsHzsW7kn0Gdkzc/edit#gid=0",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Ativo",
+              "lookupValue": "Sim"
+            }
+          ]
+        },
+        "options": {
+          "returnAllMatches": "returnAllMatches"
+        }
+      },
+      "id": "f0eb3623-3edd-4f33-bd74-43d60397d014",
+      "name": "Base de Clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        0,
+        112
+      ],
+      "typeVersion": 4.4
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Dados Cliente').first().json[\"Email\"] }}",
+        "subject": "Relatorio de Campanha",
+        "emailType": "text",
+        "message": "=📊 Relatório de campanha da conta {{ $('Dados Cliente').first().json[\"Cliente\"] }}\n\n🗓️ Data: {{ new Date(Date.now() - 86400000).toLocaleDateString('pt-BR') }}\n\n- Total de Cliques: {{ $('Script para Alterar Dados').item.json.totalLinkClicks }}\n- Custo Médio por Cliques: R$ {{ $('Script para Alterar Dados').item.json.avgCPC }}\n\n- Valor Total Investido: R${{ $('Script para Alterar Dados').item.json.totalSpend }}\n\n- Total de {{ $item('0').$node[\"Dados\"].json[\"Objetivo\"] }}: {{ $json.totalLeads }}\n- Custo Médio por {{ $item('0').$node[\"Dados\"].json[\"Objetivo\"] }}: R${{ $json.cpl }}\"",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Flux Automate"
+        }
+      },
+      "id": "8b45d57c-14a2-42f7-a0a6-d902a8ff5a1a",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1568,
+        112
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "54b1cb5b-e4f7-4b20-996d-4a6319c94912"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "3152ba7b-2784-42d8-ad8c-a9f97ad61fc0",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.data }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "37fa3013-aa96-4e90-8a7f-afe5dbf57862",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        752,
+        128
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf0c339a-d3d1-4bc5-9079-d47ec4a2ae05",
+              "name": "Conta_de_Anuncio",
+              "type": "string",
+              "value": "={{ $json['Conta de Anuncio'] }}"
+            },
+            {
+              "id": "f4600920-959d-4eef-8a5c-acca0be0158b",
+              "name": "Contato_do_cliente",
+              "type": "string",
+              "value": "={{ $json['Contato do cliente'] }}"
+            },
+            {
+              "id": "1ca84bfe-93ec-45bb-be63-27a93363980c",
+              "name": "Email",
+              "type": "string",
+              "value": "={{ $json.Email }}"
+            },
+            {
+              "id": "bf948392-b9f7-4698-b27a-8a979d5e144c",
+              "name": "Cliente",
+              "type": "string",
+              "value": "={{ $json.Cliente }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a03ad382-1077-41a3-9626-9515eec799fd",
+      "name": "Dados Cliente",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        400,
+        128
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "030e2b8b-180b-4753-8ec2-2a70101aefb1",
+              "name": "url_evolution",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "81419d30-620a-4705-8816-03327870beab",
+              "name": "instancia",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "ceeffd46-2654-4d6d-8c69-2914ee1fff93",
+              "name": "token",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "3cdab645-994c-4ced-8ed6-a1dbc16782e5",
+              "name": "Action_type",
+              "type": "string",
+              "value": "onsite_conversion.messaging_conversation_started_7d"
+            },
+            {
+              "id": "103b5e28-ac3d-47d4-862f-82aa9e2f27a4",
+              "name": "Objetivo",
+              "type": "string",
+              "value": "Conversa Iniciada"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0254708-47ad-45f3-bf20-b90fc7f6cd2f",
+      "name": "Dados",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -240,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## Dados\n**Alterar apenas aqui",
+        "height": 309.5559926974605,
+        "width": 437.4719903578132
+      },
+      "id": "ac780316-4f48-42e2-b92b-9514f3695c30",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -288,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $item(\"0\").$node[\"Dados\"].json[\"url_evolution\"] }}/message/sendText/{{ $item(\"0\").$node[\"Dados\"].json[\"instancia\"] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $item(\"0\").$node[\"Dados\"].json[\"token\"] }}"
+            },
+            {
+              "name": "content_type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"number\": \"{{ $item('0').$node[\"Dados Cliente\"].json[\"Contato_do_cliente\"] }}\",\n    \"text\": \"📊 *Relatório de campanha da conta*{{$('Dados Cliente').first().json[\"Cliente\"] }}*\\n\\n🗓️ *Data:* {{ new Date(Date.now() - 86400000).toLocaleDateString('pt-BR') }}\\n\\n- *Total de Cliques:* {{ $json.totalLinkClicks }}\\n- *Custo Médio por Cliques:* R${{ $json.avgCPC }}\\n\\n-*Valor Total Investido:* R${{ $json.totalSpend }}\\n\\n- *Total de {{ $item('0').$node[\"Dados\"].json[\"Objetivo\"] }}:* {{ $json.totalLeads }}\\n- *Custo Médio por {{ $item('0').$node[\"Dados\"].json[\"Objetivo\"] }}:* R${{ $json.cpl }}\"\n}",
+        "options": {}
+      },
+      "id": "ea58782d-175e-4ea8-bcf7-e597581c936f",
+      "name": "Evolution 2.1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1344,
+        112
+      ],
+      "typeVersion": 4.2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Desmembrar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "Base de Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados Cliente": {
+      "main": [
+        [
+          {
+            "node": "Buscar Dados no Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution 2.1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dados Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base de Clientes": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desmembrar Dados": {
+      "main": [
+        [
+          {
+            "node": "Script para Alterar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Dados no Meta": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gatilho por Horário": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script para Alterar Dados": {
+      "main": [
+        [
+          {
+            "node": "Evolution 2.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b9801bc7-51bd-4976-a3f1-984bb8814ece",
+  "meta": {
+    "instanceId": "63dbfee99e7db46636912ea02f6284c665c3cc754411fa1f0eb04a3eeeaecdf7"
+  },
+  "id": "FQ3ENiGJ9Htg3pAl",
+  "tags": [
+    {
+      "updatedAt": "2025-12-23T14:45:25.640Z",
+      "createdAt": "2025-12-23T14:45:25.640Z",
+      "id": "qyN5io39TTQlQch8",
+      "name": "FLUX"
+    }
+  ]
+}

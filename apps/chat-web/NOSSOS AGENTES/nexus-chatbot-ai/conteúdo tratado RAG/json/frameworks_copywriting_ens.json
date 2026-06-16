@@ -1,0 +1,170 @@
+[
+  {
+    "page_content": "# Copywriting para a ENS (Escola de Negócios e Seguros)\n\n## Contexto e tom institucional (baseado no site)\n- ENS atua há **mais de 50 anos** formando profissionais do mercado.\n- A ENS se posiciona como quem **mapeia necessidades**, **arquiteta soluções de ensino** e **conecta alunos ao ecossistema**.\n- Valores declarados: **Ética, Foco nas metas, Respeito, Inovação, Excelência**.\n- Tom predominante: direto, confiante, voltado a carreira, com ênfase em autoridade, trilha e clareza.\n\n## Regras de copy para a ENS (para manter consistência)\n- Priorize **clareza** e **precisão** (educação em seguros é decisão de alta confiança).\n- Prova > promessa: use **estrutura, duração, modalidade, requisitos, corpo docente, ecossistema**.\n- Evite superlativos absolutos e garantias (“o melhor”, “garantido”, “altos ganhos” como certeza).\n- Não prometa aprovação/certificação como certeza; descreva o caminho e os requisitos.\n- Sempre inclua um próximo passo único (CTA).\n\n## Oferta padrão (blocos que a copy deve sempre refletir)\n- O que é (nome do curso/programa)\n- Para quem (perfil e momento)\n- Resultado realista (competência, repertório, empregabilidade, autonomia)\n- Como funciona (modalidade, duração, agenda)\n- Provas (história, corpo docente, depoimentos, parcerias, ecossistema)\n- Segurança (ética, compliance, transparência, política de privacidade/cookies)",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 1
+    }
+  },
+  {
+    "page_content": "## Framework 1 — AIDA (Atenção, Interesse, Desejo, Ação)\n**Aplicação:** anúncios, hero de landing page, card de redes sociais, abertura de e-mail.\n\n- **Atenção:** dado, tensão de carreira ou pergunta objetiva.\n  - Exemplos:\n    - “Quer entrar no mercado de seguros com um caminho claro?”\n    - “Sua carreira em seguros precisa de especialização ou direção?”\n- **Interesse:** conecte a dor e o cenário do aluno (tempo, segurança jurídica, clareza do próximo passo).\n  - Exemplos:\n    - “Você não precisa adivinhar o que estudar: existe trilha, método e critérios.”\n    - “Aprenda com professores de mercado e aula online ao vivo.”\n- **Desejo:** transforme em benefício concreto, com prova.\n  - Exemplos:\n    - “Curso com duração definida, pré-requisitos claros e ecossistema conectado ao setor.”\n    - “Formação para atuar com autoridade e visão de futuro no mercado de seguros.”\n- **Ação:** CTA único.\n  - Exemplos:\n    - “Ver a trilha e escolher sua formação”\n    - “Conferir datas e condições de matrícula”\n\n## Framework 2 — PAS (Problema, Agitação, Solução)\n**Aplicação:** quebra de objeções, criativos de performance, páginas de curso.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 2
+    }
+  },
+  {
+    "page_content": "- **Problema:** nomeie a fricção real.\n  - Exemplos:\n    - “Você quer atuar em seguros, mas não sabe por onde começar.”\n    - “Você já vende, mas sente que falta base técnica para crescer.”\n- **Agitação:** custo de permanecer igual (sem medo exagerado).\n  - Exemplos:\n    - “Sem trilha e método, você perde tempo, erra prioridade e fica inseguro na prática.”\n    - “Sem atualização, você fica limitado aos produtos mais comoditizados.”\n- **Solução:** ENS como caminho estruturado.\n  - Exemplos:\n    - “Siga uma formação com professores de mercado, aulas ao vivo e orientação para o próximo passo.”\n    - “Escolha a trilha ideal (habilitação, graduação, pós/MBA, qualificações) e avance com segurança.”\n\n## Framework 3 — StoryBrand (Jornada do Herói)\n**Aplicação:** institucional, vídeos, páginas de programas, e-mails de nutrição.\n\n- **Herói:** aluno/profissional (não a ENS).\n- **Problema:** complexidade do mercado, medo de errar, falta de direção.\n- **Guia:** ENS com credenciais, método e ecossistema.\n- **Plano:** trilha clara (ver trilha → escolher programa → estudar com prática → credencial/aplicação).\n- **Sucesso:** se tornar referência técnica, ganhar autonomia e capacidade.\n- **Falha evitada:** estagnação e insegurança profissional.\n\n## Framework 4 — JTBD (Jobs To Be Done)\n**Aplicação:** segmentação por intenção, páginas por persona, copy de WhatsApp.\n\n- **Quando** eu (contexto) …\n- **Quero** …\n- **Para** …",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 3
+    }
+  },
+  {
+    "page_content": "Personas típicas (ENS):\n- Iniciante: “quando quero entrar em seguros, quero uma trilha confiável para começar com segurança.”\n- Corretor em crescimento: “quando quero parar de competir por preço, quero especialização para vender com autoridade.”\n- Profissional de seguradora: “quando quero evoluir para liderança, quero repertório e método aplicável.”\n\n## Framework 5 — Problema → Mecanismo → Prova → CTA\n**Aplicação:** copy curta para performance (anúncios, carrossel, reels, banner).\n\n- **Problema:** “Falta direção.”\n- **Mecanismo:** “Trilha + aulas ao vivo + professores de mercado.”\n- **Prova:** “Instituição com mais de 50 anos e ecossistema do setor.”\n- **CTA:** “Ver opções e datas.”\n\n## Framework 6 — 4U (Useful, Urgent, Unique, Ultra-specific)\n**Aplicação:** headlines, assuntos de e-mail.\n\n- Useful: qual ganho objetivo.\n- Urgent: janela (turma, calendário, bônus) sem sensacionalismo.\n- Unique: diferencial (aulas ao vivo, ecossistema, trilha, tradição).\n- Ultra-specific: modalidade, duração, horários, pré-requisitos.\n\n## Templates prontos (para o agente preencher)\n\n### Template 1 — Hero de landing page\n- Headline: {resultado desejado} em {nicho} com {mecanismo}\n- Sub: {para quem} + {modalidade} + {prova}\n- Bullets: {3 provas/benefícios}\n- CTA: {ação única}\n\n### Template 2 — Anúncio (3 variações)\n1) Direto: “{dor} → {curso} → {benefício}.” CTA.\n2) Prova: “{prova institucional} + {mecanismo} + {benefício}.” CTA.\n3) Trilhas: “Comece por aqui: {trilha}.” CTA.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 4
+    }
+  },
+  {
+    "page_content": "### Template 3 — WhatsApp de triagem (conversão)\n1) “Para eu te indicar a melhor trilha: você é {iniciante/corretor/seguradora}?”\n2) “Seu objetivo é {habilitar/qualificar/especializar/liderar}?”\n3) “Você prefere {ao vivo/assíncrono} e qual horário {manhã/noite}?”\n4) “Perfeito. Aqui está a recomendação + próximos passos.”\n\n### Template 4 — Sequência de e-mail (5 toques)\n1) Boas-vindas + trilha\n2) Conteúdo útil (tema)\n3) Prova (depoimento/estrutura/corpo docente)\n4) Oferta (datas/condições)\n5) Última chamada (prazo real)\n\n## Biblioteca de frases (componentes reutilizáveis)\n\n### Autoridade (sem arrogância)\n- “Formação conectada ao que o setor exige.”\n- “Ensino didático e integrador: teoria + prática.”\n- “Ecossistema com seguradoras, especialistas e iniciativas do setor.”\n\n### Segurança/ética\n- “Comunicação com responsabilidade e foco em transparência.”\n- “Consentimento e privacidade são parte do padrão.”\n\n### Carreira\n- “Um caminho sólido para atuar com autoridade.”\n- “Trilha clara para evoluir do básico ao avançado.”\n\n## Exemplos (baseados em página de habilitação)\n\n### Exemplo — Headline + sub\n- Headline: “Dê o primeiro passo para atuar em seguros com segurança.”\n- Sub: “Curso online ao vivo, com professores de mercado e trilha clara para habilitação.”\n\n### Exemplo — Bullets\n- “Aulas online ao vivo e acompanhamento.”\n- “Pré-requisitos e calendário transparentes.”\n- “Ecossistema conectado ao mercado de seguros.”",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 5
+    }
+  },
+  {
+    "page_content": "## Checklist rápido antes de publicar qualquer peça\n- O texto deixa claro: o que é, para quem é, como funciona, qual o próximo passo?\n- Existe prova explícita (estrutura, corpo docente, tradição, ecossistema)?\n- Existe alguma promessa absoluta que precisa ser suavizada?\n- A peça respeita privacidade/consentimento e evita alegações arriscadas?",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 6
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o contexto e tom institucional da ENS descritos no documento?\nResposta: A ENS atua há mais de 50 anos, mapeia necessidades, arquiteta soluções de ensino e conecta alunos ao ecossistema; o tom é direto, confiante e voltado à carreira e autoridade.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 7
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais valores declarados da ENS são citados?\nResposta: Ética, foco nas metas, respeito, inovação e excelência.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 8
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é a regra “Prova > promessa” no documento?\nResposta: Priorizar prova e evidência em vez de promessas: estrutura, duração, modalidade, requisitos, corpo docente e ecossistema.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 9
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais termos o documento recomenda evitar por serem promessas absolutas?\nResposta: “o melhor”, “garantido” e prometer aprovação/certificação como certeza.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 10
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é a recomendação sobre CTA?\nResposta: Sempre incluir um próximo passo único (CTA).",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 11
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais blocos a “oferta padrão” deve refletir?\nResposta: O que é, para quem, resultado realista, como funciona, provas, segurança (ética/compliance/transparência) e privacidade/cookies.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 12
+    }
+  },
+  {
+    "page_content": "Pergunta: O que é AIDA e onde aplicar?\nResposta: Atenção, Interesse, Desejo e Ação; aplicar em anúncios, hero de landing page, cards e abertura de e-mail.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 13
+    }
+  },
+  {
+    "page_content": "Pergunta: O que é PAS e onde aplicar?\nResposta: Problema, Agitação e Solução; aplicar em quebra de objeções, criativos de performance e páginas de curso.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 14
+    }
+  },
+  {
+    "page_content": "Pergunta: No StoryBrand, quem é o herói e quem é o guia?\nResposta: O aluno/profissional é o herói e a ENS é o guia.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 15
+    }
+  },
+  {
+    "page_content": "Pergunta: Como o JTBD é estruturado no documento?\nResposta: “Quando eu (contexto), quero (ação), para (resultado)”.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 16
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais personas típicas aparecem no JTBD?\nResposta: Iniciante, corretor em crescimento e profissional de seguradora.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 17
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o framework “Problema → Mecanismo → Prova → CTA”?\nResposta: Uma estrutura de copy curta para performance que encadeia dor, mecanismo, evidência e ação única.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 18
+    }
+  },
+  {
+    "page_content": "Pergunta: O que significa 4U e onde aplicar?\nResposta: Useful, Urgent, Unique, Ultra-specific; aplicar em headlines e assuntos de e-mail.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 19
+    }
+  },
+  {
+    "page_content": "Pergunta: O que o template de Hero de landing page inclui?\nResposta: Headline (resultado + nicho + mecanismo), sub (para quem + modalidade + prova), 3 bullets de prova/benefício e CTA.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 20
+    }
+  },
+  {
+    "page_content": "Pergunta: Como funciona o template de WhatsApp de triagem?\nResposta: Perguntar perfil, objetivo e preferência de formato/horário e então dar recomendação + próximos passos.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 21
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais frases de “Autoridade (sem arrogância)” o documento sugere?\nResposta: “Formação conectada ao que o setor exige.”, “Ensino didático e integrador: teoria + prática.” e “Ecossistema conectado ao mercado de seguros.”",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 22
+    }
+  },
+  {
+    "page_content": "Pergunta: Quais frases de “Segurança/ética” o documento sugere?\nResposta: “Comunicação com responsabilidade e foco em transparência.” e “Consentimento e privacidade são parte do padrão.”",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 23
+    }
+  },
+  {
+    "page_content": "Pergunta: Qual é o checklist rápido antes de publicar uma peça?\nResposta: Deixar claro o que é/para quem/como funciona/próximo passo, ter prova explícita, revisar promessas absolutas e respeitar privacidade/consentimento.",
+    "metadata": {
+      "source": "Conteúdo para RAG/Frameworks Copywriting ENS.md",
+      "page": 24
+    }
+  }
+]

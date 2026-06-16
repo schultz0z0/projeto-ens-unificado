@@ -1,0 +1,76 @@
+{
+  "template_id": "05_whatsapp/pos",
+  "output_contract": {
+    "status": "OK|BLOCK",
+    "goal": "string",
+    "allowed_changes": [
+      "..."
+    ],
+    "forbidden_changes": [
+      "..."
+    ],
+    "edit_prompt_final": "prompt curto e executável",
+    "confidence": 0.0,
+    "notes": "string"
+  },
+  "context_json_compacto": {
+    "template_id": "05_whatsapp/institucional",
+    "kv_guidelines": [
+      "Preservar integralmente o key visual do template original.",
+      "Manter o degradê principal horizontal, com origem inferior e transição para cima.",
+      "Não alterar direção, intensidade, opacidade ou área de cobertura do degradê.",
+      "Não alterar enquadramento geral e hierarquia visual do KV."
+    ],
+    "overlay_rules": [
+      "Não reposicionar overlays, formas orgânicas e elementos decorativos.",
+      "Não alterar contraste, saturação ou matiz do KV.",
+      "Não aplicar filtros globais de nitidez, HDR ou color grading."
+    ],
+    "background_rules": [
+      "Permitir edição apenas na região de fundo/persona atrás do KV.",
+      "Ao solicitar fundo sem humanos, proibir rostos, mãos, silhuetas e personagens.",
+      "Manter iluminação compatível com o template para evitar recorte artificial."
+    ],
+    "do_not_change_zones": [
+      {
+        "zone_id": "kv_overlay_main",
+        "description": "Faixa de degradê azul #009db7 na metade horizontal da peça",
+        "lock": true
+      }
+    ],
+    "hard_locks": {
+      "logos": [
+        "ENS"
+      ],
+      "must_preserve": [
+        "logo_ens_assinatura",
+        "rodape",
+        "degrade_principal",
+        "overlays_organicos"
+      ]
+    }
+  },
+  "context_json_raw_path": "C:\\Users\\raphaeloliveira\\Desktop\\Projetos Saas\\Agência NexusAI\\nexus-designer-v3-main\\templates_library\\05_whatsapp\\institucional\\template_context.json",
+  "reference_images": [],
+  "step": "step2_persona",
+  "hard_constraints": [
+    "Não alterar textos, boxes, logos, rodapé, degradê e overlays.",
+    "Trocar somente persona/fundo na área de persona.",
+    "Etiqueta: fundo branco puro (#FFFFFF) e texto na cor principal do KV.",
+    "Box1: fundo branco puro (#FFFFFF) e texto na cor principal do KV.",
+    "Box2: texto branco puro (#FFFFFF).",
+    "Título e frase: sempre branco puro (#FFFFFF).",
+    "Se houver desvio de branco para creme/off-white, corrigir de volta para #FFFFFF.",
+    "Template vertical: preservar cabeça, ombros e tronco com enquadramento natural, sem crop agressivo no topo.",
+    "Manter a posição da persona coerente com a geometria do template atual, sem deslocar o sujeito principal para fora da área esperada.",
+    "Não aplicar corte seco: preservar contexto visual ao redor da persona para evitar recortes abruptos de cabeça, tronco ou membros principais.",
+    "Sem transparência, alpha, fade, ghosting ou lavagem na camada de persona/fundo."
+  ],
+  "planner_overrides": {
+    "color_lock_policy": {
+      "enabled": true,
+      "allow_exceptions": false,
+      "exceptions": []
+    }
+  }
+}
