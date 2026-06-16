@@ -1,7 +1,7 @@
 {
-  "name": "nexusai-rag-mcp",
+  "name": "ens-rag-mcp",
   "version": "0.1.0",
-  "description": "Hermes-compatible MCP gateway for NexusAI multi-tenant Supabase RAG.",
+  "description": "Hermes-compatible MCP gateway for ENS RAG collections.",
   "type": "module",
   "private": true,
   "engines": {

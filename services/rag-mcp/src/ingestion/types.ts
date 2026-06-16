@@ -1,3 +1,5 @@
+import type { EnsRagCollection } from '../rag/types.js';
+
 export type IngestionChunk = {
   kind: string;
   content: string;
@@ -6,6 +8,7 @@ export type IngestionChunk = {
 
 export type IngestionDocument = {
   tenantSlug: string;
+  collection: EnsRagCollection;
   sourceId: string;
   sourceKey: string;
   title: string;

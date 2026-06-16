@@ -54,7 +54,7 @@ services:
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.middlewares=${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard-auth
-      - traefik.http.middlewares.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard-auth.basicauth.users=${NEXUS_HERMES_KANBAN_AUTH_USER:-NexusAI}:${NEXUS_HERMES_KANBAN_AUTH_PASSWORD_HASH:-CHANGE_ME_HTPASSWD_HASH_ESCAPED}
+      - traefik.http.middlewares.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard-auth.basicauth.users=${NEXUS_HERMES_KANBAN_AUTH_USER:-ENS}:${NEXUS_HERMES_KANBAN_AUTH_PASSWORD_HASH:-CHANGE_ME_HTPASSWD_HASH_ESCAPED}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-hermes-dashboard.loadbalancer.server.port=${NEXUS_HERMES_KANBAN_PORT:-9119}
 
   # RAG MCP remains internal-only; Hermes reaches it over the project internal

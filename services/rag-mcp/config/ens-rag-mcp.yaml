@@ -7,7 +7,7 @@ supabase:
   service_role_key_env: "SUPABASE_SERVICE_ROLE_KEY"
 
 policy:
-  common_tenant: "nexusai"
+  common_tenant: "ens"
   admin_profiles:
     - "ceo"
     - "default"

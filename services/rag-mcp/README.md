@@ -1,25 +1,33 @@
-# NexusAI RAG MCP
+# ENS RAG MCP
 
-Hermes-compatible MCP server for the future NexusAI multi-tenant Supabase RAG base.
+Hermes-compatible MCP server for the ENS knowledge base.
 
-This project keeps Hermes Agent clean: Hermes connects to this server over MCP HTTP, and this server owns tenant policy, active-client context, Supabase access, and audit logging.
+This project keeps Hermes clean: Hermes connects over MCP HTTP, and this server owns Supabase access, collection routing, ingestion, audit logging, and write guardrails.
 
-## Why HTTP MCP
+## Collections
 
-Hermes supports MCP servers in `~/.hermes/config.yaml` through `mcp_servers`. HTTP is the best fit for the planned VPS setup because Hermes can run in one container and this MCP can run beside it in the same compose network.
+- `courses`: ENS course catalog, offers, links, modules, FAQs, faculty, and course facts. Read-only for Hermes.
+- `insights`: reusable dated ENS analysis such as funnels, campaigns, and performance conclusions.
+- `institutional`: institutional ENS knowledge and reference context. Read-only in this version.
+- `marketing`: validated ENS marketing learnings and approved campaign knowledge.
 
 ## Tools
 
-- `nexus_rag_search`
-- `nexus_rag_set_active_client`
-- `nexus_rag_context_status`
-- `nexus_rag_list_sources`
-- `nexus_rag_get_document`
-- `nexus_rag_get_ens_course_context`
-- `nexus_rag_ingest_source`
-- `nexus_rag_audit_recent`
+New ENS-first tools:
 
-`nexus_rag_ingest_source` supports controlled refresh ingestion for `ens_courses` and `nexusai_manual`.
+- `ens_rag_search`
+- `ens_rag_get_document`
+- `ens_rag_get_course_context`
+- `ens_rag_ingest_courses`
+- `ens_rag_ingest_institutional`
+- `ens_rag_ingest_marketing`
+- `ens_rag_ingest_insights`
+- `ens_rag_save_insight`
+- `ens_rag_save_marketing_memory`
+- `ens_rag_list_collections`
+- `ens_rag_audit_recent`
+
+The MCP exposes only ENS-first tools. Previous multi-tenant tool names are intentionally not registered.
 
 ## Local Setup
 
@@ -38,7 +46,7 @@ curl http://localhost:8000/health
 
 ## Config
 
-Behavior lives in `config/nexusai-rag-mcp.yaml`.
+Behavior lives in `config/ens-rag-mcp.yaml`.
 
 Secrets live in `.env`:
 
@@ -47,102 +55,141 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
 ENS_API_URL=...
 ENS_API_KEY=...
-ENS_API_KEY_HEADER=key
+ENS_API_KEY_HEADER=x-api-key
 OPENAI_API_KEY=...
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+ENS_INSTITUTIONAL_CONTENT_DIR=data/institutional
+ENS_MARKETING_CONTENT_DIR=data/marketing
+ENS_INSIGHTS_CONTENT_DIR=data/insights
 ```
 
 If Supabase env vars are missing, the server still starts. RAG tools return a clear unavailable error until the database is configured.
 
-## Hermes Config
-
-When this MCP runs in the same Docker Compose network as Hermes:
-
-```yaml
-mcp_servers:
-  nexusai_rag:
-    url: "http://nexusai-rag-mcp:8000/mcp"
-    timeout: 60
-    connect_timeout: 15
-    supports_parallel_tool_calls: false
-    tools:
-      include:
-        - nexus_rag_search
-        - nexus_rag_set_active_client
-        - nexus_rag_context_status
-        - nexus_rag_list_sources
-        - nexus_rag_get_document
-        - nexus_rag_get_ens_course_context
-        - nexus_rag_ingest_source
-        - nexus_rag_audit_recent
-      prompts: false
-      resources: false
-```
-
-Hermes will expose the tools with its MCP prefix, for example:
-
-```text
-mcp_nexusai_rag_nexus_rag_search
-```
-
 ## Supabase
 
-Apply `supabase/schema.sql` after creating the Supabase project.
+For a fresh ENS RAG project:
 
-If you already applied the first schema, apply `supabase/migrations/2026-06-10-rag-ingestion.sql` next.
+```text
+apply services/rag-mcp/supabase/schema.sql
+```
+
+For an existing project already running the old MCP:
+
+1. ensure `services/rag-mcp/supabase/migrations/2026-06-10-rag-ingestion.sql` is already applied
+2. apply `services/rag-mcp/supabase/migrations/2026-06-16-ens-rag-collections.sql`
+3. apply `services/rag-mcp/supabase/migrations/2026-06-16-remove-nexusai-tenant.sql` to remove old NexusAI rows
 
 Search uses full-text search when embeddings are unavailable and hybrid vector + full-text search when `OPENAI_API_KEY` is configured and chunks have embeddings.
 
 ## Ingestion
 
+Course ingestion is now ENS-only and collection-specific.
+
 Run controlled ingestion through the MCP tool:
 
 ```json
 {
-  "source_id": "ens_courses",
-  "tenant_id": "ens",
   "actor_profile": "ceo",
   "admin_mode": true
 }
 ```
 
-ENS ingestion is specific to tenant `ens`. Its dead-course rule is not global:
+Tool name:
+
+```text
+ens_rag_ingest_courses
+```
+
+ENS course filter:
 
 ```text
 skip only when liberar_curso = blocked and exibir_sempre_pagina_interna = false
 ```
 
-For Hermes copy/strategy work on ENS courses, use the ENS-only context expansion tool after setting the active client:
+The refresh model remains replace-then-add for the ENS course source.
 
-```json
-{
-  "course_name": "Gestão de Seguros",
-  "actor_profile": "marketing-specialist",
-  "client_id": "ens"
-}
+Institutional ingestion uses versioned Markdown files from:
+
+```text
+data/institutional
 ```
 
-This returns all ingested chunks for the selected ENS course grouped by section: summary, description, audience, modules, faculty, offers, visual content, FAQs, differentials, and testimonials when present.
+Tool name:
 
-NexusAI example ingestion:
+```text
+ens_rag_ingest_institutional
+```
+
+Marketing ingestion uses versioned Markdown files from:
+
+```text
+data/marketing
+```
+
+Tool name:
+
+```text
+ens_rag_ingest_marketing
+```
+
+Insights ingestion uses versioned Markdown files from:
+
+```text
+data/insights
+```
+
+Tool name:
+
+```text
+ens_rag_ingest_insights
+```
+
+The helper script calls all four ingestion tools through MCP:
+
+```bash
+MCP_URL=http://127.0.0.1:8000/mcp node scripts/run-first-ingestion.mjs
+```
+
+After ingestion, validate collection counts and one grounded search per collection:
+
+```bash
+MCP_URL=http://127.0.0.1:8000/mcp node scripts/validate-ens-rag.mjs
+```
+
+Arguments:
 
 ```json
 {
-  "source_id": "nexusai_manual",
-  "tenant_id": "nexusai",
   "actor_profile": "ceo",
   "admin_mode": true
 }
 ```
 
-The current NexusAI source uses example content from `data/seeds/nexusai-example-content.json`.
+## Search and Save Rules
 
-## Tenant Rule
+- Use `courses` for factual course grounding.
+- Use `ens_rag_get_course_context` for one specific course.
+- Use `insights` for analytical memory and prefer recent analysis.
+- Use `institutional` for ENS institutional context.
+- Use `marketing` only for validated marketing memory.
+- `ens_rag_save_marketing_memory` requires explicit user validation.
+- Use `ens_rag_search` with explicit `collections` whenever the task is narrow.
+- Treat empty search results as lack of grounded evidence, not permission to invent.
 
-Specialist profiles can access:
+## Skills
 
-```text
-nexusai + active_client
-```
+The installable skills for Hermes are stored inside this repo:
 
-Admin profiles listed in YAML can access other tenants only with `admin_mode: true` and explicit tenant IDs.
+- `skills/ens-rag-router`
+- `skills/ens-rag-courses`
+- `skills/ens-rag-insights`
+- `skills/ens-rag-institutional`
+- `skills/ens-rag-marketing`
+
+They are not auto-installed. Validate them first, then install or copy them into Hermes manually.
+
+## Hermes Config Example
+
+See `docs/hermes-config.example.yaml`.
+
+This repo does not modify Hermes automatically.

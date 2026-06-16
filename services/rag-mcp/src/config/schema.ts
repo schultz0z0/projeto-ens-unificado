@@ -10,7 +10,7 @@ export const appConfigSchema = z.object({
     service_role_key_env: z.string().default('SUPABASE_SERVICE_ROLE_KEY')
   }),
   policy: z.object({
-    common_tenant: z.string().min(1).default('nexusai'),
+    common_tenant: z.string().min(1).default('ens'),
     admin_profiles: z.array(z.string().min(1)).default(['ceo', 'default']),
     default_limit: z.number().int().positive().default(8),
     max_limit: z.number().int().positive().default(20)

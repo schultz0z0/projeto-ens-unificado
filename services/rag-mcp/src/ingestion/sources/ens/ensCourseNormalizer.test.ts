@@ -103,6 +103,7 @@ describe('ENS course normalizer', () => {
 
     expect(document).not.toBeNull();
     expect(document?.title).toBe('Curso ENS Exemplo');
+    expect(document?.collection).toBe('courses');
     expect(document?.sourceId).toBe('ens_courses');
     expect(document?.sourceKey).toBe('ens-123:curso ens exemplo');
     expect(document?.metadata).toMatchObject({

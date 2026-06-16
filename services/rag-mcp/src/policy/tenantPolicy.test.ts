@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { assertTenantAccess, resolveTenantScope } from './tenantPolicy.js';
 
 const basePolicy = {
-  commonTenant: 'nexusai',
+  commonTenant: 'ens',
   adminProfiles: ['ceo', 'default'],
   maxLimit: 20,
   defaultLimit: 8
@@ -13,12 +13,12 @@ describe('tenant policy', () => {
     const scope = resolveTenantScope({
       actorProfile: 'marketing-specialist',
       activeClient: 'cliente_acme',
-      requestedTenants: ['nexusai', 'cliente_acme'],
+      requestedTenants: ['ens', 'cliente_acme'],
       adminMode: false,
       policy: basePolicy
     });
 
-    expect(scope.allowedTenants).toEqual(['nexusai', 'cliente_acme']);
+    expect(scope.allowedTenants).toEqual(['ens', 'cliente_acme']);
     expect(scope.isAdmin).toBe(false);
   });
 
@@ -42,7 +42,7 @@ describe('tenant policy', () => {
       policy: basePolicy
     });
 
-    expect(scope.allowedTenants).toEqual(['nexusai']);
+    expect(scope.allowedTenants).toEqual(['ens']);
   });
 
   it('requires explicit admin mode before an admin profile can access arbitrary tenants', () => {

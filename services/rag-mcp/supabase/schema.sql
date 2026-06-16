@@ -12,6 +12,7 @@ create table if not exists tenants (
 create table if not exists documents (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references tenants(id) on delete cascade,
+  collection text not null default 'courses' check (collection in ('courses', 'insights', 'institutional', 'marketing')),
   title text not null,
   source_type text not null,
   source_id text,
@@ -27,6 +28,7 @@ create table if not exists document_chunks (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references tenants(id) on delete cascade,
   document_id uuid not null references documents(id) on delete cascade,
+  collection text not null default 'courses' check (collection in ('courses', 'insights', 'institutional', 'marketing')),
   content text not null,
   embedding vector(1536),
   embedding_model text,
@@ -60,8 +62,11 @@ create table if not exists rag_audit_events (
 create index if not exists documents_tenant_id_idx on documents(tenant_id);
 create index if not exists documents_tenant_source_idx on documents(tenant_id, source_id);
 create unique index if not exists documents_tenant_source_key_idx on documents(tenant_id, source_id, source_key) where source_id is not null and source_key is not null;
+create index if not exists documents_collection_source_idx on documents(collection, source_id);
+create index if not exists documents_collection_updated_at_idx on documents(collection, updated_at desc);
 create index if not exists document_chunks_tenant_id_idx on document_chunks(tenant_id);
 create index if not exists document_chunks_document_id_idx on document_chunks(document_id);
+create index if not exists document_chunks_collection_idx on document_chunks(collection);
 create index if not exists document_chunks_fts_idx on document_chunks using gin(fts);
 create index if not exists rag_queries_created_at_idx on rag_queries(created_at desc);
 create index if not exists rag_audit_events_created_at_idx on rag_audit_events(created_at desc);
@@ -70,12 +75,16 @@ create or replace function match_document_chunks(
   query_text text,
   tenant_slugs text[],
   match_count integer default 8,
-  query_embedding vector(1536) default null
+  query_embedding vector(1536) default null,
+  collections text[] default null,
+  freshness_cutoff timestamptz default null,
+  include_stale boolean default true
 )
 returns table (
   chunk_id uuid,
   document_id uuid,
   tenant_slug text,
+  collection text,
   title text,
   content text,
   score real,
@@ -90,10 +99,12 @@ as $$
       c.id as chunk_id,
       d.id as document_id,
       t.slug as tenant_slug,
+      d.collection,
       d.title,
       c.content,
       c.metadata,
       d.source_uri,
+      d.updated_at,
       case
         when c.fts @@ plainto_tsquery('portuguese', query_text)
           then ts_rank_cd(c.fts, plainto_tsquery('portuguese', query_text))
@@ -109,6 +120,19 @@ as $$
     join tenants t on t.id = c.tenant_id
     where
       t.slug = any(tenant_slugs)
+      and (collections is null or d.collection = any(collections))
+      and (
+        include_stale
+        or freshness_cutoff is null
+        or coalesce(
+          case
+            when (d.metadata->>'analysis_date') ~ '^\d{4}-\d{2}-\d{2}'
+              then (d.metadata->>'analysis_date')::timestamptz
+            else null
+          end,
+          d.updated_at
+        ) >= freshness_cutoff
+      )
       and (
         c.fts @@ plainto_tsquery('portuguese', query_text)
         or (query_embedding is not null and c.embedding is not null)
@@ -118,6 +142,7 @@ as $$
     chunk_id,
     document_id,
     tenant_slug,
+    collection,
     title,
     content,
     ((0.55 * vector_score) + (0.45 * fts_score))::real as score,
@@ -129,5 +154,5 @@ as $$
 $$;
 
 insert into tenants (slug, name, type)
-values ('nexusai', 'NexusAI', 'internal')
+values ('ens', 'ENS', 'client')
 on conflict (slug) do nothing;

@@ -37,6 +37,7 @@ export function normalizeEnsCourse(item: EnsCourseItem, tenantSlug = 'ens'): Ing
 
   return {
     tenantSlug,
+    collection: 'courses',
     sourceId,
     sourceKey,
     title,

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type {
+  EnsRagCollection,
   RagAuditEvent,
   RagDocument,
   RagRepository,
@@ -38,6 +39,10 @@ class UnavailableRagRepository implements RagRepository {
     throw new RepositoryUnavailableError(this.reason);
   }
 
+  async listCollections(): Promise<Array<{ collection: EnsRagCollection; documentCount: number; latestUpdatedAt?: string }>> {
+    throw new RepositoryUnavailableError(this.reason);
+  }
+
   async getDocument(): Promise<RagDocument | null> {
     throw new RepositoryUnavailableError(this.reason);
   }
@@ -57,6 +62,10 @@ class UnavailableRagRepository implements RagRepository {
   async refreshSourceDocuments(): Promise<void> {
     throw new RepositoryUnavailableError(this.reason);
   }
+
+  async insertKnowledgeDocument(): Promise<RagDocument> {
+    throw new RepositoryUnavailableError(this.reason);
+  }
 }
 
 class SupabaseRagRepository implements RagRepository {
@@ -67,7 +76,10 @@ class SupabaseRagRepository implements RagRepository {
       query_text: input.query,
       tenant_slugs: input.allowedTenants,
       match_count: input.limit,
-      query_embedding: input.queryEmbedding ?? null
+      query_embedding: input.queryEmbedding ?? null,
+      collections: input.collections ?? null,
+      freshness_cutoff: toFreshnessCutoff(input.freshnessDays),
+      include_stale: input.includeStale ?? true
     });
 
     if (error) {
@@ -78,6 +90,7 @@ class SupabaseRagRepository implements RagRepository {
       chunkId: row.chunk_id,
       documentId: row.document_id,
       tenant: row.tenant_slug,
+      collection: row.collection,
       title: row.title,
       content: row.content,
       score: Number(row.score ?? 0),
@@ -89,7 +102,7 @@ class SupabaseRagRepository implements RagRepository {
   async listSources(tenant: string): Promise<RagSource[]> {
     const { data, error } = await this.supabase
       .from('documents')
-      .select('id,title,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
+      .select('id,title,collection,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
       .eq('tenants.slug', tenant)
       .order('updated_at', { ascending: false });
 
@@ -100,10 +113,43 @@ class SupabaseRagRepository implements RagRepository {
     return (data ?? []).map((row: any) => mapSource(row));
   }
 
+  async listCollections(): Promise<Array<{ collection: EnsRagCollection; documentCount: number; latestUpdatedAt?: string }>> {
+    const { data, error } = await this.supabase
+      .from('documents')
+      .select('collection,updated_at,tenants!inner(slug)')
+      .eq('tenants.slug', 'ens');
+
+    if (error) {
+      throw new Error(`Supabase list collections failed: ${error.message}`);
+    }
+
+    const grouped = new Map<EnsRagCollection, { collection: EnsRagCollection; documentCount: number; latestUpdatedAt?: string }>();
+
+    for (const row of data ?? []) {
+      const collection = row.collection as EnsRagCollection;
+      const current = grouped.get(collection);
+      if (!current) {
+        grouped.set(collection, {
+          collection,
+          documentCount: 1,
+          latestUpdatedAt: row.updated_at ?? undefined
+        });
+        continue;
+      }
+
+      current.documentCount += 1;
+      if (!current.latestUpdatedAt || (row.updated_at && row.updated_at > current.latestUpdatedAt)) {
+        current.latestUpdatedAt = row.updated_at ?? current.latestUpdatedAt;
+      }
+    }
+
+    return [...grouped.values()].sort((a, b) => a.collection.localeCompare(b.collection));
+  }
+
   async getDocument(documentId: string): Promise<RagDocument | null> {
     const { data: document, error: documentError } = await this.supabase
       .from('documents')
-      .select('id,title,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
+      .select('id,title,collection,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
       .eq('id', documentId)
       .maybeSingle();
 
@@ -117,7 +163,7 @@ class SupabaseRagRepository implements RagRepository {
 
     const { data: chunks, error: chunksError } = await this.supabase
       .from('document_chunks')
-      .select('id,content,metadata,created_at')
+      .select('id,content,metadata,created_at,collection')
       .eq('document_id', documentId)
       .order('created_at', { ascending: true });
 
@@ -145,7 +191,7 @@ class SupabaseRagRepository implements RagRepository {
     const normalizedTitle = input.title.trim();
     const { data, error } = await this.supabase
       .from('documents')
-      .select('id,title,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
+      .select('id,title,collection,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
       .eq('tenants.slug', input.tenantSlug)
       .eq('source_id', input.sourceId)
       .ilike('title', `%${escapeIlike(normalizedTitle)}%`)
@@ -253,6 +299,7 @@ class SupabaseRagRepository implements RagRepository {
         .from('documents')
         .insert({
           tenant_id: tenantId,
+          collection: document.collection,
           title: document.title,
           source_type: document.sourceType,
           source_id: document.sourceId,
@@ -273,6 +320,7 @@ class SupabaseRagRepository implements RagRepository {
         return {
           tenant_id: tenantId,
           document_id: insertedDocument.id,
+          collection: document.collection,
           content: chunk.content,
           embedding,
           embedding_model: embedding ? input.embeddingModel ?? null : null,
@@ -296,6 +344,76 @@ class SupabaseRagRepository implements RagRepository {
     }
   }
 
+  async insertKnowledgeDocument(input: {
+    collection: EnsRagCollection;
+    title: string;
+    sourceId: string;
+    sourceKey: string;
+    sourceType: string;
+    sourceUri?: string;
+    visibility: string;
+    metadata: Record<string, unknown>;
+    chunks: Array<{
+      kind: string;
+      content: string;
+      metadata: Record<string, unknown>;
+      embedding?: number[] | null;
+      embeddingModel?: string;
+    }>;
+  }): Promise<RagDocument> {
+    const tenantId = await this.ensureTenant('ens');
+    const { data: insertedDocument, error: documentError } = await this.supabase
+      .from('documents')
+      .insert({
+        tenant_id: tenantId,
+        collection: input.collection,
+        title: input.title,
+        source_type: input.sourceType,
+        source_id: input.sourceId,
+        source_key: input.sourceKey,
+        source_uri: input.sourceUri ?? null,
+        visibility: input.visibility,
+        metadata: input.metadata
+      })
+      .select('id,title,collection,source_type,source_uri,visibility,metadata,updated_at,tenants!inner(slug)')
+      .single();
+
+    if (documentError) {
+      throw new Error(`Supabase document insert failed: ${documentError.message}`);
+    }
+
+    const chunkRows = input.chunks.map(chunk => ({
+      tenant_id: tenantId,
+      document_id: insertedDocument.id,
+      collection: input.collection,
+      content: chunk.content,
+      embedding: chunk.embedding ?? null,
+      embedding_model: chunk.embedding ? chunk.embeddingModel ?? null : null,
+      metadata: {
+        ...chunk.metadata,
+        source_id: input.sourceId,
+        source_key: input.sourceKey,
+        chunk_kind: chunk.kind
+      }
+    }));
+
+    if (chunkRows.length > 0) {
+      const { error: chunkError } = await this.supabase.from('document_chunks').insert(chunkRows);
+      if (chunkError) {
+        throw new Error(`Supabase chunk insert failed: ${chunkError.message}`);
+      }
+    }
+
+    return {
+      ...mapSource(insertedDocument),
+      chunks: chunkRows.map((row, index) => ({
+        id: `inserted-${index}`,
+        content: row.content,
+        metadata: row.metadata
+      }))
+    };
+  }
+
   private async ensureTenant(slug: string): Promise<string> {
     const { data: existing, error: lookupError } = await this.supabase
       .from('tenants')
@@ -316,7 +434,7 @@ class SupabaseRagRepository implements RagRepository {
       .insert({
         slug,
         name: slug === 'ens' ? 'ENS' : slug,
-        type: slug === 'nexusai' ? 'internal' : 'client'
+        type: slug === 'ens' ? 'client' : 'external'
       })
       .select('id')
       .single();
@@ -333,6 +451,7 @@ function mapSource(row: any): RagSource {
   return {
     id: row.id,
     tenant: row.tenants?.slug,
+    collection: row.collection,
     title: row.title,
     sourceType: row.source_type,
     sourceUri: row.source_uri ?? undefined,
@@ -340,6 +459,15 @@ function mapSource(row: any): RagSource {
     metadata: row.metadata ?? {},
     updatedAt: row.updated_at ?? undefined
   };
+}
+
+function toFreshnessCutoff(freshnessDays?: number): string | null {
+  if (!freshnessDays || freshnessDays <= 0) {
+    return null;
+  }
+
+  const now = Date.now();
+  return new Date(now - freshnessDays * 24 * 60 * 60 * 1000).toISOString();
 }
 
 function escapeIlike(value: string): string {

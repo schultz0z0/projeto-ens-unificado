@@ -3,7 +3,7 @@ import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { loadDotEnv } from './config/loadEnv.js';
 import { loadConfig } from './config/loadConfig.js';
-import { createNexusRagMcpServer } from './mcp/createServer.js';
+import { createEnsRagMcpServer } from './mcp/createServer.js';
 import { createSupabaseRepository } from './rag/ragRepository.js';
 
 loadDotEnv();
@@ -19,13 +19,13 @@ const app = createMcpExpressApp({ host: config.server.host });
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
     ok: true,
-    service: 'nexusai-rag-mcp',
+    service: 'ens-rag-mcp',
     transport: 'streamable-http'
   });
 });
 
 app.post('/mcp', async (req: Request, res: Response) => {
-  const server = createNexusRagMcpServer({ config, repository });
+  const server = createEnsRagMcpServer({ config, repository });
 
   try {
     const transport = new StreamableHTTPServerTransport({
@@ -71,5 +71,5 @@ app.delete('/mcp', (_req: Request, res: Response) => {
 });
 
 app.listen(config.server.port, config.server.host, () => {
-  console.log(`NexusAI RAG MCP listening on ${config.server.host}:${config.server.port}`);
+  console.log(`ENS RAG MCP listening on ${config.server.host}:${config.server.port}`);
 });

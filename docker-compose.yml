@@ -9,16 +9,18 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXUSAI_RAG_MCP_CONFIG: /app/config/nexusai-rag-mcp.yaml
+      ENS_RAG_MCP_CONFIG: ${NEXUS_RAG_MCP_CONFIG:-/app/config/ens-rag-mcp.yaml}
       SUPABASE_URL: ${NEXUS_RAG_SUPABASE_URL:-}
       SUPABASE_SERVICE_ROLE_KEY: ${NEXUS_RAG_SUPABASE_SERVICE_ROLE_KEY:-}
       ENS_API_URL: ${NEXUS_ENS_API_URL:-}
       ENS_API_KEY: ${NEXUS_ENS_API_KEY:-}
       ENS_API_KEY_HEADER: ${NEXUS_ENS_API_KEY_HEADER:-x-api-key}
+      ENS_INSTITUTIONAL_CONTENT_DIR: ${NEXUS_RAG_INSTITUTIONAL_CONTENT_DIR:-/app/data/institutional}
+      ENS_MARKETING_CONTENT_DIR: ${NEXUS_RAG_MARKETING_CONTENT_DIR:-/app/data/marketing}
+      ENS_INSIGHTS_CONTENT_DIR: ${NEXUS_RAG_INSIGHTS_CONTENT_DIR:-/app/data/insights}
       OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
       OPENAI_EMBEDDING_MODEL: ${NEXUS_OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       OPENAI_EMBEDDING_BASE_URL: ${NEXUS_OPENAI_EMBEDDING_BASE_URL:-}
-      NEXUSAI_MANUAL_SEED_PATH: ${NEXUS_RAG_MANUAL_SEED_PATH:-}
     volumes:
       - ./services/rag-mcp/config:/app/config:ro
     ports:

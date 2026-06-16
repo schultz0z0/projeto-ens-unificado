@@ -1,16 +1,31 @@
 import type { IngestionDocument } from '../ingestion/types.js';
 
+export type EnsRagCollection = 'courses' | 'insights' | 'institutional' | 'marketing';
+
+export type RagSearchIntent =
+  | 'course_fact'
+  | 'course_copy'
+  | 'analytics'
+  | 'institutional'
+  | 'marketing_strategy'
+  | 'general';
+
 export type RagSearchInput = {
   query: string;
   allowedTenants: string[];
+  collections?: EnsRagCollection[];
   limit: number;
   queryEmbedding?: number[];
+  freshnessDays?: number;
+  includeStale?: boolean;
+  intent?: RagSearchIntent;
 };
 
 export type RagSearchResult = {
   chunkId: string;
   documentId: string;
   tenant: string;
+  collection: EnsRagCollection;
   title: string;
   content: string;
   score: number;
@@ -21,6 +36,7 @@ export type RagSearchResult = {
 export type RagSource = {
   id: string;
   tenant: string;
+  collection: EnsRagCollection;
   title: string;
   sourceType: string;
   sourceUri?: string;
@@ -51,6 +67,13 @@ export type RagAuditEvent = {
 
 export interface RagRepository {
   searchChunks(input: RagSearchInput): Promise<RagSearchResult[]>;
+  listCollections(): Promise<
+    Array<{
+      collection: EnsRagCollection;
+      documentCount: number;
+      latestUpdatedAt?: string;
+    }>
+  >;
   listSources(tenant: string): Promise<RagSource[]>;
   getDocument(documentId: string): Promise<RagDocument | null>;
   findDocumentsByTitle(input: {
@@ -83,4 +106,21 @@ export interface RagRepository {
     embeddings: Array<number[] | null>;
     embeddingModel?: string;
   }): Promise<void>;
+  insertKnowledgeDocument(input: {
+    collection: EnsRagCollection;
+    title: string;
+    sourceId: string;
+    sourceKey: string;
+    sourceType: string;
+    sourceUri?: string;
+    visibility: string;
+    metadata: Record<string, unknown>;
+    chunks: Array<{
+      kind: string;
+      content: string;
+      metadata: Record<string, unknown>;
+      embedding?: number[] | null;
+      embeddingModel?: string;
+    }>;
+  }): Promise<RagDocument>;
 }

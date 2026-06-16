@@ -1,12 +1,17 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { getActiveClient, listActiveContexts, setActiveClient } from '../context/activeContext.js';
 import type { AppConfig } from '../config/schema.js';
 import { createEmbeddingProviderFromEnv } from '../ingestion/embeddings/embeddingProvider.js';
 import { IngestionService } from '../ingestion/ingestionService.js';
 import { buildEnsCourseContext } from '../ingestion/sources/ens/ensCourseContext.js';
-import { assertTenantAccess, TenantAccessError, type TenantPolicyConfig } from '../policy/tenantPolicy.js';
-import type { RagRepository } from '../rag/types.js';
+import {
+  assertMarketingValidation,
+  defaultCollectionsForIntent,
+  normalizeCollections
+} from '../policy/collectionPolicy.js';
+import { TenantAccessError, type TenantPolicyConfig } from '../policy/tenantPolicy.js';
+import type { EnsRagCollection, RagRepository, RagSearchIntent } from '../rag/types.js';
+import { collectionSchema, marketingCategorySchema, searchIntentSchema } from './ensToolSchemas.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
 
 export type ServerDependencies = {
@@ -16,9 +21,9 @@ export type ServerDependencies = {
 
 const actorProfileSchema = z.string().min(1).default('default');
 
-export function createNexusRagMcpServer({ config, repository }: ServerDependencies): McpServer {
+export function createEnsRagMcpServer({ config, repository }: ServerDependencies): McpServer {
   const server = new McpServer({
-    name: 'nexusai-rag-mcp',
+    name: 'ens-rag-mcp',
     version: '0.1.0'
   });
 
@@ -27,198 +32,107 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
   const ingestionService = new IngestionService(repository, embeddingProvider);
 
   server.registerTool(
-    'nexus_rag_set_active_client',
+    'ens_rag_search',
     {
-      title: 'Set Active NexusAI RAG Client',
-      description: 'Set the active client tenant for a Hermes profile before RAG lookups.',
-      inputSchema: {
-        actor_profile: actorProfileSchema,
-        client_id: z.string().min(1).describe('Tenant slug, for example cliente_acme.')
-      }
-    },
-    async ({ actor_profile, client_id }) => {
-      setActiveClient(actor_profile, client_id);
-
-      return jsonToolResult({
-        ok: true,
-        actor_profile,
-        active_client: client_id
-      });
-    }
-  );
-
-  server.registerTool(
-    'nexus_rag_context_status',
-    {
-      title: 'NexusAI RAG Context Status',
-      description: 'Show active client context and policy settings for NexusAI RAG.',
-      inputSchema: {
-        actor_profile: actorProfileSchema
-      }
-    },
-    async ({ actor_profile }) =>
-      jsonToolResult({
-        actor_profile,
-        active_client: getActiveClient(actor_profile),
-        active_contexts: listActiveContexts(),
-        common_tenant: policy.commonTenant,
-        admin_profiles: policy.adminProfiles
-      })
-  );
-
-  server.registerTool(
-    'nexus_rag_search',
-    {
-      title: 'Search NexusAI RAG',
-      description: 'Search approved NexusAI and active-client RAG tenants with tenant isolation.',
+      title: 'Search ENS RAG Collections',
+      description: 'Search ENS knowledge collections with collection routing and freshness controls.',
       inputSchema: {
         query: z.string().min(1),
-        actor_profile: actorProfileSchema,
-        client_id: z.string().min(1).optional(),
-        tenant_ids: z.array(z.string().min(1)).optional(),
-        purpose: z.string().optional(),
+        collections: z.array(collectionSchema).optional(),
+        intent: searchIntentSchema.optional(),
         limit: z.number().int().positive().optional(),
-        admin_mode: z.boolean().default(false)
+        freshness_days: z.number().int().positive().optional(),
+        include_stale: z.boolean().optional(),
+        require_evidence: z.boolean().default(true),
+        actor_profile: actorProfileSchema
       }
     },
     async input => {
       try {
-        const activeClient = input.client_id ?? getActiveClient(input.actor_profile);
-        const scope = assertTenantAccess({
-          actorProfile: input.actor_profile,
-          activeClient,
-          requestedTenants: input.tenant_ids,
-          adminMode: input.admin_mode,
-          policy
-        });
+        const collections = normalizeCollections(input.collections ?? defaultCollectionsForIntent(input.intent as RagSearchIntent));
         const limit = clampLimit(input.limit, policy);
         const [queryEmbedding] = await embeddingProvider.embed([input.query]);
         const results = await repository.searchChunks({
           query: input.query,
-          allowedTenants: scope.allowedTenants,
+          allowedTenants: ['ens'],
+          collections,
           limit,
-          queryEmbedding: queryEmbedding ?? undefined
+          queryEmbedding: queryEmbedding ?? undefined,
+          freshnessDays: input.freshness_days,
+          includeStale: input.include_stale ?? !['analytics', 'marketing_strategy'].includes(input.intent ?? ''),
+          intent: input.intent as RagSearchIntent | undefined
         });
 
         await repository.recordQuery({
           actorProfile: input.actor_profile,
-          activeClient,
-          allowedTenants: scope.allowedTenants,
+          activeClient: 'ens',
+          allowedTenants: ['ens'],
           query: input.query,
-          purpose: input.purpose,
+          purpose: input.intent,
           resultCount: results.length
         });
 
         return jsonToolResult({
           query: input.query,
-          purpose: input.purpose,
           actor_profile: input.actor_profile,
-          active_client: activeClient,
-          allowed_tenants: scope.allowedTenants,
+          collections,
           result_count: results.length,
+          require_evidence: input.require_evidence,
           search_mode: queryEmbedding ? 'hybrid_vector_fts' : 'full_text',
+          warning: input.require_evidence && results.length === 0 ? 'No grounded ENS evidence found for this query.' : undefined,
           results
         });
       } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'search', input.tenant_ids, error);
         return toolError(error);
       }
     }
   );
 
   server.registerTool(
-    'nexus_rag_list_sources',
+    'ens_rag_get_document',
     {
-      title: 'List NexusAI RAG Sources',
-      description: 'List documents for an allowed tenant.',
-      inputSchema: {
-        tenant_id: z.string().min(1),
-        actor_profile: actorProfileSchema,
-        client_id: z.string().min(1).optional(),
-        admin_mode: z.boolean().default(false)
-      }
-    },
-    async input => {
-      try {
-        assertTenantAccess({
-          actorProfile: input.actor_profile,
-          activeClient: input.client_id ?? getActiveClient(input.actor_profile),
-          requestedTenants: [input.tenant_id],
-          adminMode: input.admin_mode,
-          policy
-        });
-
-        const sources = await repository.listSources(input.tenant_id);
-        return jsonToolResult({ tenant_id: input.tenant_id, count: sources.length, sources });
-      } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'list_sources', [input.tenant_id], error);
-        return toolError(error);
-      }
-    }
-  );
-
-  server.registerTool(
-    'nexus_rag_get_document',
-    {
-      title: 'Get NexusAI RAG Document',
-      description: 'Get one document and its chunks after tenant access is validated.',
+      title: 'Get ENS RAG Document',
+      description: 'Load a full ENS document and its chunks, optionally constrained to an expected collection.',
       inputSchema: {
         document_id: z.string().uuid(),
-        tenant_id: z.string().min(1),
-        actor_profile: actorProfileSchema,
-        client_id: z.string().min(1).optional(),
-        admin_mode: z.boolean().default(false)
+        expected_collection: collectionSchema.optional(),
+        actor_profile: actorProfileSchema
       }
     },
     async input => {
       try {
-        assertTenantAccess({
-          actorProfile: input.actor_profile,
-          activeClient: input.client_id ?? getActiveClient(input.actor_profile),
-          requestedTenants: [input.tenant_id],
-          adminMode: input.admin_mode,
-          policy
-        });
-
         const document = await repository.getDocument(input.document_id);
         if (!document) {
           return jsonToolResult({ document_id: input.document_id, found: false });
         }
 
-        if (document.tenant !== input.tenant_id) {
-          throw new TenantAccessError(`Access denied: document is not in tenant ${input.tenant_id}.`);
+        if (document.tenant !== 'ens') {
+          throw new TenantAccessError('Access denied: document is not in the ENS tenant.');
+        }
+
+        if (input.expected_collection && document.collection !== input.expected_collection) {
+          throw new Error(`Document collection mismatch: expected ${input.expected_collection}, received ${document.collection}.`);
         }
 
         return jsonToolResult({ document_id: input.document_id, found: true, document });
       } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'get_document', [input.tenant_id], error, input.document_id);
         return toolError(error);
       }
     }
   );
 
   server.registerTool(
-    'nexus_rag_get_ens_course_context',
+    'ens_rag_get_course_context',
     {
-      title: 'Get Full ENS Course Context',
-      description: 'ENS-only helper that returns all ingested chunks for one ENS course, grouped for Hermes copy/strategy work.',
+      title: 'Get ENS Course Context',
+      description: 'Load the full grounded course context for one ENS course.',
       inputSchema: {
         course_name: z.string().min(1),
-        actor_profile: actorProfileSchema,
-        client_id: z.string().min(1).optional(),
-        tenant_id: z.literal('ens').default('ens')
+        actor_profile: actorProfileSchema
       }
     },
     async input => {
       try {
-        assertTenantAccess({
-          actorProfile: input.actor_profile,
-          activeClient: input.client_id ?? getActiveClient(input.actor_profile),
-          requestedTenants: ['ens'],
-          adminMode: false,
-          policy
-        });
-
         const candidates = await repository.findDocumentsByTitle({
           tenantSlug: 'ens',
           sourceId: 'ens_courses',
@@ -229,7 +143,7 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
         if (candidates.length === 0) {
           return jsonToolResult({
             found: false,
-            tenant_id: 'ens',
+            collection: 'courses',
             source_id: 'ens_courses',
             course_name: input.course_name,
             message: 'No ENS course document matched the requested course name.'
@@ -241,17 +155,16 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
         if (!document || document.tenant !== 'ens') {
           return jsonToolResult({
             found: false,
-            tenant_id: 'ens',
+            collection: 'courses',
             source_id: 'ens_courses',
             course_name: input.course_name,
             candidates
           });
         }
 
-        const context = buildEnsCourseContext(document);
         return jsonToolResult({
           found: true,
-          tenant_id: 'ens',
+          collection: 'courses',
           source_id: 'ens_courses',
           requested_course_name: input.course_name,
           selected_course_title: selected.title,
@@ -260,23 +173,20 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
             title: candidate.title,
             source_key: candidate.metadata.source_key ?? candidate.metadata.id_academico
           })),
-          context
+          context: buildEnsCourseContext(document)
         } as unknown as Record<string, unknown>);
       } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'get_ens_course_context', ['ens'], error);
         return toolError(error);
       }
     }
   );
 
   server.registerTool(
-    'nexus_rag_ingest_source',
+    'ens_rag_ingest_courses',
     {
-      title: 'Ingest NexusAI RAG Source',
-      description: 'Refresh a controlled RAG source. ENS rules apply only to ens_courses.',
+      title: 'Ingest ENS Courses',
+      description: 'Refresh the ENS courses collection from the ENS site API.',
       inputSchema: {
-        source_id: z.enum(['ens_courses', 'nexusai_manual']),
-        tenant_id: z.string().min(1),
         actor_profile: actorProfileSchema,
         admin_mode: z.boolean().default(false)
       }
@@ -284,35 +194,296 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
     async input => {
       try {
         if (!input.admin_mode || !policy.adminProfiles.includes(input.actor_profile)) {
-          throw new TenantAccessError('Access denied: ingest_source requires admin_mode from an admin profile.');
-        }
-
-        if (input.source_id === 'ens_courses' && input.tenant_id !== 'ens') {
-          throw new TenantAccessError('Access denied: ens_courses can only ingest into tenant ens.');
-        }
-
-        if (input.source_id === 'nexusai_manual' && input.tenant_id !== policy.commonTenant) {
-          throw new TenantAccessError(`Access denied: nexusai_manual can only ingest into tenant ${policy.commonTenant}.`);
+          throw new TenantAccessError('Access denied: ens_rag_ingest_courses requires admin_mode from an admin profile.');
         }
 
         const result = await ingestionService.refreshSource({
-          sourceId: input.source_id,
-          tenantSlug: input.tenant_id
+          sourceId: 'ens_courses',
+          tenantSlug: 'ens'
         });
 
-        return jsonToolResult(result as unknown as Record<string, unknown>);
+        return jsonToolResult({
+          ...result,
+          collection: 'courses'
+        });
       } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'ingest_source', [input.tenant_id], error);
+        await auditDenied(repository, input.actor_profile, 'ens_ingest_courses', ['ens'], error);
         return toolError(error);
       }
     }
   );
 
   server.registerTool(
-    'nexus_rag_audit_recent',
+    'ens_rag_ingest_institutional',
     {
-      title: 'Recent NexusAI RAG Audit Events',
-      description: 'Show recent RAG audit events. Requires an admin profile with admin_mode true.',
+      title: 'Ingest ENS Institutional Knowledge',
+      description: 'Refresh the ENS institutional collection from versioned Markdown files.',
+      inputSchema: {
+        actor_profile: actorProfileSchema,
+        admin_mode: z.boolean().default(false)
+      }
+    },
+    async input => {
+      try {
+        if (!input.admin_mode || !policy.adminProfiles.includes(input.actor_profile)) {
+          throw new TenantAccessError('Access denied: ens_rag_ingest_institutional requires admin_mode from an admin profile.');
+        }
+
+        const result = await ingestionService.refreshSource({
+          sourceId: 'ens_institutional_manual',
+          tenantSlug: 'ens'
+        });
+
+        return jsonToolResult({
+          ...result,
+          collection: 'institutional'
+        });
+      } catch (error) {
+        await auditDenied(repository, input.actor_profile, 'ens_ingest_institutional', ['ens'], error);
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_ingest_marketing',
+    {
+      title: 'Ingest ENS Marketing Knowledge',
+      description: 'Refresh the ENS marketing collection from versioned Markdown files.',
+      inputSchema: {
+        actor_profile: actorProfileSchema,
+        admin_mode: z.boolean().default(false)
+      }
+    },
+    async input => {
+      try {
+        if (!input.admin_mode || !policy.adminProfiles.includes(input.actor_profile)) {
+          throw new TenantAccessError('Access denied: ens_rag_ingest_marketing requires admin_mode from an admin profile.');
+        }
+
+        const result = await ingestionService.refreshSource({
+          sourceId: 'ens_marketing_manual',
+          tenantSlug: 'ens'
+        });
+
+        return jsonToolResult({
+          ...result,
+          collection: 'marketing'
+        });
+      } catch (error) {
+        await auditDenied(repository, input.actor_profile, 'ens_ingest_marketing', ['ens'], error);
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_ingest_insights',
+    {
+      title: 'Ingest ENS Insights Knowledge',
+      description: 'Refresh the ENS insights collection from versioned Markdown files.',
+      inputSchema: {
+        actor_profile: actorProfileSchema,
+        admin_mode: z.boolean().default(false)
+      }
+    },
+    async input => {
+      try {
+        if (!input.admin_mode || !policy.adminProfiles.includes(input.actor_profile)) {
+          throw new TenantAccessError('Access denied: ens_rag_ingest_insights requires admin_mode from an admin profile.');
+        }
+
+        const result = await ingestionService.refreshSource({
+          sourceId: 'ens_insights_manual',
+          tenantSlug: 'ens'
+        });
+
+        return jsonToolResult({
+          ...result,
+          collection: 'insights'
+        });
+      } catch (error) {
+        await auditDenied(repository, input.actor_profile, 'ens_ingest_insights', ['ens'], error);
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_save_insight',
+    {
+      title: 'Save ENS Insight',
+      description: 'Save a dated ENS analytical insight into the insights collection.',
+      inputSchema: {
+        title: z.string().min(1),
+        summary: z.string().min(1),
+        analysis: z.string().min(1),
+        subject: z.string().min(1),
+        analysis_date: z.string().optional(),
+        related_course: z.string().optional(),
+        campaign_or_funnel: z.string().optional(),
+        metrics_period: z.string().optional(),
+        confidence: z.enum(['low', 'medium', 'high']).optional(),
+        stale_after_days: z.number().int().positive().optional(),
+        evidence: z.array(z.string().min(1)).optional(),
+        actor_profile: actorProfileSchema
+      }
+    },
+    async input => {
+      try {
+        const chunkPayloads = [
+          {
+            kind: 'insight_summary',
+            content: input.summary,
+            metadata: { section: 'summary', subject: input.subject }
+          },
+          {
+            kind: 'insight_analysis',
+            content: input.analysis,
+            metadata: { section: 'analysis', subject: input.subject }
+          }
+        ];
+        const embeddings = await embeddingProvider.embed(chunkPayloads.map(chunk => chunk.content));
+        const document = await repository.insertKnowledgeDocument({
+          collection: 'insights',
+          title: input.title,
+          sourceId: 'hermes_insight',
+          sourceKey: `${Date.now()}-${slugify(input.title)}`,
+          sourceType: 'hermes_analysis',
+          visibility: 'internal',
+          metadata: {
+            subject: input.subject,
+            analysis_date: input.analysis_date ?? new Date().toISOString(),
+            related_course: input.related_course ?? null,
+            campaign_or_funnel: input.campaign_or_funnel ?? null,
+            metrics_period: input.metrics_period ?? null,
+            confidence: input.confidence ?? null,
+            stale_after_days: input.stale_after_days ?? null,
+            evidence: input.evidence ?? [],
+            actor_profile: input.actor_profile
+          },
+          chunks: chunkPayloads.map((chunk, index) => ({
+            ...chunk,
+            embedding: embeddings[index] ?? null,
+            embeddingModel: embeddings[index] ? embeddingProvider.model : undefined
+          }))
+        });
+
+        await repository.recordAuditEvent({
+          actorProfile: input.actor_profile,
+          action: 'save:insight',
+          tenant: 'ens',
+          documentId: document.id,
+          allowed: true,
+          reason: `Saved ENS insight in collection insights.`
+        });
+
+        return jsonToolResult({ ok: true, collection: 'insights', document });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_save_marketing_memory',
+    {
+      title: 'Save ENS Marketing Memory',
+      description: 'Save validated ENS marketing knowledge into the marketing collection.',
+      inputSchema: {
+        title: z.string().min(1),
+        content: z.string().min(1),
+        category: marketingCategorySchema,
+        user_validated: z.boolean(),
+        validation_note: z.string().min(1),
+        related_course: z.string().optional(),
+        campaign_name: z.string().optional(),
+        actor_profile: actorProfileSchema
+      }
+    },
+    async input => {
+      try {
+        assertMarketingValidation({
+          userValidated: input.user_validated,
+          validationNote: input.validation_note
+        });
+
+        const [embedding] = await embeddingProvider.embed([input.content]);
+        const document = await repository.insertKnowledgeDocument({
+          collection: 'marketing',
+          title: input.title,
+          sourceId: 'hermes_marketing_memory',
+          sourceKey: `${Date.now()}-${slugify(input.title)}`,
+          sourceType: 'validated_marketing_memory',
+          visibility: 'internal',
+          metadata: {
+            category: input.category,
+            validation_note: input.validation_note,
+            validated_at: new Date().toISOString(),
+            validated_by: input.actor_profile,
+            related_course: input.related_course ?? null,
+            campaign_name: input.campaign_name ?? null
+          },
+          chunks: [
+            {
+              kind: 'marketing_memory',
+              content: input.content,
+              metadata: {
+                section: 'marketing_memory',
+                category: input.category
+              },
+              embedding,
+              embeddingModel: embedding ? embeddingProvider.model : undefined
+            }
+          ]
+        });
+
+        await repository.recordAuditEvent({
+          actorProfile: input.actor_profile,
+          action: 'save:marketing_memory',
+          tenant: 'ens',
+          documentId: document.id,
+          allowed: true,
+          reason: `Saved validated ENS marketing memory.`
+        });
+
+        return jsonToolResult({ ok: true, collection: 'marketing', document });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_list_collections',
+    {
+      title: 'List ENS RAG Collections',
+      description: 'Show available ENS collections with counts and freshness hints.',
+      inputSchema: {
+        actor_profile: actorProfileSchema
+      }
+    },
+    async () => {
+      try {
+        const collections = await repository.listCollections();
+        return jsonToolResult({
+          count: collections.length,
+          collections: collections.map(item => ({
+            ...item,
+            purpose: collectionPurpose(item.collection)
+          }))
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'ens_rag_audit_recent',
+    {
+      title: 'Recent ENS RAG Audit Events',
+      description: 'Show recent ENS RAG audit events. Requires an admin profile with admin_mode true.',
       inputSchema: {
         actor_profile: actorProfileSchema,
         limit: z.number().int().positive().optional(),
@@ -322,13 +493,13 @@ export function createNexusRagMcpServer({ config, repository }: ServerDependenci
     async input => {
       try {
         if (!input.admin_mode || !policy.adminProfiles.includes(input.actor_profile)) {
-          throw new TenantAccessError('Access denied: audit_recent requires admin_mode from an admin profile.');
+          throw new TenantAccessError('Access denied: ens_rag_audit_recent requires admin_mode from an admin profile.');
         }
 
         const events = await repository.auditRecent(clampLimit(input.limit, policy));
         return jsonToolResult({ count: events.length, events });
       } catch (error) {
-        await auditDenied(repository, input.actor_profile, 'audit_recent', undefined, error);
+        await auditDenied(repository, input.actor_profile, 'ens_audit_recent', ['ens'], error);
         return toolError(error);
       }
     }
@@ -356,6 +527,29 @@ function toolError(error: unknown) {
   }
 
   return errorToolResult('Unknown tool error', error);
+}
+
+function collectionPurpose(collection: EnsRagCollection): string {
+  switch (collection) {
+    case 'courses':
+      return 'Grounded ENS course catalog and offers.';
+    case 'insights':
+      return 'Reusable ENS analytical insights with time sensitivity.';
+    case 'institutional':
+      return 'Institutional ENS reference knowledge.';
+    case 'marketing':
+      return 'Validated ENS marketing knowledge and approved learnings.';
+  }
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
 }
 
 async function auditDenied(

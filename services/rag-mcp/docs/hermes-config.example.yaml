@@ -1,18 +1,21 @@
 mcp_servers:
-  nexusai_rag:
-    url: "http://nexusai-rag-mcp:8000/mcp"
+  ens_rag:
+    url: "http://rag-mcp:8000/mcp"
     timeout: 60
     connect_timeout: 15
     supports_parallel_tool_calls: false
     tools:
       include:
-        - nexus_rag_search
-        - nexus_rag_set_active_client
-        - nexus_rag_context_status
-        - nexus_rag_list_sources
-        - nexus_rag_get_document
-        - nexus_rag_get_ens_course_context
-        - nexus_rag_ingest_source
-        - nexus_rag_audit_recent
+        - ens_rag_search
+        - ens_rag_get_document
+        - ens_rag_get_course_context
+        - ens_rag_ingest_courses
+        - ens_rag_ingest_institutional
+        - ens_rag_ingest_marketing
+        - ens_rag_ingest_insights
+        - ens_rag_save_insight
+        - ens_rag_save_marketing_memory
+        - ens_rag_list_collections
+        - ens_rag_audit_recent
       prompts: false
       resources: false
