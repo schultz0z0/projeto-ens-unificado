@@ -6,6 +6,8 @@
 # Runtime state / volumes
 data/
 **/data/
+!services/rag-mcp/data/
+!services/rag-mcp/data/**
 logs/
 **/logs/
 outputs/

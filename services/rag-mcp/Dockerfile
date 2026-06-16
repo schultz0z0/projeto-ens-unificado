@@ -13,10 +13,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
+COPY . ./
 COPY --from=build /app/dist ./dist
-COPY config ./config
-COPY data ./data
-COPY scripts ./scripts
+RUN mkdir -p data/institutional data/marketing data/insights scripts
 EXPOSE 8000
 CMD ["node", "dist/index.js"]
 

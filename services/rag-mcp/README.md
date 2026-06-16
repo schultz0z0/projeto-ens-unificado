@@ -85,6 +85,8 @@ Search uses full-text search when embeddings are unavailable and hybrid vector +
 
 Course ingestion is now ENS-only and collection-specific.
 
+The Markdown knowledge under `services/rag-mcp/data` is intentionally versioned. Do not treat it like runtime volume data; it must be present in a fresh Git clone so the Docker image can ingest institutional, marketing, and insights knowledge.
+
 Run controlled ingestion through the MCP tool:
 
 ```json
