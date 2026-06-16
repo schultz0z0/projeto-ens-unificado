@@ -18,7 +18,13 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import BannerRequest, editable_output_path_for_delivery, generate_banner
-from api.supabase_outputs import is_supabase_outputs_enabled, refresh_signed_output_url, upload_output_to_supabase, _get_client
+from api.supabase_outputs import (
+    is_supabase_metadata_enabled,
+    is_supabase_outputs_enabled,
+    refresh_signed_output_url,
+    upload_output_to_supabase,
+    _get_client,
+)
 
 logger = logging.getLogger("ens.api.jobs")
 
@@ -102,7 +108,7 @@ _min_seconds_between_pieces = max(0.0, float(os.getenv("MIN_SECONDS_BETWEEN_PIEC
 
 
 def _persist_job_to_supabase(job: JobRecord) -> None:
-    if not is_supabase_outputs_enabled():
+    if not is_supabase_metadata_enabled():
         return
     try:
         client = _get_client()
@@ -187,7 +193,7 @@ def get_job(job_id: str) -> Optional[JobRecord]:
     if job:
         return job
         
-    if is_supabase_outputs_enabled():
+    if is_supabase_metadata_enabled():
         try:
             client = _get_client()
             job_res = client.schema("image_gen").table("jobs").select("*").eq("id", job_id).execute()
@@ -253,7 +259,7 @@ def count_jobs() -> int:
 
 def resume_interrupted_jobs(loop) -> None:
     """Recupera jobs interrompidos do Supabase e os re-enfileira."""
-    if not is_supabase_outputs_enabled():
+    if not is_supabase_metadata_enabled():
         return
     try:
         client = _get_client()

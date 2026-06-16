@@ -12,6 +12,7 @@ from main import BannerRequest, NexusImageOrchestrator, generate_banner
 from fastapi import HTTPException
 from api.app import app, GenerationMode, _resolve_target_channels, _resolve_persona_value, _templates_catalog
 from api.job_service import JobStatus, JobItemStatus, _jobs, _run_adjustment_sync, _run_pipeline_sync, create_job, get_enxoval_metrics_summary
+from api.supabase_outputs import upload_output_to_supabase
 from manual_test import resolve_manual_target_channels
 
 # Mock do Google GenAI Client
@@ -1884,6 +1885,47 @@ def test_run_pipeline_sync_uploads_outputs_to_supabase_when_enabled():
     assert updated.itens[0].file_url.startswith("https://cdn.example.com/")
     assert updated.itens[0].storage_path.endswith(".png")
     assert updated.itens[0].signed_url_expires_at == "2026-03-18T12:00:00Z"
+
+
+def test_upload_output_to_supabase_keeps_signed_url_when_metadata_schema_is_not_exposed(tmp_path):
+    image_path = tmp_path / "piece.png"
+    image_path.write_bytes(b"fake-png")
+
+    fake_bucket = MagicMock()
+    fake_bucket.upload.return_value = None
+    fake_bucket.create_signed_url.return_value = {"signedURL": "https://cdn.example.com/signed-piece.png"}
+
+    fake_storage = MagicMock()
+    fake_storage.from_.return_value = fake_bucket
+
+    fake_upsert = MagicMock()
+    fake_upsert.execute.side_effect = Exception(
+        "{'message': 'The schema must be one of the following: public, graphql_public', 'code': 'PGRST106'}"
+    )
+    fake_table = MagicMock()
+    fake_table.upsert.return_value = fake_upsert
+    fake_schema = MagicMock()
+    fake_schema.table.return_value = fake_table
+
+    fake_client = MagicMock()
+    fake_client.storage = fake_storage
+    fake_client.schema.return_value = fake_schema
+
+    with (
+        patch("api.supabase_outputs._get_client", return_value=fake_client),
+        patch("api.supabase_outputs.is_supabase_metadata_enabled", return_value=True),
+    ):
+        result = upload_output_to_supabase(
+            local_path=image_path,
+            job_id="6342b16e-48ba-4101-8a71-619bd7889e8c",
+            item_id="147357ec-1566-4035-97df-0956221eb025",
+            canal="08_topo_email",
+            kv="graduacao",
+            requested_by="7a69c5cf-6a89-41a6-8b9b-204d184c9050",
+        )
+
+    assert result["signed_url"] == "https://cdn.example.com/signed-piece.png"
+    assert result["storage_path"].endswith("/08_topo_email/147357ec-1566-4035-97df-0956221eb025.png")
 
 
 def test_download_banner_redirects_to_signed_url():

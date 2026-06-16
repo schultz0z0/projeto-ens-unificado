@@ -1,4 +1,5 @@
 import os
+import logging
 import mimetypes
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -16,10 +17,15 @@ except ImportError:
 load_dotenv()
 
 _client: Optional[Client] = None
+logger = logging.getLogger("nexus.api.supabase_outputs")
 
 
 def is_supabase_outputs_enabled() -> bool:
     return bool(create_client and _env("SUPABASE_URL") and _env("SUPABASE_SERVICE_ROLE_KEY"))
+
+
+def is_supabase_metadata_enabled() -> bool:
+    return is_supabase_outputs_enabled() and _env_bool("SUPABASE_OUTPUTS_METADATA_ENABLED", False)
 
 
 def upload_output_to_supabase(
@@ -38,18 +44,29 @@ def upload_output_to_supabase(
     content_type = mimetypes.guess_type(local_path.name)[0] or "image/png"
     _upload_with_retry(client, bucket, object_path, local_path, content_type)
     signed_url = _create_signed_url(client, bucket, object_path, expires_in)
-    _persist_output_metadata(
-        client=client,
-        job_id=job_id,
-        item_id=item_id,
-        canal=canal,
-        kv=kv,
-        requested_by=requested_by,
-        bucket=bucket,
-        object_path=object_path,
-        content_type=content_type,
-        size_bytes=local_path.stat().st_size,
-    )
+    if is_supabase_metadata_enabled():
+        try:
+            _persist_output_metadata(
+                client=client,
+                job_id=job_id,
+                item_id=item_id,
+                canal=canal,
+                kv=kv,
+                requested_by=requested_by,
+                bucket=bucket,
+                object_path=object_path,
+                content_type=content_type,
+                size_bytes=local_path.stat().st_size,
+            )
+        except Exception as error:
+            logger.warning(
+                "Falha ao persistir metadados do output no Supabase; usando signed URL mesmo assim. "
+                "job_id=%s item_id=%s storage_path=%s error=%s",
+                job_id,
+                item_id,
+                object_path,
+                error,
+            )
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
     return {
         "storage_path": object_path,
@@ -166,3 +183,10 @@ def _env(key: str, default: Optional[str] = None) -> Optional[str]:
     if value is None:
         return None
     return str(value).strip()
+
+
+def _env_bool(key: str, default: bool = False) -> bool:
+    value = _env(key)
+    if value is None or value == "":
+        return default
+    return value.lower() in {"1", "true", "yes", "y", "on"}
