@@ -72,6 +72,53 @@ class SupabaseRagRepository implements RagRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async searchChunks(input: RagSearchInput): Promise<RagSearchResult[]> {
+    const { data, error } = await this.supabase.rpc('match_document_chunks_advanced', {
+      query_text: input.query,
+      tenant_slugs: input.allowedTenants,
+      match_count: input.limit,
+      query_embedding: input.queryEmbedding ?? null,
+      collections: input.collections ?? null,
+      freshness_cutoff: toFreshnessCutoff(input.freshnessDays),
+      include_stale: input.includeStale ?? true,
+      chunk_kinds: input.courseFilters?.chunkKinds ?? null,
+      course_categories: input.courseFilters?.courseCategories ?? null,
+      course_types: input.courseFilters?.courseTypes ?? null,
+      course_statuses: input.courseFilters?.courseStatuses ?? null,
+      offer_statuses: input.courseFilters?.offerStatuses ?? null,
+      modalities: input.courseFilters?.modalities ?? null,
+      localities: input.courseFilters?.localities ?? null,
+      only_active_offers: input.courseFilters?.onlyActiveOffers ?? false,
+      offer_start_from: input.courseFilters?.offerStartFrom ?? null,
+      offer_start_to: input.courseFilters?.offerStartTo ?? null,
+      enrollment_open_at: input.courseFilters?.enrollmentOpenAt ?? null
+    });
+
+    if (error) {
+      if (isMissingAdvancedSearchFunction(error.message)) {
+        return this.searchChunksLegacy(input);
+      }
+
+      throw new Error(`Supabase search failed: ${error.message}`);
+    }
+
+    return (data ?? []).map((row: any) => ({
+      chunkId: row.chunk_id,
+      documentId: row.document_id,
+      tenant: row.tenant_slug,
+      collection: row.collection,
+      title: row.title,
+      content: row.content,
+      score: Number(row.score ?? 0),
+      metadata: {
+        ...(row.metadata ?? {}),
+        ...(row.rank_reason ? { sql_rank_reason: row.rank_reason } : {}),
+        ...(row.score_breakdown ? { sql_score_breakdown: row.score_breakdown } : {})
+      },
+      sourceUri: row.source_uri ?? undefined
+    }));
+  }
+
+  private async searchChunksLegacy(input: RagSearchInput): Promise<RagSearchResult[]> {
     const { data, error } = await this.supabase.rpc('match_document_chunks', {
       query_text: input.query,
       tenant_slugs: input.allowedTenants,
@@ -94,7 +141,10 @@ class SupabaseRagRepository implements RagRepository {
       title: row.title,
       content: row.content,
       score: Number(row.score ?? 0),
-      metadata: row.metadata ?? {},
+      metadata: {
+        ...(row.metadata ?? {}),
+        legacy_search_fallback: true
+      },
       sourceUri: row.source_uri ?? undefined
     }));
   }
@@ -492,4 +542,12 @@ function normalizeTitle(value: string): string {
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim();
+}
+
+function isMissingAdvancedSearchFunction(message: string): boolean {
+  return (
+    message.includes('match_document_chunks_advanced') ||
+    message.includes('Could not find the function') ||
+    message.includes('schema cache')
+  );
 }

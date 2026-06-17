@@ -198,6 +198,45 @@ Se a mudanca for apenas no `data/hermes/config.yaml`, normalmente basta reinicia
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml restart hermes-api app-bridge
 ```
 
+## Supabase do RAG MCP
+
+As migrations do RAG MCP sao aplicadas manualmente no Supabase do RAG, pelo SQL Editor. Para um projeto ja existente, use esta ordem:
+
+```text
+services/rag-mcp/supabase/migrations/2026-06-10-rag-ingestion.sql
+services/rag-mcp/supabase/migrations/2026-06-16-ens-rag-collections.sql
+services/rag-mcp/supabase/migrations/2026-06-16-remove-nexusai-tenant.sql
+services/rag-mcp/supabase/migrations/2026-06-17-ens-course-advanced-search.sql
+```
+
+Depois da migration `2026-06-17`, reingira os cursos. Ela muda a estrategia de cursos para criar um chunk `course_offer` por oferta, com filtros de status, modalidade, localidade e datas:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d rag-mcp
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -e MCP_URL=http://127.0.0.1:8000/mcp rag-mcp node scripts/run-first-ingestion.mjs
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -e MCP_URL=http://127.0.0.1:8000/mcp rag-mcp node scripts/validate-ens-rag.mjs
+```
+
+O Compose tambem sobe `rag-mcp-ingestion-cron`. Ele roda automaticamente toda segunda-feira as 07h no fuso `NEXUS_TZ`:
+
+```env
+NEXUS_TZ=America/Sao_Paulo
+NEXUS_RAG_INGEST_ACTOR_PROFILE=ceo
+NEXUS_RAG_INGEST_CRON_SCHEDULE=0 7 * * 1
+```
+
+Esse cron executa a ingestao completa uma vez por semana:
+
+```text
+1. cursos pela API do site da ENS
+2. institutional pelos arquivos services/rag-mcp/data/institutional
+3. marketing pelos arquivos services/rag-mcp/data/marketing
+4. insights pelos arquivos services/rag-mcp/data/insights
+5. validacao geral do RAG
+```
+
+Se voce alterar arquivos locais em `services/rag-mcp/data`, faca rebuild do `rag-mcp`; esses arquivos entram na imagem Docker.
+
 ## Verificacoes pos-deploy
 
 Status geral:

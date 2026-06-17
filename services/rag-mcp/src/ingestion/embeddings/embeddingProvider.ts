@@ -12,7 +12,7 @@ export function createEmbeddingProviderFromEnv(): EmbeddingProvider {
   return new OpenAiCompatibleEmbeddingProvider({
     apiKey,
     model: process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small',
-    baseUrl: process.env.OPENAI_EMBEDDING_BASE_URL ?? 'https://api.openai.com/v1'
+    baseUrl: nonEmpty(process.env.OPENAI_EMBEDDING_BASE_URL) ?? 'https://api.openai.com/v1'
   });
 }
 
@@ -20,6 +20,11 @@ class DisabledEmbeddingProvider implements EmbeddingProvider {
   async embed(texts: string[]): Promise<Array<number[] | null>> {
     return texts.map(() => null);
   }
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed || undefined;
 }
 
 class OpenAiCompatibleEmbeddingProvider implements EmbeddingProvider {

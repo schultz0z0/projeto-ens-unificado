@@ -108,6 +108,10 @@ describe('ENS course normalizer', () => {
     expect(document?.sourceKey).toBe('ens-123:curso ens exemplo');
     expect(document?.metadata).toMatchObject({
       id_academico: 'ENS-123',
+      course_id: 'ENS-123',
+      course_category: 'Pós',
+      course_type: 'MBA',
+      course_status: 'available',
       liberar_curso: 'available',
       exibir_sempre_pagina_interna: false,
       modalidades: ['Online - Aulas ao Vivo'],
@@ -119,9 +123,59 @@ describe('ENS course normalizer', () => {
       'audience_requirements',
       'modules',
       'faculty',
-      'offers',
+      'course_offer',
       'visual_content'
     ]);
+
+    const offerChunk = document?.chunks.find(chunk => chunk.kind === 'course_offer');
+    expect(offerChunk?.content).toContain('Oferta 99');
+    expect(offerChunk?.metadata).toMatchObject({
+      chunk_kind: 'course_offer',
+      course_id: 'ENS-123',
+      course_name: 'Curso ENS Exemplo',
+      course_category: 'Pós',
+      course_type: 'MBA',
+      course_status: 'available',
+      offer_id: '99',
+      offer_status: 'available',
+      offer_modality: 'Online - Aulas ao Vivo',
+      offer_location: 'Online',
+      offer_location_id: '50',
+      offer_hidden: false,
+      offer_class_confirmed: false,
+      offer_start_date: '2026-09-10T19:00:00.000Z',
+      offer_end_date: '2028-03-30T21:00:00.000Z',
+      enrollment_start_date: '2025-06-23T10:00:00.000Z',
+      enrollment_end_date: '2026-09-09T23:00:00.000Z'
+    });
+  });
+
+  it('creates one searchable chunk per ENS offer instead of mixing all offers together', () => {
+    const document = normalizeEnsCourse({
+      ...baseEnsItem,
+      ofertas: [
+        baseEnsItem.ofertas[0],
+        {
+          ...baseEnsItem.ofertas[0],
+          id_oferta: 100,
+          status_da_oferta: 'blocked',
+          modalidade: 'Presencial',
+          localidade: 'ENS Matriz | Rio de Janeiro - RJ',
+          id_localidade: 'RJ',
+          data_ini_aula: '15/10/2026 08:00',
+          data_fim_aula: '15/12/2026 18:00',
+          data_ini_inscr: '01/08/2026 10:00',
+          data_fim_inscr: '10/10/2026 23:59'
+        }
+      ]
+    });
+
+    const offerChunks = document?.chunks.filter(chunk => chunk.kind === 'course_offer') ?? [];
+
+    expect(offerChunks).toHaveLength(2);
+    expect(offerChunks.map(chunk => chunk.metadata.offer_id)).toEqual(['99', '100']);
+    expect(offerChunks.map(chunk => chunk.metadata.offer_status)).toEqual(['available', 'blocked']);
+    expect(offerChunks.map(chunk => chunk.metadata.offer_modality)).toEqual(['Online - Aulas ao Vivo', 'Presencial']);
   });
 
   it('uses course name in ENS source keys to avoid duplicated id_academico collisions', () => {

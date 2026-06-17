@@ -14,7 +14,15 @@ console.log('VALIDATION_COLLECTIONS');
 console.log(JSON.stringify(collections, null, 2));
 
 const checks = [
-  { collection: 'courses', intent: 'course_fact', query: 'curso ENS seguros carga horaria inscricao' },
+  {
+    collection: 'courses',
+    intent: 'course_fact',
+    query: 'curso ENS seguros link inscricao investimento data inicio',
+    course_filters: {
+      chunk_kinds: ['course_offer'],
+      only_active_offers: true
+    }
+  },
   { collection: 'institutional', intent: 'institutional', query: 'missao visao valores historia ENS' },
   { collection: 'marketing', intent: 'marketing_strategy', query: 'tom de voz WhatsApp campanha B2C ENS' },
   { collection: 'insights', intent: 'analytics', query: 'funil marketing KPIs CAC ROAS matricula ENS' }
@@ -27,6 +35,7 @@ for (const check of checks) {
     intent: check.intent,
     query: check.query,
     limit: 3,
+    course_filters: check.course_filters,
     include_stale: true,
     require_evidence: true
   });
@@ -37,6 +46,8 @@ for (const check of checks) {
       {
         result_count: result.result_count,
         search_mode: result.search_mode,
+        reranker: result.reranker,
+        course_filters: result.course_filters,
         titles: (result.results ?? []).map(item => item.title)
       },
       null,

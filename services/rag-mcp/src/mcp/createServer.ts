@@ -4,14 +4,16 @@ import type { AppConfig } from '../config/schema.js';
 import { createEmbeddingProviderFromEnv } from '../ingestion/embeddings/embeddingProvider.js';
 import { IngestionService } from '../ingestion/ingestionService.js';
 import { buildEnsCourseContext } from '../ingestion/sources/ens/ensCourseContext.js';
+import { buildCourseSearchFilters } from '../policy/courseSearchPolicy.js';
 import {
   assertMarketingValidation,
   defaultCollectionsForIntent,
   normalizeCollections
 } from '../policy/collectionPolicy.js';
 import { TenantAccessError, type TenantPolicyConfig } from '../policy/tenantPolicy.js';
-import type { EnsRagCollection, RagRepository, RagSearchIntent } from '../rag/types.js';
-import { collectionSchema, marketingCategorySchema, searchIntentSchema } from './ensToolSchemas.js';
+import { createRagRerankerFromEnv } from '../rag/reranker.js';
+import type { EnsRagCollection, RagCourseSearchFilters, RagRepository, RagSearchIntent } from '../rag/types.js';
+import { collectionSchema, courseFiltersSchema, marketingCategorySchema, searchIntentSchema } from './ensToolSchemas.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
 
 export type ServerDependencies = {
@@ -30,6 +32,7 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
   const policy = toTenantPolicy(config);
   const embeddingProvider = createEmbeddingProviderFromEnv();
   const ingestionService = new IngestionService(repository, embeddingProvider);
+  const reranker = createRagRerankerFromEnv();
 
   server.registerTool(
     'ens_rag_search',
@@ -43,6 +46,7 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
         limit: z.number().int().positive().optional(),
         freshness_days: z.number().int().positive().optional(),
         include_stale: z.boolean().optional(),
+        course_filters: courseFiltersSchema,
         require_evidence: z.boolean().default(true),
         actor_profile: actorProfileSchema
       }
@@ -50,18 +54,33 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
     async input => {
       try {
         const collections = normalizeCollections(input.collections ?? defaultCollectionsForIntent(input.intent as RagSearchIntent));
-        const limit = clampLimit(input.limit, policy);
+        const requestedLimit = clampLimit(input.limit, policy);
+        const candidateLimit = candidateLimitFor(requestedLimit);
+        const courseFilters = buildCourseSearchFilters({
+          query: input.query,
+          collections,
+          intent: input.intent as RagSearchIntent | undefined,
+          explicitFilters: toCourseFilters(input.course_filters)
+        });
         const [queryEmbedding] = await embeddingProvider.embed([input.query]);
-        const results = await repository.searchChunks({
+        const candidateResults = await repository.searchChunks({
           query: input.query,
           allowedTenants: ['ens'],
           collections,
-          limit,
+          limit: candidateLimit,
           queryEmbedding: queryEmbedding ?? undefined,
           freshnessDays: input.freshness_days,
           includeStale: input.include_stale ?? !['analytics', 'marketing_strategy'].includes(input.intent ?? ''),
-          intent: input.intent as RagSearchIntent | undefined
+          intent: input.intent as RagSearchIntent | undefined,
+          courseFilters
         });
+        const reranked = await reranker.rerank({
+          query: input.query,
+          intent: input.intent as RagSearchIntent | undefined,
+          requestedLimit,
+          results: candidateResults
+        });
+        const results = reranked.results;
 
         await repository.recordQuery({
           actorProfile: input.actor_profile,
@@ -76,9 +95,16 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
           query: input.query,
           actor_profile: input.actor_profile,
           collections,
+          course_filters: courseFilters,
+          candidate_count: candidateResults.length,
           result_count: results.length,
           require_evidence: input.require_evidence,
-          search_mode: queryEmbedding ? 'hybrid_vector_fts' : 'full_text',
+          search_mode: queryEmbedding ? 'advanced_hybrid_vector_fts' : 'advanced_full_text',
+          reranker: {
+            mode: reranked.mode,
+            applied: reranked.applied,
+            warning: reranked.warning
+          },
           warning: input.require_evidence && results.length === 0 ? 'No grounded ENS evidence found for this query.' : undefined,
           results
         });
@@ -519,6 +545,44 @@ function toTenantPolicy(config: AppConfig): TenantPolicyConfig {
 
 function clampLimit(limit: number | undefined, policy: TenantPolicyConfig): number {
   return Math.min(limit ?? policy.defaultLimit, policy.maxLimit);
+}
+
+function candidateLimitFor(requestedLimit: number): number {
+  return Math.min(Math.max(requestedLimit * 3, requestedLimit), 50);
+}
+
+function toCourseFilters(input: unknown): RagCourseSearchFilters | undefined {
+  if (!input || typeof input !== 'object') {
+    return undefined;
+  }
+
+  const filters = input as {
+    chunk_kinds?: string[];
+    course_categories?: string[];
+    course_types?: string[];
+    course_statuses?: string[];
+    offer_statuses?: string[];
+    modalities?: string[];
+    localities?: string[];
+    only_active_offers?: boolean;
+    offer_start_from?: string;
+    offer_start_to?: string;
+    enrollment_open_at?: string;
+  };
+
+  return {
+    chunkKinds: filters.chunk_kinds,
+    courseCategories: filters.course_categories,
+    courseTypes: filters.course_types,
+    courseStatuses: filters.course_statuses,
+    offerStatuses: filters.offer_statuses,
+    modalities: filters.modalities,
+    localities: filters.localities,
+    onlyActiveOffers: filters.only_active_offers,
+    offerStartFrom: filters.offer_start_from,
+    offerStartTo: filters.offer_start_to,
+    enrollmentOpenAt: filters.enrollment_open_at
+  };
 }
 
 function toolError(error: unknown) {

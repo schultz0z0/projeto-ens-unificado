@@ -19,6 +19,21 @@ export type RagSearchInput = {
   freshnessDays?: number;
   includeStale?: boolean;
   intent?: RagSearchIntent;
+  courseFilters?: RagCourseSearchFilters;
+};
+
+export type RagCourseSearchFilters = {
+  chunkKinds?: string[];
+  courseCategories?: string[];
+  courseTypes?: string[];
+  courseStatuses?: string[];
+  offerStatuses?: string[];
+  modalities?: string[];
+  localities?: string[];
+  onlyActiveOffers?: boolean;
+  offerStartFrom?: string;
+  offerStartTo?: string;
+  enrollmentOpenAt?: string;
 };
 
 export type RagSearchResult = {

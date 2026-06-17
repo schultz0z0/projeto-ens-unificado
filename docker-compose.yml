@@ -2,6 +2,7 @@ name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}
 
 services:
   rag-mcp:
+    image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp:latest
     build:
       context: ./services/rag-mcp
       dockerfile: Dockerfile
@@ -21,6 +22,9 @@ services:
       OPENAI_API_KEY: ${NEXUS_OPENAI_API_KEY:-}
       OPENAI_EMBEDDING_MODEL: ${NEXUS_OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       OPENAI_EMBEDDING_BASE_URL: ${NEXUS_OPENAI_EMBEDDING_BASE_URL:-}
+      OPENAI_CHAT_BASE_URL: ${NEXUS_OPENAI_CHAT_BASE_URL:-}
+      ENS_RAG_RERANKER_MODE: ${NEXUS_RAG_RERANKER_MODE:-local}
+      ENS_RAG_RERANKER_MODEL: ${NEXUS_RAG_RERANKER_MODEL:-gpt-4o-mini}
     volumes:
       - ./services/rag-mcp/config:/app/config:ro
     ports:
@@ -33,6 +37,36 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    networks:
+      - ens-internal
+
+  rag-mcp-ingestion-cron:
+    image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp:latest
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp-ingestion-cron
+    restart: unless-stopped
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        echo "[rag-mcp-cron] schedule: $${RAG_INGEST_CRON_SCHEDULE}"
+        {
+          echo "SHELL=/bin/sh"
+          echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          echo "TZ=$${TZ}"
+          echo "MCP_URL=$${MCP_URL}"
+          echo "MCP_ACTOR_PROFILE=$${MCP_ACTOR_PROFILE}"
+          echo "$${RAG_INGEST_CRON_SCHEDULE} cd /app && node scripts/run-first-ingestion.mjs && node scripts/validate-ens-rag.mjs"
+        } > /etc/crontabs/root
+        exec crond -f -l 8
+    environment:
+      TZ: ${NEXUS_TZ:-America/Sao_Paulo}
+      MCP_URL: http://rag-mcp:8000/mcp
+      MCP_ACTOR_PROFILE: ${NEXUS_RAG_INGEST_ACTOR_PROFILE:-ceo}
+      RAG_INGEST_CRON_SCHEDULE: ${NEXUS_RAG_INGEST_CRON_SCHEDULE:-0 7 * * 1}
+    depends_on:
+      rag-mcp:
+        condition: service_healthy
     networks:
       - ens-internal
 

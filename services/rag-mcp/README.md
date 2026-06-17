@@ -78,8 +78,11 @@ For an existing project already running the old MCP:
 1. ensure `services/rag-mcp/supabase/migrations/2026-06-10-rag-ingestion.sql` is already applied
 2. apply `services/rag-mcp/supabase/migrations/2026-06-16-ens-rag-collections.sql`
 3. apply `services/rag-mcp/supabase/migrations/2026-06-16-remove-nexusai-tenant.sql` to remove old NexusAI rows
+4. apply `services/rag-mcp/supabase/migrations/2026-06-17-ens-course-advanced-search.sql`
 
 Search uses full-text search when embeddings are unavailable and hybrid vector + full-text search when `OPENAI_API_KEY` is configured and chunks have embeddings.
+
+The 2026-06-17 migration adds the advanced RPC used for course filters and ranking. The MCP has a fallback to the old RPC, but course search quality is lower until this migration is applied.
 
 ## Ingestion
 
@@ -109,6 +112,8 @@ skip only when liberar_curso = blocked and exibir_sempre_pagina_interna = false
 ```
 
 The refresh model remains replace-then-add for the ENS course source.
+
+After changes to the ENS course normalizer or after applying the advanced course search migration, run `ens_rag_ingest_courses` again. This recreates course chunks with one `course_offer` chunk per offer and filterable metadata such as `course_category`, `course_type`, `offer_status`, `offer_modality`, `offer_location`, `offer_start_date` and enrollment dates.
 
 Institutional ingestion uses versioned Markdown files from:
 
@@ -152,6 +157,25 @@ The helper script calls all four ingestion tools through MCP:
 MCP_URL=http://127.0.0.1:8000/mcp node scripts/run-first-ingestion.mjs
 ```
 
+The ingestion order is:
+
+1. `ens_rag_ingest_courses` from the ENS site API.
+2. `ens_rag_ingest_institutional` from `data/institutional`.
+3. `ens_rag_ingest_marketing` from `data/marketing`.
+4. `ens_rag_ingest_insights` from `data/insights`.
+
+In production Compose, `rag-mcp-ingestion-cron` runs the same script automatically once a week by default:
+
+```env
+NEXUS_TZ=America/Sao_Paulo
+NEXUS_RAG_INGEST_ACTOR_PROFILE=ceo
+NEXUS_RAG_INGEST_CRON_SCHEDULE=0 7 * * 1
+```
+
+That schedule means every Monday at 07:00 in `NEXUS_TZ`. The cron also runs `scripts/validate-ens-rag.mjs` after ingestion.
+
+The local Markdown RAGs are versioned inside the repo/image. If you update files under `services/rag-mcp/data`, rebuild/recreate the `rag-mcp` image so the cron container can see the updated files.
+
 After ingestion, validate collection counts and one grounded search per collection:
 
 ```bash
@@ -171,6 +195,7 @@ Arguments:
 
 - Use `courses` for factual course grounding.
 - Use `ens_rag_get_course_context` for one specific course.
+- For course offers, links, dates, investment, modality or enrollment, use `course_filters.chunk_kinds: ["course_offer"]` and usually `only_active_offers: true`.
 - Use `insights` for analytical memory and prefer recent analysis.
 - Use `institutional` for ENS institutional context.
 - Use `marketing` only for validated marketing memory.
@@ -180,15 +205,11 @@ Arguments:
 
 ## Skills
 
-The installable skills for Hermes are stored inside this repo:
+The installable skill for Hermes is stored inside this repo:
 
-- `skills/ens-rag-router`
-- `skills/ens-rag-courses`
-- `skills/ens-rag-insights`
-- `skills/ens-rag-institutional`
-- `skills/ens-rag-marketing`
+- `skills/ens-rag`
 
-They are not auto-installed. Validate them first, then install or copy them into Hermes manually.
+It is not auto-installed. Validate it first, then install or copy it into Hermes manually.
 
 ## Hermes Config Example
 
