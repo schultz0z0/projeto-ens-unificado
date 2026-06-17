@@ -137,7 +137,117 @@ export const buildHermesRunInput = ({
 export const shouldUseResponsesApi = (attachments) =>
   attachments.some((attachment) => isImageAttachment(attachment) || !attachment.extracted_text?.trim());
 
-export const buildHermesResponsesRequest = ({
+export const selectHermesBridgeMode = (attachments) =>
+
+  "session";
+
+
+
+const buildHermesSessionChatMessage = ({
+
+  messageText,
+
+  attachments,
+
+  imageTransport = "inline",
+
+}) => {
+
+  const imageAttachments = attachments.filter(isImageAttachment);
+
+  if (imageAttachments.length === 0) {
+
+    return buildHermesRunInput({
+
+      messageText,
+
+      attachments,
+
+      replayContextMessages: [],
+
+    });
+
+  }
+
+
+
+  const nonImageAttachments = attachments.filter((attachment) => !isImageAttachment(attachment));
+
+  const textContent = buildHermesRunInput({
+
+    messageText,
+
+    attachments: nonImageAttachments,
+
+    replayContextMessages: [],
+
+  });
+
+  const content = [];
+
+  if (textContent) {
+
+    content.push({ type: "input_text", text: textContent });
+
+  }
+
+
+
+  imageAttachments.forEach((attachment) => {
+
+    const imageUrl = imageTransport === "remote"
+
+      ? attachment.original_signed_url ?? attachment.signed_url
+
+      : attachment.inline_data_url ?? attachment.signed_url;
+
+    if (!imageUrl) return;
+
+    content.push({
+
+      type: "input_image",
+
+      image_url: imageUrl,
+
+      detail: "auto",
+
+    });
+
+  });
+
+
+
+  return content;
+
+};
+
+
+
+export const buildHermesSessionChatRequest = ({
+
+  messageText,
+
+  attachments,
+
+  imageTransport = "inline",
+
+}) => ({
+
+  message: buildHermesSessionChatMessage({
+
+    messageText,
+
+    attachments,
+
+    imageTransport,
+
+  }),
+
+});
+
+
+
+export const buildHermesResponsesRequest = ({
   modelName,
   userId,
   sessionId,

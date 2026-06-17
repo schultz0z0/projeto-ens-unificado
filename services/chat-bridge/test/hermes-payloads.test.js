@@ -6,13 +6,17 @@ import test from "node:test";
 
 import {
 
-  buildHermesRunInput,
-
-  buildHermesResponsesRequest,
-
-  buildHermesResponsesInput,
-
-  shouldUseResponsesApi,
+  buildHermesRunInput,
+
+  buildHermesSessionChatRequest,
+
+  buildHermesResponsesRequest,
+
+  buildHermesResponsesInput,
+
+  selectHermesBridgeMode,
+
+  shouldUseResponsesApi,
 
 } from "../src/hermes-payloads.js";
 
@@ -100,7 +104,7 @@ test("buildHermesRunInput includes extracted file text for long running text run
 
 
 
-test("buildHermesRunInput includes replayed chat history before current text", () => {
+test("buildHermesRunInput includes replayed chat history before current text", () => {
 
   const input = buildHermesRunInput({
 
@@ -126,7 +130,91 @@ test("buildHermesRunInput includes replayed chat history before current text", (
 
   assert.ok(input.includes("[Mensagem atual do usuario]"));
   assert.ok(input.includes("oque eu falei antes mesmo?"));
-});
+});
+
+
+
+test("selectHermesBridgeMode routes every chatbot turn through persisted Hermes sessions", () => {
+
+  assert.equal(selectHermesBridgeMode([]), "session");
+
+  assert.equal(selectHermesBridgeMode([{ kind: "file", mime_type: "text/plain", extracted_text: "ok" }]), "session");
+
+  assert.equal(selectHermesBridgeMode([{ kind: "image", mime_type: "image/png" }]), "session");
+
+});
+
+
+
+test("buildHermesSessionChatRequest leaves conversation continuity to Hermes SessionDB", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "qual e minha cor escolhida?",
+
+    attachments: [],
+
+    replayContextMessages: [
+
+      { role: "user", messageText: "Minha cor escolhida e vermelho.", attachments: [] },
+
+      { role: "assistant", messageText: "Entendido.", attachments: [] },
+
+    ],
+
+  });
+
+
+
+  assert.deepEqual(request, {
+
+    message: "qual e minha cor escolhida?",
+
+  });
+
+});
+
+
+
+test("buildHermesSessionChatRequest sends current images as Hermes session multimodal input", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "analise esta imagem",
+
+    attachments: [{
+
+      kind: "image",
+
+      name: "layout.png",
+
+      mime_type: "image/png",
+
+      storage_path: "user-1/session-1/layout.png",
+
+      signed_url: "https://project.supabase.co/storage/v1/object/sign/chat-attachments/user-1/session-1/layout.png?token=abc",
+
+      inline_data_url: "data:image/png;base64,AAAA",
+
+    }],
+
+  });
+
+
+
+  assert.deepEqual(request, {
+
+    message: [
+
+      { type: "input_text", text: "analise esta imagem" },
+
+      { type: "input_image", image_url: "data:image/png;base64,AAAA", detail: "auto" },
+
+    ],
+
+  });
+
+});
 
 
 

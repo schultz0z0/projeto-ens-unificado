@@ -11,10 +11,11 @@ import {
 import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
 import {
   buildHermesRunRequest,
-  buildHermesResponsesRequest,
+  buildHermesResponsesRequest,
+  buildHermesSessionChatRequest,
   buildHermesSessionKey,
-  isImageAttachment,
-  shouldUseResponsesApi,
+  isImageAttachment,
+  selectHermesBridgeMode,
 } from "./hermes-payloads.js";
 import {
   bindHermesSessionFromResponse,
@@ -391,8 +392,10 @@ class HermesBridge {
       userToken: user.token,
       bucket: config.attachmentBucket,
     });
-    const useResponsesApi = shouldUseResponsesApi(preparedAttachments);
-    const replayContextMessages = await fetchReplayContextMessages({
+    const mode = selectHermesBridgeMode(preparedAttachments);
+    const replayContextMessages = mode === "session"
+      ? []
+      : await fetchReplayContextMessages({
       sessionId: validated.session_id,
       currentMessageText: validated.message_text,
     });
@@ -404,7 +407,7 @@ class HermesBridge {
       hermes_run_id: null,
       hermes_response_id: null,
       hermes_conversation_id: null,
-      mode: useResponsesApi ? "responses" : "runs",
+      mode,
       status: "queued",
       message_text: validated.message_text,
       input: "",
@@ -420,7 +423,7 @@ class HermesBridge {
             event: "bridge.run.accepted",
             run_id: null,
             bridge_run_id: null,
-            mode: useResponsesApi ? "responses" : "runs",
+            mode,
           },
         },
       ],
@@ -471,14 +474,14 @@ class HermesBridge {
     await this.store.save(run);
   }
 
-  async ensureHermesSessionBinding(run, hermesBaseUrl, { createIfMissing = true } = {}) {
+  async ensureHermesSessionBinding(run, hermesBaseUrl, { createIfMissing = true, forceRecreate = false } = {}) {
     let state = await ensureHermesConversationState({
       repository: this.hermesStateRepository,
       chatSessionId: run.chat_session_id,
       userId: run.user_id,
     });
 
-    if (state.hermes_session_id || !config.hermesSessionsApiEnabled || !createIfMissing) {
+    if ((state.hermes_session_id && !forceRecreate) || !config.hermesSessionsApiEnabled || !createIfMissing) {
       return state;
     }
 
@@ -688,7 +691,193 @@ class HermesBridge {
     }
   }
 
-  async fetchHermesResponse(run, hermesBaseUrl, routingState, imageTransport) {
+  async executeSessionApi(run, hermesBaseUrl, initialState) {
+
+    let state = initialState;
+
+    const hasImageAttachments = run.attachments.some((attachment) => isImageAttachment(attachment));
+
+    let imageTransport = "inline";
+
+    let attemptedRemoteImage = false;
+
+    let recreatedMissingSession = false;
+
+
+
+    while (!terminalStatuses.has(run.status)) {
+
+      const requestPayload = buildHermesSessionChatRequest({
+
+        messageText: run.message_text,
+
+        attachments: run.attachments,
+
+        imageTransport,
+
+      });
+
+      run.input = typeof requestPayload.message === "string"
+
+        ? requestPayload.message
+
+        : JSON.stringify(requestPayload.message);
+
+
+
+      const response = await fetch(new URL(`/api/sessions/${encodeURIComponent(run.hermes_session_id)}/chat/stream`, hermesBaseUrl.origin), {
+
+        method: "POST",
+
+        headers: this.buildHermesHeaders("text/event-stream", run),
+
+        body: JSON.stringify(requestPayload),
+
+      });
+
+
+
+      if (!response.ok || !response.body) {
+
+        if (response.status === 404 && config.hermesSessionsApiEnabled && !recreatedMissingSession) {
+
+          recreatedMissingSession = true;
+
+          state = await this.ensureHermesSessionBinding(run, hermesBaseUrl, {
+
+            createIfMissing: true,
+
+            forceRecreate: true,
+
+          });
+
+          run.hermes_session_id = state.hermes_session_id || buildHermesRunSessionId(run.chat_session_id);
+
+          await this.store.save(run);
+
+          continue;
+
+        }
+
+        if (response.status === 404) {
+
+          throw new Error(`hermes_session_chat_failed:${response.status}`);
+
+        }
+
+
+
+        if (hasImageAttachments && !attemptedRemoteImage) {
+
+          attemptedRemoteImage = true;
+
+          imageTransport = "remote";
+
+          this.appendEvent(run, {
+
+            event: "status",
+
+            data: { text: "Hermes vai tentar ler a imagem por URL segura.", tone: "warning" },
+
+          });
+
+          await this.store.save(run);
+
+          continue;
+
+        }
+
+
+
+        const body = await response.text().catch(() => "");
+
+        throw new Error(body.trim() || `hermes_session_chat_failed:${response.status}`);
+
+      }
+
+
+
+      const result = await this.consumeEventsResponse(run, response, {
+
+        shouldRetryParsed: (parsed) => (
+
+          parsed.failed &&
+
+          hasImageAttachments &&
+
+          !attemptedRemoteImage &&
+
+          !parsed.streamedText?.trim()
+
+        ),
+
+        onParsed: async (parsed) => {
+
+          const nextHermesSessionId = parsed.events
+
+            .map((event) => event.data?.session_id)
+
+            .find((sessionId) => typeof sessionId === "string" && sessionId.trim());
+
+          if (nextHermesSessionId && nextHermesSessionId !== state.hermes_session_id) {
+
+            state = await bindHermesSessionToState({
+
+              repository: this.hermesStateRepository,
+
+              state,
+
+              hermesSessionId: nextHermesSessionId,
+
+            });
+
+            run.hermes_session_id = nextHermesSessionId;
+
+            await this.store.save(run);
+
+          }
+
+        },
+
+      });
+
+
+
+      if (result === "retry") {
+
+        attemptedRemoteImage = true;
+
+        imageTransport = "remote";
+
+        run.output_text = "";
+
+        this.appendEvent(run, {
+
+          event: "status",
+
+          data: { text: "Hermes vai tentar ler a imagem por URL segura.", tone: "warning" },
+
+        });
+
+        await this.store.save(run);
+
+        continue;
+
+      }
+
+
+
+      if (result === "terminal" || terminalStatuses.has(run.status)) break;
+
+      throw new Error("hermes_session_stream_closed_without_terminal_event");
+
+    }
+
+  }
+
+
+
+  async fetchHermesResponse(run, hermesBaseUrl, routingState, imageTransport) {
     const requestPayload = buildHermesResponsesRequest({
       modelName: config.hermesModelName,
       userId: run.user_id,
@@ -817,7 +1006,11 @@ class HermesBridge {
     this.appendEvent(run, { event: "status", data: { text: "Hermes iniciou a tarefa.", tone: "info" } });
     await this.store.save(run);
 
-    if (run.mode === "responses") {
+    if (run.mode === "session") {
+
+      await this.executeSessionApi(run, hermesBaseUrl, state);
+
+    } else if (run.mode === "responses") {
       await this.executeResponsesApi(run, hermesBaseUrl, state);
     } else {
       await this.executeRunsApi(run, hermesBaseUrl);
