@@ -177,3 +177,27 @@ export const buildHermesResponseRoutingState = ({ state, previousResponseId }) =
   previousResponseId: previousResponseId ?? state.last_good_response_id,
   hermesSessionId: state.hermes_session_id,
 });
+
+export const getHermesSessionIdFromResponse = (response) => {
+  const raw = response?.headers?.get?.("X-Hermes-Session-Id") ?? response?.headers?.get?.("x-hermes-session-id") ?? "";
+  return typeof raw === "string" ? raw.trim() : "";
+};
+
+export const bindHermesSessionFromResponse = async ({ repository, state, run, response }) => {
+  const hermesSessionId = getHermesSessionIdFromResponse(response);
+  if (!hermesSessionId || hermesSessionId === state.hermes_session_id) {
+    return state;
+  }
+
+  const nextState = await bindHermesSessionToState({
+    repository,
+    state,
+    hermesSessionId,
+  });
+
+  if (run && typeof run === "object") {
+    run.hermes_session_id = hermesSessionId;
+  }
+
+  return nextState;
+};

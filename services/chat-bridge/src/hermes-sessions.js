@@ -33,14 +33,26 @@ const parseSessionResponse = async (response) => {
 export const createHermesSession = async ({
   hermesBaseUrl,
   hermesApiKey,
+  sessionId,
   title,
   fetchImpl = fetch,
 }) => {
+  const trimmedSessionId = typeof sessionId === "string" ? sessionId.trim() : "";
+  const trimmedTitle = typeof title === "string" ? title.trim() : "";
+  const body = {
+    ...(trimmedSessionId ? { id: trimmedSessionId } : {}),
+    ...(trimmedTitle ? { title: trimmedTitle } : {}),
+  };
+
   const response = await fetchImpl(new URL("/api/sessions", hermesBaseUrl.origin), {
     method: "POST",
     headers: buildHermesSessionHeaders(hermesApiKey),
-    body: JSON.stringify(title?.trim() ? { title: title.trim() } : {}),
+    body: JSON.stringify(body),
   });
+
+  if (response.status === 409 && trimmedSessionId) {
+    return { id: trimmedSessionId, title: trimmedTitle || null, existed: true };
+  }
 
   if (!response.ok) {
     throw new Error(`hermes_session_create_failed:${response.status}`);
