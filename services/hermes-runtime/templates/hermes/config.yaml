@@ -1,12 +1,12 @@
 # Template inicial para /opt/data/config.yaml dentro do container.
-# Copie para data/hermes/config.yaml na VPS e ajuste via SSH com:
-#   docker compose exec hermes-api bash
-#   hermes setup
-#   hermes model
-#   hermes tools
-#
-# MCPs não entram neste compose agora. Quando formos adicionar, configuraremos
-# diretamente na VPS via SSH e reiniciaremos hermes-api/hermes-kanban.
+# O runtime tambem garante este bloco nos perfis existentes em
+# /opt/data/profiles/*/config.yaml, porque o dashboard do Hermes e os MCPs sao
+# escopados por perfil.
 
-# Exemplo futuro de estrutura, sem ativar nada agora:
-# mcp_servers: {}
+mcp_servers:
+  nexus_rag:
+    url: "http://rag-mcp:8000/mcp"
+    timeout: 180
+    connect_timeout: 30
+    sampling:
+      enabled: false

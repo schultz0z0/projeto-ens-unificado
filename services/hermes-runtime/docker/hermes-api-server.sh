@@ -20,6 +20,10 @@ mkdir -p "$HERMES_DATA_PATH" \
          "$HERMES_DATA_PATH/cron" \
          "$HERMES_DATA_PATH/plugins"
 
+if [ -x /usr/local/bin/ensure-ens-rag-mcp.sh ]; then
+  /usr/local/bin/ensure-ens-rag-mcp.sh || echo "[hermes-api] warning: could not ensure ENS RAG MCP config" >&2
+fi
+
 chown -R hermes:hermes "$HERMES_DATA_PATH" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "$HERMES_DATA_PATH" 2>/dev/null || true
 

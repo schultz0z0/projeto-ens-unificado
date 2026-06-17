@@ -34,6 +34,7 @@ RUN /opt/hermes/.venv/bin/python3 -m ensurepip --upgrade && \
       -e "/opt/hermes-src[web,pty]" \
       "mcp" \
       "playwright" \
+      "PyYAML" \
       "uv" && \
     /opt/hermes/.venv/bin/python3 -m playwright install chromium && \
     /opt/hermes/.venv/bin/python3 -m playwright install-deps
@@ -47,10 +48,15 @@ RUN ln -sf /opt/hermes/.venv/bin/hermes /usr/local/bin/hermes && \
 COPY docker/hermes-init.sh /usr/local/bin/hermes-init.sh
 COPY docker/hermes-api-server.sh /usr/local/bin/hermes-api-server.sh
 COPY docker/hermes-kanban-dashboard.sh /usr/local/bin/hermes-kanban-dashboard.sh
+COPY docker/ensure-ens-rag-mcp.sh /usr/local/bin/ensure-ens-rag-mcp.sh
+COPY docker/ensure-ens-rag-mcp.py /usr/local/bin/ensure-ens-rag-mcp.py
+COPY templates/hermes/config.yaml /opt/hermes-defaults/config.yaml
 
 RUN chmod +x \
       /usr/local/bin/hermes-init.sh \
       /usr/local/bin/hermes-api-server.sh \
-      /usr/local/bin/hermes-kanban-dashboard.sh
+      /usr/local/bin/hermes-kanban-dashboard.sh \
+      /usr/local/bin/ensure-ens-rag-mcp.sh \
+      /usr/local/bin/ensure-ens-rag-mcp.py
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
