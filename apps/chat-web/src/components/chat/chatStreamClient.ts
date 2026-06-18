@@ -237,6 +237,9 @@ export const sendMessageToChatbotStream = async ({
                   ? file.name
                   : guessFileNameFromUrl(url);
               const kind = file.kind === "image" || isImageResource(name || url, mimeType) ? "image" : "file";
+              const storagePath = typeof file.storage_path === "string" ? file.storage_path : undefined;
+              const signedUrlExpiresAt =
+                typeof file.signed_url_expires_at === "string" ? file.signed_url_expires_at : undefined;
 
               return [
                 createFilePart({
@@ -244,6 +247,8 @@ export const sendMessageToChatbotStream = async ({
                   url,
                   kind,
                   mimeType,
+                  storagePath,
+                  signedUrlExpiresAt,
                 }),
               ];
             })

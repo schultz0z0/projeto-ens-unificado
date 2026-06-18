@@ -115,6 +115,7 @@ const extractFilesFromUnknown = (value, depth = 0) => {
 
   const rawUrlCandidates = [
     record.url,
+    record.image,
     record.image_url,
     record.file_url,
     record.download_url,
@@ -138,11 +139,21 @@ const extractFilesFromUnknown = (value, depth = 0) => {
     }
 
     const name = rawName?.trim() || guessFileNameFromUrl(url);
+    const storagePath =
+      typeof record.storage_path === "string" && record.storage_path.trim()
+        ? record.storage_path.trim()
+        : undefined;
+    const signedUrlExpiresAt =
+      typeof record.signed_url_expires_at === "string" && record.signed_url_expires_at.trim()
+        ? record.signed_url_expires_at.trim()
+        : undefined;
     return [{
       name,
       url,
       kind: type.includes("image") || isImageLike(name || url, mimeType) ? "image" : "file",
       ...(mimeType ? { mimeType } : {}),
+      ...(storagePath ? { storage_path: storagePath } : {}),
+      ...(signedUrlExpiresAt ? { signed_url_expires_at: signedUrlExpiresAt } : {}),
     }];
   });
 

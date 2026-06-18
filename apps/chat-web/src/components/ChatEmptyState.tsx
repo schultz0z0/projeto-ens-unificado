@@ -2,7 +2,7 @@ import { useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { Mascot } from "./Mascot";
-import { ChatComposer, type ComposerAttachment, type ComposerMenuItem } from "./ChatComposer";
+import { ChatComposer, type ComposerAttachment, type ComposerMenuItem, type ImageGenerationOptions } from "./ChatComposer";
 
 export type HomeTab = "chat" | "image" | "email" | "landing";
 
@@ -21,6 +21,10 @@ interface ChatEmptyStateProps {
   suggestionCards: SuggestionCard[];
   attachments: ComposerAttachment[];
   menuItems: ComposerMenuItem[];
+  imageGenerationMode?: boolean;
+  imageGenerationOptions?: ImageGenerationOptions;
+  onImageGenerationOptionsChange?: (options: ImageGenerationOptions) => void;
+  onExitImageGenerationMode?: () => void;
   onPickFiles: (files: FileList) => void;
   onRemoveAttachment: (id: string) => void;
 }
@@ -33,6 +37,10 @@ export function ChatEmptyState({
   suggestionCards,
   attachments,
   menuItems,
+  imageGenerationMode,
+  imageGenerationOptions,
+  onImageGenerationOptionsChange,
+  onExitImageGenerationMode,
   onPickFiles,
   onRemoveAttachment,
 }: ChatEmptyStateProps) {
@@ -100,6 +108,10 @@ export function ChatEmptyState({
           onSubmit={onSubmit}
           placeholder="Diga o que você quer criar hoje para sua marca..."
           attachments={attachments}
+          imageGenerationMode={imageGenerationMode}
+          imageGenerationOptions={imageGenerationOptions}
+          onImageGenerationOptionsChange={onImageGenerationOptionsChange}
+          onExitImageGenerationMode={onExitImageGenerationMode}
           onPickFiles={onPickFiles}
           onRemoveAttachment={onRemoveAttachment}
           menuItems={menuItems}

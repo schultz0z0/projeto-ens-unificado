@@ -237,6 +237,48 @@ Esse cron executa a ingestao completa uma vez por semana:
 
 Se voce alterar arquivos locais em `services/rag-mcp/data`, faca rebuild do `rag-mcp`; esses arquivos entram na imagem Docker.
 
+## Supabase do frontend/app para imagens geradas pelo Hermes
+
+O modo `Criar imagem` do chatbot usa o `image_generate` do Hermes com OpenAI e entrega a imagem pelo Supabase Storage do frontend/app. A imagem gerada e enviada para o bucket privado `image-gen-outputs`, o Hermes devolve uma URL assinada para o usuario baixar, e o arquivo local do cache do Hermes e removido depois do upload.
+
+Antes de usar JPEG/WebP ou imagens maiores, aplique manualmente no SQL Editor do Supabase do app:
+
+```text
+apps/chat-web/supabase/migrations/20260618123000_image_gen_outputs_storage.sql
+```
+
+Essa migration cria/atualiza o bucket privado:
+
+```text
+bucket: image-gen-outputs
+mime types: image/png, image/jpeg, image/webp
+limite: 50 MB
+```
+
+Variaveis relevantes no `.env`:
+
+```env
+NEXUS_APP_SUPABASE_URL=...
+NEXUS_APP_SUPABASE_SERVICE_ROLE_KEY=...
+NEXUS_SUPABASE_OUTPUTS_BUCKET=image-gen-outputs
+NEXUS_SUPABASE_GENERATED_IMAGES_PREFIX=hermes-chat-images
+NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS=3600
+NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE=true
+```
+
+Quando o usuario apaga um chat no frontend, a bridge apaga os objetos em:
+
+```text
+image-gen-outputs/hermes-chat-images/<sessao-hermes>/
+```
+
+Para atualizar essa parte em producao, rebuild/recrie pelo menos:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api hermes-kanban app-bridge app-frontend
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api hermes-kanban app-bridge app-frontend
+```
+
 ## Verificacoes pos-deploy
 
 Status geral:

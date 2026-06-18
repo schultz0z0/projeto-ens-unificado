@@ -39,7 +39,7 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./ChatHistorySidebar";
 import { ChatEmptyState, type HomeTab } from "./ChatEmptyState";
-import { ChatComposer, type ComposerAttachment, type ComposerMenuItem } from "./ChatComposer";
+import { ChatComposer, type ComposerAttachment, type ComposerMenuItem, type ImageGenerationOptions } from "./ChatComposer";
 import { hydrateChatMessages } from "./chat/chatAttachmentHydration";
 import { reconcileHydratedMessages } from "./chat/chatMessageReconciliation";
 import { sendMessageToChatbotStream, type StreamArtifact, type StreamStatus } from "./chat/chatStreamClient";
@@ -63,6 +63,12 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+  const [imageGenerationMode, setImageGenerationMode] = useState(false);
+  const [imageGenerationOptions, setImageGenerationOptions] = useState<ImageGenerationOptions>({
+    quality: "auto",
+    size: "auto",
+    outputFormat: "png",
+  });
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isRetrievingContext, setIsRetrievingContext] = useState(false);
@@ -122,7 +128,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
         label: "Criar imagem",
         icon: ImageIcon,
         kind: "action",
-        onSelect: () => onRequestTabChange?.("image"),
+        onSelect: () => setImageGenerationMode(true),
         separatorAfter: true,
       },
       {
@@ -154,7 +160,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
         onSelect: () => setInput("Crie um planejamento semanal de conteúdo para: "),
       },
     ],
-    [onRequestTabChange],
+    [],
   );
   const displayMessages = useMemo(() => {
     const result: Message[] = [];
@@ -526,6 +532,8 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     if ((!input.trim() && attachments.length === 0) || !user || isUploadingAttachments) return;
 
     const currentInput = input;
+    const currentImageGenerationMode = imageGenerationMode;
+    const currentImageGenerationOptions = imageGenerationOptions;
     setInput("");
 
     let activeSessionId = currentSessionId;
@@ -564,6 +572,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
         sessionId: activeSessionId,
         messageText: currentInput.trim(),
         attachments: storedParts,
+        imageGeneration: currentImageGenerationMode ? currentImageGenerationOptions : null,
       });
       if (!proxyPayload.message_text && !proxyPayload.attachments?.length && !messageForStorage) return;
 
@@ -744,6 +753,10 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
               suggestionCards={suggestionCards}
               attachments={attachments}
               menuItems={composerMenuItems}
+              imageGenerationMode={imageGenerationMode}
+              imageGenerationOptions={imageGenerationOptions}
+              onImageGenerationOptionsChange={setImageGenerationOptions}
+              onExitImageGenerationMode={() => setImageGenerationMode(false)}
               onPickFiles={handlePickFiles}
               onRemoveAttachment={handleRemoveAttachment}
             />
@@ -830,6 +843,10 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
                 placeholder="Diga o que você quer criar hoje para sua marca..."
                 attachments={attachments}
                 menuItems={composerMenuItems}
+                imageGenerationMode={imageGenerationMode}
+                imageGenerationOptions={imageGenerationOptions}
+                onImageGenerationOptionsChange={setImageGenerationOptions}
+                onExitImageGenerationMode={() => setImageGenerationMode(false)}
                 onPickFiles={handlePickFiles}
                 onRemoveAttachment={handleRemoveAttachment}
                 disabled={isTyping || isUploadingAttachments}

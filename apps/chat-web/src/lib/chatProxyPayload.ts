@@ -10,6 +10,24 @@ const chatProxyAttachmentSchema = z.object({
   storagePath: z.string().trim().min(1),
 });
 
+const imageGenerationOptionsSchema = z.object({
+  quality: z.enum(["auto", "low", "medium", "high"]),
+  size: z.enum([
+    "auto",
+    "1024x1024",
+    "1536x1024",
+    "1024x1536",
+    "2048x2048",
+    "2048x1152",
+    "1152x2048",
+    "2560x1440",
+    "1440x2560",
+    "3840x2160",
+    "2160x3840",
+  ]),
+  outputFormat: z.enum(["png", "jpeg", "webp"]),
+});
+
 export type ChatProxyAttachmentPayload = {
   kind: "image" | "file";
   name: string;
@@ -17,16 +35,27 @@ export type ChatProxyAttachmentPayload = {
   storage_path: string;
 };
 
+export type ChatImageGenerationOptions = z.infer<typeof imageGenerationOptionsSchema>;
+
+export type ChatProxyImageOptionsPayload = {
+  quality: ChatImageGenerationOptions["quality"];
+  size: ChatImageGenerationOptions["size"];
+  output_format: ChatImageGenerationOptions["outputFormat"];
+};
+
 export type ChatProxyPayload = {
   session_id: string;
   message_text: string;
   attachments?: ChatProxyAttachmentPayload[];
+  intent?: "image_generate";
+  image_options?: ChatProxyImageOptionsPayload;
 };
 
 type BuildChatProxyPayloadParams = {
   sessionId: string;
   messageText: string;
   attachments: ChatMessageFilePart[];
+  imageGeneration?: ChatImageGenerationOptions | null;
 };
 
 const mapAttachmentForProxy = (attachment: ChatMessageFilePart): ChatProxyAttachmentPayload => {
@@ -53,6 +82,7 @@ export const buildChatProxyPayload = ({
   sessionId,
   messageText,
   attachments,
+  imageGeneration,
 }: BuildChatProxyPayloadParams): ChatProxyPayload => {
   const trimmedMessage = messageText.trim();
   const normalizedSessionId = sessionId.trim();
@@ -64,6 +94,20 @@ export const buildChatProxyPayload = ({
 
   if (attachments.length > 0) {
     payload.attachments = attachments.map(mapAttachmentForProxy);
+  }
+
+  if (imageGeneration) {
+    const parsed = imageGenerationOptionsSchema.safeParse(imageGeneration);
+    if (!parsed.success) {
+      throw new Error("Nao foi possivel preparar as opcoes de imagem para o Hermes.");
+    }
+
+    payload.intent = "image_generate";
+    payload.image_options = {
+      quality: parsed.data.quality,
+      size: parsed.data.size,
+      output_format: parsed.data.outputFormat,
+    };
   }
 
   return payload;

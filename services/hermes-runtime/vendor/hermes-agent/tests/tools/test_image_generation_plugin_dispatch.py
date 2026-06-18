@@ -27,6 +27,7 @@ class _FakeCodexProvider(ImageGenProvider):
             "prompt": prompt,
             "aspect_ratio": aspect_ratio,
             "provider": "codex",
+            "kwargs": kwargs,
         }
 
 
@@ -51,6 +52,33 @@ class TestPluginDispatch:
         assert payload["provider"] == "codex"
         assert payload["image"] == "/tmp/codex-test.png"
         assert payload["aspect_ratio"] == "square"
+
+    def test_dispatch_forwards_image_generation_options(self, monkeypatch, tmp_path):
+        from tools import image_generation_tool
+        from agent import image_gen_registry as registry_module
+        from hermes_cli import plugins as plugins_module
+
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        (tmp_path / "config.yaml").write_text("image_gen:\n  provider: codex\n")
+
+        provider = _FakeCodexProvider()
+        monkeypatch.setattr(image_generation_tool, "_read_configured_image_provider", lambda: "codex")
+        monkeypatch.setattr(plugins_module, "_ensure_plugins_discovered", lambda: None)
+        monkeypatch.setattr(registry_module, "get_provider", lambda name: provider if name == "codex" else None)
+
+        dispatched = image_generation_tool._dispatch_to_plugin_provider(
+            "draw cat",
+            "square",
+            quality="high",
+            size="2560x1440",
+            output_format="webp",
+        )
+        payload = json.loads(dispatched)
+
+        assert payload["success"] is True
+        assert payload["kwargs"]["quality"] == "high"
+        assert payload["kwargs"]["size"] == "2560x1440"
+        assert payload["kwargs"]["output_format"] == "webp"
 
     def test_dispatch_reports_missing_registered_provider(self, monkeypatch, tmp_path):
         from tools import image_generation_tool

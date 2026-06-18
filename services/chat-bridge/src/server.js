@@ -44,7 +44,9 @@ const config = {
   supabaseUrl: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "",
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-  attachmentBucket: process.env.CHAT_ATTACHMENTS_BUCKET || process.env.VITE_CHAT_ATTACHMENTS_BUCKET || CHAT_ATTACHMENT_BUCKET,
+  attachmentBucket: process.env.CHAT_ATTACHMENTS_BUCKET || process.env.VITE_CHAT_ATTACHMENTS_BUCKET || CHAT_ATTACHMENT_BUCKET,
+  supabaseOutputsBucket: process.env.SUPABASE_OUTPUTS_BUCKET || "image-gen-outputs",
+  supabaseGeneratedImagesPrefix: process.env.SUPABASE_GENERATED_IMAGES_PREFIX || "hermes-chat-images",
   hermesBaseUrl: process.env.HERMES_API_BASE_URL || "",
   hermesApiKey: process.env.HERMES_API_KEY || "",
   hermesModelName: process.env.HERMES_MODEL_NAME || "hermes-agent",
@@ -181,7 +183,105 @@ const deleteSupabaseRows = async (table, filters) => {
     throw new Error(`${table}.delete_failed:${payload?.message ?? response.status}`);
   }
 };
-const CHAT_REPLAY_CONTEXT_LIMIT = Number(process.env.CHAT_REPLAY_CONTEXT_LIMIT || 12);
+const sanitizeStoragePathSegment = (value, fallback = "session") => {
+  const sanitized = String(value ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._=-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 160);
+
+  return sanitized || fallback;
+};
+
+const buildGeneratedImagesPrefix = (hermesSessionId) => {
+  const root = String(config.supabaseGeneratedImagesPrefix || "hermes-chat-images")
+    .replace(/^\/+|\/+$/g, "");
+  return `${root}/${sanitizeStoragePathSegment(hermesSessionId)}`;
+};
+
+const listSupabaseStorageObjects = async ({ bucket, prefix }) => {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey) return [];
+
+  const supabaseUrl = config.supabaseUrl.replace(/\/$/, "");
+  const limit = 1000;
+  let offset = 0;
+  const paths = [];
+
+  for (;;) {
+    const response = await fetch(`${supabaseUrl}/storage/v1/object/list/${encodeURIComponent(bucket)}`, {
+      method: "POST",
+      headers: buildSupabaseAdminHeaders(),
+      body: JSON.stringify({
+        prefix,
+        limit,
+        offset,
+        sortBy: { column: "name", order: "asc" },
+      }),
+    });
+
+    const rows = await response.json().catch(() => []);
+    if (!response.ok || !Array.isArray(rows)) {
+      throw new Error(`storage.list_failed:${response.status}`);
+    }
+
+    rows.forEach((row) => {
+      const name = typeof row?.name === "string" ? row.name.trim() : "";
+      if (!name) return;
+      paths.push(name.startsWith(`${prefix}/`) ? name : `${prefix}/${name}`);
+    });
+
+    if (rows.length < limit) break;
+    offset += rows.length;
+  }
+
+  return paths;
+};
+
+const deleteSupabaseStorageObjects = async ({ bucket, paths }) => {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey || paths.length === 0) return;
+
+  const supabaseUrl = config.supabaseUrl.replace(/\/$/, "");
+  const batchSize = 100;
+  for (let index = 0; index < paths.length; index += batchSize) {
+    const prefixes = paths.slice(index, index + batchSize);
+    const response = await fetch(`${supabaseUrl}/storage/v1/object/${encodeURIComponent(bucket)}`, {
+      method: "DELETE",
+      headers: buildSupabaseAdminHeaders(),
+      body: JSON.stringify({ prefixes }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`storage.delete_failed:${response.status}`);
+    }
+  }
+};
+
+const deleteGeneratedImagesForHermesSessions = async (hermesSessionIds) => {
+  const uniqueSessionIds = Array.from(new Set(
+    hermesSessionIds
+      .map((value) => String(value ?? "").trim())
+      .filter(Boolean),
+  ));
+  if (uniqueSessionIds.length === 0) return;
+
+  const allPaths = [];
+  for (const hermesSessionId of uniqueSessionIds) {
+    const prefix = buildGeneratedImagesPrefix(hermesSessionId);
+    const paths = await listSupabaseStorageObjects({
+      bucket: config.supabaseOutputsBucket,
+      prefix,
+    });
+    allPaths.push(...paths);
+  }
+
+  await deleteSupabaseStorageObjects({
+    bucket: config.supabaseOutputsBucket,
+    paths: Array.from(new Set(allPaths)),
+  });
+};
+
+const CHAT_REPLAY_CONTEXT_LIMIT = Number(process.env.CHAT_REPLAY_CONTEXT_LIMIT || 12);
 
 const normalizeReplayContextContent = (content) => {
   if (typeof content !== "string") return "";
@@ -246,16 +346,113 @@ const assertChatSessionOwner = async ({ sessionId, userId }) => {
   }
 };
 
-const deleteChatSessionData = async ({ sessionId, userId }) => {
+const deleteChatSessionData = async ({ sessionId, userId, hermesSessionIds = [] }) => {
   await assertChatSessionOwner({ sessionId, userId });
-  await deleteSupabaseRows("chat_messages", { session_id: sessionId });
+  try {
+    await deleteGeneratedImagesForHermesSessions(hermesSessionIds);
+  } catch (error) {
+    console.warn("[chat-bridge] could not delete generated images for chat session", {
+      sessionId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  await deleteSupabaseRows("chat_messages", { session_id: sessionId });
   await deleteSupabaseRows("chat_sessions", { id: sessionId, user_id: userId });
 };
 
-const validateChatPayload = (payload) => {
+const IMAGE_GENERATE_QUALITIES = new Set(["auto", "low", "medium", "high"]);
+
+const IMAGE_GENERATE_SIZES = new Set([
+
+  "auto",
+
+  "1024x1024",
+
+  "1536x1024",
+
+  "1024x1536",
+
+  "2048x2048",
+
+  "2048x1152",
+
+  "1152x2048",
+
+  "2560x1440",
+
+  "1440x2560",
+
+  "3840x2160",
+
+  "2160x3840",
+
+]);
+
+const IMAGE_GENERATE_OUTPUT_FORMATS = new Set(["png", "jpeg", "webp"]);
+
+
+
+const validateImageOptions = (payload) => {
+
+  if (payload.intent !== "image_generate") return null;
+
+  const options = payload.image_options && typeof payload.image_options === "object"
+
+    ? payload.image_options
+
+    : {};
+
+  const quality = typeof options.quality === "string" ? options.quality.trim().toLowerCase() : "auto";
+
+  const size = typeof options.size === "string" ? options.size.trim().toLowerCase() : "auto";
+
+  const outputFormat = typeof options.output_format === "string" ? options.output_format.trim().toLowerCase() : "png";
+
+  if (!IMAGE_GENERATE_QUALITIES.has(quality)) {
+
+    const error = new Error("invalid_image_quality");
+
+    error.status = 400;
+
+    throw error;
+
+  }
+
+  if (!IMAGE_GENERATE_SIZES.has(size)) {
+
+    const error = new Error("invalid_image_size");
+
+    error.status = 400;
+
+    throw error;
+
+  }
+
+  if (!IMAGE_GENERATE_OUTPUT_FORMATS.has(outputFormat)) {
+
+    const error = new Error("invalid_image_output_format");
+
+    error.status = 400;
+
+    throw error;
+
+  }
+
+  return { quality, size, output_format: outputFormat };
+
+};
+
+
+
+const validateChatPayload = (payload) => {
   const sessionId = typeof payload.session_id === "string" ? payload.session_id.trim() : "";
   const messageText = typeof payload.message_text === "string" ? payload.message_text.trim() : "";
-  const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+  const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+
+  const imageOptions = validateImageOptions(payload);
+
+  const intent = imageOptions ? "image_generate" : null;
 
   if (!sessionId) {
     const error = new Error("missing_session_id");
@@ -269,7 +466,7 @@ const validateChatPayload = (payload) => {
     throw error;
   }
 
-  return { session_id: sessionId, message_text: messageText, attachments };
+  return { session_id: sessionId, message_text: messageText, attachments, intent, image_options: imageOptions };
 };
 
 class RunStore {
@@ -409,7 +606,11 @@ class HermesBridge {
       hermes_conversation_id: null,
       mode,
       status: "queued",
-      message_text: validated.message_text,
+      message_text: validated.message_text,
+
+      intent: validated.intent,
+
+      image_options: validated.image_options,
       input: "",
       attachments: preparedAttachments,
       replay_context_messages: replayContextMessages,
@@ -715,6 +916,10 @@ class HermesBridge {
 
         imageTransport,
 
+        intent: run.intent,
+
+        imageOptions: run.image_options,
+
       });
 
       run.input = typeof requestPayload.message === "string"
@@ -989,7 +1194,18 @@ class HermesBridge {
   }
 
   async executeRun(runId) {
-    const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
+    const hermesSessionIds = new Set([
+      buildHermesRunSessionId(sessionId),
+      state?.hermes_session_id,
+    ].filter(Boolean));
+
+    store.runs.forEach((run) => {
+      if (run?.chat_session_id === sessionId && run?.user_id === user.id && run?.hermes_session_id) {
+        hermesSessionIds.add(run.hermes_session_id);
+      }
+    });
+
+    const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
     if (!hermesBaseUrl) {
       throw new Error("missing_or_invalid_HERMES_API_BASE_URL");
     }
@@ -1084,7 +1300,11 @@ const handleRequest = async (req, res) => {
     }
 
     await hermesStateRepository.delete(sessionId, user.id).catch(() => {});
-    await deleteChatSessionData({ sessionId, userId: user.id });
+    await deleteChatSessionData({
+      sessionId,
+      userId: user.id,
+      hermesSessionIds: Array.from(hermesSessionIds),
+    });
     jsonResponse(res, 200, { ok: true }, corsHeaders);
     return;
   }

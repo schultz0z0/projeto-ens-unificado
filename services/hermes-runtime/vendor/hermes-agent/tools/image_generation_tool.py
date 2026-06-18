@@ -999,6 +999,22 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 from tools.registry import registry, tool_error
 
+IMAGE_GENERATE_QUALITY_OPTIONS = ("auto", "low", "medium", "high")
+IMAGE_GENERATE_SIZE_OPTIONS = (
+    "auto",
+    "1024x1024",
+    "1536x1024",
+    "1024x1536",
+    "2048x2048",
+    "2048x1152",
+    "1152x2048",
+    "2560x1440",
+    "1440x2560",
+    "3840x2160",
+    "2160x3840",
+)
+IMAGE_GENERATE_OUTPUT_FORMAT_OPTIONS = ("png", "jpeg", "webp")
+
 IMAGE_GENERATE_SCHEMA = {
     "name": "image_generate",
     "description": (
@@ -1023,6 +1039,24 @@ IMAGE_GENERATE_SCHEMA = {
                 "enum": list(VALID_ASPECT_RATIOS),
                 "description": "The aspect ratio of the generated image. 'landscape' is 16:9 wide, 'portrait' is 16:9 tall, 'square' is 1:1.",
                 "default": DEFAULT_ASPECT_RATIO,
+            },
+            "quality": {
+                "type": "string",
+                "enum": list(IMAGE_GENERATE_QUALITY_OPTIONS),
+                "description": "Optional rendering quality for backends that support it, such as OpenAI GPT Image 2.",
+                "default": "auto",
+            },
+            "size": {
+                "type": "string",
+                "enum": list(IMAGE_GENERATE_SIZE_OPTIONS),
+                "description": "Optional output dimensions for backends that support explicit image sizes.",
+                "default": "auto",
+            },
+            "output_format": {
+                "type": "string",
+                "enum": list(IMAGE_GENERATE_OUTPUT_FORMAT_OPTIONS),
+                "description": "Optional output file format for backends that support it.",
+                "default": "png",
             },
         },
         "required": ["prompt"],
@@ -1069,7 +1103,14 @@ def _read_configured_image_provider():
     return None
 
 
-def _dispatch_to_plugin_provider(prompt: str, aspect_ratio: str):
+def _dispatch_to_plugin_provider(
+    prompt: str,
+    aspect_ratio: str,
+    *,
+    quality: str | None = None,
+    size: str | None = None,
+    output_format: str | None = None,
+):
     """Route the call to a plugin-registered provider when one is selected.
 
     Returns a JSON string on dispatch, or ``None`` to fall through to the
@@ -1126,6 +1167,12 @@ def _dispatch_to_plugin_provider(prompt: str, aspect_ratio: str):
         kwargs = {"prompt": prompt, "aspect_ratio": aspect_ratio}
         if configured_model:
             kwargs["model"] = configured_model
+        if quality:
+            kwargs["quality"] = quality
+        if size:
+            kwargs["size"] = size
+        if output_format:
+            kwargs["output_format"] = output_format
         result = provider.generate(**kwargs)
     except Exception as exc:
         logger.warning(
@@ -1153,17 +1200,27 @@ def _handle_image_generate(args, **kw):
     if not prompt:
         return tool_error("prompt is required for image generation")
     aspect_ratio = args.get("aspect_ratio", DEFAULT_ASPECT_RATIO)
+    quality = args.get("quality")
+    size = args.get("size")
+    output_format = args.get("output_format")
     task_id = kw.get("task_id")
 
     # Route to a plugin-registered provider if one is active (and it's
     # not the in-tree FAL path).
-    dispatched = _dispatch_to_plugin_provider(prompt, aspect_ratio)
+    dispatched = _dispatch_to_plugin_provider(
+        prompt,
+        aspect_ratio,
+        quality=quality,
+        size=size,
+        output_format=output_format,
+    )
     if dispatched is not None:
         return _postprocess_image_generate_result(dispatched, task_id=task_id)
 
     raw = image_generate_tool(
         prompt=prompt,
         aspect_ratio=aspect_ratio,
+        output_format=output_format,
     )
     return _postprocess_image_generate_result(raw, task_id=task_id)
 

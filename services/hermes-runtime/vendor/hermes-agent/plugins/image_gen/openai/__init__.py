@@ -25,7 +25,12 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote, urljoin
 
 from agent.image_gen_provider import (
     DEFAULT_ASPECT_RATIO,
@@ -78,6 +83,211 @@ _SIZES = {
     "square": "1024x1024",
     "portrait": "1024x1536",
 }
+
+_QUALITY_VALUES = {"auto", "low", "medium", "high"}
+_OUTPUT_FORMATS = {"png", "jpeg", "webp"}
+_EXPLICIT_SIZES = {
+    "auto",
+    "1024x1024",
+    "1536x1024",
+    "1024x1536",
+    "2048x2048",
+    "2048x1152",
+    "1152x2048",
+    "2560x1440",
+    "1440x2560",
+    "3840x2160",
+    "2160x3840",
+}
+
+_SUPABASE_IMAGE_PREFIX = "hermes-chat-images"
+
+
+def _env(name: str, default: str = "") -> str:
+    return str(os.environ.get(name, default) or "").strip()
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = _env(name)
+    if not value:
+        return default
+    return value.lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _sanitize_storage_segment(value: Any, fallback: str = "session") -> str:
+    sanitized = re.sub(r"[^a-zA-Z0-9._=-]+", "-", str(value or "").strip())
+    sanitized = re.sub(r"-+", "-", sanitized).strip("-")[:160]
+    return sanitized or fallback
+
+
+def _encode_storage_path(storage_path: str) -> str:
+    return "/".join(quote(segment, safe="") for segment in storage_path.split("/"))
+
+
+def _guess_image_mime(path: Path, output_format: str) -> str:
+    suffix = (path.suffix.lstrip(".") or output_format or "png").lower()
+    if suffix in {"jpg", "jpeg"}:
+        return "image/jpeg"
+    if suffix == "webp":
+        return "image/webp"
+    return "image/png"
+
+
+def _extract_signed_url(payload: Any) -> Optional[str]:
+    if isinstance(payload, str) and payload:
+        return payload
+    if isinstance(payload, dict):
+        for key in ("signedURL", "signedUrl", "signed_url"):
+            value = payload.get(key)
+            if isinstance(value, str) and value:
+                return value
+        data = payload.get("data")
+        if isinstance(data, dict):
+            for key in ("signedURL", "signedUrl", "signed_url"):
+                value = data.get(key)
+                if isinstance(value, str) and value:
+                    return value
+    return None
+
+
+def _current_hermes_session_id() -> str:
+    try:
+        from gateway.session_context import get_session_env
+
+        return get_session_env("HERMES_SESSION_ID", "") or _env("HERMES_SESSION_ID")
+    except Exception:
+        return _env("HERMES_SESSION_ID")
+
+
+def _upload_local_image_to_supabase(path: Path, *, output_format: str) -> Optional[Dict[str, str]]:
+    supabase_url = _env("SUPABASE_URL")
+    service_role_key = _env("SUPABASE_SERVICE_ROLE_KEY")
+    if not supabase_url or not service_role_key:
+        return None
+
+    import requests
+
+    supabase_url = supabase_url.rstrip("/")
+    bucket = _env("SUPABASE_OUTPUTS_BUCKET", "image-gen-outputs")
+    prefix = _env("SUPABASE_GENERATED_IMAGES_PREFIX", _SUPABASE_IMAGE_PREFIX).strip("/") or _SUPABASE_IMAGE_PREFIX
+    expires_in = int(_env("SUPABASE_SIGNED_URL_EXPIRES_SECONDS", "604800") or "604800")
+    max_attempts = max(1, int(_env("SUPABASE_UPLOAD_MAX_ATTEMPTS", "3") or "3"))
+    backoff = max(0.0, float(_env("SUPABASE_UPLOAD_BACKOFF_SECONDS", "1") or "1"))
+
+    session_segment = _sanitize_storage_segment(_current_hermes_session_id())
+    fallback_suffix = f".{output_format or 'png'}"
+    filename = f"{_sanitize_storage_segment(path.stem, 'image')}{path.suffix or fallback_suffix}"
+    storage_path = f"{prefix}/{session_segment}/{filename}"
+    encoded_path = _encode_storage_path(storage_path)
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+    }
+    upload_headers = {
+        **headers,
+        "Content-Type": _guess_image_mime(path, output_format),
+        "x-upsert": "true",
+    }
+
+    uploaded = False
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with path.open("rb") as file_obj:
+                response = requests.post(
+                    f"{supabase_url}/storage/v1/object/{quote(bucket, safe='')}/{encoded_path}",
+                    headers=upload_headers,
+                    data=file_obj,
+                    timeout=90,
+                )
+            response.raise_for_status()
+            uploaded = True
+            break
+        except Exception as exc:  # noqa: BLE001 - upload is best effort
+            if attempt >= max_attempts:
+                raise
+            time.sleep(backoff * attempt)
+    if not uploaded:
+        raise RuntimeError("Supabase upload did not complete")
+
+    sign_response = requests.post(
+        f"{supabase_url}/storage/v1/object/sign/{quote(bucket, safe='')}/{encoded_path}",
+        headers={**headers, "Content-Type": "application/json"},
+        json={"expiresIn": expires_in},
+        timeout=30,
+    )
+    sign_response.raise_for_status()
+    signed_url = _extract_signed_url(sign_response.json())
+    if not signed_url:
+        raise RuntimeError("Supabase did not return a signed URL for generated image")
+
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    return {
+        "image_url": urljoin(f"{supabase_url}/", signed_url),
+        "download_url": urljoin(f"{supabase_url}/", signed_url),
+        "storage_path": storage_path,
+        "storage_bucket": bucket,
+        "signed_url_expires_at": expires_at.isoformat().replace("+00:00", "Z"),
+    }
+
+
+def _delete_local_cache_after_upload(path: Path) -> bool:
+    if not _env_bool("HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE", True):
+        return False
+    try:
+        path.unlink(missing_ok=True)
+        return True
+    except OSError as exc:
+        logger.debug("Could not delete uploaded local image cache %s: %s", path, exc)
+        return False
+
+
+def _publish_saved_image(path: Path, *, output_format: str) -> Tuple[str, Dict[str, Any]]:
+    extra: Dict[str, Any] = {}
+    image_ref = str(path)
+    try:
+        uploaded = _upload_local_image_to_supabase(path, output_format=output_format)
+    except Exception as exc:  # noqa: BLE001 - keep image generation successful
+        logger.warning("Could not upload generated image to Supabase Storage: %s", exc)
+        extra["supabase_upload_error"] = str(exc)
+        return image_ref, extra
+
+    if not uploaded:
+        return image_ref, extra
+
+    image_ref = uploaded["image_url"]
+    extra.update(uploaded)
+    extra["local_cache_removed"] = _delete_local_cache_after_upload(path)
+    return image_ref, extra
+
+
+def _clean_option(value: Any, allowed: set[str]) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip().lower()
+    return candidate if candidate in allowed else None
+
+
+def _resolve_quality(override: Any) -> Tuple[str, str]:
+    quality = _clean_option(override, _QUALITY_VALUES)
+    if quality:
+        return f"{API_MODEL}-{quality}", quality
+
+    tier_id, meta = _resolve_model()
+    return tier_id, meta["quality"]
+
+
+def _resolve_size(override: Any, aspect: str) -> str:
+    size = _clean_option(override, _EXPLICIT_SIZES)
+    if size:
+        return size
+    return _SIZES.get(aspect, _SIZES["square"])
+
+
+def _resolve_output_format(override: Any) -> Tuple[str, bool]:
+    output_format = _clean_option(override, _OUTPUT_FORMATS)
+    if output_format:
+        return output_format, True
+    return "png", False
 
 
 def _load_openai_config() -> Dict[str, Any]:
@@ -210,8 +420,9 @@ class OpenAIImageGenProvider(ImageGenProvider):
                 aspect_ratio=aspect,
             )
 
-        tier_id, meta = _resolve_model()
-        size = _SIZES.get(aspect, _SIZES["square"])
+        tier_id, quality = _resolve_quality(kwargs.get("quality"))
+        size = _resolve_size(kwargs.get("size"), aspect)
+        output_format, explicit_output_format = _resolve_output_format(kwargs.get("output_format"))
 
         # gpt-image-2 returns b64_json unconditionally and REJECTS
         # ``response_format`` as an unknown parameter. Don't send it.
@@ -220,8 +431,10 @@ class OpenAIImageGenProvider(ImageGenProvider):
             "prompt": prompt,
             "size": size,
             "n": 1,
-            "quality": meta["quality"],
+            "quality": quality,
         }
+        if explicit_output_format:
+            payload["output_format"] = output_format
 
         try:
             client = openai.OpenAI()
@@ -252,10 +465,15 @@ class OpenAIImageGenProvider(ImageGenProvider):
         b64 = getattr(first, "b64_json", None)
         url = getattr(first, "url", None)
         revised_prompt = getattr(first, "revised_prompt", None)
+        saved_path: Optional[Path] = None
 
         if b64:
             try:
-                saved_path = save_b64_image(b64, prefix=f"openai_{tier_id}")
+                saved_path = save_b64_image(
+                    b64,
+                    prefix=f"openai_{tier_id}",
+                    extension=output_format,
+                )
             except Exception as exc:
                 return error_response(
                     error=f"Could not save image to cache: {exc}",
@@ -292,9 +510,17 @@ class OpenAIImageGenProvider(ImageGenProvider):
                 aspect_ratio=aspect,
             )
 
-        extra: Dict[str, Any] = {"size": size, "quality": meta["quality"]}
+        extra: Dict[str, Any] = {
+            "size": size,
+            "quality": quality,
+            "output_format": output_format,
+        }
         if revised_prompt:
             extra["revised_prompt"] = revised_prompt
+
+        if saved_path is not None:
+            image_ref, publish_extra = _publish_saved_image(saved_path, output_format=output_format)
+            extra.update(publish_extra)
 
         return success_response(
             image=image_ref,

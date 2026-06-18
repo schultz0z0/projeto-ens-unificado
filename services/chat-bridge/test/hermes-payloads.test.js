@@ -215,10 +215,69 @@ test("buildHermesSessionChatRequest sends current images as Hermes session multi
   });
 
 });
-
-
-
-test("shouldUseResponsesApi routes images and non-extracted files to multimodal responses", () => {
+test("buildHermesSessionChatRequest turns image mode into image_generate instructions", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "crie um banner para campanha da ENS",
+
+    attachments: [{
+
+      kind: "image",
+
+      name: "referencia.png",
+
+      mime_type: "image/png",
+
+      storage_path: "user-1/session-1/referencia.png",
+
+      signed_url: "https://project.supabase.co/storage/v1/object/sign/chat-attachments/user-1/session-1/referencia.png?token=abc",
+
+      inline_data_url: "data:image/png;base64,AAAA",
+
+    }],
+
+    intent: "image_generate",
+
+    imageOptions: {
+
+      quality: "high",
+
+      size: "2560x1440",
+
+      output_format: "webp",
+
+    },
+
+  });
+
+  assert.equal(Array.isArray(request.message), true);
+
+  assert.match(request.message[0].text, /Use obrigatoriamente a ferramenta image_generate/);
+
+  assert.match(request.message[0].text, /quality: high/);
+
+  assert.match(request.message[0].text, /size: 2560x1440/);
+
+  assert.match(request.message[0].text, /output_format: webp/);
+
+  assert.match(request.message[0].text, /aspect_ratio: landscape/);
+
+  assert.deepEqual(request.message[1], {
+
+    type: "input_image",
+
+    image_url: "data:image/png;base64,AAAA",
+
+    detail: "auto",
+
+  });
+
+});
+
+
+
+test("shouldUseResponsesApi routes images and non-extracted files to multimodal responses", () => {
 
   assert.equal(shouldUseResponsesApi([]), false);
 

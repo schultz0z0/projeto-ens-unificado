@@ -91,6 +91,24 @@ test("parseHermesEventBlock emits missing final text, files and done on run.comp
   assert.equal(parsed.completed, true);
 });
 
+test("parseHermesEventBlock exposes Supabase-generated image metadata", () => {
+  const parsed = parseHermesEventBlock(
+    'data: {"event":"run.completed","run_id":"run_123","session_id":"session-1","output":"Imagem pronta.","result":{"type":"image","image_url":"https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai.png?token=abc","name":"openai.png","mime_type":"image/png","storage_path":"hermes-chat-images/nexus-chat-1/openai.png","signed_url_expires_at":"2026-06-18T12:00:00Z"}}',
+    context,
+  );
+
+  const filesEvent = parsed.events.find((event) => event.event === "files");
+  assert.deepEqual(filesEvent?.data.files, [{
+    name: "openai.png",
+    url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai.png?token=abc",
+    kind: "image",
+    mimeType: "image/png",
+    storage_path: "hermes-chat-images/nexus-chat-1/openai.png",
+    signed_url_expires_at: "2026-06-18T12:00:00Z",
+  }]);
+  assert.equal(parsed.completed, true);
+});
+
 test("parseHermesStatusPayload keeps running runs open and completes terminal runs", () => {
   assert.deepEqual(parseHermesStatusPayload({ status: "running" }, context), {
     terminal: false,

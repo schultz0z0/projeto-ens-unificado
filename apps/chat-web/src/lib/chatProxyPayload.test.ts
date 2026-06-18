@@ -65,6 +65,30 @@ describe("buildChatProxyPayload", () => {
     expect(payload.attachments?.[0]).not.toHaveProperty("signed_url");
   });
 
+  it("serializa opcoes do modo gerar imagem sem misturar no texto do usuario", () => {
+    const payload = buildChatProxyPayload({
+      sessionId: "session-1",
+      messageText: "crie uma imagem para uma campanha da ENS",
+      attachments: [],
+      imageGeneration: {
+        quality: "high",
+        size: "2560x1440",
+        outputFormat: "webp",
+      },
+    });
+
+    expect(payload).toEqual({
+      session_id: "session-1",
+      message_text: "crie uma imagem para uma campanha da ENS",
+      intent: "image_generate",
+      image_options: {
+        quality: "high",
+        size: "2560x1440",
+        output_format: "webp",
+      },
+    });
+  });
+
   it("rejeita attachment sem storagePath ou mimeType valido", () => {
     expect(() =>
       buildChatProxyPayload({

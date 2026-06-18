@@ -47,6 +47,19 @@ Pontos obrigatorios para producao:
 - `NEXUS_HERMES_API_KEY=<segredo-forte>`
 - chaves reais de Supabase e provedores de IA usados pelos servicos
 
+Para o modo `Criar imagem` do chatbot via Hermes, o Supabase do app tambem precisa destas variaveis:
+
+- `NEXUS_SUPABASE_OUTPUTS_BUCKET=image-gen-outputs`
+- `NEXUS_SUPABASE_GENERATED_IMAGES_PREFIX=hermes-chat-images`
+- `NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS=3600`
+- `NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE=true`
+
+Aplique no SQL Editor do Supabase do app a migration:
+
+```text
+apps/chat-web/supabase/migrations/20260618123000_image_gen_outputs_storage.sql
+```
+
 ## 4. Build e start
 
 Use sempre os dois arquivos Compose em producao, porque `docker-compose.prod.yml` adiciona as labels do Traefik.

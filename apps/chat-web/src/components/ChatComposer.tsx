@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { CHAT_COMPOSER_ACCEPTED_FILE_TYPES } from "@/lib/chatAttachmentPolicy";
-import { FileText, Mic, Plus, Send, X } from "lucide-react";
+import { Check, ChevronDown, FileText, Image as ImageIcon, Mic, Plus, Send, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type ComposerMenuItem =
@@ -37,13 +37,38 @@ export type ComposerAttachment = {
   kind: "image" | "file";
 };
 
+export type ImageGenerationQuality = "auto" | "low" | "medium" | "high";
+export type ImageGenerationSize =
+  | "auto"
+  | "1024x1024"
+  | "1536x1024"
+  | "1024x1536"
+  | "2048x2048"
+  | "2048x1152"
+  | "1152x2048"
+  | "2560x1440"
+  | "1440x2560"
+  | "3840x2160"
+  | "2160x3840";
+export type ImageGenerationOutputFormat = "png" | "jpeg" | "webp";
+
+export type ImageGenerationOptions = {
+  quality: ImageGenerationQuality;
+  size: ImageGenerationSize;
+  outputFormat: ImageGenerationOutputFormat;
+};
+
 type ChatComposerProps = {
   value: string;
   placeholder?: string;
   disabled?: boolean;
   attachments: ComposerAttachment[];
   menuItems: ComposerMenuItem[];
+  imageGenerationMode?: boolean;
+  imageGenerationOptions?: ImageGenerationOptions;
   onChange: (value: string) => void;
+  onImageGenerationOptionsChange?: (options: ImageGenerationOptions) => void;
+  onExitImageGenerationMode?: () => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onSubmit: () => void;
   onPickFiles: (files: FileList) => void;
@@ -54,13 +79,82 @@ type ChatComposerProps = {
 
 const maxComposerTextareaHeight = 240;
 
+const qualityOptions: Array<{ value: ImageGenerationQuality; label: string }> = [
+  { value: "auto", label: "Auto" },
+  { value: "high", label: "Alta" },
+  { value: "medium", label: "Media" },
+  { value: "low", label: "Baixa" },
+];
+
+const sizeOptions: Array<{ value: ImageGenerationSize; label: string }> = [
+  { value: "auto", label: "Auto" },
+  { value: "1024x1024", label: "Quadrado 1024" },
+  { value: "1024x1536", label: "Retrato 1024x1536" },
+  { value: "1536x1024", label: "Paisagem 1536x1024" },
+  { value: "2560x1440", label: "2K 2560x1440" },
+  { value: "3840x2160", label: "4K 3840x2160" },
+];
+
+const outputFormatOptions: Array<{ value: ImageGenerationOutputFormat; label: string }> = [
+  { value: "png", label: "PNG" },
+  { value: "jpeg", label: "JPEG" },
+  { value: "webp", label: "WebP" },
+];
+
+type OptionMenuProps<T extends string> = {
+  label: string;
+  value: T;
+  options: Array<{ value: T; label: string }>;
+  disabled?: boolean;
+  onChange: (value: T) => void;
+};
+
+function OptionMenu<T extends string>({ label, value, options, disabled, onChange }: OptionMenuProps<T>) {
+  const selected = options.find((option) => option.value === value)?.label ?? value;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-9 rounded-full border border-white/30 bg-white/35 px-3 text-xs font-medium text-slate-700 hover:bg-white/50"
+          disabled={disabled}
+        >
+          <span className="max-w-[120px] truncate">{label}: {selected}</span>
+          <ChevronDown className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="glass-surface border-white/20 bg-white/80 backdrop-blur-md shadow-glass min-w-[190px]">
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onSelect={(event) => {
+              event.preventDefault();
+              onChange(option.value);
+            }}
+            className="cursor-pointer justify-between"
+          >
+            <span>{option.label}</span>
+            {option.value === value && <Check className="h-4 w-4 text-brand-primary" aria-hidden="true" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function ChatComposer({
   value,
   placeholder = "Pergunte alguma coisa...",
   disabled,
   attachments,
   menuItems,
+  imageGenerationMode = false,
+  imageGenerationOptions,
   onChange,
+  onImageGenerationOptionsChange,
+  onExitImageGenerationMode,
   onKeyDown,
   onSubmit,
   onPickFiles,
@@ -73,6 +167,7 @@ export function ChatComposer({
   const dragCounterRef = useRef(0);
   const [isDragActive, setIsDragActive] = useState(false);
   const canSend = useMemo(() => value.trim().length > 0 || attachments.length > 0, [attachments.length, value]);
+  const canEditImageOptions = imageGenerationMode && imageGenerationOptions && onImageGenerationOptionsChange;
 
   const handleOpenFilePicker = () => {
     fileInputRef.current?.click();
@@ -163,6 +258,51 @@ export function ChatComposer({
           <p className="rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-slate-800 shadow-sm">
             Solte seus arquivos aqui para anexar ao chat
           </p>
+        </div>
+      )}
+
+      {imageGenerationMode && imageGenerationOptions && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="flex h-9 items-center gap-2 rounded-full border border-brand-primary/30 bg-brand-primary/10 px-3 text-xs font-semibold text-slate-800">
+            <ImageIcon className="h-4 w-4 text-brand-primary" aria-hidden="true" />
+            <span>Gerar imagem</span>
+          </div>
+
+          <OptionMenu
+            label="Tamanho"
+            value={imageGenerationOptions.size}
+            options={sizeOptions}
+            disabled={disabled || !canEditImageOptions}
+            onChange={(size) => onImageGenerationOptionsChange?.({ ...imageGenerationOptions, size })}
+          />
+
+          <OptionMenu
+            label="Qualidade"
+            value={imageGenerationOptions.quality}
+            options={qualityOptions}
+            disabled={disabled || !canEditImageOptions}
+            onChange={(quality) => onImageGenerationOptionsChange?.({ ...imageGenerationOptions, quality })}
+          />
+
+          <OptionMenu
+            label="Formato"
+            value={imageGenerationOptions.outputFormat}
+            options={outputFormatOptions}
+            disabled={disabled || !canEditImageOptions}
+            onChange={(outputFormat) => onImageGenerationOptionsChange?.({ ...imageGenerationOptions, outputFormat })}
+          />
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Sair do modo gerar imagem"
+            className="h-9 w-9 rounded-full border border-white/30 bg-white/30 hover:bg-white/50"
+            onClick={onExitImageGenerationMode}
+            disabled={disabled}
+          >
+            <X className="h-4 w-4 text-slate-700" aria-hidden="true" />
+          </Button>
         </div>
       )}
 

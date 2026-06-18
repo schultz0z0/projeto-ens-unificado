@@ -32,6 +32,18 @@ def _fake_response(*, b64=None, url=None, revised_prompt=None):
 @pytest.fixture(autouse=True)
 def _tmp_hermes_home(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    for name in (
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "SUPABASE_OUTPUTS_BUCKET",
+        "SUPABASE_GENERATED_IMAGES_PREFIX",
+        "SUPABASE_SIGNED_URL_EXPIRES_SECONDS",
+        "SUPABASE_UPLOAD_MAX_ATTEMPTS",
+        "SUPABASE_UPLOAD_BACKOFF_SECONDS",
+        "HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE",
+        "HERMES_SESSION_ID",
+    ):
+        monkeypatch.delenv(name, raising=False)
     yield tmp_path
 
 
@@ -196,6 +208,43 @@ class TestGenerate:
 
         assert fake_client.images.generate.call_args.kwargs["size"] == expected_size
 
+    def test_per_call_quality_size_and_output_format_override_configured_tier(self, provider):
+        fake_client = MagicMock()
+        fake_client.images.generate.return_value = _fake_response(b64=_b64_png())
+
+        with _patched_openai(fake_client):
+            result = provider.generate(
+                "a cat",
+                aspect_ratio="landscape",
+                quality="high",
+                size="2560x1440",
+                output_format="webp",
+            )
+
+        call_kwargs = fake_client.images.generate.call_args.kwargs
+        assert call_kwargs["quality"] == "high"
+        assert call_kwargs["size"] == "2560x1440"
+        assert call_kwargs["output_format"] == "webp"
+        assert result["quality"] == "high"
+        assert result["size"] == "2560x1440"
+        assert result["output_format"] == "webp"
+        assert result["model"] == "gpt-image-2-high"
+        assert Path(result["image"]).suffix == ".webp"
+
+    def test_auto_quality_and_size_are_forwarded_when_requested(self, provider):
+        fake_client = MagicMock()
+        fake_client.images.generate.return_value = _fake_response(b64=_b64_png())
+
+        with _patched_openai(fake_client):
+            result = provider.generate("a cat", quality="auto", size="auto")
+
+        call_kwargs = fake_client.images.generate.call_args.kwargs
+        assert call_kwargs["quality"] == "auto"
+        assert call_kwargs["size"] == "auto"
+        assert result["quality"] == "auto"
+        assert result["size"] == "auto"
+        assert result["model"] == "gpt-image-2-auto"
+
     def test_revised_prompt_passed_through(self, provider):
         fake_client = MagicMock()
         fake_client.images.generate.return_value = _fake_response(
@@ -206,6 +255,41 @@ class TestGenerate:
             result = provider.generate("a cat")
 
         assert result["revised_prompt"] == "A photo of a cat"
+
+    def test_generated_image_uploads_to_supabase_and_removes_local_cache(self, provider, tmp_path, monkeypatch):
+        monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
+        monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
+        monkeypatch.setenv("SUPABASE_OUTPUTS_BUCKET", "image-gen-outputs")
+        monkeypatch.setenv("SUPABASE_GENERATED_IMAGES_PREFIX", "hermes-chat-images")
+        monkeypatch.setenv("SUPABASE_SIGNED_URL_EXPIRES_SECONDS", "3600")
+        monkeypatch.setenv("SUPABASE_UPLOAD_MAX_ATTEMPTS", "1")
+        monkeypatch.setenv("HERMES_SESSION_ID", "nexus:chat-session-1")
+        monkeypatch.setenv("HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE", "true")
+
+        fake_client = MagicMock()
+        fake_client.images.generate.return_value = _fake_response(b64=_b64_png())
+
+        upload_response = MagicMock()
+        upload_response.raise_for_status.return_value = None
+        sign_response = MagicMock()
+        sign_response.raise_for_status.return_value = None
+        sign_response.json.return_value = {
+            "signedURL": "/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-session-1/image.png?token=abc",
+        }
+
+        with _patched_openai(fake_client), patch("requests.post", side_effect=[upload_response, sign_response]) as post:
+            result = provider.generate("a cat", output_format="png")
+
+        assert result["success"] is True
+        assert result["image"].startswith("https://project.supabase.co/storage/v1/object/sign/")
+        assert result["image_url"] == result["image"]
+        assert result["download_url"] == result["image"]
+        assert result["storage_bucket"] == "image-gen-outputs"
+        assert result["storage_path"].startswith("hermes-chat-images/nexus-chat-session-1/")
+        assert result["signed_url_expires_at"].endswith("Z")
+        assert result["local_cache_removed"] is True
+        assert list((tmp_path / "cache" / "images").glob("*")) == []
+        assert post.call_count == 2
 
     def test_api_error_returns_error_response(self, provider):
         fake_client = MagicMock()
@@ -228,7 +312,7 @@ class TestGenerate:
         assert result["success"] is False
         assert result["error_type"] == "empty_response"
 
-    def test_url_response_is_cached_locally(self, provider):
+    def test_url_response_is_cached_locally(self, provider, tmp_path):
         """OpenAI URL response (if API ever returns one) is cached locally.
 
         Pre-fix this asserted the bare URL passed through; symmetric to the
@@ -243,12 +327,12 @@ class TestGenerate:
 
         with _patched_openai(fake_client), patch(
             "plugins.image_gen.openai.save_url_image",
-            return_value=Path("/tmp/openai_gpt-image-2_20260524_000000_deadbeef.png"),
+            return_value=tmp_path / "openai_gpt-image-2_20260524_000000_deadbeef.png",
         ) as mock_save_url:
             result = provider.generate("a cat")
 
         assert result["success"] is True
-        assert result["image"].startswith("/")
+        assert Path(result["image"]).is_absolute()
         assert "example.com" not in result["image"]
         mock_save_url.assert_called_once()
 

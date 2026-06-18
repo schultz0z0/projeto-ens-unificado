@@ -10,7 +10,103 @@ export const buildHermesSessionKey = ({ userId, sessionId }) => {
 export const isImageAttachment = (attachment) =>
   attachment?.kind === "image" || String(attachment?.mime_type ?? "").startsWith("image/");
 
-const appendFileText = (lines, label, attachment, { includeUrl = true } = {}) => {
+const IMAGE_GENERATE_SIZE_TO_ASPECT_RATIO = {
+
+  "1024x1024": "square",
+
+  "2048x2048": "square",
+
+  "1536x1024": "landscape",
+
+  "2048x1152": "landscape",
+
+  "2560x1440": "landscape",
+
+  "3840x2160": "landscape",
+
+  "1024x1536": "portrait",
+
+  "1152x2048": "portrait",
+
+  "1440x2560": "portrait",
+
+  "2160x3840": "portrait",
+
+};
+
+
+
+const deriveImageAspectRatio = (size) => IMAGE_GENERATE_SIZE_TO_ASPECT_RATIO[size] ?? "landscape";
+
+
+
+const buildImageGenerationMessageText = ({ messageText, imageOptions, hasReferenceImages }) => {
+
+  const options = imageOptions ?? {};
+
+  const quality = options.quality || "auto";
+
+  const size = options.size || "auto";
+
+  const outputFormat = options.output_format || "png";
+
+  const aspectRatio = size === "auto" ? "landscape" : deriveImageAspectRatio(size);
+
+  const prompt = String(messageText ?? "").trim() || "Gerar imagem usando as referencias anexadas e o contexto da conversa.";
+
+  const lines = [
+
+    "[Modo Nexus: gerar imagem com Hermes]",
+
+    "Use obrigatoriamente a ferramenta image_generate nesta resposta.",
+
+    "Nao responda apenas com texto antes de chamar a ferramenta.",
+
+    "Depois da geracao, entregue a imagem gerada ao usuario e mencione de forma breve os parametros usados.",
+
+    "",
+
+    "[Pedido visual do usuario]",
+
+    prompt,
+
+    "",
+
+    "[Parametros para image_generate]",
+
+    "prompt: reescreva o pedido visual acima como um prompt detalhado e fiel ao contexto da conversa.",
+
+    `aspect_ratio: ${aspectRatio}`,
+
+    `quality: ${quality}`,
+
+    `size: ${size}`,
+
+    `output_format: ${outputFormat}`,
+
+  ];
+
+  if (hasReferenceImages) {
+
+    lines.push(
+
+      "",
+
+      "[Referencias visuais anexadas]",
+
+      "As imagens anexadas nesta mesma mensagem sao referencias visuais. Analise-as no contexto da conversa e incorpore suas caracteristicas relevantes no prompt textual da ferramenta image_generate.",
+
+    );
+
+  }
+
+  return lines.join("\n");
+
+};
+
+
+
+const appendFileText = (lines, label, attachment, { includeUrl = true } = {}) => {
   lines.push(`[${label}: ${attachment.name}]`);
   lines.push(`Tipo: ${attachment.mime_type}`);
   if (includeUrl && attachment.signed_url) {
@@ -151,15 +247,33 @@ const buildHermesSessionChatMessage = ({
 
   imageTransport = "inline",
 
+  intent,
+
+  imageOptions,
+
 }) => {
 
   const imageAttachments = attachments.filter(isImageAttachment);
+
+  const effectiveMessageText = intent === "image_generate"
+
+    ? buildImageGenerationMessageText({
+
+      messageText,
+
+      imageOptions,
+
+      hasReferenceImages: imageAttachments.length > 0,
+
+    })
+
+    : messageText;
 
   if (imageAttachments.length === 0) {
 
     return buildHermesRunInput({
 
-      messageText,
+      messageText: effectiveMessageText,
 
       attachments,
 
@@ -175,7 +289,7 @@ const buildHermesSessionChatMessage = ({
 
   const textContent = buildHermesRunInput({
 
-    messageText,
+    messageText: effectiveMessageText,
 
     attachments: nonImageAttachments,
 
@@ -231,6 +345,10 @@ export const buildHermesSessionChatRequest = ({
 
   imageTransport = "inline",
 
+  intent,
+
+  imageOptions,
+
 }) => ({
 
   message: buildHermesSessionChatMessage({
@@ -240,6 +358,10 @@ export const buildHermesSessionChatRequest = ({
     attachments,
 
     imageTransport,
+
+    intent,
+
+    imageOptions,
 
   }),
 
