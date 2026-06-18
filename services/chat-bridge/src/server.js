@@ -1194,17 +1194,6 @@ class HermesBridge {
   }
 
   async executeRun(runId) {
-    const hermesSessionIds = new Set([
-      buildHermesRunSessionId(sessionId),
-      state?.hermes_session_id,
-    ].filter(Boolean));
-
-    store.runs.forEach((run) => {
-      if (run?.chat_session_id === sessionId && run?.user_id === user.id && run?.hermes_session_id) {
-        hermesSessionIds.add(run.hermes_session_id);
-      }
-    });
-
     const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
     if (!hermesBaseUrl) {
       throw new Error("missing_or_invalid_HERMES_API_BASE_URL");
@@ -1299,7 +1288,18 @@ const handleRequest = async (req, res) => {
       }
     }
 
-    await hermesStateRepository.delete(sessionId, user.id).catch(() => {});
+    const hermesSessionIds = new Set([
+      buildHermesRunSessionId(sessionId),
+      state?.hermes_session_id,
+    ].filter(Boolean));
+
+    store.runs.forEach((run) => {
+      if (run?.chat_session_id === sessionId && run?.user_id === user.id && run?.hermes_session_id) {
+        hermesSessionIds.add(run.hermes_session_id);
+      }
+    });
+
+    await hermesStateRepository.delete(sessionId, user.id).catch(() => {});
     await deleteChatSessionData({
       sessionId,
       userId: user.id,
