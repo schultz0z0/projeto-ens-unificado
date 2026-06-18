@@ -183,7 +183,7 @@ export const refreshChatAttachmentUrl = async (part: ChatMessageFilePart, bucket
     return part;
   }
 
-  const { signedUrl, signedUrlExpiresAt } = await createSignedAttachmentUrl(part.storagePath, bucket);
+  const { signedUrl, signedUrlExpiresAt } = await createSignedAttachmentUrl(part.storagePath, bucket ?? part.storageBucket);
   return {
     ...part,
     url: signedUrl,

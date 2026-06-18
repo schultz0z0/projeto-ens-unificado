@@ -274,7 +274,7 @@ class TestGenerate:
         sign_response = MagicMock()
         sign_response.raise_for_status.return_value = None
         sign_response.json.return_value = {
-            "signedURL": "/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-session-1/image.png?token=abc",
+            "signedURL": "/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-session-1/image.png?token=abc",
         }
 
         with _patched_openai(fake_client), patch("requests.post", side_effect=[upload_response, sign_response]) as post:
@@ -282,6 +282,7 @@ class TestGenerate:
 
         assert result["success"] is True
         assert result["image"].startswith("https://project.supabase.co/storage/v1/object/sign/")
+        assert "/storage/v1/object/sign/" in result["image"]
         assert result["image_url"] == result["image"]
         assert result["download_url"] == result["image"]
         assert result["storage_bucket"] == "image-gen-outputs"

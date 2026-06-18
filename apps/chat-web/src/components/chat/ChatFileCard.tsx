@@ -1,7 +1,15 @@
-import { Copy, Download, ExternalLink, FileText, Image as ImageIcon } from "lucide-react";
+import { useState } from "react";
+import { Copy, Download, ExternalLink, FileText, Image as ImageIcon, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { refreshChatAttachmentUrl } from "@/lib/chatAttachments";
 import { getFileExtension, type ChatMessageFilePart } from "@/lib/chatMessageParts";
 import { cn } from "@/lib/utils";
@@ -12,22 +20,42 @@ type ChatFileCardProps = {
   role: "user" | "assistant";
 };
 
+const normalizeSupabaseStorageUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.startsWith("/object/sign/")) {
+      parsed.pathname = `/storage/v1${parsed.pathname}`;
+      return parsed.toString();
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
 export function ChatFileCard({ part, role }: ChatFileCardProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const isUser = role === "user";
   const isImage = isSafeRenderableImage(part);
   const extension = getFileExtension(part.name || part.url);
+  const displayUrl = normalizeSupabaseStorageUrl(part.url);
 
   const getActiveUrl = async () => {
     const refreshedPart = await refreshChatAttachmentUrl(part).catch(() => part);
-    if (!isAllowedStreamFileUrl(refreshedPart.url)) {
+    const url = normalizeSupabaseStorageUrl(refreshedPart.url);
+    if (!isAllowedStreamFileUrl(url)) {
       throw new Error("unsafe_file_url");
     }
-    return refreshedPart.url;
+    return url;
   };
 
   const handleOpen = async () => {
     try {
       const url = await getActiveUrl();
+      if (isImage) {
+        setPreviewUrl(url);
+        return;
+      }
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
       toast.error("Não foi possível abrir o arquivo.");
@@ -58,56 +86,88 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
   };
 
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-2xl border shadow-sm",
-        isUser ? "border-white/20 bg-white/10" : "border-slate-200/70 bg-white/70",
-      )}
-    >
-      {isImage ? (
-        <button type="button" onClick={handleOpen} className="block w-full text-left">
-          <div className={cn("overflow-hidden", isUser ? "bg-white/10" : "bg-slate-100/80")}>
-            <img src={part.url} alt={part.name} className="max-h-[280px] w-full object-cover" />
+    <>
+      <div
+        className={cn(
+          "overflow-hidden rounded-2xl border shadow-sm",
+          isUser ? "border-white/20 bg-white/10" : "border-slate-200/70 bg-white/70",
+        )}
+      >
+        {isImage ? (
+          <button type="button" onClick={handleOpen} className="block w-full text-left" aria-label={`Ampliar ${part.name}`}>
+            <div className={cn("overflow-hidden", isUser ? "bg-white/10" : "bg-slate-100/80")}>
+              <img src={displayUrl} alt={part.name} className="max-h-[280px] w-full object-cover" />
+            </div>
+          </button>
+        ) : null}
+
+        <div className="flex items-center gap-3 p-3">
+          <div
+            className={cn(
+              "grid h-12 w-12 shrink-0 place-items-center rounded-xl border",
+              isUser ? "border-white/20 bg-white/10" : "border-slate-200 bg-white",
+            )}
+          >
+            {isImage ? (
+              <ImageIcon className={cn("h-5 w-5", isUser ? "text-white" : "text-slate-700")} />
+            ) : (
+              <FileText className={cn("h-5 w-5", isUser ? "text-white" : "text-slate-700")} />
+            )}
           </div>
-        </button>
-      ) : null}
 
-      <div className="flex items-center gap-3 p-3">
-        <div
-          className={cn(
-            "grid h-12 w-12 shrink-0 place-items-center rounded-xl border",
-            isUser ? "border-white/20 bg-white/10" : "border-slate-200 bg-white",
-          )}
-        >
-          {isImage ? (
-            <ImageIcon className={cn("h-5 w-5", isUser ? "text-white" : "text-slate-700")} />
-          ) : (
-            <FileText className={cn("h-5 w-5", isUser ? "text-white" : "text-slate-700")} />
-          )}
-        </div>
+          <div className="min-w-0 flex-1">
+            <p className={cn("truncate text-sm font-medium", isUser ? "text-white" : "text-slate-900")}>{part.name}</p>
+            <p className={cn("text-xs", isUser ? "text-white/80" : "text-slate-600")}>
+              {isImage ? "Imagem" : "Arquivo"}
+              {extension ? ` • ${extension.toUpperCase()}` : ""}
+            </p>
+          </div>
 
-        <div className="min-w-0 flex-1">
-          <p className={cn("truncate text-sm font-medium", isUser ? "text-white" : "text-slate-900")}>{part.name}</p>
-          <p className={cn("text-xs", isUser ? "text-white/80" : "text-slate-600")}>
-            {isImage ? "Imagem" : "Arquivo"}
-            {extension ? ` • ${extension.toUpperCase()}` : ""}
-          </p>
-        </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleOpen} aria-label={isImage ? `Ampliar ${part.name}` : `Abrir ${part.name}`}>
+              {isImage ? <Maximize2 className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
+            </Button>
 
-        <div className="flex shrink-0 items-center gap-1">
-          <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleOpen} aria-label={`Abrir ${part.name}`}>
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleDownload} aria-label={`Baixar ${part.name}`}>
+              <Download className="h-4 w-4" />
+            </Button>
 
-          <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleDownload} aria-label={`Baixar ${part.name}`}>
-            <Download className="h-4 w-4" />
-          </Button>
-
-          <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleCopyLink} aria-label={`Copiar link de ${part.name}`}>
-            <Copy className="h-4 w-4" />
-          </Button>
+            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleCopyLink} aria-label={`Copiar link de ${part.name}`}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {isImage ? (
+        <Dialog open={Boolean(previewUrl)} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+          <DialogContent className="w-[96vw] max-w-6xl border-white/20 bg-white/95 p-0 text-slate-900 shadow-2xl backdrop-blur-xl">
+            <DialogHeader className="border-b border-slate-200/80 px-6 py-4">
+              <div className="flex items-start justify-between gap-4 pr-8">
+                <div className="min-w-0 space-y-1">
+                  <DialogTitle className="truncate">{part.name}</DialogTitle>
+                  <DialogDescription>Visualização ampliada da imagem gerada.</DialogDescription>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleDownload}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Baixar
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copiar link
+                  </Button>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="flex max-h-[78vh] items-center justify-center overflow-auto bg-slate-950/95 p-4">
+              {previewUrl ? (
+                <img src={previewUrl} alt={part.name} className="max-h-[72vh] max-w-full rounded-lg object-contain shadow-2xl" />
+              ) : null}
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </>
   );
 }

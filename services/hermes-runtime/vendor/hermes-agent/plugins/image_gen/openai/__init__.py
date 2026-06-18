@@ -150,6 +150,18 @@ def _extract_signed_url(payload: Any) -> Optional[str]:
     return None
 
 
+def _normalize_supabase_signed_url(supabase_url: str, signed_url: str) -> str:
+    if re.match(r"^https?://", signed_url, re.IGNORECASE):
+        return signed_url
+    if signed_url.startswith("/storage/v1/"):
+        return urljoin(f"{supabase_url}/", signed_url)
+    if signed_url.startswith("/object/"):
+        return f"{supabase_url}/storage/v1{signed_url}"
+    if signed_url.startswith("object/"):
+        return f"{supabase_url}/storage/v1/{signed_url}"
+    return urljoin(f"{supabase_url}/storage/v1/", signed_url.lstrip("/"))
+
+
 def _current_hermes_session_id() -> str:
     try:
         from gateway.session_context import get_session_env
@@ -220,10 +232,11 @@ def _upload_local_image_to_supabase(path: Path, *, output_format: str) -> Option
     if not signed_url:
         raise RuntimeError("Supabase did not return a signed URL for generated image")
 
+    normalized_signed_url = _normalize_supabase_signed_url(supabase_url, signed_url)
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
     return {
-        "image_url": urljoin(f"{supabase_url}/", signed_url),
-        "download_url": urljoin(f"{supabase_url}/", signed_url),
+        "image_url": normalized_signed_url,
+        "download_url": normalized_signed_url,
         "storage_path": storage_path,
         "storage_bucket": bucket,
         "signed_url_expires_at": expires_at.isoformat().replace("+00:00", "Z"),

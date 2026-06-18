@@ -93,7 +93,7 @@ test("parseHermesEventBlock emits missing final text, files and done on run.comp
 
 test("parseHermesEventBlock exposes Supabase-generated image metadata", () => {
   const parsed = parseHermesEventBlock(
-    'data: {"event":"run.completed","run_id":"run_123","session_id":"session-1","output":"Imagem pronta.","result":{"type":"image","image_url":"https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai.png?token=abc","name":"openai.png","mime_type":"image/png","storage_path":"hermes-chat-images/nexus-chat-1/openai.png","signed_url_expires_at":"2026-06-18T12:00:00Z"}}',
+    'data: {"event":"run.completed","run_id":"run_123","session_id":"session-1","output":"Imagem pronta.","result":{"type":"image","image_url":"https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai.png?token=abc","name":"openai.png","mime_type":"image/png","storage_path":"hermes-chat-images/nexus-chat-1/openai.png","storage_bucket":"image-gen-outputs","signed_url_expires_at":"2026-06-18T12:00:00Z"}}',
     context,
   );
 
@@ -104,6 +104,7 @@ test("parseHermesEventBlock exposes Supabase-generated image metadata", () => {
     kind: "image",
     mimeType: "image/png",
     storage_path: "hermes-chat-images/nexus-chat-1/openai.png",
+    storage_bucket: "image-gen-outputs",
     signed_url_expires_at: "2026-06-18T12:00:00Z",
   }]);
   assert.equal(parsed.completed, true);

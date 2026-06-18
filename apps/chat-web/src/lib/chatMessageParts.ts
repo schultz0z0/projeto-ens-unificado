@@ -13,6 +13,7 @@ export type ChatMessageFilePart = {
   url: string;
   mimeType?: string;
   storagePath?: string;
+  storageBucket?: string;
   signedUrlExpiresAt?: string;
 };
 

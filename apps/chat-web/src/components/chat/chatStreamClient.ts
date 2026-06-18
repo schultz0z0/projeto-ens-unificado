@@ -238,6 +238,7 @@ export const sendMessageToChatbotStream = async ({
                   : guessFileNameFromUrl(url);
               const kind = file.kind === "image" || isImageResource(name || url, mimeType) ? "image" : "file";
               const storagePath = typeof file.storage_path === "string" ? file.storage_path : undefined;
+              const storageBucket = typeof file.storage_bucket === "string" ? file.storage_bucket : undefined;
               const signedUrlExpiresAt =
                 typeof file.signed_url_expires_at === "string" ? file.signed_url_expires_at : undefined;
 
@@ -248,6 +249,7 @@ export const sendMessageToChatbotStream = async ({
                   kind,
                   mimeType,
                   storagePath,
+                  storageBucket,
                   signedUrlExpiresAt,
                 }),
               ];

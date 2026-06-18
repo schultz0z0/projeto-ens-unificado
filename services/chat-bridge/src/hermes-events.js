@@ -147,12 +147,17 @@ const extractFilesFromUnknown = (value, depth = 0) => {
       typeof record.signed_url_expires_at === "string" && record.signed_url_expires_at.trim()
         ? record.signed_url_expires_at.trim()
         : undefined;
+    const storageBucket =
+      typeof record.storage_bucket === "string" && record.storage_bucket.trim()
+        ? record.storage_bucket.trim()
+        : undefined;
     return [{
       name,
       url,
       kind: type.includes("image") || isImageLike(name || url, mimeType) ? "image" : "file",
       ...(mimeType ? { mimeType } : {}),
       ...(storagePath ? { storage_path: storagePath } : {}),
+      ...(storageBucket ? { storage_bucket: storageBucket } : {}),
       ...(signedUrlExpiresAt ? { signed_url_expires_at: signedUrlExpiresAt } : {}),
     }];
   });
