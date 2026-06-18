@@ -47,7 +47,9 @@ const config = {
   attachmentBucket: process.env.CHAT_ATTACHMENTS_BUCKET || process.env.VITE_CHAT_ATTACHMENTS_BUCKET || CHAT_ATTACHMENT_BUCKET,
   supabaseOutputsBucket: process.env.SUPABASE_OUTPUTS_BUCKET || "image-gen-outputs",
   supabaseGeneratedImagesPrefix: process.env.SUPABASE_GENERATED_IMAGES_PREFIX || "hermes-chat-images",
-  hermesBaseUrl: process.env.HERMES_API_BASE_URL || "",
+  hermesImageInputsBridgeDir: process.env.HERMES_IMAGE_INPUTS_BRIDGE_DIR || path.join(process.env.BRIDGE_DATA_DIR || "/app/data", "hermes-image-inputs"),
+  hermesImageInputsHermesDir: process.env.HERMES_IMAGE_INPUTS_HERMES_DIR || "/opt/data/nexus-image-inputs",
+  hermesBaseUrl: process.env.HERMES_API_BASE_URL || "",
   hermesApiKey: process.env.HERMES_API_KEY || "",
   hermesModelName: process.env.HERMES_MODEL_NAME || "hermes-agent",
   hermesPollMs: Number(process.env.HERMES_RUN_POLL_MS || 2000),
@@ -587,7 +589,9 @@ class HermesBridge {
       supabaseAnonKey: config.supabaseAnonKey,
       supabaseServiceRoleKey: config.supabaseServiceRoleKey,
       userToken: user.token,
-      bucket: config.attachmentBucket,
+      bucket: config.attachmentBucket,
+      sharedImageBridgeDir: config.hermesImageInputsBridgeDir,
+      sharedImageHermesDir: config.hermesImageInputsHermesDir,
     });
     const mode = selectHermesBridgeMode(preparedAttachments);
     const replayContextMessages = mode === "session"

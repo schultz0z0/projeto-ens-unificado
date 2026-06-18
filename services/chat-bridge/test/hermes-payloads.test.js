@@ -235,6 +235,8 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
 
       inline_data_url: "data:image/png;base64,AAAA",
 
+      hermes_image_path: "/opt/data/nexus-image-inputs/session-1/referencia.png",
+
     }],
 
     intent: "image_generate",
@@ -269,23 +271,19 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
 
   assert.match(request.message[0].text, /referencia\.png/);
 
-  assert.match(request.message[0].text, /data:image\/png;base64,AAAA/);
+  assert.match(request.message[0].text, /\/opt\/data\/nexus-image-inputs\/session-1\/referencia\.png/);
+
+  assert.match(request.message[0].text, /input_images: \["\/opt\/data\/nexus-image-inputs\/session-1\/referencia\.png"\]/);
 
   assert.doesNotMatch(request.message[0].text, /token=abc/);
+
+  assert.doesNotMatch(request.message[0].text, /data:image\/png;base64,AAAA/);
 
   assert.match(request.message[0].text, /Nao tente baixar/);
 
   assert.match(request.message[0].text, /editar|trocar|remover|preservar o resto/);
 
-  assert.deepEqual(request.message[1], {
-
-    type: "input_image",
-
-    image_url: "data:image/png;base64,AAAA",
-
-    detail: "auto",
-
-  });
+  assert.equal(request.message.some((part) => part.type === "input_image"), false);
 
 });
 

@@ -57,7 +57,7 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
     .map((attachment) => ({
       name: attachment.name || "imagem",
       mimeType: attachment.mime_type || "image/*",
-      source: attachment.inline_data_url ?? attachment.original_signed_url ?? attachment.signed_url,
+      source: attachment.hermes_image_path ?? attachment.inline_data_url ?? attachment.original_signed_url ?? attachment.signed_url,
     }))
     .filter((attachment) => attachment.source);
 
@@ -105,6 +105,8 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
 
       "Nao tente baixar, abrir ou validar manualmente essas imagens antes de chamar image_generate; a bridge ja materializou os anexos para esta chamada.",
 
+      "Nao use vision_analyze para este fluxo; as imagens abaixo sao entradas diretas da ferramenta image_generate.",
+
       "mode: auto|reference|edit",
 
       "Use mode=edit quando o usuario pedir editar, trocar, remover, preservar o resto ou manter a mesma peca alterando apenas algo especifico.",
@@ -112,6 +114,8 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
       "Use mode=reference quando o usuario pedir usar como referencia, baseado nessa peca, seguir KV, logo, paleta, estilo, layout ou identidade visual.",
 
       "Se o pedido envolver edicao de imagem e o tamanho estiver auto, mantenha size=auto para preservar a proporcao/medidas da imagem de entrada.",
+
+      `input_images: ${JSON.stringify(imageInputs.map((attachment) => attachment.source))}`,
 
       ...imageInputs.map((attachment, index) => (
         `${index + 1}. name=${attachment.name}; mime_type=${attachment.mimeType}; source=${attachment.source}`
@@ -329,6 +333,9 @@ const buildHermesSessionChatMessage = ({
 
 
   imageAttachments.forEach((attachment) => {
+    if (intent === "image_generate") {
+      return;
+    }
 
     const imageUrl = imageTransport === "remote"
 

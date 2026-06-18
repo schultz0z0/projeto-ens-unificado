@@ -102,6 +102,7 @@ services:
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
     volumes:
       - ./data/hermes:/opt/data
+      - ./data/bridge/hermes-image-inputs:/opt/data/nexus-image-inputs:ro
     ports:
       - "127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}:${NEXUS_HERMES_API_PORT:-8652}"
     expose:
@@ -144,6 +145,7 @@ services:
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
     volumes:
       - ./data/hermes:/opt/data
+      - ./data/bridge/hermes-image-inputs:/opt/data/nexus-image-inputs:ro
     ports:
       - "127.0.0.1:${NEXUS_HERMES_KANBAN_PORT:-9119}:${NEXUS_HERMES_KANBAN_PORT:-9119}"
     expose:
@@ -176,6 +178,8 @@ services:
       CHAT_ATTACHMENTS_BUCKET: ${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
       SUPABASE_OUTPUTS_BUCKET: ${NEXUS_SUPABASE_OUTPUTS_BUCKET:-image-gen-outputs}
       SUPABASE_GENERATED_IMAGES_PREFIX: ${NEXUS_SUPABASE_GENERATED_IMAGES_PREFIX:-hermes-chat-images}
+      HERMES_IMAGE_INPUTS_BRIDGE_DIR: /app/data/hermes-image-inputs
+      HERMES_IMAGE_INPUTS_HERMES_DIR: /opt/data/nexus-image-inputs
       HERMES_API_BASE_URL: http://hermes-api:${NEXUS_HERMES_API_PORT:-8652}
       HERMES_API_KEY: ${NEXUS_HERMES_API_KEY:-change-me}
       HERMES_MODEL_NAME: ${NEXUS_HERMES_MODEL_NAME:-hermes-agent}

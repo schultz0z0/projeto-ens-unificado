@@ -1,3 +1,7 @@
+import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import { extractAttachmentText } from "./attachment-text.js";
 
 export const CHAT_ATTACHMENT_BUCKET = "chat-attachments";
@@ -46,6 +50,66 @@ const hasSuspiciousPathSegments = (storagePath) =>
 const encodeBase64 = (bytes) => Buffer.from(bytes).toString("base64");
 
 const buildInlineDataUrl = (mimeType, bytes) => `data:${mimeType};base64,${encodeBase64(bytes)}`;
+
+const INPUT_IMAGE_EXTENSIONS = new Map([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+  ["image/jpg", "jpg"],
+  ["image/webp", "webp"],
+  ["image/gif", "gif"],
+  ["image/avif", "avif"],
+  ["image/bmp", "bmp"],
+  ["image/svg+xml", "svg"],
+]);
+
+const sanitizePathSegment = (value, fallback = "item") => {
+  const sanitized = String(value ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._=-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 160);
+
+  return sanitized || fallback;
+};
+
+const fileNameFromAttachment = (attachment) => {
+  const rawName = String(attachment.name ?? "").split(/[\\/]/).pop() || "image";
+  const safeName = sanitizePathSegment(rawName, "image");
+  if (/\.[a-z0-9]{2,8}$/i.test(safeName)) return safeName;
+  const extension = INPUT_IMAGE_EXTENSIONS.get(attachment.mime_type) || "png";
+  return `${safeName}.${extension}`;
+};
+
+const toHermesPosixPath = (...segments) =>
+  path.posix.join(...segments.map((segment) => String(segment).replace(/\\/g, "/").replace(/^\/+|\/+$/g, "")));
+
+const materializeHermesImageInput = async ({
+  attachment,
+  bytes,
+  sessionId,
+  sharedImageBridgeDir,
+  sharedImageHermesDir,
+}) => {
+  if (attachment.kind !== "image" || !sharedImageBridgeDir || !sharedImageHermesDir) {
+    return null;
+  }
+
+  const sessionSegment = sanitizePathSegment(sessionId, "session");
+  const fileName = `${randomUUID()}-${fileNameFromAttachment(attachment)}`;
+  const bridgeDir = path.join(sharedImageBridgeDir, sessionSegment);
+  const bridgePath = path.join(bridgeDir, fileName);
+  const hermesRoot = String(sharedImageHermesDir).replace(/\\/g, "/").replace(/\/+$/g, "");
+  const hermesPath = `${hermesRoot}/${toHermesPosixPath(sessionSegment, fileName)}`;
+
+  await mkdir(bridgeDir, { recursive: true });
+  await writeFile(bridgePath, Buffer.from(bytes));
+
+  return {
+    bridge_image_path: bridgePath,
+    hermes_image_path: hermesPath,
+  };
+};
 
 const buildStorageHeaders = ({ supabaseAnonKey, supabaseServiceRoleKey, userToken }) => {
   const key = supabaseServiceRoleKey || supabaseAnonKey;
@@ -144,6 +208,8 @@ export const prepareHermesAttachments = async ({
   supabaseServiceRoleKey = "",
   userToken = "",
   bucket = CHAT_ATTACHMENT_BUCKET,
+  sharedImageBridgeDir = process.env.HERMES_IMAGE_INPUTS_BRIDGE_DIR || "",
+  sharedImageHermesDir = process.env.HERMES_IMAGE_INPUTS_HERMES_DIR || "",
   fetchImpl = fetch,
 }) => {
   const normalizedAttachments = Array.isArray(attachments) ? attachments.map(normalizeAttachment) : [];
@@ -177,12 +243,20 @@ export const prepareHermesAttachments = async ({
     ]);
 
     const extractedText = extractAttachmentText(attachment, bytes);
+    const hermesImageInput = await materializeHermesImageInput({
+      attachment,
+      bytes,
+      sessionId,
+      sharedImageBridgeDir,
+      sharedImageHermesDir,
+    });
 
     return {
       ...attachment,
       signed_url: signedUrl,
       original_signed_url: signedUrl,
       inline_data_url: buildInlineDataUrl(attachment.mime_type, bytes),
+      ...(hermesImageInput ?? {}),
       ...(extractedText ? { extracted_text: extractedText } : {}),
     };
   }));
