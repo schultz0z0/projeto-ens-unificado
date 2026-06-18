@@ -1645,7 +1645,12 @@ class APIServerAdapter(BasePlatformAdapter):
                 _enqueue("tool.progress", {"message_id": message_id, "tool_name": tool_name or "_thinking", "delta": preview or ""})
             elif event_type in {"tool.started", "tool.completed", "tool.failed"}:
                 event_name = event_type.replace("tool.", "tool.")
-                _enqueue(event_name, {"message_id": message_id, "tool_name": tool_name, "preview": preview, "args": args})
+                payload = {"message_id": message_id, "tool_name": tool_name, "preview": preview, "args": args}
+                if event_type == "tool.completed" and tool_name == "image_generate":
+                    payload["result"] = kwargs.get("result")
+                    payload["duration"] = round(kwargs.get("duration", 0), 3)
+                    payload["error"] = kwargs.get("is_error", False)
+                _enqueue(event_name, payload)
 
         async def _run_and_signal() -> None:
             try:
@@ -3609,14 +3614,17 @@ class APIServerAdapter(BasePlatformAdapter):
                     "preview": preview,
                 })
             elif event_type == "tool.completed":
-                _push({
+                payload = {
                     "event": "tool.completed",
                     "run_id": run_id,
                     "timestamp": ts,
                     "tool": tool_name,
                     "duration": round(kwargs.get("duration", 0), 3),
                     "error": kwargs.get("is_error", False),
-                })
+                }
+                if tool_name == "image_generate":
+                    payload["result"] = kwargs.get("result")
+                _push(payload)
             elif event_type == "reasoning.available":
                 _push({
                     "event": "reasoning.available",

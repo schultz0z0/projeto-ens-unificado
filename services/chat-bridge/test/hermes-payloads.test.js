@@ -257,6 +257,8 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
 
   assert.match(request.message[0].text, /Use obrigatoriamente a ferramenta image_generate/);
 
+  assert.match(request.message[0].text, /Antes de chamar image_generate, consulte/);
+
   assert.match(request.message[0].text, /quality: high/);
 
   assert.match(request.message[0].text, /size: 2560x1440/);

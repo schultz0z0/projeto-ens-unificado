@@ -67,7 +67,11 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
 
     "Use obrigatoriamente a ferramenta image_generate nesta resposta.",
 
-    "Nao responda apenas com texto antes de chamar a ferramenta.",
+    "Antes de chamar image_generate, consulte as ferramentas necessarias (MCP/RAG/skills/contexto da conversa) quando o pedido exigir dados oficiais, copy, oferta, curso, campanha ou pesquisa.",
+
+    "Use o raciocinio operacional e as consultas para montar o prompt final; chame image_generate somente depois de reunir os dados necessarios.",
+
+    "Nao encerre a resposta apenas com texto: depois da coleta e planejamento, chame image_generate.",
 
     "Depois da geracao, entregue a imagem gerada ao usuario e mencione de forma breve os parametros usados.",
 
@@ -101,7 +105,7 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
 
       "[Entradas reais para image_generate.input_images]",
 
-      "Chame image_generate agora e passe os valores source abaixo exatamente no array input_images da ferramenta image_generate.",
+      "Quando chegar na etapa de gerar a imagem, passe os valores source abaixo exatamente no array input_images da ferramenta image_generate.",
 
       "Nao tente baixar, abrir ou validar manualmente essas imagens antes de chamar image_generate; a bridge ja materializou os anexos para esta chamada.",
 

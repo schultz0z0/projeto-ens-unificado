@@ -110,6 +110,40 @@ test("parseHermesEventBlock exposes Supabase-generated image metadata", () => {
   assert.equal(parsed.completed, true);
 });
 
+test("parseHermesEventBlock extracts generated image files from tool completed JSON strings", () => {
+  const toolResult = JSON.stringify({
+    success: true,
+    image: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai-tool.png?token=abc",
+    image_url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai-tool.png?token=abc",
+    download_url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai-tool.png?token=abc",
+    filename: "openai-tool.png",
+    mime_type: "image/png",
+    storage_path: "hermes-chat-images/nexus-chat-1/openai-tool.png",
+    storage_bucket: "image-gen-outputs",
+    signed_url_expires_at: "2026-06-18T12:00:00Z",
+  });
+  const parsed = parseHermesEventBlock(
+    `data: ${JSON.stringify({
+      event: "tool.completed",
+      tool_name: "image_generate",
+      result: toolResult,
+    })}`,
+    context,
+  );
+
+  const filesEvent = parsed.events.find((event) => event.event === "files");
+  assert.deepEqual(filesEvent?.data.files, [{
+    name: "openai-tool.png",
+    url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus-chat-1/openai-tool.png?token=abc",
+    kind: "image",
+    mimeType: "image/png",
+    storage_path: "hermes-chat-images/nexus-chat-1/openai-tool.png",
+    storage_bucket: "image-gen-outputs",
+    signed_url_expires_at: "2026-06-18T12:00:00Z",
+  }]);
+  assert.equal(parsed.completed, false);
+});
+
 test("parseHermesStatusPayload keeps running runs open and completes terminal runs", () => {
   assert.deepEqual(parseHermesStatusPayload({ status: "running" }, context), {
     terminal: false,

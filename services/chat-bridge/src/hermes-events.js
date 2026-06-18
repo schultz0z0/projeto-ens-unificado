@@ -96,6 +96,16 @@ const guessFileNameFromUrl = (url) => {
 const extractFilesFromUnknown = (value, depth = 0) => {
   if (depth > 4 || value === null || value === undefined) return [];
 
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) return [];
+    try {
+      return extractFilesFromUnknown(JSON.parse(trimmed), depth + 1);
+    } catch {
+      return [];
+    }
+  }
+
   if (Array.isArray(value)) {
     return value.flatMap((item) => extractFilesFromUnknown(item, depth + 1));
   }
