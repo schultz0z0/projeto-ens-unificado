@@ -23,9 +23,11 @@ Selection precedence (first hit wins):
 
 from __future__ import annotations
 
+import base64
 import logging
 import os
 import re
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -86,6 +88,7 @@ _SIZES = {
 
 _QUALITY_VALUES = {"auto", "low", "medium", "high"}
 _OUTPUT_FORMATS = {"png", "jpeg", "webp"}
+_IMAGE_MODES = {"auto", "reference", "edit"}
 _EXPLICIT_SIZES = {
     "auto",
     "1024x1024",
@@ -101,6 +104,13 @@ _EXPLICIT_SIZES = {
 }
 
 _SUPABASE_IMAGE_PREFIX = "hermes-chat-images"
+_INPUT_IMAGE_CONTENT_TYPES = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/webp": "webp",
+}
+_MAX_INPUT_IMAGE_BYTES = 25 * 1024 * 1024
 
 
 def _env(name: str, default: str = "") -> str:
@@ -131,6 +141,108 @@ def _guess_image_mime(path: Path, output_format: str) -> str:
     if suffix == "webp":
         return "image/webp"
     return "image/png"
+
+
+def _extension_for_input_image(source: str, content_type: str = "") -> str:
+    content_type = (content_type or "").split(";", 1)[0].strip().lower()
+    extension = _INPUT_IMAGE_CONTENT_TYPES.get(content_type)
+    if extension:
+        return extension
+
+    source_path = source.split("?", 1)[0].lower()
+    for suffix in ("png", "jpg", "jpeg", "webp"):
+        if source_path.endswith(f".{suffix}"):
+            return "jpg" if suffix == "jpeg" else suffix
+    return "png"
+
+
+def _normalize_single_input_image(value: Any) -> Optional[str]:
+    if isinstance(value, str):
+        candidate = value.strip()
+        return candidate or None
+    if isinstance(value, dict):
+        for key in ("url", "image_url", "signed_url", "path", "file", "source"):
+            nested = _normalize_single_input_image(value.get(key))
+            if nested:
+                return nested
+    return None
+
+
+def _normalize_input_images(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, (str, dict)):
+        single = _normalize_single_input_image(value)
+        return [single] if single else []
+    if not isinstance(value, list):
+        return []
+
+    images: List[str] = []
+    for item in value:
+        normalized = _normalize_single_input_image(item)
+        if normalized:
+            images.append(normalized)
+    return images
+
+
+def _resolve_mode(value: Any, has_input_images: bool) -> str:
+    if isinstance(value, str):
+        mode = value.strip().lower()
+        if mode in _IMAGE_MODES:
+            return mode
+    return "auto" if has_input_images else "generate"
+
+
+def _write_data_url_to_temp(source: str, temp_dir: Path) -> Path:
+    match = re.match(r"^data:(?P<mime>image/[a-zA-Z0-9.+-]+);base64,(?P<data>.+)$", source, re.DOTALL)
+    if not match:
+        raise ValueError("input image data URL must be a base64 image data URL")
+
+    raw = base64.b64decode(match.group("data"), validate=True)
+    if len(raw) > _MAX_INPUT_IMAGE_BYTES:
+        raise ValueError("input image exceeds the 25MB limit")
+
+    extension = _extension_for_input_image(source, match.group("mime"))
+    path = temp_dir / f"input_{time.time_ns()}.{extension}"
+    path.write_bytes(raw)
+    return path
+
+
+def _download_input_image_to_temp(source: str, temp_dir: Path) -> Path:
+    import requests
+
+    response = requests.get(source, timeout=90, stream=True)
+    response.raise_for_status()
+    content_type = (response.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+    if content_type and not content_type.startswith("image/"):
+        raise ValueError(f"input image URL returned non-image content-type: {content_type}")
+
+    extension = _extension_for_input_image(source, content_type)
+    path = temp_dir / f"input_{time.time_ns()}.{extension}"
+    bytes_written = 0
+    with path.open("wb") as file_obj:
+        for chunk in response.iter_content(chunk_size=64 * 1024):
+            if not chunk:
+                continue
+            bytes_written += len(chunk)
+            if bytes_written > _MAX_INPUT_IMAGE_BYTES:
+                file_obj.close()
+                path.unlink(missing_ok=True)
+                raise ValueError("input image exceeds the 25MB limit")
+            file_obj.write(chunk)
+    return path
+
+
+def _materialize_input_image(source: str, temp_dir: Path) -> Path:
+    if source.lower().startswith("data:"):
+        return _write_data_url_to_temp(source, temp_dir)
+    if re.match(r"^https?://", source, re.IGNORECASE):
+        return _download_input_image_to_temp(source, temp_dir)
+
+    path = Path(source).expanduser()
+    if not path.exists() or not path.is_file():
+        raise ValueError(f"input image file does not exist: {source}")
+    return path
 
 
 def _extract_signed_url(payload: Any) -> Optional[str]:
@@ -289,10 +401,12 @@ def _resolve_quality(override: Any) -> Tuple[str, str]:
     return tier_id, meta["quality"]
 
 
-def _resolve_size(override: Any, aspect: str) -> str:
+def _resolve_size(override: Any, aspect: str, *, prefer_auto: bool = False) -> str:
     size = _clean_option(override, _EXPLICIT_SIZES)
     if size:
         return size
+    if prefer_auto:
+        return "auto"
     return _SIZES.get(aspect, _SIZES["square"])
 
 
@@ -433,8 +547,20 @@ class OpenAIImageGenProvider(ImageGenProvider):
                 aspect_ratio=aspect,
             )
 
+        input_images = _normalize_input_images(kwargs.get("input_images"))
+        mask_image = _normalize_single_input_image(kwargs.get("mask_image"))
+        mode = _resolve_mode(kwargs.get("mode"), bool(input_images))
+
+        if mask_image and not input_images:
+            return error_response(
+                error="mask_image requires at least one input image",
+                error_type="invalid_argument",
+                provider="openai",
+                aspect_ratio=aspect,
+            )
+
         tier_id, quality = _resolve_quality(kwargs.get("quality"))
-        size = _resolve_size(kwargs.get("size"), aspect)
+        size = _resolve_size(kwargs.get("size"), aspect, prefer_auto=bool(input_images))
         output_format, explicit_output_format = _resolve_output_format(kwargs.get("output_format"))
 
         # gpt-image-2 returns b64_json unconditionally and REJECTS
@@ -451,7 +577,36 @@ class OpenAIImageGenProvider(ImageGenProvider):
 
         try:
             client = openai.OpenAI()
-            response = client.images.generate(**payload)
+            if input_images:
+                with tempfile.TemporaryDirectory(prefix="hermes-openai-image-inputs-") as temp_name:
+                    temp_dir = Path(temp_name)
+                    image_files = []
+                    mask_file = None
+                    try:
+                        for source in input_images:
+                            image_path = _materialize_input_image(source, temp_dir)
+                            image_files.append(image_path.open("rb"))
+                        if mask_image:
+                            mask_path = _materialize_input_image(mask_image, temp_dir)
+                            mask_file = mask_path.open("rb")
+
+                        edit_payload = {**payload, "image": image_files}
+                        if mask_file is not None:
+                            edit_payload["mask"] = mask_file
+                        response = client.images.edit(**edit_payload)
+                    finally:
+                        for file_obj in image_files:
+                            try:
+                                file_obj.close()
+                            except Exception:
+                                pass
+                        if mask_file is not None:
+                            try:
+                                mask_file.close()
+                            except Exception:
+                                pass
+            else:
+                response = client.images.generate(**payload)
         except Exception as exc:
             logger.debug("OpenAI image generation failed", exc_info=True)
             return error_response(
@@ -528,6 +683,9 @@ class OpenAIImageGenProvider(ImageGenProvider):
             "quality": quality,
             "output_format": output_format,
         }
+        if input_images:
+            extra["mode"] = mode
+            extra["input_image_count"] = len(input_images)
         if revised_prompt:
             extra["revised_prompt"] = revised_prompt
 

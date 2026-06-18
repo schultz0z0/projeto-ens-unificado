@@ -363,14 +363,23 @@ class TestAspectRatioNormalization:
 
 class TestRegistryIntegration:
 
-    def test_schema_exposes_prompt_aspect_ratio_and_openai_output_controls(self, image_tool):
-        """The agent-facing schema exposes output controls supported by GPT Image 2.
+    def test_schema_exposes_prompt_aspect_ratio_openai_output_and_image_inputs(self, image_tool):
+        """The agent-facing schema exposes output and image-input controls supported by GPT Image 2.
 
         Model/provider selection remains user-level config; generation quality,
-        size and file format are per-request controls.
+        size, file format and reference/edit images are per-request controls.
         """
         props = image_tool.IMAGE_GENERATE_SCHEMA["parameters"]["properties"]
-        assert set(props.keys()) == {"prompt", "aspect_ratio", "quality", "size", "output_format"}
+        assert set(props.keys()) == {
+            "prompt",
+            "aspect_ratio",
+            "quality",
+            "size",
+            "output_format",
+            "input_images",
+            "mode",
+            "mask_image",
+        }
 
     def test_aspect_ratio_enum_is_three_values(self, image_tool):
         enum = image_tool.IMAGE_GENERATE_SCHEMA["parameters"]["properties"]["aspect_ratio"]["enum"]
@@ -381,6 +390,7 @@ class TestRegistryIntegration:
         assert set(props["quality"]["enum"]) == {"auto", "low", "medium", "high"}
         assert {"auto", "1024x1024", "1024x1536", "1536x1024", "2560x1440", "3840x2160"} <= set(props["size"]["enum"])
         assert set(props["output_format"]["enum"]) == {"png", "jpeg", "webp"}
+        assert set(props["mode"]["enum"]) == {"auto", "reference", "edit"}
 
 
 # ---------------------------------------------------------------------------

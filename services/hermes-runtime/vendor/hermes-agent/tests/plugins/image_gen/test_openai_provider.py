@@ -256,6 +256,61 @@ class TestGenerate:
 
         assert result["revised_prompt"] == "A photo of a cat"
 
+    def test_input_images_use_edit_endpoint_with_multiple_references(self, provider, tmp_path):
+        reference_a = tmp_path / "kv.png"
+        reference_b = tmp_path / "logo.png"
+        reference_a.write_bytes(bytes.fromhex(_PNG_HEX))
+        reference_b.write_bytes(bytes.fromhex(_PNG_HEX))
+
+        fake_client = MagicMock()
+        fake_client.images.edit.return_value = _fake_response(b64=_b64_png())
+
+        with _patched_openai(fake_client):
+            result = provider.generate(
+                "crie uma variacao usando as referencias",
+                input_images=[str(reference_a), str(reference_b)],
+                mode="reference",
+                quality="high",
+                size="auto",
+                output_format="webp",
+            )
+
+        assert result["success"] is True
+        assert fake_client.images.generate.call_count == 0
+        call_kwargs = fake_client.images.edit.call_args.kwargs
+        assert call_kwargs["model"] == "gpt-image-2"
+        assert call_kwargs["prompt"] == "crie uma variacao usando as referencias"
+        assert call_kwargs["quality"] == "high"
+        assert call_kwargs["size"] == "auto"
+        assert call_kwargs["output_format"] == "webp"
+        assert len(call_kwargs["image"]) == 2
+        assert result["mode"] == "reference"
+        assert result["input_image_count"] == 2
+
+    def test_remote_input_image_is_downloaded_for_edit_endpoint(self, provider):
+        fake_client = MagicMock()
+        fake_client.images.edit.return_value = _fake_response(b64=_b64_png())
+
+        response = MagicMock()
+        response.headers = {"Content-Type": "image/png"}
+        response.iter_content.return_value = [bytes.fromhex(_PNG_HEX)]
+        response.raise_for_status.return_value = None
+
+        with _patched_openai(fake_client), patch("requests.get", return_value=response) as get:
+            result = provider.generate(
+                "edite preservando o restante",
+                input_images=["https://project.supabase.co/storage/v1/object/sign/chat-attachments/ref.png?token=abc"],
+                mode="edit",
+            )
+
+        assert result["success"] is True
+        get.assert_called_once()
+        assert fake_client.images.edit.call_count == 1
+        call_kwargs = fake_client.images.edit.call_args.kwargs
+        assert call_kwargs["size"] == "auto"
+        assert len(call_kwargs["image"]) == 1
+        assert result["mode"] == "edit"
+
     def test_generated_image_uploads_to_supabase_and_removes_local_cache(self, provider, tmp_path, monkeypatch):
         monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
         monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")

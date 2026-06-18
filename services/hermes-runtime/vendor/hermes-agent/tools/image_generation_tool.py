@@ -1014,6 +1014,7 @@ IMAGE_GENERATE_SIZE_OPTIONS = (
     "2160x3840",
 )
 IMAGE_GENERATE_OUTPUT_FORMAT_OPTIONS = ("png", "jpeg", "webp")
+IMAGE_GENERATE_MODE_OPTIONS = ("auto", "reference", "edit")
 
 IMAGE_GENERATE_SCHEMA = {
     "name": "image_generate",
@@ -1057,6 +1058,29 @@ IMAGE_GENERATE_SCHEMA = {
                 "enum": list(IMAGE_GENERATE_OUTPUT_FORMAT_OPTIONS),
                 "description": "Optional output file format for backends that support it.",
                 "default": "png",
+            },
+            "input_images": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": (
+                    "Optional image URLs, data URLs, or local file paths to use as real inputs for "
+                    "image reference or image editing. When set, capable backends should use an "
+                    "image-edit endpoint instead of pure text-to-image generation."
+                ),
+            },
+            "mode": {
+                "type": "string",
+                "enum": list(IMAGE_GENERATE_MODE_OPTIONS),
+                "description": (
+                    "How to interpret input_images: auto lets the prompt decide, reference uses "
+                    "the images as visual references, edit modifies the provided image while "
+                    "preserving unchanged regions as much as possible."
+                ),
+                "default": "auto",
+            },
+            "mask_image": {
+                "type": "string",
+                "description": "Optional mask image URL, data URL, or local path for selective editing when the active backend supports masks.",
             },
         },
         "required": ["prompt"],
@@ -1110,6 +1134,9 @@ def _dispatch_to_plugin_provider(
     quality: str | None = None,
     size: str | None = None,
     output_format: str | None = None,
+    input_images: list[str] | None = None,
+    mode: str | None = None,
+    mask_image: str | None = None,
 ):
     """Route the call to a plugin-registered provider when one is selected.
 
@@ -1173,6 +1200,12 @@ def _dispatch_to_plugin_provider(
             kwargs["size"] = size
         if output_format:
             kwargs["output_format"] = output_format
+        if input_images:
+            kwargs["input_images"] = input_images
+        if mode:
+            kwargs["mode"] = mode
+        if mask_image:
+            kwargs["mask_image"] = mask_image
         result = provider.generate(**kwargs)
     except Exception as exc:
         logger.warning(
@@ -1203,6 +1236,9 @@ def _handle_image_generate(args, **kw):
     quality = args.get("quality")
     size = args.get("size")
     output_format = args.get("output_format")
+    input_images = args.get("input_images")
+    mode = args.get("mode")
+    mask_image = args.get("mask_image")
     task_id = kw.get("task_id")
 
     # Route to a plugin-registered provider if one is active (and it's
@@ -1213,9 +1249,18 @@ def _handle_image_generate(args, **kw):
         quality=quality,
         size=size,
         output_format=output_format,
+        input_images=input_images,
+        mode=mode,
+        mask_image=mask_image,
     )
     if dispatched is not None:
         return _postprocess_image_generate_result(dispatched, task_id=task_id)
+
+    if input_images:
+        return tool_error(
+            "image_generate received input_images, but the active image provider "
+            "does not support image reference/edit inputs. Configure image_gen.provider: openai."
+        )
 
     raw = image_generate_tool(
         prompt=prompt,

@@ -263,6 +263,16 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
 
   assert.match(request.message[0].text, /aspect_ratio: landscape/);
 
+  assert.match(request.message[0].text, /input_images/);
+
+  assert.match(request.message[0].text, /mode: auto\|reference\|edit/);
+
+  assert.match(request.message[0].text, /referencia\.png/);
+
+  assert.match(request.message[0].text, /https:\/\/project\.supabase\.co\/storage\/v1\/object\/sign\/chat-attachments\/user-1\/session-1\/referencia\.png\?token=abc/);
+
+  assert.match(request.message[0].text, /editar|trocar|remover|preservar o resto/);
+
   assert.deepEqual(request.message[1], {
 
     type: "input_image",

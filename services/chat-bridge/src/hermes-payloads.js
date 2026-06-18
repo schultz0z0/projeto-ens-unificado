@@ -40,7 +40,7 @@ const deriveImageAspectRatio = (size) => IMAGE_GENERATE_SIZE_TO_ASPECT_RATIO[siz
 
 
 
-const buildImageGenerationMessageText = ({ messageText, imageOptions, hasReferenceImages }) => {
+const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttachments = [] }) => {
 
   const options = imageOptions ?? {};
 
@@ -53,6 +53,13 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, hasReferen
   const aspectRatio = size === "auto" ? "landscape" : deriveImageAspectRatio(size);
 
   const prompt = String(messageText ?? "").trim() || "Gerar imagem usando as referencias anexadas e o contexto da conversa.";
+  const imageInputs = imageAttachments
+    .map((attachment) => ({
+      name: attachment.name || "imagem",
+      mimeType: attachment.mime_type || "image/*",
+      url: attachment.original_signed_url ?? attachment.signed_url,
+    }))
+    .filter((attachment) => attachment.url);
 
   const lines = [
 
@@ -86,15 +93,27 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, hasReferen
 
   ];
 
-  if (hasReferenceImages) {
+  if (imageInputs.length > 0) {
 
     lines.push(
 
       "",
 
-      "[Referencias visuais anexadas]",
+      "[Entradas reais para image_generate.input_images]",
 
-      "As imagens anexadas nesta mesma mensagem sao referencias visuais. Analise-as no contexto da conversa e incorpore suas caracteristicas relevantes no prompt textual da ferramenta image_generate.",
+      "Passe as URLs abaixo exatamente no array input_images da ferramenta image_generate.",
+
+      "mode: auto|reference|edit",
+
+      "Use mode=edit quando o usuario pedir editar, trocar, remover, preservar o resto ou manter a mesma peca alterando apenas algo especifico.",
+
+      "Use mode=reference quando o usuario pedir usar como referencia, baseado nessa peca, seguir KV, logo, paleta, estilo, layout ou identidade visual.",
+
+      "Se o pedido envolver edicao de imagem e o tamanho estiver auto, mantenha size=auto para preservar a proporcao/medidas da imagem de entrada.",
+
+      ...imageInputs.map((attachment, index) => (
+        `${index + 1}. name=${attachment.name}; mime_type=${attachment.mimeType}; url=${attachment.url}`
+      )),
 
     );
 
@@ -263,7 +282,7 @@ const buildHermesSessionChatMessage = ({
 
       imageOptions,
 
-      hasReferenceImages: imageAttachments.length > 0,
+      imageAttachments,
 
     })
 

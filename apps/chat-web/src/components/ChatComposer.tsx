@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { CHAT_COMPOSER_ACCEPTED_FILE_TYPES } from "@/lib/chatAttachmentPolicy";
 import { Check, ChevronDown, FileText, Image as ImageIcon, Mic, Plus, Send, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getComposerTextareaLayout } from "./chatComposerTextarea";
 
 export type ComposerMenuItem =
   | {
@@ -165,6 +166,7 @@ export function ChatComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dragCounterRef = useRef(0);
+  const previousValueLengthRef = useRef(0);
   const [isDragActive, setIsDragActive] = useState(false);
   const canSend = useMemo(() => value.trim().length > 0 || attachments.length > 0, [attachments.length, value]);
   const canEditImageOptions = imageGenerationMode && imageGenerationOptions && onImageGenerationOptionsChange;
@@ -176,11 +178,21 @@ export function ChatComposer({
   const resizeTextarea = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    textarea.style.height = "auto";
-    const nextHeight = Math.min(textarea.scrollHeight, maxComposerTextareaHeight);
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxComposerTextareaHeight ? "auto" : "hidden";
-  }, []);
+    if (value.length < previousValueLengthRef.current || value.length === 0) {
+      textarea.style.height = "auto";
+    }
+    const layout = getComposerTextareaLayout({
+      scrollHeight: textarea.scrollHeight,
+      currentHeight: textarea.style.height,
+      currentOverflowY: textarea.style.overflowY,
+      maxHeight: maxComposerTextareaHeight,
+    });
+    if (layout) {
+      textarea.style.height = layout.height;
+      textarea.style.overflowY = layout.overflowY;
+    }
+    previousValueLengthRef.current = value.length;
+  }, [value.length]);
 
   useLayoutEffect(() => {
     resizeTextarea();
