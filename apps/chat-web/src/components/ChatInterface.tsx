@@ -761,7 +761,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
               onRemoveAttachment={handleRemoveAttachment}
             />
           ) : (
-            <div className="space-y-6 overflow-y-auto p-4 md:p-8 flex-1 flex flex-col min-h-0">
+            <div className="space-y-6 overflow-y-auto overscroll-contain [overflow-anchor:none] p-4 md:p-8 flex-1 flex flex-col min-h-0">
                 {(isRetrievingContext || (showPendingAssistantIndicator && liveStatusText)) && (
                   <div className="flex items-center gap-2 text-xs text-text-secondary bg-white/70 border border-white/40 px-3 py-2 rounded-full self-center animate-pulse">
                     <Sparkles className="w-3 h-3 text-brand-primary" />
@@ -834,7 +834,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
           )}
 
           {!isEmpty && (
-            <div className="px-4 md:px-8 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+            <div className="shrink-0 [overflow-anchor:none] px-4 md:px-8 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
               <ChatComposer
                 value={input}
                 onChange={setInput}

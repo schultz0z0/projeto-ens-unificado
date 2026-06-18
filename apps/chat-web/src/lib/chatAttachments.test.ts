@@ -4,6 +4,8 @@ import {
   buildChatAttachmentMarkdown,
   buildChatAttachmentPath,
   buildSignedUrlExpiresAt,
+  resolveChatAttachmentBucket,
+  shouldHideTextImagePreview,
   shouldRefreshSignedUrl,
   validateAttachmentFile,
 } from "./chatAttachments";
@@ -76,5 +78,27 @@ describe("chatAttachments", () => {
         now: Date.parse("2026-05-28T17:00:00.000Z"),
       }),
     ).toBe(true);
+  });
+
+  it("infere o bucket de imagens geradas quando mensagens antigas nao trazem storageBucket", () => {
+    expect(resolveChatAttachmentBucket({ storagePath: "hermes-chat-images/nexus-chat/image.png" })).toBe(
+      "image-gen-outputs",
+    );
+  });
+
+  it("nao cria preview textual extra quando ja existe imagem estruturada na mensagem", () => {
+    expect(
+      shouldHideTextImagePreview({
+        textUrl: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/hermes-chat-images/nexus/image.png?token=old",
+        hasStructuredImagePart: true,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldHideTextImagePreview({
+        textUrl: "https://example.com/public-image.png",
+        hasStructuredImagePart: false,
+      }),
+    ).toBe(false);
   });
 });

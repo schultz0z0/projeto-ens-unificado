@@ -12,6 +12,9 @@ import {
   extractRenderableImagePreviewsFromParts,
 } from "@/components/chat/chatTextImagePreviews";
 import {
+  shouldHideTextImagePreview,
+} from "@/lib/chatAttachments";
+import {
   parseChatMessageContent,
   type ChatMessageArtifactPart,
   type ChatMessagePart,
@@ -29,9 +32,18 @@ type ChatMessageContentProps = {
 export function ChatMessageContent({ role, content, isStreaming = false }: ChatMessageContentProps) {
   const [previewArtifact, setPreviewArtifact] = useState<ChatMessageArtifactPart | null>(null);
   const parts = useMemo(() => parseChatMessageContent(content), [content]);
+  const hasStructuredImagePart = useMemo(
+    () => parts.some((part) => part.type === "file" && part.kind === "image"),
+    [parts],
+  );
   const textImagePreviews = useMemo(
-    () => (role === "assistant" ? extractRenderableImagePreviewsFromParts(parts) : []),
-    [parts, role],
+    () =>
+      role === "assistant"
+        ? extractRenderableImagePreviewsFromParts(parts).filter(
+            (preview) => !shouldHideTextImagePreview({ textUrl: preview.url, hasStructuredImagePart }),
+          )
+        : [],
+    [hasStructuredImagePart, parts, role],
   );
 
   const renderTextPart = (part: ChatMessageTextPart) => (
@@ -72,6 +84,16 @@ export function ChatMessageContent({ role, content, isStreaming = false }: ChatM
             />
           ),
           img: ({ node, src, alt, ...props }) => {
+            if (
+              typeof src === "string" &&
+              shouldHideTextImagePreview({
+                textUrl: src,
+                hasStructuredImagePart,
+              })
+            ) {
+              return null;
+            }
+
             const preview = typeof src === "string" ? createRenderableImagePreviewPartFromUrl(src) : null;
             if (!preview) return null;
 

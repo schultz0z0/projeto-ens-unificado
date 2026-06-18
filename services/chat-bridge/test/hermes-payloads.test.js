@@ -269,7 +269,11 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
 
   assert.match(request.message[0].text, /referencia\.png/);
 
-  assert.match(request.message[0].text, /https:\/\/project\.supabase\.co\/storage\/v1\/object\/sign\/chat-attachments\/user-1\/session-1\/referencia\.png\?token=abc/);
+  assert.match(request.message[0].text, /data:image\/png;base64,AAAA/);
+
+  assert.doesNotMatch(request.message[0].text, /token=abc/);
+
+  assert.match(request.message[0].text, /Nao tente baixar/);
 
   assert.match(request.message[0].text, /editar|trocar|remover|preservar o resto/);
 

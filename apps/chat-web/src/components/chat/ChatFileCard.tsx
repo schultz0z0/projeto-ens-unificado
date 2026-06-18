@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Copy, Download, ExternalLink, FileText, Image as ImageIcon, Maximize2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Download, ExternalLink, FileText, Image as ImageIcon, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
 import { refreshChatAttachmentUrl } from "@/lib/chatAttachments";
 import { getFileExtension, type ChatMessageFilePart } from "@/lib/chatMessageParts";
 import { cn } from "@/lib/utils";
+import { downloadChatFile } from "./chatFileDownloads";
 import { isAllowedStreamFileUrl, isSafeRenderableImage } from "./chatStreamFileSafety";
 
 type ChatFileCardProps = {
@@ -34,29 +35,66 @@ const normalizeSupabaseStorageUrl = (url: string) => {
 };
 
 export function ChatFileCard({ part, role }: ChatFileCardProps) {
+  const [activePart, setActivePart] = useState(part);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const isUser = role === "user";
-  const isImage = isSafeRenderableImage(part);
-  const extension = getFileExtension(part.name || part.url);
-  const displayUrl = normalizeSupabaseStorageUrl(part.url);
+  const isImage = isSafeRenderableImage(activePart);
+  const extension = getFileExtension(activePart.name || activePart.url);
+  const displayUrl = normalizeSupabaseStorageUrl(activePart.url);
 
-  const getActiveUrl = async () => {
-    const refreshedPart = await refreshChatAttachmentUrl(part).catch(() => part);
+  useEffect(() => {
+    setActivePart(part);
+  }, [part]);
+
+  const refreshActivePart = useCallback(async () => {
+    const refreshedPart = await refreshChatAttachmentUrl(activePart).catch(() => activePart);
+    const nextPart = {
+      ...refreshedPart,
+      url: normalizeSupabaseStorageUrl(refreshedPart.url),
+    };
+    setActivePart(nextPart);
+    return nextPart;
+  }, [activePart]);
+
+  useEffect(() => {
+    if (!part.storagePath) return;
+
+    let cancelled = false;
+    refreshChatAttachmentUrl(part)
+      .then((refreshedPart) => {
+        if (cancelled) return;
+        setActivePart({
+          ...refreshedPart,
+          url: normalizeSupabaseStorageUrl(refreshedPart.url),
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [part]);
+
+  const getActivePart = async () => {
+    const refreshedPart = await refreshActivePart();
     const url = normalizeSupabaseStorageUrl(refreshedPart.url);
     if (!isAllowedStreamFileUrl(url)) {
       throw new Error("unsafe_file_url");
     }
-    return url;
+    return {
+      ...refreshedPart,
+      url,
+    };
   };
 
   const handleOpen = async () => {
     try {
-      const url = await getActiveUrl();
+      const active = await getActivePart();
       if (isImage) {
-        setPreviewUrl(url);
+        setPreviewUrl(active.url);
         return;
       }
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.open(active.url, "_blank", "noopener,noreferrer");
     } catch {
       toast.error("Não foi possível abrir o arquivo.");
     }
@@ -64,24 +102,13 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
 
   const handleDownload = async () => {
     try {
-      const url = await getActiveUrl();
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = part.name;
-      link.rel = "noopener noreferrer";
-      link.click();
+      const active = await getActivePart();
+      await downloadChatFile({
+        url: active.url,
+        fileName: active.name,
+      });
     } catch {
       toast.error("Não foi possível baixar o arquivo.");
-    }
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      const url = await getActiveUrl();
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
-    } catch {
-      toast.error("Não foi possível copiar o link.");
     }
   };
 
@@ -94,9 +121,9 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
         )}
       >
         {isImage ? (
-          <button type="button" onClick={handleOpen} className="block w-full text-left" aria-label={`Ampliar ${part.name}`}>
+          <button type="button" onClick={handleOpen} className="block w-full text-left" aria-label={`Ampliar ${activePart.name}`}>
             <div className={cn("overflow-hidden", isUser ? "bg-white/10" : "bg-slate-100/80")}>
-              <img src={displayUrl} alt={part.name} className="max-h-[280px] w-full object-cover" />
+              <img src={displayUrl} alt={activePart.name} className="max-h-[280px] w-full object-cover" />
             </div>
           </button>
         ) : null}
@@ -116,7 +143,7 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className={cn("truncate text-sm font-medium", isUser ? "text-white" : "text-slate-900")}>{part.name}</p>
+            <p className={cn("truncate text-sm font-medium", isUser ? "text-white" : "text-slate-900")}>{activePart.name}</p>
             <p className={cn("text-xs", isUser ? "text-white/80" : "text-slate-600")}>
               {isImage ? "Imagem" : "Arquivo"}
               {extension ? ` • ${extension.toUpperCase()}` : ""}
@@ -124,16 +151,12 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleOpen} aria-label={isImage ? `Ampliar ${part.name}` : `Abrir ${part.name}`}>
+            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleOpen} aria-label={isImage ? `Ampliar ${activePart.name}` : `Abrir ${activePart.name}`}>
               {isImage ? <Maximize2 className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
             </Button>
 
-            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleDownload} aria-label={`Baixar ${part.name}`}>
+            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleDownload} aria-label={`Baixar ${activePart.name}`}>
               <Download className="h-4 w-4" />
-            </Button>
-
-            <Button type="button" size="icon" variant="ghost" className={cn("h-9 w-9 rounded-full", isUser ? "hover:bg-white/20" : "hover:bg-slate-100")} onClick={handleCopyLink} aria-label={`Copiar link de ${part.name}`}>
-              <Copy className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -145,7 +168,7 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
             <DialogHeader className="border-b border-slate-200/80 px-6 py-4">
               <div className="flex items-start justify-between gap-4 pr-8">
                 <div className="min-w-0 space-y-1">
-                  <DialogTitle className="truncate">{part.name}</DialogTitle>
+                  <DialogTitle className="truncate">{activePart.name}</DialogTitle>
                   <DialogDescription>Visualização ampliada da imagem gerada.</DialogDescription>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -153,16 +176,12 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
                     <Download className="mr-2 h-4 w-4" />
                     Baixar
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copiar link
-                  </Button>
                 </div>
               </div>
             </DialogHeader>
             <div className="flex max-h-[78vh] items-center justify-center overflow-auto bg-slate-950/95 p-4">
               {previewUrl ? (
-                <img src={previewUrl} alt={part.name} className="max-h-[72vh] max-w-full rounded-lg object-contain shadow-2xl" />
+                <img src={previewUrl} alt={activePart.name} className="max-h-[72vh] max-w-full rounded-lg object-contain shadow-2xl" />
               ) : null}
             </div>
           </DialogContent>

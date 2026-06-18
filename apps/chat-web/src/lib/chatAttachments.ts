@@ -17,6 +17,14 @@ const DEFAULT_CHAT_ATTACHMENTS_BUCKET =
   ((import.meta.env.VITE_CHAT_ATTACHMENTS_BUCKET || import.meta.env.NEXT_PUBLIC_CHAT_ATTACHMENTS_BUCKET) as
     | string
     | undefined) ?? "chat-attachments";
+const DEFAULT_GENERATED_IMAGES_BUCKET =
+  ((import.meta.env.VITE_SUPABASE_OUTPUTS_BUCKET || import.meta.env.NEXT_PUBLIC_SUPABASE_OUTPUTS_BUCKET) as
+    | string
+    | undefined) ?? "image-gen-outputs";
+const DEFAULT_GENERATED_IMAGES_PREFIX =
+  ((import.meta.env.VITE_SUPABASE_GENERATED_IMAGES_PREFIX ||
+    import.meta.env.NEXT_PUBLIC_SUPABASE_GENERATED_IMAGES_PREFIX) as string | undefined) ??
+  "hermes-chat-images";
 
 export const MAX_CHAT_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60 * 15;
@@ -55,10 +63,28 @@ const isAttachmentTypeAllowed = (file: File) => {
   return isChatAttachmentSupportedInCurrentStage(mimeType, extension);
 };
 
-const getAttachmentBucket = (bucket?: string) => {
-  const normalized = bucket?.trim();
-  return normalized || DEFAULT_CHAT_ATTACHMENTS_BUCKET;
+export const resolveChatAttachmentBucket = ({
+  storageBucket,
+  storagePath,
+  fallbackBucket,
+}: {
+  storageBucket?: string;
+  storagePath?: string;
+  fallbackBucket?: string;
+} = {}) => {
+  const explicitBucket = storageBucket?.trim() || fallbackBucket?.trim();
+  if (explicitBucket) return explicitBucket;
+
+  const normalizedPath = storagePath?.trim() ?? "";
+  const generatedPrefix = DEFAULT_GENERATED_IMAGES_PREFIX.trim().replace(/^\/+|\/+$/g, "");
+  if (generatedPrefix && normalizedPath.startsWith(`${generatedPrefix}/`)) {
+    return DEFAULT_GENERATED_IMAGES_BUCKET;
+  }
+
+  return DEFAULT_CHAT_ATTACHMENTS_BUCKET;
 };
+
+const getAttachmentBucket = (bucket?: string) => resolveChatAttachmentBucket({ fallbackBucket: bucket });
 
 const mapStorageError = (error: string) => {
   if (error.includes("Bucket not found")) {
@@ -183,12 +209,39 @@ export const refreshChatAttachmentUrl = async (part: ChatMessageFilePart, bucket
     return part;
   }
 
-  const { signedUrl, signedUrlExpiresAt } = await createSignedAttachmentUrl(part.storagePath, bucket ?? part.storageBucket);
+  const activeBucket = resolveChatAttachmentBucket({
+    storageBucket: bucket ?? part.storageBucket,
+    storagePath: part.storagePath,
+  });
+  const { signedUrl, signedUrlExpiresAt } = await createSignedAttachmentUrl(part.storagePath, activeBucket);
   return {
     ...part,
     url: signedUrl,
     signedUrlExpiresAt,
+    storageBucket: activeBucket,
   };
+};
+
+export const shouldHideTextImagePreview = ({
+  textUrl,
+  hasStructuredImagePart,
+}: {
+  textUrl: string;
+  hasStructuredImagePart: boolean;
+}) => {
+  if (!hasStructuredImagePart) return false;
+
+  try {
+    const parsed = new URL(textUrl);
+    const normalizedPath = parsed.pathname.replace(/^\/storage\/v1/, "");
+    const generatedPrefix = DEFAULT_GENERATED_IMAGES_PREFIX.trim().replace(/^\/+|\/+$/g, "");
+    return (
+      normalizedPath.startsWith(`/object/sign/${DEFAULT_GENERATED_IMAGES_BUCKET}/${generatedPrefix}/`) ||
+      normalizedPath.startsWith(`/object/public/${DEFAULT_GENERATED_IMAGES_BUCKET}/${generatedPrefix}/`)
+    );
+  } catch {
+    return false;
+  }
 };
 
 export const uploadChatAttachments = async ({
@@ -238,6 +291,7 @@ export const uploadChatAttachments = async ({
         url: signedUrl,
         mimeType: normalizedMimeType || undefined,
         storagePath,
+        storageBucket: activeBucket,
         signedUrlExpiresAt,
       });
 

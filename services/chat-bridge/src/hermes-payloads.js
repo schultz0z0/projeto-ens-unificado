@@ -57,9 +57,9 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
     .map((attachment) => ({
       name: attachment.name || "imagem",
       mimeType: attachment.mime_type || "image/*",
-      url: attachment.original_signed_url ?? attachment.signed_url,
+      source: attachment.inline_data_url ?? attachment.original_signed_url ?? attachment.signed_url,
     }))
-    .filter((attachment) => attachment.url);
+    .filter((attachment) => attachment.source);
 
   const lines = [
 
@@ -101,7 +101,9 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
 
       "[Entradas reais para image_generate.input_images]",
 
-      "Passe as URLs abaixo exatamente no array input_images da ferramenta image_generate.",
+      "Chame image_generate agora e passe os valores source abaixo exatamente no array input_images da ferramenta image_generate.",
+
+      "Nao tente baixar, abrir ou validar manualmente essas imagens antes de chamar image_generate; a bridge ja materializou os anexos para esta chamada.",
 
       "mode: auto|reference|edit",
 
@@ -112,7 +114,7 @@ const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttac
       "Se o pedido envolver edicao de imagem e o tamanho estiver auto, mantenha size=auto para preservar a proporcao/medidas da imagem de entrada.",
 
       ...imageInputs.map((attachment, index) => (
-        `${index + 1}. name=${attachment.name}; mime_type=${attachment.mimeType}; url=${attachment.url}`
+        `${index + 1}. name=${attachment.name}; mime_type=${attachment.mimeType}; source=${attachment.source}`
       )),
 
     );
