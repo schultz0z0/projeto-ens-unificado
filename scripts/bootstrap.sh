@@ -9,6 +9,9 @@ mkdir -p \
   data/hermes/cron \
   data/hermes/plugins \
   data/bridge \
+  data/bridge/hermes-image-inputs \
+  data/hermes-artifacts \
+  data/artifacts \
   data/designer/outputs \
   data/designer/tmp \
   data/designer/temp/uploads \

@@ -39,6 +39,14 @@ services:
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.loadbalancer.server.port=${NEXUS_DESIGNER_API_PORT:-8090}
 
+  artifact-server:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-artifacts.rule=Host(`${NEXUS_PUBLIC_ARTIFACT_HOST:-arquivos.solucoes-nexus.tech}`)
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-artifacts.entrypoints=websecure
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-artifacts.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-artifacts.loadbalancer.server.port=8095
+
   hermes-api:
     labels:
       - traefik.enable=true

@@ -1,6 +1,8 @@
 import { getFileExtension } from "@/lib/chatMessageParts";
 
 const SAFE_RENDERABLE_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "avif"]);
+const SAFE_RENDERABLE_VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov"]);
+const SAFE_RENDERABLE_VIDEO_MIME_TYPES = new Set(["video/mp4", "video/webm", "video/ogg", "video/quicktime"]);
 
 export const parseAllowedStreamFileHosts = (rawValue: string | undefined | null) => {
   if (!rawValue) return [];
@@ -49,8 +51,13 @@ export const getAllowedStreamFileHosts = () => {
 export const isAllowedStreamFileUrl = (url: string, allowedHosts = getAllowedStreamFileHosts()) => {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return false;
-    return allowedHosts.includes(parsed.hostname.toLowerCase());
+    const hostname = parsed.hostname.toLowerCase();
+    if (!allowedHosts.includes(hostname)) return false;
+    if (parsed.protocol === "https:") return true;
+    if (parsed.protocol === "http:") {
+      return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+    }
+    return false;
   } catch {
     return false;
   }
@@ -69,4 +76,17 @@ export const isSafeRenderableImage = ({
   if (mimeType === "image/svg+xml") return false;
   const extension = getFileExtension(name);
   return SAFE_RENDERABLE_IMAGE_EXTENSIONS.has(extension);
+};
+
+export const isSafeRenderableVideo = ({
+  name,
+  mimeType,
+}: {
+  name: string;
+  mimeType?: string;
+}) => {
+  const normalizedMimeType = mimeType?.split(";")[0]?.trim().toLowerCase();
+  const extension = getFileExtension(name);
+  if (normalizedMimeType && SAFE_RENDERABLE_VIDEO_MIME_TYPES.has(normalizedMimeType)) return true;
+  return SAFE_RENDERABLE_VIDEO_EXTENSIONS.has(extension);
 };

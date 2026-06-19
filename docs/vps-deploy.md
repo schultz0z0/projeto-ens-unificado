@@ -41,13 +41,21 @@ Pontos obrigatorios para producao:
 
 - `NEXUS_PUBLIC_CHATBOT_PROXY_URL=https://bridge.seu-dominio`
 - `NEXUS_PUBLIC_DESIGNER_API_URL=https://designer.seu-dominio`
-- `NEXUS_PUBLIC_CHAT_STREAM_FILE_HOSTS=app.seu-dominio,bridge.seu-dominio,designer.seu-dominio`
+- `NEXUS_PUBLIC_ARTIFACT_URL=https://arquivos.seu-dominio`
+- `NEXUS_PUBLIC_CHAT_STREAM_FILE_HOSTS=app.seu-dominio,bridge.seu-dominio,designer.seu-dominio,arquivos.seu-dominio`
 - `NEXUS_CHAT_ALLOWED_ORIGINS=https://app.seu-dominio`
 - `NEXUS_DESIGNER_ALLOWED_ORIGINS=https://app.seu-dominio`
+- `NEXUS_ARTIFACT_ALLOWED_ORIGINS=https://app.seu-dominio`
 - `NEXUS_HERMES_API_KEY=<segredo-forte>`
+- `NEXUS_ARTIFACT_INTERNAL_KEY=<segredo-forte>`
+- `NEXUS_ARTIFACT_ACCESS_TOKEN_SECRET=<segredo-forte>`
 - chaves reais de Supabase e provedores de IA usados pelos servicos
 
-Para o modo `Criar imagem` do chatbot via Hermes, o Supabase do app tambem precisa destas variaveis:
+O Artifact Server local guarda arquivos privados em `data/artifacts` e publica somente links assinados curtos pelo dominio `NEXUS_PUBLIC_ARTIFACT_URL`. O limite operacional inicial por arquivo/artifact individual e `NEXUS_ARTIFACT_MAX_UPLOAD_BYTES=5368709120` (5 GiB), pensado para imagens, videos e projetos zipados grandes; isso nao define cota total do storage local. Esse mesmo valor e repassado ao Hermes como `HERMES_ARTIFACT_MAX_BYTES`, para limitar cada arquivo stageado antes do Bridge importar. O Traefik continua em compose separado; este projeto apenas adiciona labels Docker para o host `NEXUS_PUBLIC_ARTIFACT_HOST`.
+
+O handoff Hermes -> Bridge usa `data/hermes-artifacts`: o `api_server` do fork do Hermes baixa/copia outputs de tools para `NEXUS_HERMES_ARTIFACTS_DIR` (`/opt/data/nexus-artifacts`) e emite esse caminho local nos eventos `tool.completed`; o Bridge le o mesmo bind mount em `NEXUS_BRIDGE_HERMES_ARTIFACTS_DIR` (`/app/data/hermes-artifacts`) para importar o arquivo ao Artifact Server.
+
+Para o modo legado de imagem via Supabase, enquanto algum tool do Hermes ainda nao emitir arquivos para o Artifact Server, o Supabase do app tambem precisa destas variaveis:
 
 - `NEXUS_SUPABASE_OUTPUTS_BUCKET=image-gen-outputs`
 - `NEXUS_SUPABASE_GENERATED_IMAGES_PREFIX=hermes-chat-images`
@@ -73,5 +81,5 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 
 ```bash
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps -a
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 hermes-api designer-api app-bridge app-frontend hermes-kanban
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 hermes-api designer-api artifact-server app-bridge app-frontend hermes-kanban
 ```

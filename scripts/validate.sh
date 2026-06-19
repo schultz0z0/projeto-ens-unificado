@@ -8,6 +8,7 @@ echo "== Projeto ENS monorepo validation =="
 
 required=(
   "apps/chat-web/package.json"
+  "services/artifact-server/package.json"
   "services/chat-bridge/package.json"
   "services/rag-mcp/package.json"
   "services/hermes-runtime/docker/hermes.Dockerfile"

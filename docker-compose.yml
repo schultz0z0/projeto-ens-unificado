@@ -100,9 +100,12 @@ services:
       SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
+      HERMES_ARTIFACTS_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
+      HERMES_ARTIFACT_MAX_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}
     volumes:
       - ./data/hermes:/opt/data
       - ./data/bridge/hermes-image-inputs:/opt/data/nexus-image-inputs:ro
+      - ./data/hermes-artifacts:${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
     ports:
       - "127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}:${NEXUS_HERMES_API_PORT:-8652}"
     expose:
@@ -143,9 +146,12 @@ services:
       SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
+      HERMES_ARTIFACTS_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
+      HERMES_ARTIFACT_MAX_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}
     volumes:
       - ./data/hermes:/opt/data
       - ./data/bridge/hermes-image-inputs:/opt/data/nexus-image-inputs:ro
+      - ./data/hermes-artifacts:${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
     ports:
       - "127.0.0.1:${NEXUS_HERMES_KANBAN_PORT:-9119}:${NEXUS_HERMES_KANBAN_PORT:-9119}"
     expose:
@@ -187,15 +193,23 @@ services:
       HERMES_RUN_POLL_MS: ${NEXUS_HERMES_RUN_POLL_MS:-2000}
       HERMES_STREAM_TIMEOUT_MS: ${NEXUS_HERMES_STREAM_TIMEOUT_MS:-120000}
       HERMES_REQUEST_TIMEOUT_MS: ${NEXUS_HERMES_REQUEST_TIMEOUT_MS:-120000}
+      HERMES_ARTIFACTS_BRIDGE_DIR: ${NEXUS_BRIDGE_HERMES_ARTIFACTS_DIR:-/app/data/hermes-artifacts}
+      HERMES_ARTIFACTS_HERMES_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
+      ARTIFACT_INTERNAL_URL: ${NEXUS_ARTIFACT_INTERNAL_URL:-http://artifact-server:8095}
+      ARTIFACT_INTERNAL_KEY: ${NEXUS_ARTIFACT_INTERNAL_KEY:-change-me}
+      ARTIFACT_ACCESS_TOKEN_TTL_SECONDS: ${NEXUS_ARTIFACT_ACCESS_TOKEN_TTL_SECONDS:-900}
       RUN_SESSION_PREFIX: ${NEXUS_RUN_SESSION_PREFIX:-}
     volumes:
       - ./data/bridge:/app/data
+      - ./data/hermes-artifacts:${NEXUS_BRIDGE_HERMES_ARTIFACTS_DIR:-/app/data/hermes-artifacts}:ro
     ports:
       - "127.0.0.1:${NEXUS_CHAT_BRIDGE_PORT:-8081}:8080"
     expose:
       - "8080"
     depends_on:
       hermes-api:
+        condition: service_healthy
+      artifact-server:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
@@ -265,6 +279,37 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    networks:
+      - ens-internal
+
+  artifact-server:
+    build:
+      context: ./services/artifact-server
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-artifact-server
+    restart: unless-stopped
+    environment:
+      ARTIFACT_PORT: "8095"
+      ARTIFACT_DATA_DIR: /app/data
+      ARTIFACT_INTERNAL_KEY: ${NEXUS_ARTIFACT_INTERNAL_KEY:-change-me}
+      ARTIFACT_ACCESS_TOKEN_SECRET: ${NEXUS_ARTIFACT_ACCESS_TOKEN_SECRET:-change-me}
+      ARTIFACT_PUBLIC_BASE_URL: ${NEXUS_PUBLIC_ARTIFACT_URL:-http://127.0.0.1:8095}
+      ARTIFACT_ALLOWED_ORIGINS: ${NEXUS_ARTIFACT_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}
+      ARTIFACT_MAX_UPLOAD_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}
+      ARTIFACT_ACCESS_TOKEN_TTL_SECONDS: ${NEXUS_ARTIFACT_ACCESS_TOKEN_TTL_SECONDS:-900}
+      ARTIFACT_MAX_ACCESS_TOKEN_TTL_SECONDS: ${NEXUS_ARTIFACT_MAX_ACCESS_TOKEN_TTL_SECONDS:-3600}
+    volumes:
+      - ./data/artifacts:/app/data
+    ports:
+      - "127.0.0.1:${NEXUS_ARTIFACT_PORT:-8095}:8095"
+    expose:
+      - "8095"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8095/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - ens-internal
 

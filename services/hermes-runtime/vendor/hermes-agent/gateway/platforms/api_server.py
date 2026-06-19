@@ -36,11 +36,15 @@ import hashlib
 import hmac
 import json
 import logging
+import mimetypes
 import os
 import socket as _socket
 import re
 import sqlite3
+import tempfile
 import time
+import urllib.parse
+import urllib.request
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -100,6 +104,15 @@ def _coerce_port(value: Any, default: int = DEFAULT_PORT) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _coerce_positive_int(value: Any, default: int) -> int:
+    """Parse a positive integer without letting malformed env/config values crash startup."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
 
 
 _TRUE_REQUEST_BOOL_STRINGS = frozenset({"1", "true", "yes", "on"})
@@ -731,6 +744,341 @@ except Exception:  # pragma: no cover - scanner is optional hardening
     _scan_cron_prompt = None
 
 
+_ARTIFACT_STAGE_CHUNK_SIZE = 1024 * 1024
+_DEFAULT_ARTIFACT_STAGE_MAX_BYTES = 5 * 1024 * 1024 * 1024
+_ARTIFACT_SOURCE_FIELDS = (
+    "host_image",
+    "image",
+    "agent_visible_image",
+    "download_url",
+    "image_url",
+    "file_url",
+    "url",
+    "path",
+    "file_path",
+    "output_path",
+    "local_path",
+)
+_IMAGE_GENERATE_DELIVERY_FIELDS = ("host_image", "image", "agent_visible_image", "download_url")
+_ARTIFACT_URL_FILE_EXTENSIONS = frozenset(
+    {
+        "png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif",
+        "pdf", "doc", "docx", "txt", "rtf", "md", "csv", "json", "xlsx", "xls",
+        "ppt", "pptx", "zip", "tar", "gz", "tgz", "html", "htm", "mp3", "wav",
+        "mp4", "mov", "webm",
+    }
+)
+
+
+def _safe_artifact_filename(value: Any, fallback: str = "artifact.bin") -> str:
+    raw = Path(str(value or fallback).replace("\\", "/")).name.strip()
+    sanitized = re.sub(r"[\r\n\"]", "", raw)
+    sanitized = re.sub(r"[^\w.\-=+ ]+", "_", sanitized)
+    sanitized = re.sub(r"\s+", " ", sanitized).strip()[:180]
+    return sanitized or fallback
+
+
+def _is_http_url(value: Any) -> bool:
+    return isinstance(value, str) and urllib.parse.urlparse(value).scheme in {"http", "https"}
+
+
+def _is_local_path(value: Any) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    if value.startswith("/") or bool(re.match(r"^[A-Za-z]:[\\/]", value)):
+        return True
+    parsed = urllib.parse.urlparse(value)
+    if parsed.scheme == "file":
+        return True
+    if parsed.scheme:
+        return False
+    return False
+
+
+def _content_type_extension(content_type: Optional[str]) -> str:
+    if not content_type:
+        return ""
+    guessed = mimetypes.guess_extension(content_type.split(";")[0].strip().lower())
+    if guessed == ".jpe":
+        return ".jpg"
+    return guessed or ""
+
+
+def _artifact_url_has_file_signal(record: Dict[str, Any], source: str) -> bool:
+    record_type = str(record.get("type") or "").lower()
+    if any(marker in record_type for marker in ("file", "image", "video", "audio", "artifact")):
+        return True
+
+    if any(isinstance(record.get(key), str) and record[key].strip() for key in ("filename", "file_name", "name")):
+        return True
+
+    content_type = str(record.get("mime_type") or record.get("mimeType") or record.get("content_type") or "").lower()
+    if content_type and not content_type.startswith("text/html"):
+        return True
+
+    match = re.search(r"\.([a-z0-9]+)(?:[?#].*)?$", source, flags=re.IGNORECASE)
+    return bool(match and match.group(1).lower() in _ARTIFACT_URL_FILE_EXTENSIONS)
+
+
+def _guess_artifact_filename(record: Dict[str, Any], source: str, content_type: Optional[str]) -> str:
+    for key in ("filename", "name", "file_name", "title"):
+        if isinstance(record.get(key), str) and record[key].strip():
+            return _safe_artifact_filename(record[key])
+
+    if _is_http_url(source):
+        parsed = urllib.parse.urlparse(source)
+        candidate = urllib.parse.unquote(Path(parsed.path).name)
+    elif urllib.parse.urlparse(source).scheme == "file":
+        candidate = Path(urllib.request.url2pathname(urllib.parse.urlparse(source).path)).name
+    else:
+        candidate = Path(source.replace("\\", "/")).name
+
+    filename = _safe_artifact_filename(candidate)
+    if "." not in filename:
+        filename = f"{filename}{_content_type_extension(content_type) or '.bin'}"
+    return filename
+
+
+def _path_is_within(child: Path, parent: Path) -> bool:
+    try:
+        child.resolve().relative_to(parent.resolve())
+        return True
+    except Exception:
+        return False
+
+
+def _download_remote_artifact(url: str, destination: Path, *, max_bytes: int) -> Optional[str]:
+    request = urllib.request.Request(url, headers={"User-Agent": "hermes-agent-artifact-stager/1.0"})
+    total = 0
+    with urllib.request.urlopen(request, timeout=60) as response, destination.open("wb") as output:
+        while True:
+            chunk = response.read(_ARTIFACT_STAGE_CHUNK_SIZE)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError("artifact_stage_too_large")
+            output.write(chunk)
+        content_type = response.headers.get("Content-Type", "")
+    return content_type.split(";")[0].strip().lower() or None
+
+
+def _copy_local_artifact(source: Path, destination: Path, *, max_bytes: int) -> None:
+    total = 0
+    with source.open("rb") as input_file, destination.open("wb") as output:
+        while True:
+            chunk = input_file.read(_ARTIFACT_STAGE_CHUNK_SIZE)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError("artifact_stage_too_large")
+            output.write(chunk)
+
+
+def _finalize_staged_artifact(temp_path: Path, artifacts_dir: Path, filename: str, *, max_bytes: int) -> Path:
+    digest = hashlib.sha256()
+    total = 0
+    with temp_path.open("rb") as input_file:
+        while True:
+            chunk = input_file.read(_ARTIFACT_STAGE_CHUNK_SIZE)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError("artifact_stage_too_large")
+            digest.update(chunk)
+
+    target = artifacts_dir / f"{digest.hexdigest()[:16]}-{_safe_artifact_filename(filename)}"
+    if target.exists():
+        temp_path.unlink(missing_ok=True)
+        return target
+
+    os.replace(temp_path, target)
+    return target
+
+
+def _stage_artifact_source(
+    source: str,
+    record: Dict[str, Any],
+    *,
+    artifacts_dir: Path,
+    max_bytes: int,
+    download_remote=_download_remote_artifact,
+) -> Optional[str]:
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    content_type = (
+        str(record.get("mime_type") or record.get("mimeType") or record.get("content_type") or "").split(";")[0].strip().lower()
+        or None
+    )
+
+    if _is_local_path(source):
+        parsed = urllib.parse.urlparse(source)
+        source_path = Path(urllib.request.url2pathname(parsed.path)) if parsed.scheme == "file" else Path(source)
+        if not source_path.is_file():
+            return None
+        if _path_is_within(source_path, artifacts_dir):
+            return str(source_path)
+        filename = _guess_artifact_filename(record, source, content_type)
+        fd, temp_name = tempfile.mkstemp(prefix=".stage-", suffix=".part", dir=str(artifacts_dir))
+        os.close(fd)
+        temp_path = Path(temp_name)
+        try:
+            _copy_local_artifact(source_path, temp_path, max_bytes=max_bytes)
+            return str(_finalize_staged_artifact(temp_path, artifacts_dir, filename, max_bytes=max_bytes))
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
+
+    if _is_http_url(source):
+        fd, temp_name = tempfile.mkstemp(prefix=".stage-", suffix=".part", dir=str(artifacts_dir))
+        os.close(fd)
+        temp_path = Path(temp_name)
+        try:
+            downloaded_content_type = download_remote(source, temp_path, max_bytes=max_bytes)
+            content_type = content_type or downloaded_content_type
+            filename = _guess_artifact_filename(record, source, content_type)
+            return str(_finalize_staged_artifact(temp_path, artifacts_dir, filename, max_bytes=max_bytes))
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
+
+    return None
+
+
+def _coerce_tool_result_payload(result: Any) -> tuple[Any, bool]:
+    if isinstance(result, str):
+        try:
+            parsed = json.loads(result)
+        except Exception:
+            return result, False
+        return parsed, True
+    return result, False
+
+
+def _artifact_result_contains_staged_reference(value: Any) -> bool:
+    payload, _ = _coerce_tool_result_payload(value)
+    if isinstance(payload, dict):
+        if isinstance(payload.get("artifact_path"), str) and payload["artifact_path"].strip():
+            return True
+        return any(
+            _artifact_result_contains_staged_reference(payload.get(field))
+            for field in ("files", "artifacts", "items", "outputs", "result")
+        )
+    if isinstance(payload, list):
+        return any(_artifact_result_contains_staged_reference(item) for item in payload)
+    return False
+
+
+def _stage_artifact_record(
+    record: Dict[str, Any],
+    *,
+    tool_name: str,
+    artifacts_dir: Path,
+    max_bytes: int,
+    download_remote,
+) -> Dict[str, Any]:
+    next_record = dict(record)
+
+    for list_field in ("files", "artifacts", "items", "outputs"):
+        if isinstance(next_record.get(list_field), list):
+            next_record[list_field] = [
+                _stage_artifact_record(
+                    item,
+                    tool_name=tool_name,
+                    artifacts_dir=artifacts_dir,
+                    max_bytes=max_bytes,
+                    download_remote=download_remote,
+                )
+                if isinstance(item, dict)
+                else item
+                for item in next_record[list_field]
+            ]
+
+    source_field = None
+    source = None
+    for field in _ARTIFACT_SOURCE_FIELDS:
+        candidate = next_record.get(field)
+        if isinstance(candidate, str) and candidate.strip() and (_is_http_url(candidate) or _is_local_path(candidate)):
+            if field == "url" and not _artifact_url_has_file_signal(next_record, candidate):
+                continue
+            source_field = field
+            source = candidate.strip()
+            break
+
+    if not source_field or not source:
+        return next_record
+
+    try:
+        staged_path = _stage_artifact_source(
+            source,
+            next_record,
+            artifacts_dir=artifacts_dir,
+            max_bytes=max_bytes,
+            download_remote=download_remote,
+        )
+    except Exception as exc:
+        logger.warning("api server artifact staging failed for %s: %s", source_field, exc)
+        return next_record
+
+    if not staged_path:
+        return next_record
+
+    original_key = f"original_{source_field}"
+    next_record.setdefault(original_key, source)
+
+    if tool_name == "image_generate":
+        for field in _IMAGE_GENERATE_DELIVERY_FIELDS:
+            if isinstance(next_record.get(field), str) and next_record[field] != staged_path:
+                next_record.setdefault(f"original_{field}", next_record[field])
+            next_record[field] = staged_path
+    else:
+        next_record[source_field] = staged_path
+
+    next_record.setdefault("artifact_path", staged_path)
+    return next_record
+
+
+def _stage_tool_result_artifacts(
+    tool_name: Optional[str],
+    result: Any,
+    *,
+    artifacts_dir: Optional[Any] = None,
+    max_bytes: int = _DEFAULT_ARTIFACT_STAGE_MAX_BYTES,
+    download_remote=_download_remote_artifact,
+) -> Any:
+    if not artifacts_dir:
+        return result
+
+    payload, was_json_string = _coerce_tool_result_payload(result)
+    if isinstance(payload, dict):
+        staged = _stage_artifact_record(
+            payload,
+            tool_name=str(tool_name or ""),
+            artifacts_dir=Path(artifacts_dir),
+            max_bytes=max_bytes,
+            download_remote=download_remote,
+        )
+        return json.dumps(staged, ensure_ascii=False) if was_json_string else staged
+
+    if isinstance(payload, list):
+        staged = [
+            _stage_artifact_record(
+                item,
+                tool_name=str(tool_name or ""),
+                artifacts_dir=Path(artifacts_dir),
+                max_bytes=max_bytes,
+                download_remote=download_remote,
+            )
+            if isinstance(item, dict)
+            else item
+            for item in payload
+        ]
+        return json.dumps(staged, ensure_ascii=False) if was_json_string else staged
+
+    return result
+
+
 class APIServerAdapter(BasePlatformAdapter):
     """
     OpenAI-compatible HTTP API server adapter.
@@ -754,6 +1102,20 @@ class APIServerAdapter(BasePlatformAdapter):
         self._model_name: str = self._resolve_model_name(
             extra.get("model_name", os.getenv("API_SERVER_MODEL_NAME", "")),
         )
+        raw_artifacts_dir = extra.get("artifacts_dir")
+        if raw_artifacts_dir is None:
+            raw_artifacts_dir = os.getenv("HERMES_ARTIFACTS_DIR", "")
+        self._artifacts_dir: str = str(raw_artifacts_dir or "").strip()
+        raw_artifact_stage_max_bytes = extra.get("artifact_stage_max_bytes")
+        if raw_artifact_stage_max_bytes is None:
+            raw_artifact_stage_max_bytes = os.getenv(
+                "HERMES_ARTIFACT_MAX_BYTES",
+                os.getenv("ARTIFACT_MAX_UPLOAD_BYTES", str(_DEFAULT_ARTIFACT_STAGE_MAX_BYTES)),
+            )
+        self._artifact_stage_max_bytes: int = _coerce_positive_int(
+            raw_artifact_stage_max_bytes,
+            _DEFAULT_ARTIFACT_STAGE_MAX_BYTES,
+        )
         self._app: Optional["web.Application"] = None
         self._runner: Optional["web.AppRunner"] = None
         self._site: Optional["web.TCPSite"] = None
@@ -772,6 +1134,20 @@ class APIServerAdapter(BasePlatformAdapter):
         # in-flight run by run_id.
         self._run_approval_sessions: Dict[str, str] = {}
         self._session_db: Optional[Any] = None  # Lazy-init SessionDB for session continuity
+
+    def _tool_result_for_api_delivery(self, tool_name: Optional[str], result: Any) -> Any:
+        if not self._artifacts_dir:
+            return result if tool_name == "image_generate" else None
+
+        staged_result = _stage_tool_result_artifacts(
+            tool_name or "",
+            result,
+            artifacts_dir=self._artifacts_dir or None,
+            max_bytes=self._artifact_stage_max_bytes,
+        )
+        if tool_name == "image_generate" or _artifact_result_contains_staged_reference(staged_result):
+            return staged_result
+        return None
 
     @staticmethod
     def _parse_cors_origins(value: Any) -> tuple[str, ...]:
@@ -1646,8 +2022,10 @@ class APIServerAdapter(BasePlatformAdapter):
             elif event_type in {"tool.started", "tool.completed", "tool.failed"}:
                 event_name = event_type.replace("tool.", "tool.")
                 payload = {"message_id": message_id, "tool_name": tool_name, "preview": preview, "args": args}
-                if event_type == "tool.completed" and tool_name == "image_generate":
-                    payload["result"] = kwargs.get("result")
+                if event_type == "tool.completed":
+                    result_for_delivery = self._tool_result_for_api_delivery(tool_name, kwargs.get("result"))
+                    if result_for_delivery is not None:
+                        payload["result"] = result_for_delivery
                     payload["duration"] = round(kwargs.get("duration", 0), 3)
                     payload["error"] = kwargs.get("is_error", False)
                 _enqueue(event_name, payload)
@@ -3622,8 +4000,9 @@ class APIServerAdapter(BasePlatformAdapter):
                     "duration": round(kwargs.get("duration", 0), 3),
                     "error": kwargs.get("is_error", False),
                 }
-                if tool_name == "image_generate":
-                    payload["result"] = kwargs.get("result")
+                result_for_delivery = self._tool_result_for_api_delivery(tool_name, kwargs.get("result"))
+                if result_for_delivery is not None:
+                    payload["result"] = result_for_delivery
                 _push(payload)
             elif event_type == "reasoning.available":
                 _push({

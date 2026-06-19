@@ -15,6 +15,10 @@ export type ChatMessageFilePart = {
   storagePath?: string;
   storageBucket?: string;
   signedUrlExpiresAt?: string;
+  artifactId?: string;
+  artifactSize?: number;
+  artifactSha256?: string;
+  originalUrl?: string;
 };
 
 export type ChatMessageArtifactPart = {

@@ -144,6 +144,32 @@ test("parseHermesEventBlock extracts generated image files from tool completed J
   assert.equal(parsed.completed, false);
 });
 
+test("parseHermesEventBlock extracts local artifact paths from tool completed JSON strings", () => {
+  const toolResult = JSON.stringify({
+    success: true,
+    host_image: "/opt/data/nexus-artifacts/run-1/banner.png",
+    filename: "banner.png",
+    mime_type: "image/png",
+  });
+  const parsed = parseHermesEventBlock(
+    `data: ${JSON.stringify({
+      event: "tool.completed",
+      tool_name: "image_generate",
+      result: toolResult,
+    })}`,
+    context,
+  );
+
+  const filesEvent = parsed.events.find((event) => event.event === "files");
+  assert.deepEqual(filesEvent?.data.files, [{
+    name: "banner.png",
+    url: "/opt/data/nexus-artifacts/run-1/banner.png",
+    kind: "image",
+    mimeType: "image/png",
+  }]);
+  assert.equal(parsed.completed, false);
+});
+
 test("parseHermesStatusPayload keeps running runs open and completes terminal runs", () => {
   assert.deepEqual(parseHermesStatusPayload({ status: "running" }, context), {
     terminal: false,

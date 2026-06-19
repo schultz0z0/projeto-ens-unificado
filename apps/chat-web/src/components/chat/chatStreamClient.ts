@@ -237,8 +237,12 @@ export const sendMessageToChatbotStream = async ({
                   ? file.name
                   : guessFileNameFromUrl(url);
               const kind = file.kind === "image" || isImageResource(name || url, mimeType) ? "image" : "file";
-              const storagePath = typeof file.storage_path === "string" ? file.storage_path : undefined;
-              const storageBucket = typeof file.storage_bucket === "string" ? file.storage_bucket : undefined;
+              const artifactId = typeof file.artifact_id === "string" ? file.artifact_id : undefined;
+              const artifactSize = typeof file.artifact_size === "number" ? file.artifact_size : undefined;
+              const artifactSha256 = typeof file.artifact_sha256 === "string" ? file.artifact_sha256 : undefined;
+              const originalUrl = typeof file.original_url === "string" ? file.original_url : undefined;
+              const storagePath = !artifactId && typeof file.storage_path === "string" ? file.storage_path : undefined;
+              const storageBucket = !artifactId && typeof file.storage_bucket === "string" ? file.storage_bucket : undefined;
               const signedUrlExpiresAt =
                 typeof file.signed_url_expires_at === "string" ? file.signed_url_expires_at : undefined;
 
@@ -251,6 +255,10 @@ export const sendMessageToChatbotStream = async ({
                   storagePath,
                   storageBucket,
                   signedUrlExpiresAt,
+                  artifactId,
+                  artifactSize,
+                  artifactSha256,
+                  originalUrl,
                 }),
               ];
             })

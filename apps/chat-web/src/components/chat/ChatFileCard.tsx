@@ -11,10 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { refreshChatAttachmentUrl } from "@/lib/chatAttachments";
+import { refreshArtifactFileUrl } from "@/lib/chatArtifacts";
 import { getFileExtension, type ChatMessageFilePart } from "@/lib/chatMessageParts";
 import { cn } from "@/lib/utils";
 import { downloadChatFile } from "./chatFileDownloads";
-import { isAllowedStreamFileUrl, isSafeRenderableImage } from "./chatStreamFileSafety";
+import { isAllowedStreamFileUrl, isSafeRenderableImage, isSafeRenderableVideo } from "./chatStreamFileSafety";
 
 type ChatFileCardProps = {
   part: ChatMessageFilePart;
@@ -34,11 +35,17 @@ const normalizeSupabaseStorageUrl = (url: string) => {
   }
 };
 
+const refreshFilePartUrl = (part: ChatMessageFilePart) => {
+  if (part.artifactId) return refreshArtifactFileUrl(part);
+  return refreshChatAttachmentUrl(part);
+};
+
 export function ChatFileCard({ part, role }: ChatFileCardProps) {
   const [activePart, setActivePart] = useState(part);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const isUser = role === "user";
   const isImage = isSafeRenderableImage(activePart);
+  const isVideo = isSafeRenderableVideo(activePart);
   const extension = getFileExtension(activePart.name || activePart.url);
   const displayUrl = normalizeSupabaseStorageUrl(activePart.url);
 
@@ -47,7 +54,7 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
   }, [part]);
 
   const refreshActivePart = useCallback(async () => {
-    const refreshedPart = await refreshChatAttachmentUrl(activePart).catch(() => activePart);
+    const refreshedPart = await refreshFilePartUrl(activePart).catch(() => activePart);
     const nextPart = {
       ...refreshedPart,
       url: normalizeSupabaseStorageUrl(refreshedPart.url),
@@ -57,10 +64,10 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
   }, [activePart]);
 
   useEffect(() => {
-    if (!part.storagePath) return;
+    if (!part.storagePath && !part.artifactId) return;
 
     let cancelled = false;
-    refreshChatAttachmentUrl(part)
+    refreshFilePartUrl(part)
       .then((refreshedPart) => {
         if (cancelled) return;
         setActivePart({
@@ -128,6 +135,12 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
           </button>
         ) : null}
 
+        {isVideo ? (
+          <div className={cn("overflow-hidden", isUser ? "bg-white/10" : "bg-slate-950")}>
+            <video src={displayUrl} controls preload="metadata" className="max-h-[320px] w-full bg-black object-contain" />
+          </div>
+        ) : null}
+
         <div className="flex items-center gap-3 p-3">
           <div
             className={cn(
@@ -145,7 +158,7 @@ export function ChatFileCard({ part, role }: ChatFileCardProps) {
           <div className="min-w-0 flex-1">
             <p className={cn("truncate text-sm font-medium", isUser ? "text-white" : "text-slate-900")}>{activePart.name}</p>
             <p className={cn("text-xs", isUser ? "text-white/80" : "text-slate-600")}>
-              {isImage ? "Imagem" : "Arquivo"}
+              {isImage ? "Imagem" : isVideo ? "Video" : "Arquivo"}
               {extension ? ` • ${extension.toUpperCase()}` : ""}
             </p>
           </div>

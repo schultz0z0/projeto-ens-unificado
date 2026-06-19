@@ -13,6 +13,7 @@ Tests cover:
 """
 
 import asyncio
+import hashlib
 import json
 import os
 import stat
@@ -30,6 +31,7 @@ from gateway.platforms.api_server import (
     ResponseStore,
     _IdempotencyCache,
     _derive_chat_session_id,
+    _stage_tool_result_artifacts,
     check_api_server_requirements,
     cors_middleware,
     security_headers_middleware,
@@ -434,6 +436,129 @@ def auth_adapter():
 # ---------------------------------------------------------------------------
 # Adapter internals
 # ---------------------------------------------------------------------------
+
+
+class TestArtifactStaging:
+    def test_stages_remote_image_generate_result_for_api_delivery(self, tmp_path):
+        artifact_dir = tmp_path / "nexus-artifacts"
+        payload = {
+            "success": True,
+            "download_url": "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc",
+            "image": "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc",
+            "filename": "render.png",
+            "mime_type": "image/png",
+        }
+
+        def fake_download(url, destination, *, max_bytes):
+            assert url == payload["download_url"]
+            destination.write_bytes(b"png-bytes")
+            return "image/png"
+
+        staged = _stage_tool_result_artifacts(
+            "image_generate",
+            json.dumps(payload),
+            artifacts_dir=artifact_dir,
+            download_remote=fake_download,
+        )
+        staged_payload = json.loads(staged)
+
+        expected_path = artifact_dir / f"{hashlib.sha256(b'png-bytes').hexdigest()[:16]}-render.png"
+        assert expected_path.read_bytes() == b"png-bytes"
+        assert staged_payload["host_image"] == str(expected_path)
+        assert staged_payload["image"] == str(expected_path)
+        assert staged_payload["download_url"] == str(expected_path)
+        assert staged_payload["original_download_url"] == payload["download_url"]
+        assert staged_payload["mime_type"] == "image/png"
+
+    def test_stages_local_file_result_for_api_delivery(self, tmp_path):
+        artifact_dir = tmp_path / "nexus-artifacts"
+        source = tmp_path / "report.pdf"
+        source.write_bytes(b"%PDF-test")
+
+        staged = _stage_tool_result_artifacts(
+            "document_export",
+            {
+                "success": True,
+                "file_path": str(source),
+                "filename": "report.pdf",
+                "mime_type": "application/pdf",
+            },
+            artifacts_dir=artifact_dir,
+        )
+
+        expected_path = artifact_dir / f"{hashlib.sha256(b'%PDF-test').hexdigest()[:16]}-report.pdf"
+        assert expected_path.read_bytes() == b"%PDF-test"
+        assert staged["file_path"] == str(expected_path)
+        assert staged["original_file_path"] == str(source)
+
+    def test_does_not_stage_bare_generic_urls_without_file_signal(self, tmp_path):
+        calls = []
+
+        def fake_download(url, destination, *, max_bytes):
+            calls.append(url)
+            destination.write_bytes(b"html")
+            return "text/html"
+
+        staged = _stage_tool_result_artifacts(
+            "web_search",
+            {"success": True, "url": "https://example.com/article", "title": "Article"},
+            artifacts_dir=tmp_path / "nexus-artifacts",
+            download_remote=fake_download,
+        )
+
+        assert calls == []
+        assert staged == {"success": True, "url": "https://example.com/article", "title": "Article"}
+
+    def test_adapter_delivers_staged_generic_artifact_results(self, tmp_path):
+        artifact_dir = tmp_path / "nexus-artifacts"
+        source = tmp_path / "project.zip"
+        source.write_bytes(b"zip-bytes")
+        adapter = APIServerAdapter(
+            PlatformConfig(enabled=True, extra={"artifacts_dir": str(artifact_dir)})
+        )
+
+        staged = adapter._tool_result_for_api_delivery(
+            "zip_project",
+            {
+                "success": True,
+                "file_path": str(source),
+                "filename": "project.zip",
+                "mime_type": "application/zip",
+            },
+        )
+
+        expected_path = artifact_dir / f"{hashlib.sha256(b'zip-bytes').hexdigest()[:16]}-project.zip"
+        assert expected_path.read_bytes() == b"zip-bytes"
+        assert staged["file_path"] == str(expected_path)
+        assert staged["original_file_path"] == str(source)
+
+    def test_adapter_ignores_generic_results_without_artifacts(self, tmp_path):
+        adapter = APIServerAdapter(
+            PlatformConfig(enabled=True, extra={"artifacts_dir": str(tmp_path / "nexus-artifacts")})
+        )
+
+        assert adapter._tool_result_for_api_delivery("web_search", {"success": True, "text": "ok"}) is None
+
+    def test_adapter_does_not_emit_generic_artifacts_without_staging_dir(self, tmp_path):
+        source = tmp_path / "project.zip"
+        source.write_bytes(b"zip-bytes")
+        adapter = APIServerAdapter(PlatformConfig(enabled=True, extra={"artifacts_dir": ""}))
+
+        assert adapter._tool_result_for_api_delivery("zip_project", {"file_path": str(source)}) is None
+
+    def test_adapter_does_not_emit_generic_artifacts_when_staging_fails(self, tmp_path):
+        artifact_dir = tmp_path / "nexus-artifacts"
+        adapter = APIServerAdapter(
+            PlatformConfig(enabled=True, extra={"artifacts_dir": str(artifact_dir)})
+        )
+
+        assert (
+            adapter._tool_result_for_api_delivery(
+                "zip_project",
+                {"file_path": str(tmp_path / "missing.zip"), "filename": "missing.zip"},
+            )
+            is None
+        )
 
 
 class TestAgentExecution:

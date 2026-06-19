@@ -78,9 +78,12 @@ const isImageLike = (value, mimeType) => {
   return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"].includes(getFileExtension(value));
 };
 
-const isLikelyFileUrl = (url) => {
-  if (!/^https?:\/\//i.test(url)) return false;
-  return knownFileExtensions.has(getFileExtension(url));
+const isLikelyFileReference = (url) => {
+  const value = String(url ?? "").trim();
+  if (!value) return false;
+  if (/^https?:\/\//i.test(value)) return knownFileExtensions.has(getFileExtension(value));
+  if (value.startsWith("/") || /^[a-z]:[\\/]/i.test(value)) return knownFileExtensions.has(getFileExtension(value));
+  return false;
 };
 
 const guessFileNameFromUrl = (url) => {
@@ -89,7 +92,7 @@ const guessFileNameFromUrl = (url) => {
     const segments = parsed.pathname.split("/").filter(Boolean);
     return decodeURIComponent(segments[segments.length - 1] ?? "arquivo");
   } catch {
-    return "arquivo";
+    return String(url ?? "").replace(/\\/g, "/").split("/").filter(Boolean).pop() || "arquivo";
   }
 };
 
@@ -129,6 +132,12 @@ const extractFilesFromUnknown = (value, depth = 0) => {
     record.image_url,
     record.file_url,
     record.download_url,
+    record.host_image,
+    record.agent_visible_image,
+    record.path,
+    record.file_path,
+    record.output_path,
+    record.local_path,
     record.href,
   ].filter((candidate) => typeof candidate === "string" && candidate.trim().length > 0);
 
@@ -144,7 +153,7 @@ const extractFilesFromUnknown = (value, depth = 0) => {
             : undefined;
 
   const directFiles = rawUrlCandidates.flatMap((url) => {
-    if (!(type.includes("file") || type.includes("image") || mimeType || rawName || isLikelyFileUrl(url))) {
+    if (!(type.includes("file") || type.includes("image") || mimeType || rawName || isLikelyFileReference(url))) {
       return [];
     }
 

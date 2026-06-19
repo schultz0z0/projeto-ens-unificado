@@ -8,7 +8,12 @@ import {
   parseHermesEventBlock,
   parseHermesStatusPayload,
 } from "./hermes-events.js";
-import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
+import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
+import {
+  createArtifactAccessLink,
+  importHermesFilesToArtifacts,
+  toBridgeArtifactPath,
+} from "./artifacts.js";
 import {
   buildHermesRunRequest,
   buildHermesResponsesRequest,
@@ -49,6 +54,11 @@ const config = {
   supabaseGeneratedImagesPrefix: process.env.SUPABASE_GENERATED_IMAGES_PREFIX || "hermes-chat-images",
   hermesImageInputsBridgeDir: process.env.HERMES_IMAGE_INPUTS_BRIDGE_DIR || path.join(process.env.BRIDGE_DATA_DIR || "/app/data", "hermes-image-inputs"),
   hermesImageInputsHermesDir: process.env.HERMES_IMAGE_INPUTS_HERMES_DIR || "/opt/data/nexus-image-inputs",
+  hermesArtifactsBridgeDir: process.env.HERMES_ARTIFACTS_BRIDGE_DIR || path.join(process.env.BRIDGE_DATA_DIR || "/app/data", "hermes-artifacts"),
+  hermesArtifactsHermesDir: process.env.HERMES_ARTIFACTS_HERMES_DIR || "/opt/data/nexus-artifacts",
+  artifactInternalUrl: process.env.ARTIFACT_INTERNAL_URL || "",
+  artifactInternalKey: process.env.ARTIFACT_INTERNAL_KEY || "",
+  artifactAccessTokenTtlSeconds: Number(process.env.ARTIFACT_ACCESS_TOKEN_TTL_SECONDS || 900),
   hermesBaseUrl: process.env.HERMES_API_BASE_URL || "",
   hermesApiKey: process.env.HERMES_API_KEY || "",
   hermesModelName: process.env.HERMES_MODEL_NAME || "hermes-agent",
@@ -648,8 +658,8 @@ class HermesBridge {
     return run;
   }
 
-  appendEvent(run, event) {
-    run.events.push(event);
+  appendEvent(run, event) {
+    run.events.push(event);
     if (event.event === "delta" && typeof event.data?.delta === "string") {
       run.output_text += event.data.delta;
     }
@@ -661,13 +671,55 @@ class HermesBridge {
           run.files.push(file);
         }
       });
-    }
-  }
-
-  async appendEvents(run, events) {
-    events.forEach((event) => this.appendEvent(run, event));
-    await this.store.save(run);
-  }
+    }
+  }
+
+  mapHermesArtifactFile(file) {
+    const bridgePath = toBridgeArtifactPath({
+      hermesPath: file?.url,
+      hermesRoot: config.hermesArtifactsHermesDir,
+      bridgeRoot: config.hermesArtifactsBridgeDir,
+    });
+
+    if (!bridgePath) return file;
+
+    return {
+      ...file,
+      original_url: file.original_url || file.url,
+      url: bridgePath,
+    };
+  }
+
+  async importFilesEventArtifacts(run, event) {
+    if (event.event !== "files" || !Array.isArray(event.data?.files)) return event;
+
+    const files = event.data.files.map((file) => this.mapHermesArtifactFile(file));
+    const importedFiles = await importHermesFilesToArtifacts({
+      files,
+      ownerId: run.user_id,
+      sessionId: run.chat_session_id,
+      artifactBaseUrl: config.artifactInternalUrl,
+      artifactInternalKey: config.artifactInternalKey,
+      allowedLocalRoots: [config.hermesArtifactsBridgeDir],
+      accessLinkTtlSeconds: config.artifactAccessTokenTtlSeconds,
+      logger: console,
+    });
+
+    return {
+      ...event,
+      data: {
+        ...event.data,
+        files: importedFiles,
+      },
+    };
+  }
+
+  async appendEvents(run, events) {
+    for (const event of events) {
+      this.appendEvent(run, await this.importFilesEventArtifacts(run, event));
+    }
+    await this.store.save(run);
+  }
 
   async failRun(runId, error) {
     const run = this.store.get(runId);
@@ -1257,20 +1309,44 @@ const handleRequest = async (req, res) => {
 
   const url = new URL(req.url || "/", "http://localhost");
 
-  if (req.method === "GET" && url.pathname === "/health") {
-    jsonResponse(res, 200, {
-      ok: true,
-      service: "nexus-hermes-bridge",
-      hermesConfigured: Boolean(normalizeBaseUrl(config.hermesBaseUrl)),
-      supabaseStorageConfigured: Boolean(config.supabaseUrl && (config.supabaseServiceRoleKey || config.supabaseAnonKey)),
+  if (req.method === "GET" && url.pathname === "/health") {
+    jsonResponse(res, 200, {
+      ok: true,
+      service: "nexus-hermes-bridge",
+      hermesConfigured: Boolean(normalizeBaseUrl(config.hermesBaseUrl)),
+      artifactServerConfigured: Boolean(config.artifactInternalUrl && config.artifactInternalKey),
+      supabaseStorageConfigured: Boolean(config.supabaseUrl && (config.supabaseServiceRoleKey || config.supabaseAnonKey)),
       supabaseStateConfigured: Boolean(config.supabaseUrl && config.supabaseServiceRoleKey),
       attachmentBucket: config.attachmentBucket,
     }, corsHeaders);
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/chat/session/delete") {
-    const user = await verifyUser(req);
+    return;
+  }
+
+  const artifactAccessMatch = url.pathname.match(/^\/api\/artifacts\/([^/]+)\/access-link$/);
+  if (artifactAccessMatch && req.method === "POST") {
+    if (!config.artifactInternalUrl || !config.artifactInternalKey) {
+      jsonResponse(res, 503, { error: "artifact_server_not_configured" }, corsHeaders);
+      return;
+    }
+
+    const user = await verifyUser(req);
+    const access = await createArtifactAccessLink({
+      artifactBaseUrl: config.artifactInternalUrl,
+      artifactInternalKey: config.artifactInternalKey,
+      artifactId: decodeURIComponent(artifactAccessMatch[1]),
+      ownerId: user.id,
+      expiresInSeconds: config.artifactAccessTokenTtlSeconds,
+    });
+
+    jsonResponse(res, 200, {
+      url: access.url,
+      expires_at: access.expires_at,
+    }, corsHeaders);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/chat/session/delete") {
+    const user = await verifyUser(req);
     const payload = await readJsonBody(req);
     const sessionId = typeof payload.session_id === "string" ? payload.session_id.trim() : "";
     if (!sessionId) {
