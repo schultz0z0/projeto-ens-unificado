@@ -101,4 +101,13 @@ describe("chatAttachments", () => {
       }),
     ).toBe(false);
   });
+
+  it("nao cria preview textual extra para artifact quando ja existe imagem estruturada", () => {
+    expect(
+      shouldHideTextImagePreview({
+        textUrl: "https://arquivos.solucoes-nexus.tech/v1/artifacts/artifact-1/content?token=abc",
+        hasStructuredImagePart: true,
+      }),
+    ).toBe(true);
+  });
 });

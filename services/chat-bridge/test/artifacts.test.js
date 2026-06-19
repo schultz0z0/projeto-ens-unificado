@@ -6,8 +6,10 @@ import { test } from "node:test";
 
 import {
   ARTIFACT_STORAGE_BUCKET,
+  collectArtifactUrlReplacements,
   importHermesFileToArtifact,
   importHermesFilesToArtifacts,
+  replaceArtifactUrls,
   toBridgeArtifactPath,
 } from "../src/artifacts.js";
 
@@ -215,4 +217,27 @@ test("importHermesFilesToArtifacts restores original URL when local artifact is 
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("replaceArtifactUrls swaps Hermes original URLs for artifact URLs in assistant text", () => {
+  const supabaseUrl = "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc";
+  const artifactUrl = "https://arquivos.solucoes-nexus.tech/v1/artifacts/artifact-1/content?token=xyz";
+  const replacements = collectArtifactUrlReplacements(
+    [{
+      name: "render.png",
+      url: "/app/data/hermes-artifacts/render.png",
+      original_url: supabaseUrl,
+    }],
+    [{
+      name: "render.png",
+      url: artifactUrl,
+      original_url: supabaseUrl,
+      artifact_id: "artifact-1",
+    }],
+  );
+
+  assert.equal(
+    replaceArtifactUrls(`Imagem pronta:\n![preview](${supabaseUrl})`, replacements),
+    `Imagem pronta:\n![preview](${artifactUrl})`,
+  );
 });

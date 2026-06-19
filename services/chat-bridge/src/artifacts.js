@@ -64,6 +64,45 @@ const guessFileName = (file) => {
 
 const normalizeRoot = (value) => String(value ?? "").replace(/\\/g, "/").replace(/\/+$/, "");
 
+const asNonEmptyString = (value) => (typeof value === "string" && value.trim() ? value.trim() : "");
+
+export const collectArtifactUrlReplacements = (sourceFiles = [], importedFiles = []) => {
+  const replacements = [];
+  const seen = new Set();
+  const maxLength = Math.max(sourceFiles.length, importedFiles.length);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const sourceFile = sourceFiles[index] ?? {};
+    const importedFile = importedFiles[index] ?? {};
+    const targetUrl = asNonEmptyString(importedFile.url);
+    if (!targetUrl) continue;
+
+    [
+      sourceFile.url,
+      sourceFile.original_url,
+      importedFile.original_url,
+      importedFile.source_url,
+    ].forEach((candidate) => {
+      const fromUrl = asNonEmptyString(candidate);
+      if (!fromUrl || fromUrl === targetUrl) return;
+      const key = `${fromUrl}\n${targetUrl}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      replacements.push({ from: fromUrl, to: targetUrl });
+    });
+  }
+
+  return replacements;
+};
+
+export const replaceArtifactUrls = (text, replacements = []) => {
+  if (typeof text !== "string" || replacements.length === 0) return text;
+  return replacements
+    .filter((replacement) => asNonEmptyString(replacement?.from) && asNonEmptyString(replacement?.to))
+    .sort((a, b) => b.from.length - a.from.length)
+    .reduce((nextText, replacement) => nextText.split(replacement.from).join(replacement.to), text);
+};
+
 export const toBridgeArtifactPath = ({ hermesPath, hermesRoot, bridgeRoot }) => {
   const normalizedHermesPath = String(hermesPath ?? "").replace(/\\/g, "/");
   const normalizedHermesRoot = normalizeRoot(hermesRoot);

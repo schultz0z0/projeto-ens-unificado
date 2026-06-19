@@ -170,10 +170,18 @@ const extractFilesFromUnknown = (value, depth = 0) => {
       typeof record.storage_bucket === "string" && record.storage_bucket.trim()
         ? record.storage_bucket.trim()
         : undefined;
+    const originalUrl = [
+      record.original_url,
+      record.original_download_url,
+      record.original_image_url,
+      record.original_file_url,
+      record.source_url,
+    ].find((candidate) => typeof candidate === "string" && candidate.trim() && candidate.trim() !== url);
     return [{
       name,
       url,
       kind: type.includes("image") || isImageLike(name || url, mimeType) ? "image" : "file",
+      ...(originalUrl ? { original_url: originalUrl.trim() } : {}),
       ...(mimeType ? { mimeType } : {}),
       ...(storagePath ? { storage_path: storagePath } : {}),
       ...(storageBucket ? { storage_bucket: storageBucket } : {}),

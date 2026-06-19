@@ -170,6 +170,33 @@ test("parseHermesEventBlock extracts local artifact paths from tool completed JS
   assert.equal(parsed.completed, false);
 });
 
+test("parseHermesEventBlock preserves original download URL for staged image artifacts", () => {
+  const toolResult = JSON.stringify({
+    success: true,
+    download_url: "/opt/data/nexus-artifacts/run-1/render.png",
+    original_download_url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc",
+    filename: "render.png",
+    mime_type: "image/png",
+  });
+  const parsed = parseHermesEventBlock(
+    `data: ${JSON.stringify({
+      event: "tool.completed",
+      tool_name: "image_generate",
+      result: toolResult,
+    })}`,
+    context,
+  );
+
+  const filesEvent = parsed.events.find((event) => event.event === "files");
+  assert.deepEqual(filesEvent?.data.files, [{
+    name: "render.png",
+    url: "/opt/data/nexus-artifacts/run-1/render.png",
+    original_url: "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc",
+    kind: "image",
+    mimeType: "image/png",
+  }]);
+});
+
 test("parseHermesStatusPayload keeps running runs open and completes terminal runs", () => {
   assert.deepEqual(parseHermesStatusPayload({ status: "running" }, context), {
     terminal: false,

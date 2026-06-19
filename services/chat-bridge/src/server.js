@@ -10,8 +10,10 @@ import {
 } from "./hermes-events.js";
 import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
 import {
+  collectArtifactUrlReplacements,
   createArtifactAccessLink,
   importHermesFilesToArtifacts,
+  replaceArtifactUrls,
   toBridgeArtifactPath,
 } from "./artifacts.js";
 import {
@@ -658,14 +660,61 @@ class HermesBridge {
     return run;
   }
 
+  applyArtifactUrlReplacements(run, text) {
+    return replaceArtifactUrls(text, run.artifact_url_replacements ?? []);
+  }
+
+  normalizeEventArtifactUrls(run, event) {
+    if (event.event !== "delta" || typeof event.data?.delta !== "string") return event;
+    const delta = this.applyArtifactUrlReplacements(run, event.data.delta);
+    if (delta === event.data.delta) return event;
+    return {
+      ...event,
+      data: {
+        ...event.data,
+        delta,
+      },
+    };
+  }
+
+  registerArtifactUrlReplacements(run, sourceFiles, importedFiles) {
+    const replacements = collectArtifactUrlReplacements(sourceFiles, importedFiles);
+    if (replacements.length === 0) return;
+
+    const existing = Array.isArray(run.artifact_url_replacements) ? run.artifact_url_replacements : [];
+    const seen = new Set(existing.map((replacement) => `${replacement.from}\n${replacement.to}`));
+    const nextReplacements = [...existing];
+
+    replacements.forEach((replacement) => {
+      const key = `${replacement.from}\n${replacement.to}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      nextReplacements.push(replacement);
+    });
+
+    run.artifact_url_replacements = nextReplacements;
+    run.output_text = replaceArtifactUrls(run.output_text, replacements);
+    run.events = run.events.map((existingEvent) => {
+      if (existingEvent.event !== "delta" || typeof existingEvent.data?.delta !== "string") return existingEvent;
+      return {
+        ...existingEvent,
+        data: {
+          ...existingEvent.data,
+          delta: replaceArtifactUrls(existingEvent.data.delta, replacements),
+        },
+      };
+    });
+  }
+
   appendEvent(run, event) {
-    run.events.push(event);
-    if (event.event === "delta" && typeof event.data?.delta === "string") {
-      run.output_text += event.data.delta;
+    const normalizedEvent = this.normalizeEventArtifactUrls(run, event);
+    run.events.push(normalizedEvent);
+    if (normalizedEvent.event === "delta" && typeof normalizedEvent.data?.delta === "string") {
+      run.output_text += normalizedEvent.data.delta;
     }
-    if (event.event === "files" && Array.isArray(event.data?.files)) {
+    if (normalizedEvent.event === "files" && Array.isArray(normalizedEvent.data?.files)) {
       const seen = new Set(run.files.map((file) => file.url));
-      event.data.files.forEach((file) => {
+      normalizedEvent.data.files.forEach((file) => {
         if (!seen.has(file.url)) {
           seen.add(file.url);
           run.files.push(file);
@@ -704,6 +753,7 @@ class HermesBridge {
       accessLinkTtlSeconds: config.artifactAccessTokenTtlSeconds,
       logger: console,
     });
+    this.registerArtifactUrlReplacements(run, files, importedFiles);
 
     return {
       ...event,

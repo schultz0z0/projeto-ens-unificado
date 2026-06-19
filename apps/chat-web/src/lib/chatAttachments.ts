@@ -234,6 +234,7 @@ export const shouldHideTextImagePreview = ({
   try {
     const parsed = new URL(textUrl);
     const normalizedPath = parsed.pathname.replace(/^\/storage\/v1/, "");
+    if (normalizedPath.startsWith("/v1/artifacts/")) return true;
     const generatedPrefix = DEFAULT_GENERATED_IMAGES_PREFIX.trim().replace(/^\/+|\/+$/g, "");
     return (
       normalizedPath.startsWith(`/object/sign/${DEFAULT_GENERATED_IMAGES_BUCKET}/${generatedPrefix}/`) ||
