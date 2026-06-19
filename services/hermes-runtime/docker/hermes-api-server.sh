@@ -29,6 +29,8 @@ fi
 
 chown -R hermes:hermes "$HERMES_DATA_PATH" "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "$HERMES_DATA_PATH" "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true
+chmod -R u+rwX,g+rwX,o+rX "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true
+umask 0022
 
 run_as_hermes() {
   su -s /bin/bash hermes -c "$1"

@@ -892,9 +892,17 @@ def _finalize_staged_artifact(temp_path: Path, artifacts_dir: Path, filename: st
     target = artifacts_dir / f"{digest.hexdigest()[:16]}-{_safe_artifact_filename(filename)}"
     if target.exists():
         temp_path.unlink(missing_ok=True)
+        try:
+            target.chmod(0o644)
+        except OSError:
+            pass
         return target
 
     os.replace(temp_path, target)
+    try:
+        target.chmod(0o644)
+    except OSError:
+        pass
     return target
 
 

@@ -470,6 +470,30 @@ class TestArtifactStaging:
         assert staged_payload["original_download_url"] == payload["download_url"]
         assert staged_payload["mime_type"] == "image/png"
 
+    def test_staged_artifact_is_readable_by_peer_containers(self, tmp_path):
+        artifact_dir = tmp_path / "nexus-artifacts"
+        payload = {
+            "success": True,
+            "download_url": "https://project.supabase.co/storage/v1/object/sign/image-gen-outputs/render.png?token=abc",
+            "filename": "render.png",
+            "mime_type": "image/png",
+        }
+
+        def fake_download(url, destination, *, max_bytes):
+            destination.write_bytes(b"png-bytes")
+            return "image/png"
+
+        expected_path = artifact_dir / f"{hashlib.sha256(b'png-bytes').hexdigest()[:16]}-render.png"
+        with patch.object(type(tmp_path), "chmod", autospec=True) as chmod_mock:
+            _stage_tool_result_artifacts(
+                "image_generate",
+                json.dumps(payload),
+                artifacts_dir=artifact_dir,
+                download_remote=fake_download,
+            )
+
+        chmod_mock.assert_any_call(expected_path, 0o644)
+
     def test_stages_local_file_result_for_api_delivery(self, tmp_path):
         artifact_dir = tmp_path / "nexus-artifacts"
         source = tmp_path / "report.pdf"

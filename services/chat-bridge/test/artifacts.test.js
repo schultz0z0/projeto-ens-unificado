@@ -177,3 +177,42 @@ test("importHermesFilesToArtifacts restores original URL when mapped local impor
 
   assert.equal(files[0].url, "/opt/data/nexus-artifacts/run-1/app.zip");
 });
+
+test("importHermesFilesToArtifacts restores original URL when local artifact is unreadable", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "bridge-unreadable-artifacts-"));
+  try {
+    const localPath = path.join(root, "render.png");
+    await writeFile(localPath, "png-bytes");
+    let uploadAttempted = false;
+
+    const files = await importHermesFilesToArtifacts({
+      files: [{
+        name: "render.png",
+        url: localPath,
+        original_url: "/opt/data/nexus-artifacts/render.png",
+        kind: "image",
+        mimeType: "image/png",
+      }],
+      ownerId: "user-1",
+      sessionId: "session-1",
+      artifactBaseUrl: "http://artifact.test",
+      artifactInternalKey: "internal-key",
+      allowedLocalRoots: [root],
+      accessImpl: async () => {
+        const error = new Error(`EACCES: permission denied, open '${localPath}'`);
+        error.code = "EACCES";
+        throw error;
+      },
+      fetchImpl: async () => {
+        uploadAttempted = true;
+        throw new Error("fetch should not be reached");
+      },
+      logger: { warn() {} },
+    });
+
+    assert.equal(files[0].url, "/opt/data/nexus-artifacts/render.png");
+    assert.equal(uploadAttempted, false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

@@ -1,5 +1,5 @@
-import { createReadStream } from "node:fs";
-import { realpath, stat } from "node:fs/promises";
+import { constants, createReadStream } from "node:fs";
+import { access, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
 export const ARTIFACT_STORAGE_BUCKET = "nexus-artifacts";
@@ -167,15 +167,18 @@ export const createArtifactAccessLink = async ({
   return payload;
 };
 
-const resolveLocalArtifactSource = async ({ file, allowedLocalRoots }) => {
+const resolveLocalArtifactSource = async ({ file, allowedLocalRoots, accessImpl = access }) => {
   const localPath = await assertAllowedLocalPath({
     localPath: String(file.url ?? ""),
     allowedLocalRoots,
   });
   const fileStat = await stat(localPath);
   if (!fileStat.isFile()) throw new Error("artifact_local_path_not_file");
+  await accessImpl(localPath, constants.R_OK);
+  const body = createReadStream(localPath);
+  body.on("error", () => {});
   return {
-    body: createReadStream(localPath),
+    body,
     mimeType: guessMimeType(file),
   };
 };
@@ -199,6 +202,7 @@ export const importHermesFileToArtifact = async ({
   artifactBaseUrl,
   artifactInternalKey,
   allowedLocalRoots = [],
+  accessImpl = access,
   fetchImpl = fetch,
   accessLinkTtlSeconds = DEFAULT_ACCESS_LINK_TTL_SECONDS,
 }) => {
@@ -206,7 +210,7 @@ export const importHermesFileToArtifact = async ({
   const fileName = guessFileName(file);
   const source = isHttpUrl(file.url)
     ? await resolveRemoteArtifactSource({ file, fetchImpl })
-    : await resolveLocalArtifactSource({ file, allowedLocalRoots });
+    : await resolveLocalArtifactSource({ file, allowedLocalRoots, accessImpl });
 
   const artifact = await uploadToArtifactServer({
     artifactBaseUrl,
@@ -248,6 +252,7 @@ export const importHermesFilesToArtifacts = async ({
   artifactBaseUrl,
   artifactInternalKey,
   allowedLocalRoots = [],
+  accessImpl = access,
   fetchImpl = fetch,
   accessLinkTtlSeconds = DEFAULT_ACCESS_LINK_TTL_SECONDS,
   logger = console,
@@ -266,6 +271,7 @@ export const importHermesFilesToArtifacts = async ({
         artifactBaseUrl,
         artifactInternalKey,
         allowedLocalRoots,
+        accessImpl,
         fetchImpl,
         accessLinkTtlSeconds,
       });
