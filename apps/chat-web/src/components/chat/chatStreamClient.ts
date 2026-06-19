@@ -102,6 +102,18 @@ const parseRunId = async (response: Response) => {
   return runId;
 };
 
+type RunSnapshotEvent = {
+  event?: unknown;
+  data?: unknown;
+};
+
+const serializeSnapshotEvent = (event: RunSnapshotEvent) => {
+  const eventType = typeof event.event === "string" ? event.event.trim() : "";
+  if (!eventType) return "";
+  const data = typeof event.data === "string" ? event.data : JSON.stringify(event.data ?? {});
+  return `event: ${eventType}\ndata: ${data}`;
+};
+
 export const sendMessageToChatbotStream = async ({
   payload,
   getAccessToken,
@@ -325,6 +337,52 @@ export const sendMessageToChatbotStream = async ({
     throw new Error("Sessão expirada. Faça login novamente.");
   };
 
+  const reconcileSnapshot = async () => {
+    const snapshotResponse = await requestRunSnapshot({
+      token: accessToken,
+      runId,
+      resolveChatbotProxyBaseUrl,
+    }).catch(() => null);
+
+    if (snapshotResponse?.status === 401 || snapshotResponse?.status === 403) {
+      await refreshOrThrow();
+      return true;
+    }
+
+    if (!snapshotResponse?.ok) return false;
+
+    const snapshot = await snapshotResponse.json().catch(() => null) as {
+      run?: { status?: string; events?: RunSnapshotEvent[] };
+    } | null;
+    const events = Array.isArray(snapshot?.run?.events) ? snapshot.run.events : [];
+
+    while (cursor < events.length) {
+      const chunk = serializeSnapshotEvent(events[cursor]);
+      cursor += 1;
+      if (!chunk) continue;
+      processChunk(chunk);
+      if (streamError) throw new Error(streamError);
+      if (completed) return true;
+    }
+
+    const status = snapshot?.run?.status;
+    if (status === "completed") {
+      completed = true;
+      return true;
+    }
+    if (
+      status === "failed" ||
+      status === "cancelled" ||
+      status === "canceled" ||
+      status === "expired" ||
+      status === "interrupted"
+    ) {
+      throw new Error("Hermes encerrou a execução antes de entregar uma resposta.");
+    }
+
+    return false;
+  };
+
   while (!completed) {
     let eventsResponse: Response;
     try {
@@ -335,6 +393,7 @@ export const sendMessageToChatbotStream = async ({
         resolveChatbotProxyBaseUrl,
       });
     } catch {
+      if (await reconcileSnapshot()) continue;
       await wait(900);
       continue;
     }
@@ -398,41 +457,7 @@ export const sendMessageToChatbotStream = async ({
 
     if (!completed) {
       buffer = "";
-      const snapshotResponse = await requestRunSnapshot({
-        token: accessToken,
-        runId,
-        resolveChatbotProxyBaseUrl,
-      }).catch(() => null);
-
-      if (snapshotResponse?.status === 401 || snapshotResponse?.status === 403) {
-        await refreshOrThrow();
-        continue;
-      }
-
-      if (snapshotResponse?.ok) {
-        const snapshot = await snapshotResponse.json().catch(() => null) as {
-          run?: { status?: string; events?: unknown[] };
-        } | null;
-        const status = snapshot?.run?.status;
-        const eventCount = Array.isArray(snapshot?.run?.events) ? snapshot.run.events.length : cursor;
-        if (eventCount > cursor) {
-          await wait(250);
-          continue;
-        }
-        if (status === "completed") {
-          completed = true;
-          break;
-        }
-        if (
-          status === "failed" ||
-          status === "cancelled" ||
-          status === "canceled" ||
-          status === "expired" ||
-          status === "interrupted"
-        ) {
-          throw new Error("Hermes encerrou a execução antes de entregar uma resposta.");
-        }
-      }
+      if (await reconcileSnapshot()) continue;
 
       await wait(900);
     }
