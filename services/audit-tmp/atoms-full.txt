@@ -1,0 +1,1381 @@
+
+############################################
+### ATOM: build-test
+############################################
+--- SKILL.md (full) ---
+---
+name: build-test
+description: Run the project's build / typecheck / lint / test commands and emit the build.passing + tests.passing signals devloop convergence reads.
+od:
+  scenario: code-migration
+  mode: critique
+---
+
+# Build test
+
+Spec §20.2 / §22.4: the "subjective `critique-theater` panel" is
+not enough on its own — a code-migration / tune-collab run must
+prove the build still passes. This atom shells out to the
+project's declared test commands and emits structured signals the
+devloop's `until` evaluator reads.
+
+## Inputs
+
+- The active target stack (recorded in `code/index.json` +
+  `plan.md`'s targetStack block).
+- The user's optional override (`od plugin run --input
+  testCommand='pnpm test'`).
+
+## Default commands by framework
+
+| framework | typecheck | test |
+| --- | --- | --- |
+| next | `pnpm typecheck` | `pnpm test` |
+| vite | `pnpm typecheck` | `pnpm test` |
+| remix | `pnpm typecheck` | `pnpm test` |
+| custom | (read from `package.json.scripts`) | (read from `package.json.scripts`) |
+
+## Output
+
+```text
+project-cwd/
+└── critique/
+    ├── build-test.json   # { build: 'passing' | 'failing', tests: 'passing' | 'failing' | 'skipped', durationMs, commandsRun: [...], failures: [...] }
+    └── build-test.log    # raw stdout / stderr (truncated to OD_BUILD_TEST_LOG_BUDGET_BYTES, default 1 MiB)
+```
+
+The atom emits **two** signals the devloop reads:
+
+- `build.passing: boolean` — the typecheck command exited 0.
+- `tests.passing: boolean` — the test command exited 0.
+
+Plus the legacy `critique.score` so existing pipelines that read
+the score keep working: 5 when both pass, 3 when only build
+passes, 1 when both fail.
+
+## Convergence
+
+Pipelines wire the atom into a devloop:
+
+```jsonc
+{
+  "id": "verify",
+  "atoms": ["patch-edit", "build-test"],
+  "repeat": true,
+  "until": "(build.passing && tests.passing) || iterations >= 8"
+}
+```
+
+## Anti-patterns the prompt fragment forbids
+
+- Running tests on a partially-edited working tree (the atom
+  always runs after `patch-edit`, and only when `plan.steps`'s
+  current step is in `completed` state).
+- Suppressing test failures by changing test files; that violates
+  the rewrite-plan ownership rule.
+- Setting `tests: 'skipped'` without a non-empty `reason` field.
+
+## Status
+
+Reserved id, prompt-only fragment in v1. The shell-out wrapper +
+log-truncation worker land in spec §16 Phase 7.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "build-test",
+  "title": "Build test",
+  "version": "0.1.0",
+  "description": "Run the project's build / typecheck / lint / test commands and emit build.passing + tests.passing signals.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/build-test",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "tune-collab",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "critique",
+    "capabilities": [
+      "prompt:inject",
+      "subprocess",
+      "fs:read"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: code-import
+############################################
+--- SKILL.md (full) ---
+---
+name: code-import
+description: Read an existing repository's structure into the project cwd as a normalised snapshot the agent can analyse without re-walking the tree on every turn.
+od:
+  scenario: code-migration
+  mode: import
+---
+
+# Code import
+
+Spec §10 / §21.3.2: a code-migration / tune-collab run starts from a
+real repo (cloned via `od project import` or a path the user
+provided). This atom turns the raw checkout into a normalised
+on-disk record that subsequent atoms (`design-extract`,
+`rewrite-plan`, `patch-edit`) operate against. The point is to
+**stop re-walking the tree on every turn** — the agent reads
+`code/index.json` once and trusts the snapshot until the next
+explicit re-import.
+
+## Inputs
+
+| Source | Required | Notes |
+| --- | --- | --- |
+| `repoPath` | yes | Absolute path to the repo's root, supplied via `od project import` or an upstream `od.context.assets[]` reference |
+| `targetStack` | yes | { framework, packageManager, styleSystem, componentLibrary } via the matching `form` GenUI surface |
+
+## Output
+
+```text
+project-cwd/
+└── code/
+    ├── index.json         # { files: { path, size, language, imports[] }[], packageJson?, lockfileKind, framework, styleSystem }
+    ├── components.json    # detected components with file path + props snapshot
+    ├── routes.json        # detected routing model (next/app, react-router, vite-router, …)
+    └── meta.json          # { repoPath, gitSha, walkedAt, atomDigest, walkBudgetMs }
+```
+
+`code/index.json` is the input every other Phase 7 atom reads. The
+walk respects a budget (`OD_CODE_IMPORT_BUDGET_MS`, default 60s) so
+large monorepos don't burn an entire run on import.
+
+## Convergence
+
+The atom completes when `code/index.json` exists and contains at
+least one entry. Empty repos abort with a clear error event so the
+user re-imports.
+
+## Anti-patterns the prompt fragment forbids
+
+- Walking node_modules / .git / .next / dist / build (record in
+  `code/index.json.skipped[]` with reason).
+- Inferring a framework from a single file; require at least
+  `package.json`'s declared dep + a build-config presence
+  (`next.config.*`, `vite.config.*`, etc.).
+- Treating commented-out imports as live edges.
+
+## Status
+
+Reserved id, prompt-only fragment in v1. The walker + framework
+detector land in spec §16 Phase 7.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "code-import",
+  "title": "Code import",
+  "version": "0.1.0",
+  "description": "Read an existing repository's structure into the project cwd as a normalised snapshot.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/code-import",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "import",
+    "capabilities": [
+      "prompt:inject",
+      "fs:read"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: critique-theater
+############################################
+--- SKILL.md (full) ---
+---
+name: critique-theater
+description: 5-dimension critique panel; emits the critique.score signal that drives devloop convergence.
+od:
+  scenario: general
+  mode: critique
+---
+
+# Critique theater
+
+The atom that keeps the devloop honest. After each generation pass,
+the agent self-critiques along five dimensions (clarity, hierarchy,
+typography, motion, brand consistency — the panel is configurable per
+plugin) and emits a `critique.score` signal in the 0-5 range. The
+score is the variable a stage's `until` expression can read:
+
+```jsonc
+{
+  "id": "critique",
+  "atoms": ["critique-theater"],
+  "repeat": true,
+  "until": "critique.score >= 4 || iterations >= 3"
+}
+```
+
+## Output shape
+
+The agent writes the critique panel to `critique.json` in the project
+cwd plus a structured event the daemon's pipeline runner reads:
+
+```jsonc
+{
+  "kind": "critique-panel",
+  "score": 4,
+  "axes": {
+    "clarity":      { "score": 4, "notes": "..." },
+    "hierarchy":    { "score": 4, "notes": "..." },
+    "typography":   { "score": 5, "notes": "..." },
+    "motion":       { "score": 3, "notes": "needs easing pass" },
+    "brand":        { "score": 4, "notes": "..." }
+  }
+}
+```
+
+## Convergence + escape hatches
+
+- Critique converges at `score >= 4` per default `until`.
+- Iteration cap (`OD_MAX_DEVLOOP_ITERATIONS`, default 10) always wins
+  even when the score never reaches 4.
+- The user can break out via `od ui respond` with action `break-loop`
+  or the desktop "Stop refining" button.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "critique-theater",
+  "title": "Critique theater",
+  "version": "0.1.0",
+  "description": "5-dimension critique panel; emits the critique.score signal that drives devloop convergence.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/critique-theater",
+  "tags": [
+    "atom",
+    "first-party",
+    "critique"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "general",
+    "mode": "critique",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: design-extract
+############################################
+--- SKILL.md (full) ---
+---
+name: design-extract
+description: Extract design tokens (color / typography / spacing) from imported source code, screenshots, or Figma exports into the canonical token bag token-map consumes.
+od:
+  scenario: code-migration
+  mode: extract
+---
+
+# Design extract
+
+Spec §10 / §21.3.2: tokens scattered across a repo's CSS / theme
+files / Tailwind config / styled-components helpers / SCSS partials
+need to be lifted into one bag before `token-map` can crosswalk
+them onto the active OD design system. This atom does the lifting;
+the input shape is intentionally generic so the same atom serves
+both code-migration and figma-migration when fed different sources.
+
+## Inputs
+
+- `code/index.json` from `code-import` (code-migration), OR
+- `figma/tree.json` from `figma-extract` (figma-migration), OR
+- A folder of screenshot images (tune-collab quick-tune flows).
+
+## Output
+
+```text
+project-cwd/
+└── code/
+    └── tokens.json     # { colors[], typography[], spacing[], radius[], shadow[] }
+```
+
+Each token entry carries:
+
+```jsonc
+{
+  "kind":     "color",
+  "name":     "primary-500",     // optional source name
+  "value":    "#5b8def",          // canonical value
+  "sources": ["styles/global.css:42", "tailwind.config.js:24"],
+  "usage":   ["Header.tsx", "Footer.tsx"]
+}
+```
+
+`sources[]` and `usage[]` are the audit trail `token-map.unmatched.json`
+references when a target token can't be found.
+
+## Convergence
+
+The atom completes when `code/tokens.json` exists. Empty token bags
+emit a warning event but do not abort — `token-map` handles the
+empty case by skipping its mapping pass.
+
+## Anti-patterns the prompt fragment forbids
+
+- Hard-coded hex values inside JSX literals (`color: '#fff'`) are
+  tokens for this atom's purposes; record them with `kind:'color'`
+  and a synthetic name so they don't disappear into the noise.
+- Tailwind utility scans must dedupe palette references against the
+  active theme — never list `bg-blue-500` and `bg-blue-600` as one
+  token.
+
+## Status
+
+Reserved id, prompt-only fragment in v1.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "design-extract",
+  "title": "Design extract",
+  "version": "0.1.0",
+  "description": "Extract design tokens from source code / Figma / screenshots into the canonical token bag.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/design-extract",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "figma-migration",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "extract",
+    "capabilities": [
+      "prompt:inject",
+      "fs:read"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: diff-review
+############################################
+--- SKILL.md (full) ---
+---
+name: diff-review
+description: Render the patch-edit run's accumulated changes as a reviewable diff, surface it through a GenUI choice surface, and persist the user's accept / reject decision into the artifact manifest.
+od:
+  scenario: code-migration
+  mode: review
+---
+
+# Diff review
+
+Spec §20.3 / §21.3.2: a code-migration / tune-collab handoff is
+worthless without a human-reviewable diff. This atom is the
+"present the patch, capture the decision" stage.
+
+## Inputs
+
+- The project cwd's accumulated edits since the run started (or
+  since the previous diff-review iteration).
+- `plan/steps.json` for context per file.
+
+## Output
+
+```text
+project-cwd/
+└── review/
+    ├── diff.patch        # unified diff (git apply-shaped)
+    ├── summary.md        # human-friendly per-file walkthrough
+    ├── decision.json     # { decision: 'accept' | 'reject' | 'partial', accepted_files: [...], rejected_files: [...], reviewer: 'user' | 'agent' }
+    └── meta.json         # { generatedAt, atomDigest, planRevision }
+```
+
+The atom raises a `choice` GenUI surface with the three top-level
+decisions (`accept` / `reject` / `partial`). On `partial` the user
+flips per-file decisions through follow-up surfaces.
+
+## Convergence
+
+The atom completes when `decision.json` has a non-empty `decision`.
+Acceptance writes `handoffKind: 'patch'` (or `'deployable-app'`
+when a successful build-test is on file) into the eventual
+artifact manifest; rejection rolls back the patch via `git restore`
+or the equivalent in the `code-import`-bound repo path.
+
+## Anti-patterns the prompt fragment forbids
+
+- Skipping the surface and assuming acceptance.
+- Generating a `decision.json` that lacks `accepted_files` /
+  `rejected_files` on `partial` decisions.
+- Rolling back files outside `plan/steps.json`'s union of
+  `files[]` — the patch boundary is a contract.
+
+## Status
+
+Reserved id, prompt-only fragment in v1.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "diff-review",
+  "title": "Diff review",
+  "version": "0.1.0",
+  "description": "Surface the accumulated patch as a reviewable diff and persist the accept / reject decision.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/diff-review",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "tune-collab",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "review",
+    "capabilities": [
+      "prompt:inject",
+      "fs:read",
+      "fs:write"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: direction-picker
+############################################
+--- SKILL.md (full) ---
+---
+name: direction-picker
+description: 3-5 direction picker that lets the user choose before final generation.
+od:
+  scenario: general
+  mode: planning
+---
+
+# Direction picker
+
+Generative work benefits from explicit divergence before it converges.
+The direction-picker atom asks the agent to draft 3-5 distinct
+directions (visual / structural / tonal) and surface them via a
+GenUI `choice` surface so the user picks the winning direction before
+the expensive generation pass.
+
+## Convergence
+
+The atom completes when the user resolves the `choice` surface with a
+direction id. The agent's next turn must lock onto that direction —
+backtracking forces a fresh devloop iteration of the picker stage.
+
+## Anti-patterns the prompt fragment forbids
+
+- More than 5 directions on one turn (decision fatigue).
+- Two directions that are minor variations of each other.
+- Locking the user into a single direction with cosmetic alternates
+  (every direction must be a defensible standalone bet).
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "direction-picker",
+  "title": "Direction picker",
+  "version": "0.1.0",
+  "description": "3-5 direction picker that lets the user choose before final generation.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/direction-picker",
+  "tags": [
+    "atom",
+    "first-party",
+    "planning"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "general",
+    "mode": "planning",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: discovery-question-form
+############################################
+--- SKILL.md (full) ---
+---
+name: discovery-question-form
+description: Turn-1 discovery question form for ambiguous briefs.
+od:
+  scenario: general
+  mode: discovery
+---
+
+# Discovery question form
+
+When the user's brief is ambiguous, the agent's first turn must surface
+the smallest possible set of clarifying questions that unblock the rest
+of the workflow. The questions are rendered as a structured form
+(GenUI surface kind: `form`, persist tier: `conversation` so a follow-
+up turn doesn't re-ask).
+
+## When to fire
+
+- Brief is missing audience, target medium, or core intent.
+- Brief explicitly invites questions ("ask me anything if unclear").
+- The discovery skill or pipeline declares a `discovery` stage.
+
+## Emission shape
+
+Emit the form as a `question-form` block whose body is a JSON object with a
+top-level `questions` array. Do not emit a bare question object by itself; the
+renderer only recognizes the wrapped form contract.
+
+```html
+<question-form id="discovery" title="Quick brief — 30 seconds">
+{
+  "description": "I'll lock these in before building. Skip what doesn't apply — I'll fill defaults.",
+  "questions": [
+    {
+      "id": "audience",
+      "label": "Who's the primary audience?",
+      "type": "checkbox",
+      "options": ["VC", "Customer", "Internal team"],
+      "maxSelections": 2,
+      "required": true
+    }
+  ]
+}
+</question-form>
+```
+
+## Question object shape
+
+Each entry in the top-level `questions` array uses:
+
+- `id`: stable answer key, for example `audience`.
+- `label`: user-facing question copy.
+- `type`: one of `radio`, `checkbox`, `select`, `text`, or `textarea`.
+- `options`: required for choice controls; strings are allowed, or objects with
+  localized `label` and stable `value`.
+- `maxSelections`: include this for checkbox controls with a limited selection
+  count.
+- `required`: set to `true` only when the answer is needed before work can
+  continue.
+
+## Convergence
+
+The discovery atom completes when every required question has an answer
+in `genui_surfaces` for the current conversation. The agent should not
+loop back to discovery after that — the same surface id renders cached
+on the next turn.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "discovery-question-form",
+  "title": "Discovery question form",
+  "version": "0.1.0",
+  "description": "Turn-1 discovery question form for ambiguous briefs.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/discovery-question-form",
+  "tags": [
+    "atom",
+    "first-party",
+    "discovery"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "general",
+    "mode": "discovery",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: figma-extract
+############################################
+--- SKILL.md (full) ---
+---
+name: figma-extract
+description: Pull a Figma file's node tree, design tokens, and embedded assets into the project cwd as a structured snapshot.
+od:
+  scenario: figma-migration
+  mode: extract
+---
+
+# Figma extract
+
+Spec §10 / §21.3.1: the figma-migration scenario starts with a Figma
+file URL + an OAuth token. This atom turns that pair into the
+authoritative on-disk record subsequent stages (`token-map`,
+`generate`, `critique`) operate on.
+
+## Inputs
+
+| Source | Required | Notes |
+| --- | --- | --- |
+| Figma file URL or `node-id` | yes | Provide via the `figma-oauth` GenUI surface or `od plugin apply --input fileUrl=…` |
+| Figma OAuth token | yes | Routed through `oauth-prompt` with `oauth.route='connector'` and `connectorId='figma'`; the daemon never stores the token in SQLite |
+
+## Output
+
+The atom writes a deterministic, JSON-shaped extract under the
+project cwd:
+
+```text
+project-cwd/
+├── figma/
+│   ├── tree.json        # canonical node tree (id / type / parent / children / box / fills / text)
+│   ├── tokens.json      # color + typography + spacing tokens lifted off the file
+│   ├── assets/          # rasterised exports of every leaf node that the file marks for export
+│   │   └── <node-id>.<png|svg|webp>
+│   └── meta.json        # { fileUrl, version, lastModified, exportedAt, atomDigest }
+```
+
+`figma/tree.json` is the canonical pivot for every downstream atom.
+`figma/tokens.json` is the input to `token-map`. `assets/` is the
+input to `generate`'s media stage.
+
+## Convergence
+
+The atom completes when `figma/tree.json` exists and is non-empty.
+The `until` evaluator reads `figma.tree.nodes >= 1`; if the figma
+file is empty or the OAuth token expired, the atom emits a clear
+error event and the run aborts (the user fixes auth or picks a
+different file).
+
+## Anti-patterns the prompt fragment forbids
+
+- Synthesising a tree from screenshots when the OAuth path failed —
+  always re-prompt the user; never make up node ids.
+- Dropping unsupported node types silently; record them in
+  `meta.json.unsupportedNodes[]` so the human can audit gaps.
+- Treating component instances as duplicates; record `componentRef`
+  links so `token-map` can de-duplicate at the right boundary.
+
+## Status
+
+Reserved id, prompt-only fragment in v1. The Figma REST + node-walk
+implementation lands in spec §16 Phase 6; until then plugins that
+declare this atom rely on their bundled MCP server (typically the
+community `@community/figma-mcp`) for the actual fetch.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "figma-extract",
+  "title": "Figma extract",
+  "version": "0.1.0",
+  "description": "Pull a Figma file's node tree, design tokens, and embedded assets into the project cwd as a structured snapshot.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/figma-extract",
+  "tags": [
+    "atom",
+    "first-party",
+    "figma-migration",
+    "phase-6"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "taskKind": "figma-migration",
+    "scenario": "figma-migration",
+    "mode": "extract",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: handoff
+############################################
+--- SKILL.md (full) ---
+---
+name: handoff
+description: Push the run's accepted artifact to a downstream collaboration surface (cli, other code agents, cloud, desktop) and stamp the artifact manifest with the export target.
+od:
+  scenario: tune-collab
+  mode: handoff
+---
+
+# Handoff
+
+Spec §11.5.1 / §21.5: an OD run isn't done when the artifact
+exists — it's done when the artifact reaches the surface the user
+will keep iterating on. This atom is the "push it somewhere"
+stage. It's the natural counterpart to `diff-review`.
+
+## Inputs
+
+- The accepted artifact set (after `diff-review` resolved with
+  `decision: 'accept' | 'partial'`).
+- The export target (one of the `surface` enum values from
+  `ArtifactManifest.exportTargets[].surface`).
+
+## Surfaces
+
+| surface | typical follow-on |
+| --- | --- |
+| `cli` | the user runs `od files read` against the project; no extra push |
+| `desktop` | open the project in the OD desktop app |
+| `web` | publish to the public marketplace via spec §13's `od://` deep link |
+| `docker` | wrap the artifact into a self-contained container (calls the §15.4 image) |
+| `github` | open a PR via `od plugin publish --to <catalog>` |
+| `figma` | round-trip back into the figma-migration source file |
+| `code-agent` | hand off to Cursor / Claude Code / Codex sitting on top of the project cwd |
+
+## Output
+
+Updates `ArtifactManifest.exportTargets[]` with a row per push,
+appending — never replacing — so the artifact's distribution
+history stays append-only.
+
+## Convergence
+
+The atom completes when at least one `exportTargets[]` entry
+matches the user's intent or the user explicitly skipped via the
+`confirmation` GenUI surface.
+
+## Anti-patterns the prompt fragment forbids
+
+- Pushing the artifact to a surface that wasn't on the user's
+  intent list.
+- Mutating `sourcePluginSnapshotId` (it's immutable; the export
+  trail is additive).
+- Treating `figma` as a no-op when the user's source was a Figma
+  file — round-trip is the whole point of the figma-migration
+  scenario.
+
+## Status
+
+Reserved id, prompt-only fragment in v1.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "handoff",
+  "title": "Handoff",
+  "version": "0.1.0",
+  "description": "Push the run's accepted artifact to a downstream collaboration surface (cli, other code agents, cloud, desktop, github, figma) and stamp the artifact manifest with the export target.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/handoff",
+  "tags": [
+    "atom",
+    "first-party",
+    "tune-collab",
+    "phase-7",
+    "phase-8"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "tune-collab",
+    "mode": "handoff",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: patch-edit
+############################################
+--- SKILL.md (full) ---
+---
+name: patch-edit
+description: Apply one rewrite-plan step at a time as small reviewable file edits, never rewriting whole files when a localised change suffices.
+od:
+  scenario: code-migration
+  mode: edit
+---
+
+# Patch edit
+
+Spec §20.3 / §21.3.2: code-migration / tune-collab cannot ship a
+trustworthy diff when the agent rewrites whole files in one pass —
+the reviewer can't audit the change. This atom enforces "one step
+per turn, smallest possible localised edit".
+
+## Inputs
+
+- `plan/steps.json` from `rewrite-plan`.
+- The current value of `iterations` (the daemon's per-stage counter).
+- `code/index.json` for the file's known imports + neighbours.
+
+## Output
+
+The atom mutates files inside the project cwd via the `file-edit` tool.
+After every iteration, it writes a per-step receipt:
+
+```text
+project-cwd/
+└── plan/
+    ├── steps.json (status updated: 'pending' → 'completed' | 'skipped')
+    └── receipts/
+        └── step-<id>.json    # { files: ['...'], diffSummary, rationale, completedAt }
+```
+
+## Convergence
+
+The atom completes when every step in `plan/steps.json` is in a
+terminal state (`completed` / `skipped`) OR `iterations >=
+OD_MAX_DEVLOOP_ITERATIONS`. Use:
+
+```jsonc
+{
+  "id": "patch-edit-loop",
+  "atoms": ["patch-edit"],
+  "repeat": true,
+  "until": "plan.steps.terminal === plan.steps.total || iterations >= 8"
+}
+```
+
+## Anti-patterns the prompt fragment forbids
+
+- Rewriting an entire file when the rewrite-plan step is localised.
+- Touching a file outside the step's `files[]`.
+- Touching a `shell`-tier file when the step's `risk` is not
+  `'high'` or the user hasn't confirmed.
+- Skipping a step without a receipt + a rationale string.
+
+## Status
+
+Reserved id, prompt-only fragment in v1.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "patch-edit",
+  "title": "Patch edit",
+  "version": "0.1.0",
+  "description": "Apply one rewrite-plan step at a time as small reviewable file edits.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/patch-edit",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "tune-collab",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "edit",
+    "capabilities": [
+      "prompt:inject",
+      "fs:read",
+      "fs:write"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: rewrite-plan
+############################################
+--- SKILL.md (full) ---
+---
+name: rewrite-plan
+description: Author a long-running multi-file rewrite plan that subsequent patch-edit + diff-review + build-test stages will execute, with explicit ownership boundaries and patch-safety guarantees.
+od:
+  scenario: code-migration
+  mode: planning
+---
+
+# Rewrite plan
+
+Spec §20.3 / §21.3.2: scenario 4 (design → deliverable production
+code) requires a contract-shaped rewrite plan before the agent
+starts editing files. The plan is **the audit trail** every
+subsequent stage references; without it the patch path slides into
+"refactor everything that looks wrong" and the build breaks in
+unreviewable ways.
+
+## Inputs
+
+- `code/index.json` from `code-import`.
+- `token-map/*.json` from `token-map`.
+- The active design system DESIGN.md (already in prompt).
+- The user's tune intent (typically a short brief).
+
+## Output
+
+```text
+project-cwd/
+└── plan/
+    ├── plan.md           # human-readable narrative
+    ├── ownership.json    # { file: '...', layer: 'leaf' | 'shared' | 'route' | 'shell' }
+    ├── steps.json        # ordered { id, files[], rationale, risk: 'low' | 'medium' | 'high' }[]
+    └── meta.json         # { generatedAt, atomDigest, tokenMapDigest }
+```
+
+`steps.json` is the input `patch-edit` reads one entry per
+iteration. `ownership.json` is the source of truth for "which
+files belong to a single component vs. shared infrastructure";
+`patch-edit` refuses to touch a `shell`-tier file unless the
+matching step has `risk: 'high'` and the user explicitly confirmed.
+
+## Convergence
+
+The atom completes when `plan.md` is non-empty AND `steps.json`
+contains at least one step.
+
+## Anti-patterns the prompt fragment forbids
+
+- Plans that include "rewrite the whole component library" as a
+  single step. Break into per-component steps.
+- Plans that don't classify ownership.
+- Plans that don't list a `build-test` step at the end.
+
+## Status
+
+Reserved id, prompt-only fragment in v1. The component-mapping
+heuristic + ownership classifier land in spec §16 Phase 7.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "rewrite-plan",
+  "title": "Rewrite plan",
+  "version": "0.1.0",
+  "description": "Long-running multi-file rewrite plan with ownership boundaries and patch-safety guarantees.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/rewrite-plan",
+  "tags": [
+    "atom",
+    "first-party",
+    "code-migration",
+    "tune-collab",
+    "phase-7"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "code-migration",
+    "mode": "planning",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: todo-write
+############################################
+--- SKILL.md (full) ---
+---
+name: todo-write
+description: TodoWrite-driven plan that the agent commits to before generation.
+od:
+  scenario: general
+  mode: planning
+---
+
+# Todo write
+
+Before writing any artifact files, the agent commits to a numbered plan
+via the TodoWrite tool. The plan is the audit trail; subsequent turns
+either tick items off or rewrite the plan. The atom's prompt fragment
+teaches the agent to:
+
+1. Keep todos atomic (one verb per todo).
+2. Reorder freely as the picture sharpens.
+3. Mark a todo complete only after the matching artifact lands.
+4. Surface blockers as todos — never silently skip.
+
+The Open Design daemon does not enforce a particular tool name; the
+agent is free to use TodoWrite (Claude Code) or an in-prompt list.
+The atom's job is to keep "make a plan first" in the system prompt so
+non-trivial workflows don't skip the planning step.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "todo-write",
+  "title": "Todo write",
+  "version": "0.1.0",
+  "description": "TodoWrite-driven plan that the agent commits to before generation.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/todo-write",
+  "tags": [
+    "atom",
+    "first-party",
+    "planning"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "general",
+    "mode": "planning",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+
+
+############################################
+### ATOM: token-map
+############################################
+--- SKILL.md (full) ---
+---
+name: token-map
+description: Map an extracted Figma / source-code token bag onto the active OD design system, producing a deterministic mapping the generate stage can consume.
+od:
+  scenario: figma-migration
+  mode: token-map
+---
+
+# Token map
+
+Spec §10 / §21.3.1: every figma-migration / code-migration run
+crosses the same boundary — "the source has its own tokens; the
+target uses the active OD design system; we need a deterministic
+mapping". This atom produces that mapping.
+
+## Inputs
+
+- `figma/tokens.json` from `figma-extract` (figma-migration), OR
+- `code/tokens.json` from `design-extract` (code-migration).
+- The active design system DESIGN.md (already injected into the
+  prompt; the atom reads from the staged design-system context).
+
+## Output
+
+```text
+project-cwd/
+└── token-map/
+    ├── colors.json     # { source: '#hex' | 'tokenName', target: '--ds-token' }[]
+    ├── typography.json # font + size + weight pairings
+    ├── spacing.json    # spacing scale crosswalk
+    ├── unmatched.json  # { source: ..., reason: 'no-target-equivalent' }[]
+    └── meta.json       # { sourceKind: 'figma' | 'code', generatedAt, atomDigest }
+```
+
+`unmatched.json` is the audit list a human reviews; the agent must
+not invent target tokens silently.
+
+## Semantic token inference
+
+Figma often exports anonymous source names such as `color-3`,
+`paint/17`, or raw `#5B8DEF`. Do not ask the user to rename those
+before mapping. First infer the semantic role from usage evidence:
+
+- Node path, component name, instance overrides, variant/state labels,
+  frame name, layer name, and nearby text such as `Primary`,
+  `Selected`, `Link`, `Error`, `Focus`, `Nav`, `Button`, or `CTA`.
+- CSS-like position in the rendered tree: background fill, foreground
+  text/icon, border, divider, overlay, shadow tint, focus ring, status
+  badge, chart series, or brand/accent treatment.
+- Contrast relationships: a color paired repeatedly with the main
+  canvas is likely foreground; one paired with foreground inside CTA
+  components is likely primary/accent background; a thin outline around
+  interactive elements is likely border or focus-ring.
+- Reuse topology: a value that appears across primary buttons,
+  selected tabs, and active nav items is stronger evidence for
+  `--ds-color-primary` than a value that appears once in an illustration.
+
+Use that role evidence to choose among existing active design-system
+tokens and to decide whether an anonymous token should be renamed or
+left unmatched before the executable mapping pass. Keep the on-disk
+token-map contract unchanged: the atom still writes the existing bucket
+files, `unmatched.json`, and `meta.json` only.
+
+For example, this is a useful reasoning note for deciding whether
+`color-3` should map to the active primary token:
+
+```jsonc
+{
+  "source": "color-3",
+  "value": "#5B8DEF",
+  "role": "primary",
+  "targetCandidates": ["--ds-color-primary", "--ds-color-link"],
+  "evidence": [
+    "Button/Primary fill",
+    "Selected tab indicator",
+    "Link text in Settings frame"
+  ]
+}
+```
+
+Then map to an active design-system token only when the evidence is
+role-based, not value-only. If the top candidates are too close to
+call, or if the evidence points to conflicting roles (`primary` vs
+`link` vs `focus-ring`), leave the source token unmatched using the
+existing `no-target-equivalent` reason and include the competing
+candidates in the hint. This keeps automation useful for common
+anonymous-token cases while preserving human review for ambiguous
+brand decisions.
+
+### Before / after expectation
+
+Without semantic inference, an anonymous Figma token can only produce
+an uncertain value-level mapping:
+
+```jsonc
+{
+  "source": "color-3",
+  "value": "#5B8DEF",
+  "target": null,
+  "reason": "no-target-equivalent"
+}
+```
+
+With semantic inference, the same token should carry role evidence
+before it is accepted:
+
+```jsonc
+{
+  "source": "color-3",
+  "value": "#5B8DEF",
+  "target": "--ds-color-primary",
+  "via": "name"
+}
+```
+
+This prompt-only v1 atom does not claim a measured accuracy lift by
+itself. Treat the expected improvement as coverage of previously
+manual anonymous-token cases when the Figma tree contains enough role
+evidence. Real accuracy numbers require a fixture suite with known
+source tokens, expected semantic roles, and a before/after agent run.
+See `examples/semantic-inference-before-after.json` for a deterministic
+same-token-batch simulation that compares the old value-level output
+with the semantic inference output.
+
+## Convergence
+
+The atom completes when every input token is either mapped or
+explicitly recorded under `unmatched.json` with a non-empty
+`reason`. The `until` evaluator reads `tokens.unmatched.length === 0`
+on strict mode; default is "soft converge" (proceed with
+`unmatched.json` populated).
+
+## Anti-patterns the prompt fragment forbids
+
+- Injecting a new token into DESIGN.md without explicit user
+  approval (use a `confirmation` GenUI surface for that).
+- Mapping hex colours by visual proximity alone; perceptual ΔE
+  thresholds belong in the visual-diff evaluator (Phase 7).
+- Collapsing distinct source tokens onto the same target token
+  silently; record collisions in `unmatched.json` with reason
+  `target-collision`.
+
+## Status
+
+Reserved id, prompt-only fragment in v1. The deterministic mapping
+algorithm + DESIGN.md token-extraction helper land in spec §16
+Phase 6 alongside `figma-extract`.
+
+--- open-design.json ---
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "token-map",
+  "title": "Token map",
+  "version": "0.1.0",
+  "description": "Map an extracted source-token bag onto the active OD design system, producing a deterministic crosswalk.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design",
+    "url": "https://github.com/nexu-io"
+  },
+  "homepage": "https://github.com/nexu-io/open-design/tree/main/plugins/_official/atoms/token-map",
+  "tags": [
+    "atom",
+    "first-party",
+    "figma-migration",
+    "code-migration",
+    "phase-6"
+  ],
+  "compat": {
+    "agentSkills": [
+      {
+        "path": "./SKILL.md"
+      }
+    ]
+  },
+  "od": {
+    "kind": "atom",
+    "scenario": "figma-migration",
+    "mode": "token-map",
+    "capabilities": [
+      "prompt:inject"
+    ]
+  }
+}
+

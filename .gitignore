@@ -58,3 +58,13 @@ Thumbs.db
 
 # Keep vendored source tracked, but never nested git metadata.
 services/hermes-runtime/vendor/hermes-agent/.git/
+
+# Backup folders from skill replacement operations
+services/hermes-runtime/vendor/hermes-agent/skills/_backup-*/
+
+# Cloned reference repos (not for production)
+services/open-design/
+services/superpowers/
+
+# Taste-skill split backup (original monolithic SKILL.md kept as reference)
+services/hermes-runtime/vendor/hermes-agent/skills/**/SKILL.md.full-backup

@@ -1,0 +1,159 @@
+8-bit-orbit-video-template||
+AGENTS.md|
+README.md|
+ad-creative||
+after-hours-editorial-template||
+agent-browser||
+ai-music-album||
+algorithmic-art||
+apple-hig||
+article-magazine|Huashu / huashu-md-html-inspired magazine article layout for turning Markdown or notes into a polished long-form HTML essay.
+artifacts-builder||
+brainstorming||
+brand-extract||
+brand-guidelines||
+brandkit||
+brutalist-skill||
+canvas-design||
+card-twitter|Twitter quote or data card designed to pair with a post.
+card-xiaohongshu|Xiaohongshu-style knowledge cards, arranged as a swipeable multi-card carousel.
+color-expert||
+competitive-ads-extractor||
+copywriting||
+creative-director||
+d3-visualization||
+data-report|Turns CSV, Excel, or JSON data into a polished visual report page.
+deck-guizang-editorial|Editorial magazine meets e-ink: 10 layouts and 5 palettes (Ink, Indigo Porcelain, Forest Ink, Kraft Paper, Dune).
+deck-open-slide-canvas|Locked 1920x1080 canvas deck with React component-level free composition, not bound to a fixed template.
+deck-swiss-international|16-column grid, one saturated accent, and 22 locked layouts (Klein Blue, Lemon, Mint, Safety Orange).
+design-brief||
+design-consultation||
+design-md||
+design-review||
+digits-fintech-swiss-template||
+doc||
+doc-kami-parchment|Warm parchment canvas (#f5f4ed), monochrome ink-blue accent (#1B365D), one serif family, and editorial-grade typography.
+docx||
+domain-name-brainstormer||
+ecommerce-image-workflow||
+editorial-burgundy-principles-template||
+emilkowalski-motion||
+enhance-prompt||
+export-download-debugging||
+fal-3d||
+fal-generate||
+fal-image-edit||
+fal-kling-o3||
+fal-lip-sync||
+fal-realtime||
+fal-restore||
+fal-train||
+fal-tryon||
+fal-upscale||
+fal-video-edit||
+fal-vision||
+faq-page||
+field-notes-editorial-template||
+figma-code-connect-components||
+figma-create-design-system-rules||
+figma-create-new-file||
+figma-generate-design||
+figma-generate-library||
+figma-implement-design||
+figma-use||
+flutter-animating-apps||
+frame-data-chart-nyt|NYT-newsroom typography, staggered reveal animation, and editorial-grade charts (line, bar, or range band).
+frame-flowchart-sticky|SVG curve connectors, sticky-note nodes, and cursor interaction with a whiteboard-brainstorm feel.
+frame-glitch-title|Digital glitch, chromatic offset, and data-corruption title frame for video transitions or cyberpunk heroes.
+frame-light-leak-cinema|Film light leaks, grain, 16:9 letterbox, and large serif type for cinematic openings or chapter cards.
+frame-liquid-bg-hero|WebGL-style fluid displacement background with a quote overlay, suited to video intros, landing heroes, or posters.
+frame-logo-outro|Segmented logo assembly, glow bloom, and tagline reveal for video outros or brand closing frames.
+frame-macos-notification|Realistic macOS notification banner with app icon, title, and body, suited to video overlays or product teasers.
+frontend-design||
+frontend-dev||
+frontend-skill||
+frontend-slides||
+full-page-screenshot||
+gif-sticker-maker||
+gpt-tasteskill||
+gsap-core||
+gsap-frameworks||
+gsap-performance||
+gsap-plugins||
+gsap-react||
+gsap-scrolltrigger||
+gsap-timeline||
+gsap-utils||
+hand-drawn-diagrams||
+hatch-pet|Create, repair, validate, preview, and package Codex-compatible animated pet spritesheets from character art, screenshots, generated images, or visual references. Use when a user wants to hatch a Codex pet, create a custom animated pet, or build a built-in pet asset with an 8x9 atlas, transparent unused cells, row-by-row animation prompts, QA contact sheets, preview videos, and pet.json packaging. This skill composes the installed $imagegen system skill for visual generation and uses bundled scripts for deterministic spritesheet assembly.
+html-ppt-retro-quarterly-review||
+image-enhancer||
+image-to-code-skill||
+imagegen||
+imagegen-frontend-mobile||
+imagegen-frontend-web||
+imagen||
+impeccable-design-polish||
+library-curator||
+login-flow|Mobile login and authentication flow screens
+marketing-psychology||
+minimalist-skill||
+minimax-docx||
+minimax-pdf||
+mockup-device-3d|Static iPhone and MacBook 3D-style showcase with real HTML embedded on screens, glass-lens refraction, and 360-degree turntable composition.
+nanobanana-ppt||
+output-skill||
+paywall-upgrade-cro||
+pdf||
+pixelbin-media||
+plan-design-review||
+platform-design||
+poster-hero|Vertical poster or Moments-style share image with strong visual impact.
+ppt-keynote|Apple Keynote-quality slides, one card per screen, with keyboard left/right navigation.
+pptx||
+pptx-generator||
+pptx-html-fidelity-audit|Audit a python-pptx export against its source HTML deck, identify layout/content drift (footer overflow, cropped content, missing italic/em, lost styling, off-rhythm spacing), and re-export with strict footer-rail + cursor-flow layout discipline. Use this skill whenever the user has a .pptx that was generated from an HTML slide deck and asks to compare/audit/verify/fix the export — including phrases like compare ppt with html, fidelity audit, fix the pptx, ppt is cut off, footer overlap, italic missing in pptx, re-export the deck, pptx-html-fidelity-audit, or any case where a python-pptx → HTML round-trip needs verification or repair. Also trigger when the user shows you a deck.html and a deck.pptx side by side and is debugging visual differences.
+pr-feedback-quality-gate||
+redesign-skill||
+reference-design-contract||
+release-notes-one-pager||
+remotion||
+replicate||
+research-decision-room||
+resume-modern|Modern minimal resume, single A4 page, ready for print or PDF export.
+screenshot||
+screenshots-marketing||
+shadcn-ui||
+shader-dev||
+slack-gif-creator||
+slides||
+social-reddit-card|Realistic Reddit post card with vote rail and comment count, suited to video overlays or story sharing.
+social-spotify-card|Spotify Now Playing-style card with album art, progress bar, and playback controls, suited to video overlays or personal homepages.
+social-x-post-card|Realistic X post card with engagement metrics (likes, reposts, views), suited to video overlays or shareable image cards.
+soft-skill||
+sora||
+speech||
+stitch-loop||
+stitch-skill||
+swiftui-design||
+swiss-creative-mode-template||
+swiss-user-research-video-template||
+taste-skill||
+taste-skill-v1||
+theme-factory||
+threejs||
+ui-skills||
+ui-ux-pro-max||
+venice-audio-music||
+venice-audio-speech||
+venice-image-edit||
+venice-image-generate||
+venice-video||
+vfx-text-cursor|Cursor light trail, chromatic rays, and directional flares for word-by-word quote reveals in video intros.
+video-downloader||
+video-hyperframes|Hyperframes / Remotion-compatible continuous frame animation with autoplay support.
+web-artifacts-builder||
+web-design-guidelines||
+weread-year-in-review-video-template||
+wpds||
+youtube-clipper||

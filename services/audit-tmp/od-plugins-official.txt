@@ -1,0 +1,6 @@
+atoms
+design-systems
+examples
+image-templates
+scenarios
+video-templates
