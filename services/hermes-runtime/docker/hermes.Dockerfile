@@ -6,9 +6,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     HERMES_SOURCE_DIR=/opt/hermes-src \
-    NEXUS_GRAPH_BACKEND=local \
-    NEXUS_GRAPH_URL=redis://falkordb:6379 \
-    NEXUS_GRAPH_DB=nexus \
+    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant \
+    NEXUS_GRAPH_URL=bolt://neo4j:7687 \
+    NEXUS_DEFAULT_DB=nexus \
+    NEXUS_TENANT_ID=\
+    NEXUS_NEO4J_USER=neo4j \
+    NEXUS_NEO4J_PASSWORD=CHANGEME\
     NEXUS_GRAPH_JSON=/opt/data/graphify-out/graph.json
 
 # Base runtime/development dependencies expected by Hermes Desktop-like usage:

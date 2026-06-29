@@ -3,44 +3,51 @@ name: graphify
 description: "Use for any question about a codebase, its architecture, file relationships, or project content — especially when graphify-out/ exists, where the question should be treated as a graphify query first. Turns any input (code, docs, papers, images, videos) into a persistent knowledge graph with god nodes, community detection, and query/path/explain tools."
 ---
 
-## Backends (v3.6+)
+## Backends (v3.7+ Neo4j multi-tenant)
 
-Graphify suporta 3 backends via env var `NEXUS_GRAPH_BACKEND`:
+Padrao v3.7+: SOMENTE Neo4j (Neo4j (FalkorDB removido v3.7+) removido por decisao de projeto).
+3 modos via env var NEXUS_GRAPH_BACKEND:
 
-| Backend   | Quando usar                   | Setup                                                     |
-|-----------|-------------------------------|-----------------------------------------------------------|
-| `local`   | SOLO/DEV (default, sem config) | Nenhum setup. Usa `/opt/data/graphify-out/graph.json`     |
-| `falkordb`| Multi-tenant self-hosted       | Descomentar bloco `falkordb:` no docker-compose.yml       |
-| `neo4j`   | Heavy analytics (GPLv3)        | Descomentar bloco `neo4j:` no docker-compose.yml         |
+| Backend              | Quando usar                          | Setup                                            |
+|----------------------|--------------------------------------|--------------------------------------------------|
+| local                | DEV/SOLO, sem Neo4j                  | Requer copiar graph.json manualmente              |
+| neo4j-self-hosted    | 1 empresa, 1 DB compartilhada        | Container Neo4j descomentado, sem tenant_id    |
+| neo4j-multi-tenant   | White-label SaaS, 1 DB/tenant (DEFAULT)| NEXUS_TENANT_ID=<id> resolve automaticamente     |
 
-**Default:** `local` (zero mudanca no comportamento).
+DEFAULT: neo4j-multi-tenant (1 container Neo4j, multi-database por tenant).
 
-Para ativar FalkorDB:
+### Multi-tenant (white-label SaaS)
 
-```bash
-# .env
-NEXUS_GRAPH_BACKEND=falkordb
-NEXUS_FALKORDB_PASSWORD=*** docker-compose.yml: descomentar bloco falkordb (linhas 352+)
-docker compose --env-file .env -f docker-compose.yml build falkordb hermes-api
-docker compose --env-file .env -f docker-compose.yml up -d falkordb
-```
+Cada tenant_id tem database exclusiva. Backend resolve automaticamente:
+- tenant_id=acme -> USE DATABASE nexus_tenant_acme
+- tenant_id=globex -> USE DATABASE nexus_tenant_globex
+- tenant_id=None (admin) -> USE DATABASE neo4j
 
-Para ativar Neo4j (mesmo padrao, com NEXUS_GRAPH_BACKEND=neo4j).
+Provisioning de novo tenant:
 
-Validacao em ambos os casos:
+docker compose exec hermes-api python /opt/neo4j_admin.py create-tenant acme
+docker compose exec hermes-api python /opt/neo4j_admin.py list-tenants
+docker compose exec hermes-api python /opt/neo4j_admin.py stats acme
 
-```bash
+### Como ativar (3 cenarios)
+
+Cenario 1 - SOLO/DEV (sem Neo4j):
+  .env: NEXUS_GRAPH_BACKEND=local
+
+Cenario 2 - SINGLE-TENANT (1 empresa):
+  .env: NEXUS_GRAPH_BACKEND=neo4j-self-hosted
+  Container Neo4j descomentado (ja vem por padrao)
+
+Cenario 3 - MULTI-TENANT SAAS (white-label):
+  .env: NEXUS_GRAPH_BACKEND=neo4j-multi-tenant
+        NEXUS_TENANT_ID=<id-da-empresa>
+  Cada request traz tenant_id, backend usa database exclusiva.
+
+Validacao:
+
 docker compose exec hermes-api python /opt/graphify_backend.py --check
-# Esperado: [health] {status: ok, backend: falkordb|neo4j, ...}
-```
+# Esperado: [health] {status: ok, backend: neo4j-multi-tenant, tenant_id: ..., database: ...}
 
-Tutorial completo em `services/audit-tmp/GRAPHIFY-BACKEND-CENARIOS.md`.
-
-
-
-# /graphify
-
-Turn any folder of files into a navigable knowledge graph with community detection, an honest audit trail, and three outputs: interactive HTML, GraphRAG-ready JSON, and a plain-language GRAPH_REPORT.md.
 
 ## Usage
 
@@ -61,8 +68,8 @@ Turn any folder of files into a navigable knowledge graph with community detecti
 /graphify <path> --graphml                            # export graph.graphml (Gephi, yEd)
 /graphify <path> --neo4j                              # generate graphify-out/cypher.txt for Neo4j
 /graphify <path> --neo4j-push bolt://localhost:7687   # push directly to Neo4j
-/graphify <path> --falkordb                           # generate graphify-out/cypher.txt for FalkorDB
-/graphify <path> --falkordb-push falkordb://localhost:6379   # push directly to FalkorDB
+/graphify <path> --neo4j (use --falkordb=cypher export pra compat; deprecated)                           # generate graphify-out/cypher.txt for Neo4j (FalkorDB removido v3.7+)
+/graphify <path> --neo4j (use --falkordb=cypher export pra compat; deprecated)-push falkordb://localhost:6379   # push directly to Neo4j (FalkorDB removido v3.7+)
 /graphify <path> --mcp                                # start MCP stdio server for agent access
 /graphify <path> --watch                              # watch folder, auto-rebuild on code changes (no LLM needed)
 /graphify <path> --wiki                               # build agent-crawlable wiki (index.md + one article per community)
@@ -569,7 +576,7 @@ graphify export html  # auto-aggregates to community view if graph > 5000 nodes
 # or: graphify export html --no-viz
 ```
 
-### Steps 6b-8 - Wiki, Neo4j, FalkorDB, SVG, GraphML, MCP, benchmark (only on their flags)
+### Steps 6b-8 - Wiki, Neo4j, Neo4j (FalkorDB removido v3.7+), SVG, GraphML, MCP, benchmark (only on their flags)
 
 These run only when their flag is present (`--wiki`, `--neo4j`/`--neo4j-push`, `--falkordb`/`--falkordb-push`, `--svg`, `--graphml`, `--mcp`) or, for the token-reduction benchmark, when `total_words` exceeds 5,000. A default run with no export flags skips all of them. See `references/exports.md` for each one. Run any `--wiki` export before Step 9 cleanup so `.graphify_labels.json` is still available.
 

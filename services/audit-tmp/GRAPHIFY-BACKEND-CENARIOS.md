@@ -1,3 +1,9 @@
+
+================================================================
+DEPRECATED em v3.7+ (FalkorDB removido do projeto)
+Use NEO4J-MULTI-TENANT.md (padrao atual)
+================================================================
+
 # Graphify Backend — 3 Cenarios White-Label Nexus
 
 **Versao:** v3.6+ (atual)

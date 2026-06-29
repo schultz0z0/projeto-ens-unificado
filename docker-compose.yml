@@ -67,6 +67,8 @@ services:
     depends_on:
       rag-mcp:
         condition: service_healthy
+      neo4j:
+        condition: service_started
     networks:
       - ens-internal
 
@@ -99,6 +101,11 @@ services:
       SUPABASE_SIGNED_URL_EXPIRES_SECONDS: ${NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS:-604800}
       SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
+      NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant}
+      NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-}
+      NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
+      NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
+      NEXUS_NEO4J_PASSWORD: ${NEXUS_NEO4J_PASSWORD:-change-me}
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
       HERMES_ARTIFACTS_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
       HERMES_ARTIFACT_MAX_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}
@@ -349,13 +356,61 @@ services:
       - ens-internal
 
   # ============================================================================
-    # GRAPH BACKEND (optional): FalkorDB ou Neo4j pra Graphify
+    
+  # ============================================================================
+  # GRAPH BACKEND: Neo4j multi-tenant (white-label SaaS Nexus)
   # ----------------------------------------------------------------------------
-  # Services commented por padrao. Ver audit-tmp/GRAPHIFY-BACKEND-CENARIOS.md
-  # para templates copy-paste de falkordb/neo4j. Ativar com NEXUS_GRAPH_BACKEND.
-  # Default: graphify usa graph.json local (sem servidor externo).
+  # Padrao v3.7+: Neo4j Community 5.x com multi-database pra tenants.
+  #
+  # COMO FUNCIONA:
+  # - 1 instancia Neo4j roda como container
+  # - Cada tenant tem 1 database exclusiva: "nexus_tenant_<id>"
+  # - Quando NEXUS_TENANT_ID=acme esta setado, backend conecta em nexus_tenant_acme
+  # - Quando NEXUS_TENANT_ID=None, usa database "neo4j" (admin)
+  #
+  # CUSTOS (self-hosted, GPLv3 community):
+  # - Neo4j: $0 license + ~500MB RAM + ~100MB disco
+  # - Opcional para white-label SaaS (Enterprise so se clusterizar)
+  #
+  # PROVISIONING (criar tenant novo):
+  #   docker compose exec neo4j cypher-shell -u neo4j -p $NEXUS_NEO4J_PASSWORD \\
+  #     "CREATE DATABASE nexus_tenant_<id> WAIT"
+  #
+  # Ou usar o helper em python:
+  #   docker compose exec hermes-api python /opt/neo4j_admin.py create-tenant <id>
+  #
+  # Documentacao completa: services/audit-tmp/NEO4J-MULTI-TENANT.md
   # ============================================================================
 
+  neo4j:
+    image: neo4j:5-community
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEXUS_NEO4J_PASSWORD:-nexus-neo4j}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512m
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+      NEO4J_dbms_security_procedures_allowlist: "apoc.*"
+    volumes:
+      - ./data/neo4j/data:/data
+      - ./data/neo4j/logs:/logs
+    ports:
+      - "127.0.0.1:${NEXUS_NEO4J_HTTP_PORT:-7474}:7474"
+      - "127.0.0.1:${NEXUS_NEO4J_BOLT_PORT:-7687}:7687"
+    expose:
+      - "7474"
+      - "7687"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - ens-internal
 
 networks:
   ens-internal:
