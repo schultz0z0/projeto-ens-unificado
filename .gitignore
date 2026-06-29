@@ -68,3 +68,11 @@ services/superpowers/
 
 # Taste-skill split backup (original monolithic SKILL.md kept as reference)
 services/hermes-runtime/vendor/hermes-agent/skills/**/SKILL.md.full-backup
+
+# Backups operacionais de fases de desenvolvimento
+# (sao rollbacks de mudancas que ja foram commitadas; manter locais mas nao no repo)
+**/_backup-fase*/
+**/_backup-pre-*/
+**/_backup-*/
+**/_backup-pre-frontend*/
+**/_backup-pre-superpowers*/
