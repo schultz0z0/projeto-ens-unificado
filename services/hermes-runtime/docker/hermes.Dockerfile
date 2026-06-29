@@ -6,12 +6,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     HERMES_SOURCE_DIR=/opt/hermes-src \
-    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant \
+    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user \
     NEXUS_GRAPH_URL=bolt://neo4j:7687 \
     NEXUS_DEFAULT_DB=nexus \
     NEXUS_TENANT_ID=\
     NEXUS_NEO4J_USER=neo4j \
     NEXUS_NEO4J_PASSWORD=CHANGEME\
+    NEXUS_USER_ID=\n    NEXUS_MEMORY_DIR=/opt/data/memory
     NEXUS_GRAPH_JSON=/opt/data/graphify-out/graph.json
 
 # Base runtime/development dependencies expected by Hermes Desktop-like usage:
@@ -49,9 +50,12 @@ RUN /opt/hermes/.venv/bin/python3 -m ensurepip --upgrade && \
 
 # Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
 # Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
-# Install graphify wrapper (v3.6+: backend selector local/falkordb/neo4j)
+# Install graphify wrapper (v3.8+: Neo4j multi-tenant + multi-user)
 COPY vendor/hermes-agent/skills/code-graph/graphify/tools/graphify_backend.py /opt/graphify_backend.py
-RUN /opt/hermes/.venv/bin/python /opt/graphify_backend.py --check 2>&1 | tail -2
+COPY vendor/hermes-agent/skills/code-graph/graphify/tools/memory_store.py /opt/memory_store.py
+COPY vendor/hermes-agent/skills/code-graph/graphify/tools/memory_api.py /opt/memory_api.py
+COPY vendor/hermes-agent/skills/code-graph/graphify/tools/neo4j_admin.py /opt/neo4j_admin.py
+RUN chmod +x /opt/graphify_backend.py /opt/memory_store.py /opt/memory_api.py /opt/neo4j_admin.py &&     /opt/hermes/.venv/bin/python /opt/graphify_backend.py --check 2>&1 | tail -2
 
 # Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
 # Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
