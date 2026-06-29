@@ -35,6 +35,7 @@ RUN /opt/hermes/.venv/bin/python3 -m ensurepip --upgrade && \
       "mcp" \
       "playwright" \
       "PyYAML" \
+      "graphifyy[all]" \
       "uv" && \
     /opt/hermes/.venv/bin/python3 -m playwright install chromium && \
     /opt/hermes/.venv/bin/python3 -m playwright install-deps
@@ -53,6 +54,10 @@ RUN npm ci --omit=dev --no-audit --no-fund 2>&1 | tail -5 && \
         (echo "FATAL: dist/styles.css vazio apos build" && exit 1) && \
     npm cache clean --force
 WORKDIR /opt/hermes-src
+
+# Install graphify skill (knowledge graph do codebase, graphifyy[all] ja instalado via pip acima).
+# O comando abaixo gera SKILL.md + references/ em ~/.hermes/skills/graphify/ (auto-detectado pelo Hermes).
+RUN mkdir -p /home/nexusai/.hermes/skills &&     /opt/hermes/.venv/bin/graphify install --platform hermes 2>&1 | tail -3
 
 # Make common tools available without requiring the caller to know the venv path.
 RUN ln -sf /opt/hermes/.venv/bin/hermes /usr/local/bin/hermes && \
@@ -75,3 +80,4 @@ RUN chmod +x \
       /usr/local/bin/ensure-ens-rag-mcp.py
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
+
