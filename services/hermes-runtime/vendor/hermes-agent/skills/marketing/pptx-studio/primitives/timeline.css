@@ -1,0 +1,145 @@
+/* pptx-studio v3.5+ — Timeline primitive
+ *
+ * Componente para cronologia (ex: historia da empresa, marcos, roadmap).
+ * Inspirado em design-systems como Stripe, Linear, Vercel (cards de timeline
+ * com dot + linha conectora vertical).
+ *
+ * Estrutura HTML esperada:
+ * <div class="slide">
+ *   <div class="timeline">
+ *     <div class="timeline-item">
+ *       <div class="timeline-marker">
+ *         <div class="timeline-dot"></div>
+ *       </div>
+ *       <div class="timeline-content">
+ *         <div class="timeline-year heading-2 text-primary">1971</div>
+ *         <div class="timeline-title heading-3">Fundacao da ENS</div>
+ *         <div class="timeline-desc body">Pela iniciativa dos principais atores do setor de seguros brasileiro.</div>
+ *       </div>
+ *     </div>
+ *     <!-- repetir timeline-item pra cada marco -->
+ *   </div>
+ * </div>
+ *
+ * Variantes: vertical (default), horizontal (adicionar class="timeline-horizontal" no parent)
+ */
+
+:root {
+  --timeline-line: 2px;
+  --timeline-dot: 16px;
+  --timeline-gap: 48px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--timeline-gap);
+  position: relative;
+  padding-left: 60px;
+}
+
+/* Linha conectora vertical */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 8px;
+  bottom: 8px;
+  width: var(--timeline-line);
+  background: var(--surface);
+  border-radius: 1px;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -60px;
+  top: 4px;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-dot {
+  width: var(--timeline-dot);
+  height: var(--timeline-dot);
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 6px var(--paper), 0 0 0 8px var(--primary-soft);
+  z-index: 2;
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-year {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.timeline-title {
+  margin-bottom: 8px;
+}
+
+.timeline-desc {
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* Variante horizontal: usar .timeline-horizontal */
+.timeline-horizontal {
+  flex-direction: row;
+  padding-left: 0;
+  padding-top: 60px;
+  gap: 64px;
+}
+
+.timeline-horizontal::before {
+  left: 8px;
+  right: 8px;
+  top: 30px;
+  bottom: auto;
+  width: auto;
+  height: var(--timeline-line);
+}
+
+.timeline-horizontal .timeline-item {
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  padding-top: 12px;
+}
+
+.timeline-horizontal .timeline-marker {
+  position: absolute;
+  left: 50%;
+  top: -60px;
+  transform: translateX(-50%);
+  width: auto;
+}
+
+.timeline-horizontal .timeline-content {
+  text-align: center;
+}
+
+/* Variante milestone (cor destaque) */
+.timeline-milestone .timeline-dot {
+  background: #F57222; /* laranja ENS graduacao */
+  width: 22px;
+  height: 22px;
+  box-shadow: 0 0 0 6px var(--paper), 0 0 0 10px rgba(245, 114, 34, 0.2);
+}
+
+.timeline-milestone .timeline-year {
+  color: #F57222;
+}

@@ -1,0 +1,20 @@
+{
+  "name": "pptx-studio",
+  "version": "3.5.0",
+  "description": "Gera\u00e7\u00e3o de PPTX 16:9 (1280x720) a partir de HTML/CSS. Engine: dom-to-pptx + PptxGenJS. SEM templates, SEM layout dispatch. Cada slide \u00e9 arquivo HTML isolado, escrito do zero pra 16:9.",
+  "private": true,
+  "scripts": {
+    "build:css": "node engine/build-css.js",
+    "watch:css": "node engine/build-css.js --watch",
+    "render:dev": "node engine/render-dev.js",
+    "render:pptx": "node engine/compose-pptx-v2.js",
+    "validate": "node engine/validate-pptx.js",
+    "patch": "node scripts/patch-dom-to-pptx.js",
+    "build:css:full": "node engine/build-css-v2.js"
+  },
+  "dependencies": {
+    "dom-to-pptx": "^2.0.1",
+    "adm-zip": "^0.5.17",
+    "playwright": "^1.61.1"
+  }
+}

@@ -1,0 +1,175 @@
+/* pptx-studio v3.5+ — Comparison primitive
+ *
+ * Componente split A vs B (ex: com diploma vs sem diploma, antes vs depois).
+ * Inspirado em landing pages de SaaS (Stripe, Linear pricing tables).
+ *
+ * Estrutura HTML esperada:
+ * <div class="slide">
+ *   <div class="comparison">
+ *     <div class="comparison-col comparison-col-a">
+ *       <div class="comparison-header">
+ *         <div class="comparison-tag tag-soft">SEM DIPLOMA</div>
+ *         <h2 class="comparison-title heading-2">Trabalho informal</h2>
+ *         <div class="comparison-price heading-display text-ink-soft">R$ 0</div>
+ *       </div>
+ *       <ul class="comparison-list">
+ *         <li class="comparison-item comparison-item-neg">
+ *           <span class="comparison-icon">x</span> Sem registro em carteira
+ *         </li>
+ *         <li class="comparison-item comparison-item-neg">
+ *           <span class="comparison-icon">x</span> Sem acesso a certificacoes
+ *         </li>
+ *       </ul>
+ *     </div>
+ *     <div class="comparison-col comparison-col-b comparison-col-featured">
+ *       <div class="comparison-header">
+ *         <div class="comparison-tag tag-primary">COM DIPLOMA ENS</div>
+ *         <h2 class="comparison-title heading-2">Carreira em seguros</h2>
+ *         <div class="comparison-price heading-display text-primary">R$ 319</div>
+ *       </div>
+ *       <ul class="comparison-list">
+ *         <li class="comparison-item comparison-item-pos">
+ *           <span class="comparison-icon">check</span> Registro CLT desde o 1o dia
+ *         </li>
+ *         <li class="comparison-item comparison-item-pos">
+ *           <span class="comparison-icon">check</span> 4 certificacoes profissionais
+ *         </li>
+ *       </ul>
+ *     </div>
+ *   </div>
+ * </div>
+ *
+ * Variantes: 2-col (default), 3-col (adicionar comparison-col-c), featured (col com borda destaque)
+ */
+
+:root {
+  --comparison-gap: 32px;
+  --comparison-radius: 16px;
+  --comparison-padding: 40px;
+  --comparison-icon-size: 24px;
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--comparison-gap);
+  width: 100%;
+}
+
+.comparison-col {
+  background: var(--paper);
+  border: 1px solid var(--surface);
+  border-radius: var(--comparison-radius);
+  padding: var(--comparison-padding);
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-col-featured {
+  border: 2px solid var(--primary);
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 85, 99, 0.12);
+}
+
+.comparison-col-featured::before {
+  content: 'RECOMENDADO';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: var(--paper);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 4px 16px;
+  border-radius: 999px;
+}
+
+/* 3-col: usar .comparison-3col */
+.comparison-3col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.comparison-header {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--surface);
+}
+
+.comparison-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.tag-soft {
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.tag-primary {
+  background: var(--primary);
+  color: var(--paper);
+}
+
+.comparison-title {
+  margin-bottom: 16px;
+}
+
+.comparison-price {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.comparison-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.comparison-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
+.comparison-icon {
+  flex-shrink: 0;
+  width: var(--comparison-icon-size);
+  height: var(--comparison-icon-size);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--paper);
+}
+
+.comparison-item-pos .comparison-icon {
+  background: #10b981; /* verde sucesso */
+}
+
+.comparison-item-pos .comparison-icon::before {
+  content: '✓';
+}
+
+.comparison-item-neg .comparison-icon {
+  background: #cbd5e1; /* cinza neutro */
+  color: var(--ink-soft);
+}
+
+.comparison-item-neg .comparison-icon::before {
+  content: '×';
+}

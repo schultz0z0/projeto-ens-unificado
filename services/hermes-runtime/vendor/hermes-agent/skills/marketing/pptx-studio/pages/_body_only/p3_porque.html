@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../../primitives/styles.css">
+</head>
+<body>
+  <div style="position: relative; width: 13.333in; height: 7.5in; overflow: hidden; background: white;">
+    <!-- imagem direita como img (não CSS bg) -->
+    <img src="assets/city_sunrise.png" style="position: absolute; top: 0; right: 0; width: 6.5in; height: 7.5in; object-fit: cover; z-index: 1;">
+    <div style="position: absolute; top: 0; right: 0; width: 6.5in; height: 7.5in; background: linear-gradient(to right, white 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.5) 100%); z-index: 2;"></div>
+    <!-- header -->
+    <div style="position: absolute; top: 50px; left: 70px; right: 56%;">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #F57222; text-transform: uppercase;">O MERCADO</span>
+      <div style="width: 100px; height: 4px; background: #F57222; margin: 16px 0;"></div>
+    </div>
+    <!-- headline + lead (mais respiro) -->
+    <div style="position: absolute; top: 130px; left: 70px; width: 50%;">
+      <h1 style="font-size: 44px; font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; color: #1A1A1A; margin: 0;">O seguro é uma das áreas que mais cresce — e mais emprega — no Brasil.</h1>
+      <p style="font-size: 17px; line-height: 1.55; color: #4A4A4A; margin: 22px 0 0 0; max-width: 520px;">De carros a planos de saúde, de empresas a celulares: o seguro está em todo lugar. Uma das áreas mais resilientes da economia.</p>
+    </div>
+    <!-- 3 cards horizontais -->
+    <div style="position: absolute; bottom: 70px; left: 70px; right: 56%; display: flex; gap: 16px; z-index: 10;">
+      <div style="flex: 1; background: white; border: 1px solid #F2F4F5; border-radius: 12px; padding: 22px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEF6F1; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F57222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #1A1A1A; margin: 0 0 6px 0; letter-spacing: -0.3px;">Sempre em alta</h3>
+        <p style="font-size: 12px; line-height: 1.5; color: #4A4A4A; margin: 0;">Pessoas, carros, empresas: o seguro está em todo lugar.</p>
+      </div>
+      <div style="flex: 1; background: white; border: 1px solid #F2F4F5; border-radius: 12px; padding: 22px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEF6F1; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F57222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #1A1A1A; margin: 0 0 6px 0; letter-spacing: -0.3px;">Emprego garantido</h3>
+        <p style="font-size: 12px; line-height: 1.5; color: #4A4A4A; margin: 0;">Vagas em todo o país. Quem se forma, trabalha.</p>
+      </div>
+      <div style="flex: 1; background: white; border: 1px solid #F2F4F5; border-radius: 12px; padding: 22px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEF6F1; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F57222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #1A1A1A; margin: 0 0 6px 0; letter-spacing: -0.3px;">Boa remuneração</h3>
+        <p style="font-size: 12px; line-height: 1.5; color: #4A4A4A; margin: 0;">Plano de carreira sólido e chance de empreender.</p>
+      </div>
+    </div>
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 60px; display: flex; justify-content: space-between; align-items: center; z-index: 20;">
+      <span style="font-size: 11px; color: #606060; font-weight: 600; letter-spacing: 1px;">ENS · Escola de Negócios e Seguros</span>
+      <span style="font-size: 11px; font-weight: 700; color: #606060; letter-spacing: 1px;">03 / 10</span>
+    </div>
+  </div>
+</body>
+</html>

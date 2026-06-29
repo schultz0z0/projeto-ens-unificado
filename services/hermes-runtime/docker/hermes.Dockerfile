@@ -39,6 +39,21 @@ RUN /opt/hermes/.venv/bin/python3 -m ensurepip --upgrade && \
     /opt/hermes/.venv/bin/python3 -m playwright install chromium && \
     /opt/hermes/.venv/bin/python3 -m playwright install-deps
 
+# Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
+# Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
+COPY vendor/hermes-agent/skills/marketing/pptx-studio /opt/pptx-studio
+WORKDIR /opt/pptx-studio
+RUN npm ci --omit=dev --no-audit --no-fund 2>&1 | tail -5 && \
+    node scripts/patch-dom-to-pptx.js 2>&1 | tail -5 && \
+    # Compila primitives/ em dist/styles.css (timeline, comparison, quote, stats)
+    # Se primitives/*.css mudar, o dist/ e regenerado automaticamente
+    npm run build:css:full 2>&1 | tail -3 && \
+    # Smoke test: garantir que o build gerou output nao-vazio
+    test -s primitives/dist/styles.css && echo "OK: dist/styles.css compiled ($(wc -c < primitives/dist/styles.css) bytes)" || \
+        (echo "FATAL: dist/styles.css vazio apos build" && exit 1) && \
+    npm cache clean --force
+WORKDIR /opt/hermes-src
+
 # Make common tools available without requiring the caller to know the venv path.
 RUN ln -sf /opt/hermes/.venv/bin/hermes /usr/local/bin/hermes && \
     ln -sf /opt/hermes/.venv/bin/uv /usr/local/bin/uv && \

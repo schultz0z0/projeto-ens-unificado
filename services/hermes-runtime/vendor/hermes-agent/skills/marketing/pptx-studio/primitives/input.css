@@ -1,0 +1,18 @@
+/* pptx-studio v3.5+ — input.css
+ *
+ * Entrada do build-css.js (compila para primitives/dist/styles.css).
+ * Composto por modulos: base (original) + extras (v3.5+).
+ *
+ * Adicionar novo primitive: criar arquivo .css nesta pasta e incluir aqui.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* === BASE (original desde v1.0) === */
+@import url('./styles.css');
+
+/* === EXTRAS (v3.5+) === */
+@import url('./timeline.css');
+@import url('./comparison.css');
+@import url('./quote.css');
+@import url('./stats.css');
