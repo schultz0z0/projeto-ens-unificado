@@ -5,7 +5,11 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HERMES_SOURCE_DIR=/opt/hermes-src
+    HERMES_SOURCE_DIR=/opt/hermes-src \
+    NEXUS_GRAPH_BACKEND=local \
+    NEXUS_GRAPH_URL=redis://falkordb:6379 \
+    NEXUS_GRAPH_DB=nexus \
+    NEXUS_GRAPH_JSON=/opt/data/graphify-out/graph.json
 
 # Base runtime/development dependencies expected by Hermes Desktop-like usage:
 # - curl/git/build tools for setup and integrations
@@ -39,6 +43,12 @@ RUN /opt/hermes/.venv/bin/python3 -m ensurepip --upgrade && \
       "uv" && \
     /opt/hermes/.venv/bin/python3 -m playwright install chromium && \
     /opt/hermes/.venv/bin/python3 -m playwright install-deps
+
+# Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
+# Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
+# Install graphify wrapper (v3.6+: backend selector local/falkordb/neo4j)
+COPY vendor/hermes-agent/skills/code-graph/graphify/tools/graphify_backend.py /opt/graphify_backend.py
+RUN /opt/hermes/.venv/bin/python /opt/graphify_backend.py --check 2>&1 | tail -2
 
 # Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
 # Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)

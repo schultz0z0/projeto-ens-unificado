@@ -348,6 +348,15 @@ services:
     networks:
       - ens-internal
 
+  # ============================================================================
+    # GRAPH BACKEND (optional): FalkorDB ou Neo4j pra Graphify
+  # ----------------------------------------------------------------------------
+  # Services commented por padrao. Ver audit-tmp/GRAPHIFY-BACKEND-CENARIOS.md
+  # para templates copy-paste de falkordb/neo4j. Ativar com NEXUS_GRAPH_BACKEND.
+  # Default: graphify usa graph.json local (sem servidor externo).
+  # ============================================================================
+
+
 networks:
   ens-internal:
     name: ${NEXUS_INTERNAL_NETWORK:-projeto-ens-internal}

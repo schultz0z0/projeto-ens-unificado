@@ -3,6 +3,41 @@ name: graphify
 description: "Use for any question about a codebase, its architecture, file relationships, or project content — especially when graphify-out/ exists, where the question should be treated as a graphify query first. Turns any input (code, docs, papers, images, videos) into a persistent knowledge graph with god nodes, community detection, and query/path/explain tools."
 ---
 
+## Backends (v3.6+)
+
+Graphify suporta 3 backends via env var `NEXUS_GRAPH_BACKEND`:
+
+| Backend   | Quando usar                   | Setup                                                     |
+|-----------|-------------------------------|-----------------------------------------------------------|
+| `local`   | SOLO/DEV (default, sem config) | Nenhum setup. Usa `/opt/data/graphify-out/graph.json`     |
+| `falkordb`| Multi-tenant self-hosted       | Descomentar bloco `falkordb:` no docker-compose.yml       |
+| `neo4j`   | Heavy analytics (GPLv3)        | Descomentar bloco `neo4j:` no docker-compose.yml         |
+
+**Default:** `local` (zero mudanca no comportamento).
+
+Para ativar FalkorDB:
+
+```bash
+# .env
+NEXUS_GRAPH_BACKEND=falkordb
+NEXUS_FALKORDB_PASSWORD=*** docker-compose.yml: descomentar bloco falkordb (linhas 352+)
+docker compose --env-file .env -f docker-compose.yml build falkordb hermes-api
+docker compose --env-file .env -f docker-compose.yml up -d falkordb
+```
+
+Para ativar Neo4j (mesmo padrao, com NEXUS_GRAPH_BACKEND=neo4j).
+
+Validacao em ambos os casos:
+
+```bash
+docker compose exec hermes-api python /opt/graphify_backend.py --check
+# Esperado: [health] {status: ok, backend: falkordb|neo4j, ...}
+```
+
+Tutorial completo em `services/audit-tmp/GRAPHIFY-BACKEND-CENARIOS.md`.
+
+
+
 # /graphify
 
 Turn any folder of files into a navigable knowledge graph with community detection, an honest audit trail, and three outputs: interactive HTML, GraphRAG-ready JSON, and a plain-language GRAPH_REPORT.md.
