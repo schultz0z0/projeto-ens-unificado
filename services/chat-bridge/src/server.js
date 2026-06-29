@@ -1478,7 +1478,97 @@ const handleRequest = async (req, res) => {
 
     jsonResponse(res, 200, { run }, corsHeaders);
     return;
-  }
+  }
+  // ===========================================================================
+  // Frontend approval proxy (Opcao C - 2026-06-27).
+  // Adiciona 2 rotas que fazem proxy pro hermes-api:
+  //   - POST /api/approvals/respond : frontend -> bridge -> hermes-api
+  //   - GET  /api/approvals/stream  : SSE bridge que escuta /api/events do hermes
+  // ===========================================================================
+  if (req.method === "POST" && url.pathname === "/api/approvals/respond") {
+    const user = await verifyUser(req);
+    const body = await readJsonBody(req);
+    const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
+    if (!hermesBaseUrl) {
+      jsonResponse(res, 503, { error: "hermes_unreachable" }, corsHeaders);
+      return;
+    }
+    try {
+      const upstream = await fetch(`${hermesBaseUrl}/api/approvals/respond`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {}),
+        },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await upstream.json().catch(() => ({}));
+      jsonResponse(res, upstream.status, data, corsHeaders);
+    } catch (err) {
+      jsonResponse(res, 502, { error: "hermes_proxy_failed", detail: String(err) }, corsHeaders);
+    }
+    return;
+  }
+
+  // SSE proxy: repassa eventos do hermes-api pro frontend.
+  // O frontend abre esta conexao e recebe 'approval_request' como eventos SSE.
+  if (req.method === "GET" && url.pathname === "/api/approvals/stream") {
+    const user = await verifyUser(req);
+    const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
+    if (!hermesBaseUrl) {
+      jsonResponse(res, 503, { error: "hermes_unreachable" }, corsHeaders);
+      return;
+    }
+    // Encaminha a conexao SSE. Usa a URL /api/approvals/ws convertida pra SSE
+    // como fallback caso hermes so exponha WS - aqui simplificamos: re-usa
+    // o canal de eventos do /api/events e filtra so approval_request.
+    // O frontend eh responsavel por interpretar o payload.
+    writeSseHeaders(req, res);
+    try {
+      // Conecta no WebSocket do hermes via upgrade manual (node http puro)
+      // Como bridge nao tem WS nativo, usamos long-poll via /api/events como
+      // proxy aproximado. Para producao, recomenda-se adicionar `ws` no
+      // package.json e fazer upgrade real.
+      const upstream = await fetch(`${hermesBaseUrl}/api/events?channel=approvals`, {
+        method: "GET",
+        headers: {
+          Accept: "text/event-stream",
+          ...(config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {}),
+        },
+      });
+      if (!upstream.ok || !upstream.body) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: "upstream_unavailable" })}\n\n`);
+        res.end();
+        return;
+      }
+      // Re-emite os chunks como SSE
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      // Detecta cliente desconectando
+      const onClose = () => {
+        try { reader.cancel(); } catch (_) { /* ignore */ }
+        try { res.end(); } catch (_) { /* ignore */ }
+      };
+      req.on("close", onClose);
+      req.on("aborted", onClose);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          res.write(decoder.decode(value, { stream: true }));
+        }
+      }
+      res.end();
+    } catch (err) {
+      try {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: "stream_failed", detail: String(err) })}\n\n`);
+        res.end();
+      } catch (_) { /* ignore */ }
+    }
+    return;
+  }
+
+
 
   jsonResponse(res, 404, { error: "not_found" }, corsHeaders);
 };

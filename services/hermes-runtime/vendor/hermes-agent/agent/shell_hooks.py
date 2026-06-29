@@ -644,6 +644,40 @@ def _prompt_and_record(
     """Decide whether to approve an unseen ``(event, command)`` pair.
     Returns ``True`` iff the approval was granted and recorded.
     """
+    # ------------------------------------------------------------------
+    # Frontend approval hook (Opcao C - 2026-06-27).
+    # Se ha cliente WebSocket conectado (chat-web), delega aprovacao
+    # pra UI ao inves de prompt TTY. Se nao ha cliente OU der erro,
+    # cai pro codigo TTY original (preserva compatibilidade total).
+    # ------------------------------------------------------------------
+    try:
+        from agent.frontend_approval import is_frontend_client_active, request_frontend_approval
+        if is_frontend_client_active():
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            approved = loop.run_until_complete(
+                request_frontend_approval(
+                    event,
+                    command,
+                    description=f"Agent quer executar: {command[:120]}",
+                    timeout_seconds=30,
+                )
+            )
+            if approved:
+                _record_approval(event, command)
+                logger.info("shell hook approved via frontend: %s -> %s", event, command[:80])
+                return True
+            logger.info("shell hook denied/timeout via frontend: %s -> %s", event, command[:80])
+            return False
+    except ImportError:
+        pass  # modulo nao instalado; segue TTY
+    except Exception as e:  # noqa: BLE001
+        logger.warning("frontend_approval hook falhou, caindo pro TTY: %s", e)
+
     if accept_hooks:
         _record_approval(event, command)
         logger.info(

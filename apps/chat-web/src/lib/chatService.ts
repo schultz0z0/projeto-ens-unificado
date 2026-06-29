@@ -20,7 +20,7 @@ export interface ChatMessagesPage {
   hasMore: boolean;
 }
 
-const resolveChatbotProxyBaseUrl = () => {
+export const resolveChatbotProxyBaseUrl = () => {
   const raw = (import.meta.env.VITE_CHATBOT_PROXY_URL || "").trim();
   if (!raw) return null;
   try {

@@ -40,6 +40,8 @@ import { cn } from "@/lib/utils";
 import { ChatHistorySidebar } from "./ChatHistorySidebar";
 import { ChatEmptyState, type HomeTab } from "./ChatEmptyState";
 import { ChatComposer, type ComposerAttachment, type ComposerMenuItem, type ImageGenerationOptions } from "./ChatComposer";
+import { ApprovalModal } from "./chat/ApprovalModal";
+import { useApprovalStream } from "./chat/useApprovalStream";
 import { hydrateChatMessages } from "./chat/chatAttachmentHydration";
 import { reconcileHydratedMessages } from "./chat/chatMessageReconciliation";
 import { sendMessageToChatbotStream, type StreamArtifact, type StreamStatus } from "./chat/chatStreamClient";
@@ -57,6 +59,10 @@ interface ChatInterfaceProps {
 
 export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   const { user, session, signOut } = useAuth();
+  const { currentRequest: approvalRequest, respond: respondToApproval } = useApprovalStream({
+    bridgeBaseUrl: chatService.resolveChatbotProxyBaseUrl() ?? "",
+    getAccessToken: async () => session?.access_token ?? null,
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const currentSessionId = searchParams.get("chat");
 
@@ -855,6 +861,10 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
           )}
         </div>
       </div>
+      <ApprovalModal
+        request={approvalRequest}
+        onRespond={respondToApproval}
+      />
     </div>
   );
 };

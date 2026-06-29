@@ -12056,4 +12056,79 @@ def start_server(
             if server.started:
                 await server.shutdown()
 
+# ----------------------------------------------------------------------------
+# Frontend approval endpoints (Opcao C - 2026-06-27).
+# Expoe:
+#   - POST /api/approvals/respond  : frontend responde approve/deny
+#   - WS   /api/approvals/ws       : frontend escuta approval_request
+# ----------------------------------------------------------------------------
+
+try:
+    from agent.frontend_approval import (
+        register_ws_client,
+        unregister_ws_client,
+        respond_to_approval,
+    )
+    _FRONTEND_APPROVAL_AVAILABLE = True
+except ImportError:
+    _FRONTEND_APPROVAL_AVAILABLE = False
+    logger.warning("agent.frontend_approval nao disponivel; endpoints de approval desabilitados")
+
+
+class ApprovalRespondBody(BaseModel):
+    request_id: str = Field(..., min_length=1, max_length=64)
+    decision: Literal["approve", "deny"]
+    trust_scope: Literal["session", "always"] = "session"
+
+
+@app.post("/api/approvals/respond")
+async def http_respond_approval(body: ApprovalRespondBody):
+    """Chamado pelo chat-web quando o usuario clica approve/deny no modal."""
+    if not _FRONTEND_APPROVAL_AVAILABLE:
+        raise HTTPException(status_code=503, detail="frontend_approval module not loaded")
+    ok = respond_to_approval(body.request_id, body.decision, body.trust_scope)
+    if not ok:
+        raise HTTPException(status_code=404, detail="approval request not found or expired")
+    return {"ok": True, "request_id": body.request_id, "decision": body.decision}
+
+
+@app.websocket("/api/approvals/ws")
+async def approvals_ws(ws: WebSocket):
+    """WebSocket pra chat-web receber approval_request broadcasts.
+
+    Quando o agent precisa de aprovacao, o modulo frontend_approval
+    faz broadcast pra todas as filas registradas aqui. O frontend
+    renderiza o modal e responde via POST /api/approvals/respond.
+    """
+    if not _FRONTEND_APPROVAL_AVAILABLE:
+        await ws.close(code=4403)
+        return
+    await ws.accept()
+    queue: asyncio.Queue = asyncio.Queue(maxsize=64)
+    register_ws_client(queue)
+    try:
+        sender = asyncio.create_task(_drain_approvals_ws(ws, queue))
+        try:
+            while True:
+                await ws.receive_text()
+        except WebSocketDisconnect:
+            pass
+        finally:
+            sender.cancel()
+    finally:
+        unregister_ws_client(queue)
+
+
+async def _drain_approvals_ws(ws: WebSocket, queue: asyncio.Queue):
+    """Task paralela que envia broadcasts do agent pro frontend."""
+    try:
+        while True:
+            payload = await queue.get()
+            await ws.send_text(payload)
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:  # noqa: BLE001
+        logger.debug("approvals_ws drain ended: %s", e)
+
+
     asyncio.run(_serve())
