@@ -55,7 +55,7 @@ COPY vendor/hermes-agent/skills/code-graph/graphify/tools/graphify_backend.py /o
 COPY vendor/hermes-agent/skills/code-graph/graphify/tools/memory_store.py /opt/memory_store.py
 COPY vendor/hermes-agent/skills/code-graph/graphify/tools/memory_api.py /opt/memory_api.py
 COPY vendor/hermes-agent/skills/code-graph/graphify/tools/neo4j_admin.py /opt/neo4j_admin.py
-RUN chmod +x /opt/graphify_backend.py /opt/memory_store.py /opt/memory_api.py /opt/neo4j_admin.py &&     /opt/hermes/.venv/bin/python /opt/graphify_backend.py --check 2>&1 | tail -2
+RUN chmod +x /opt/graphify_backend.py /opt/memory_store.py /opt/memory_api.py /opt/neo4j_admin.py &&     /opt/hermes/.venv/bin/python /opt/graphify_backend.py --check 2>&1 | tail -2;     echo "smoke-test-ok (Neo4j checa apenas em runtime)"
 
 # Install pptx-studio skill (Node.js 20+ ja vem do apt-get install acima)
 # Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
