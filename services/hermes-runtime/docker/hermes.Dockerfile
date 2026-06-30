@@ -2,15 +2,15 @@ FROM ghcr.io/hostinger/hvps-hermes-agent:latest
 
 USER root
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HERMES_SOURCE_DIR=/opt/hermes-src \
-    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user \
-    NEXUS_GRAPH_URL=bolt://neo4j:7687 \
-    NEXUS_DEFAULT_DB=nexus \
-    NEXUS_TENANT_ID=\
-    NEXUS_NEO4J_USER=neo4j \
+ENV DEBIAN_FRONTEND=noninteractive \\
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \\
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \\
+    HERMES_SOURCE_DIR=/opt/hermes-src \\
+    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user \\
+    NEXUS_GRAPH_URL=bolt://neo4j:7687 \\
+    NEXUS_DEFAULT_DB=nexus \\
+    NEXUS_TENANT_ID=\\
+    NEXUS_NEO4J_USER=neo4j \\
     NEXUS_NEO4J_PASSWORD=CHANGEME\\
     NEXUS_USER_ID=\\
     NEXUS_MEMORY_DIR=/opt/data/memory\\
