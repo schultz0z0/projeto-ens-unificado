@@ -10,3 +10,9 @@ mcp_servers:
     connect_timeout: 30
     sampling:
       enabled: false
+  nexus_graph:
+    url: "http://graph-mcp:8010/mcp"
+    timeout: 180
+    connect_timeout: 30
+    sampling:
+      enabled: false

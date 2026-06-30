@@ -70,3 +70,9 @@ services:
   rag-mcp:
     labels:
       - traefik.enable=false
+
+  # Graph MCP also stays internal-only. Hermes reaches it over the project
+  # Docker network at http://graph-mcp:8010/mcp, so no public subdomain is needed.
+  graph-mcp:
+    labels:
+      - traefik.enable=false

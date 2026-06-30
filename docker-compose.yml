@@ -40,6 +40,40 @@ services:
     networks:
       - ens-internal
 
+  graph-mcp:
+    image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-graph-mcp:latest
+    build:
+      context: ./services/graph-mcp
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-graph-mcp
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      GRAPH_MCP_HOST: 0.0.0.0
+      GRAPH_MCP_PORT: "8010"
+      NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
+      NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
+      NEXUS_NEO4J_PASSWORD: ${NEXUS_NEO4J_PASSWORD:-nexus-neo4j}
+      NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-public}
+      NEXUS_GRAPH_DATABASE: ${NEXUS_GRAPH_DATABASE:-neo4j}
+      NEXUS_GRAPH_DATABASE_STRATEGY: ${NEXUS_GRAPH_DATABASE_STRATEGY:-shared}
+      NEXUS_GRAPH_BOOTSTRAP_ON_START: ${NEXUS_GRAPH_BOOTSTRAP_ON_START:-true}
+    ports:
+      - "127.0.0.1:${NEXUS_GRAPH_MCP_PORT:-8010}:8010"
+    expose:
+      - "8010"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8010/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ens-internal
+
   rag-mcp-ingestion-cron:
     image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp:latest
     container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp-ingestion-cron
@@ -101,11 +135,12 @@ services:
       SUPABASE_SIGNED_URL_EXPIRES_SECONDS: ${NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS:-604800}
       SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
-      NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant}
-      NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-}
+      NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant-user}
+      NEXUS_GRAPH_MCP_URL: ${NEXUS_GRAPH_MCP_URL:-http://graph-mcp:8010/mcp}
+      NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-public}
       NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
       NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
-      NEXUS_NEO4J_PASSWORD: ${NEXUS_NEO4J_PASSWORD:-change-me}
+      NEXUS_NEO4J_PASSWORD: ${NEXUS_NEO4J_PASSWORD:-nexus-neo4j}
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
       HERMES_ARTIFACTS_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
       HERMES_ARTIFACT_MAX_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}
@@ -119,6 +154,8 @@ services:
       - "${NEXUS_HERMES_API_PORT:-8652}"
     depends_on:
       rag-mcp:
+        condition: service_healthy
+      graph-mcp:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}/health >/dev/null || exit 1"]
@@ -152,6 +189,12 @@ services:
       SUPABASE_SIGNED_URL_EXPIRES_SECONDS: ${NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS:-604800}
       SUPABASE_UPLOAD_MAX_ATTEMPTS: ${NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
+      NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant-user}
+      NEXUS_GRAPH_MCP_URL: ${NEXUS_GRAPH_MCP_URL:-http://graph-mcp:8010/mcp}
+      NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-public}
+      NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
+      NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
+      NEXUS_NEO4J_PASSWORD: ${NEXUS_NEO4J_PASSWORD:-nexus-neo4j}
       HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE: ${NEXUS_HERMES_IMAGE_SUPABASE_DELETE_LOCAL_CACHE:-true}
       HERMES_ARTIFACTS_DIR: ${NEXUS_HERMES_ARTIFACTS_DIR:-/opt/data/nexus-artifacts}
       HERMES_ARTIFACT_MAX_BYTES: ${NEXUS_ARTIFACT_MAX_UPLOAD_BYTES:-5368709120}

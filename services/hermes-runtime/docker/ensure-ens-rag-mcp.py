@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ensure the ENS RAG MCP is present in Hermes root and profile configs."""
+"""Ensure Nexus-managed MCP servers are present in Hermes configs."""
 
 from __future__ import annotations
 
@@ -14,13 +14,21 @@ except Exception as exc:  # pragma: no cover - depends on container runtime
     raise SystemExit(0)
 
 
-MCP_SERVER_NAME = "nexus_rag"
-MCP_SERVER_CONFIG = {
-    "url": os.environ.get("ENS_RAG_MCP_URL", "http://rag-mcp:8000/mcp"),
-    "timeout": int(os.environ.get("ENS_RAG_MCP_TIMEOUT", "180")),
-    "connect_timeout": int(os.environ.get("ENS_RAG_MCP_CONNECT_TIMEOUT", "30")),
-    "sampling": {"enabled": False},
-}
+def managed_mcp_servers() -> dict[str, dict]:
+    return {
+        "nexus_rag": {
+            "url": os.environ.get("ENS_RAG_MCP_URL", "http://rag-mcp:8000/mcp"),
+            "timeout": int(os.environ.get("ENS_RAG_MCP_TIMEOUT", "180")),
+            "connect_timeout": int(os.environ.get("ENS_RAG_MCP_CONNECT_TIMEOUT", "30")),
+            "sampling": {"enabled": False},
+        },
+        "nexus_graph": {
+            "url": os.environ.get("NEXUS_GRAPH_MCP_URL", "http://graph-mcp:8010/mcp"),
+            "timeout": int(os.environ.get("NEXUS_GRAPH_MCP_TIMEOUT", "180")),
+            "connect_timeout": int(os.environ.get("NEXUS_GRAPH_MCP_CONNECT_TIMEOUT", "30")),
+            "sampling": {"enabled": False},
+        },
+    }
 
 
 def load_config(path: Path) -> dict:
@@ -39,17 +47,23 @@ def load_config(path: Path) -> dict:
     return config
 
 
-def ensure_server(path: Path) -> bool:
+def ensure_servers(path: Path) -> bool:
     config = load_config(path)
     servers = config.setdefault("mcp_servers", {})
 
     if not isinstance(servers, dict):
         raise ValueError(f"{path} has a non-mapping mcp_servers value")
 
-    if servers.get(MCP_SERVER_NAME) == MCP_SERVER_CONFIG:
+    changed = False
+    for server_name, server_config in managed_mcp_servers().items():
+        if servers.get(server_name) == server_config:
+            continue
+        servers[server_name] = server_config
+        changed = True
+
+    if not changed:
         return False
 
-    servers[MCP_SERVER_NAME] = MCP_SERVER_CONFIG
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         yaml.safe_dump(config, sort_keys=False, allow_unicode=True),
@@ -89,14 +103,14 @@ def main() -> int:
 
     for config_path in candidate_configs(data_path):
         try:
-            if ensure_server(config_path):
+            if ensure_servers(config_path):
                 changed += 1
-                print(f"[hermes-mcp] ensured {MCP_SERVER_NAME} in {config_path}")
+                print(f"[hermes-mcp] ensured Nexus MCP servers in {config_path}")
         except Exception as exc:
             print(f"[hermes-mcp] could not update {config_path}: {exc}", file=sys.stderr)
 
     if changed == 0:
-        print(f"[hermes-mcp] {MCP_SERVER_NAME} already configured")
+        print("[hermes-mcp] Nexus MCP servers already configured")
 
     return 0
 

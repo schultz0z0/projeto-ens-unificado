@@ -24,9 +24,12 @@ export SUPABASE_GENERATED_IMAGES_PREFIX="${SUPABASE_GENERATED_IMAGES_PREFIX:-her
 export SUPABASE_SIGNED_URL_EXPIRES_SECONDS="${SUPABASE_SIGNED_URL_EXPIRES_SECONDS:-604800}"
 export SUPABASE_UPLOAD_MAX_ATTEMPTS="${SUPABASE_UPLOAD_MAX_ATTEMPTS:-3}"
 export SUPABASE_UPLOAD_BACKOFF_SECONDS="${SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}"
-export NEXUS_GRAPH_BACKEND="${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant}"
-export NEXUS_TENANT_ID="${NEXUS_TENANT_ID:-}"
+export NEXUS_GRAPH_BACKEND="${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant-user}"
+export NEXUS_GRAPH_MCP_URL="${NEXUS_GRAPH_MCP_URL:-http://graph-mcp:8010/mcp}"
+export NEXUS_TENANT_ID="${NEXUS_TENANT_ID:-public}"
 export NEXUS_GRAPH_URL="${NEXUS_GRAPH_URL:-bolt://neo4j:7687}"
+export NEXUS_NEO4J_USER="${NEXUS_NEO4J_USER:-neo4j}"
+export NEXUS_NEO4J_PASSWORD="${NEXUS_NEO4J_PASSWORD:-nexus-neo4j}"
 
 build_hermes_exports() {
   local name value
@@ -41,7 +44,7 @@ mkdir -p "$HERMES_DATA_PATH" \
          "$HERMES_DATA_PATH/kanban"
 
 if [ -x /usr/local/bin/ensure-ens-rag-mcp.sh ]; then
-  /usr/local/bin/ensure-ens-rag-mcp.sh || echo "[hermes-kanban] warning: could not ensure ENS RAG MCP config" >&2
+  /usr/local/bin/ensure-ens-rag-mcp.sh || echo "[hermes-kanban] warning: could not ensure Nexus MCP config" >&2
 fi
 
 chown -R hermes:hermes "$HERMES_DATA_PATH" 2>/dev/null || true
@@ -56,7 +59,7 @@ HERMES_ENV_EXPORTS="$(build_hermes_exports \
   OPENROUTER_API_KEY OPENAI_API_KEY ANTHROPIC_API_KEY GEMINI_API_KEY GOOGLE_API_KEY \
   SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_OUTPUTS_BUCKET SUPABASE_GENERATED_IMAGES_PREFIX \
   SUPABASE_SIGNED_URL_EXPIRES_SECONDS SUPABASE_UPLOAD_MAX_ATTEMPTS SUPABASE_UPLOAD_BACKOFF_SECONDS \
-  NEXUS_GRAPH_BACKEND NEXUS_TENANT_ID NEXUS_GRAPH_URL)"
+  NEXUS_GRAPH_BACKEND NEXUS_GRAPH_MCP_URL NEXUS_TENANT_ID NEXUS_GRAPH_URL NEXUS_NEO4J_USER NEXUS_NEO4J_PASSWORD)"
 
 run_as_hermes "source /opt/hermes/.venv/bin/activate && cd /opt/data && hermes kanban init || true"
 
