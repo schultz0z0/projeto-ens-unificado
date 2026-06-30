@@ -1,4 +1,4 @@
-------
+---
 name: graphify
 version: 3.8.0
 description: "Multi-tenant + multi-user knowledge graph for white-label SaaS. Generates graph.json from any codebase, persists to Neo4j multi-database (1 DB per tenant, 1 DB per user). Includes graph query/stats tools, dual-storage memory system (global team + private user), and tenant-aware FastAPI routers (/api/graph/* and /api/memory/*). Triggered by /graphify in Hermes CLI."
