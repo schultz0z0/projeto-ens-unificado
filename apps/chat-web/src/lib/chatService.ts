@@ -55,6 +55,7 @@ const deleteSessionThroughBridge = async (sessionId: string) => {
 };
 
 export const chatService = {
+  resolveChatbotProxyBaseUrl,
   // Criar uma nova sessão
   async createSession(userId: string, title: string = "Nova Conversa") {
     const { data, error } = await supabase
