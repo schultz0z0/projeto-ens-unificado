@@ -1,7 +1,37 @@
----
+------
 name: graphify
-description: "Use for any question about a codebase, its architecture, file relationships, or project content — especially when graphify-out/ exists, where the question should be treated as a graphify query first. Turns any input (code, docs, papers, images, videos) into a persistent knowledge graph with god nodes, community detection, and query/path/explain tools."
----
+version: 3.8.0
+description: "Multi-tenant + multi-user knowledge graph for white-label SaaS. Generates graph.json from any codebase, persists to Neo4j multi-database (1 DB per tenant, 1 DB per user). Includes graph query/stats tools, dual-storage memory system (global team + private user), and tenant-aware FastAPI routers (/api/graph/* and /api/memory/*). Triggered by /graphify in Hermes CLI."
+triggers:
+  - /graphify
+  - /graphify <path>
+  - knowledge graph
+  - codebase analysis
+  - neo4j tenant provisioning
+  - memory.store.read
+  - memory.store.write
+  - memory.user.read
+  - memory.user.write
+platforms: [linux, macos, windows]
+metadata:
+  hermes:
+    tags: [graphify, neo4j, multi-tenant, multi-user, white-label, cypher, knowledge-graph, mcp, saas, fastapi]
+    category: code-graph
+    related_skills:
+      - impeccable-design-polish
+      - frontend-design
+      - taste-skill
+      - theme-factory
+      - marketing-psychology
+      - paywall-upgrade-cro
+      - canvas-design
+      - nexus-token-map
+      - claude-design
+    requires_runtime: [python>=3.10, neo4j>=6]
+    install:
+      - "pip install graphifyy[all]"
+    homepage: hermes-nexus
+------
 
 ## Backends (v3.7+ Neo4j multi-tenant)
 
