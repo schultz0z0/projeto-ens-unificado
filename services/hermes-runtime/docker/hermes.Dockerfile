@@ -3,16 +3,24 @@ FROM ghcr.io/hostinger/hvps-hermes-agent:latest
 USER root
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    HERMES_SOURCE_DIR=/opt/hermes-src\\
-    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user\\
-    NEXUS_GRAPH_URL=bolt://neo4j:7687\\
-    NEXUS_DEFAULT_DB=nexus\\
-    NEXUS_TENANT_ID=\\
-    NEXUS_NEO4J_USER=neo4j\\
-    NEXUS_NEO4J_PASSWORD=PLACEHOLDER_REPLACE_BEFORE_DEPLOY\\
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HERMES_SOURCE_DIR=/opt/hermes-src \
+    NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user \
+    NEXUS_GRAPH_URL=bolt://neo4j:7687 \
+    NEXUS_DEFAULT_DB=nexus \
+    NEXUS_TENANT_ID=\
+    NEXUS_NEO4J_USER=neo4j \
+    NEXUS_NEO4J_PASSWORD=CHANGEME\\
     NEXUS_USER_ID=\\
     NEXUS_MEMORY_DIR=/opt/data/memory\\
     NEXUS_GRAPH_JSON=/opt/data/graphify-out/graph.json
+
+# Base runtime/development dependencies expected by Hermes Desktop-like usage:
+# - curl/git/build tools for setup and integrations
+# - Chromium + Playwright deps for browser automation
+# - Node/npm/npx for JS-based MCP servers
+# - Python venv/pip/uv for Python-based MCP servers
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       bash curl git build-essential ca-certificates openssl wget gnupg \
