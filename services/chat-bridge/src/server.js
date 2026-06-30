@@ -1,7 +1,8 @@
 import { createServer } from "node:http";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import WebSocket from "ws";
 
 import {
   buildHermesRunSessionId,
@@ -84,16 +85,22 @@ const emitSse = (event, data) => (
   `event: ${event}\ndata: ${typeof data === "string" ? data : JSON.stringify(data)}\n\n`
 );
 
-const normalizeBaseUrl = (value) => {
-  if (!value) return null;
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
-};
-
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const normalizeBaseUrl = (value) => {
+  if (!value) return null;
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+};
+
+const toWebSocketUrl = (baseUrl, pathname) => {
+  const wsUrl = new URL(pathname, baseUrl);
+  wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
+  return wsUrl.toString();
+};
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getCorsHeaders = (req) => {
   const origin = req.headers.origin;
@@ -1483,7 +1490,7 @@ const handleRequest = async (req, res) => {
   // Frontend approval proxy (Opcao C - 2026-06-27).
   // Adiciona 2 rotas que fazem proxy pro hermes-api:
   //   - POST /api/approvals/respond : frontend -> bridge -> hermes-api
-  //   - GET  /api/approvals/stream  : SSE bridge que escuta /api/events do hermes
+  //   - GET  /api/approvals/stream  : SSE frontend -> bridge -> WS hermes-api
   // ===========================================================================
   if (req.method === "POST" && url.pathname === "/api/approvals/respond") {
     const user = await verifyUser(req);
@@ -1510,61 +1517,74 @@ const handleRequest = async (req, res) => {
     return;
   }
 
-  // SSE proxy: repassa eventos do hermes-api pro frontend.
-  // O frontend abre esta conexao e recebe 'approval_request' como eventos SSE.
+  // SSE proxy: o frontend continua com fetch/event-stream, enquanto a bridge
+  // assina o WebSocket real do Hermes em /api/approvals/ws.
   if (req.method === "GET" && url.pathname === "/api/approvals/stream") {
-    const user = await verifyUser(req);
+    await verifyUser(req);
     const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
     if (!hermesBaseUrl) {
       jsonResponse(res, 503, { error: "hermes_unreachable" }, corsHeaders);
       return;
     }
-    // Encaminha a conexao SSE. Usa a URL /api/approvals/ws convertida pra SSE
-    // como fallback caso hermes so exponha WS - aqui simplificamos: re-usa
-    // o canal de eventos do /api/events e filtra so approval_request.
-    // O frontend eh responsavel por interpretar o payload.
+
     writeSseHeaders(req, res);
-    try {
-      // Conecta no WebSocket do hermes via upgrade manual (node http puro)
-      // Como bridge nao tem WS nativo, usamos long-poll via /api/events como
-      // proxy aproximado. Para producao, recomenda-se adicionar `ws` no
-      // package.json e fazer upgrade real.
-      const upstream = await fetch(`${hermesBaseUrl}/api/events?channel=approvals`, {
-        method: "GET",
-        headers: {
-          Accept: "text/event-stream",
-          ...(config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {}),
-        },
-      });
-      if (!upstream.ok || !upstream.body) {
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "upstream_unavailable" })}\n\n`);
-        res.end();
-        return;
+    res.write(": connected\n\n");
+
+    const upstream = new WebSocket(toWebSocketUrl(hermesBaseUrl, "/api/approvals/ws"), {
+      headers: config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {},
+    });
+    const heartbeat = setInterval(() => {
+      if (!res.writableEnded) res.write(": heartbeat\n\n");
+    }, 25_000);
+    let closed = false;
+
+    const closeUpstream = (terminate = false) => {
+      if (upstream.readyState === WebSocket.CONNECTING || upstream.readyState === WebSocket.OPEN) {
+        if (terminate) upstream.terminate();
+        else upstream.close();
       }
-      // Re-emite os chunks como SSE
-      const reader = upstream.body.getReader();
-      const decoder = new TextDecoder();
-      // Detecta cliente desconectando
-      const onClose = () => {
-        try { reader.cancel(); } catch (_) { /* ignore */ }
-        try { res.end(); } catch (_) { /* ignore */ }
-      };
-      req.on("close", onClose);
-      req.on("aborted", onClose);
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) {
-          res.write(decoder.decode(value, { stream: true }));
-        }
-      }
-      res.end();
-    } catch (err) {
+    };
+    const cleanup = ({ endResponse = true, terminate = false } = {}) => {
+      if (closed) return;
+      closed = true;
+      clearInterval(heartbeat);
+      req.off("close", onClientClose);
+      req.off("aborted", onClientClose);
+      upstream.removeAllListeners();
+      closeUpstream(terminate);
+      if (endResponse && !res.writableEnded) res.end();
+    };
+    const onClientClose = () => cleanup({ endResponse: false, terminate: true });
+
+    req.on("close", onClientClose);
+    req.on("aborted", onClientClose);
+    upstream.on("open", () => {
+      if (!res.writableEnded) res.write(emitSse("ready", { ok: true }));
+    });
+    upstream.on("message", (data) => {
+      if (res.writableEnded) return;
+      const text = Array.isArray(data)
+        ? Buffer.concat(data).toString("utf8")
+        : Buffer.isBuffer(data)
+          ? data.toString("utf8")
+          : data instanceof ArrayBuffer
+            ? Buffer.from(data).toString("utf8")
+            : String(data);
+      let payload;
       try {
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "stream_failed", detail: String(err) })}\n\n`);
-        res.end();
-      } catch (_) { /* ignore */ }
-    }
+        payload = JSON.parse(text);
+      } catch {
+        payload = { type: "message", data: text };
+      }
+      res.write(emitSse(payload?.type || "message", payload));
+    });
+    upstream.on("error", (err) => {
+      if (!res.writableEnded) {
+        res.write(emitSse("error", { error: "upstream_ws_error", detail: err.message || String(err) }));
+      }
+      cleanup({ terminate: true });
+    });
+    upstream.on("close", () => cleanup());
     return;
   }
 

@@ -32,3 +32,15 @@ test("chat delete route collects Hermes session ids before storage cleanup", () 
   assert.match(deleteRouteBlock, /deleteChatSessionData\(\{/);
   assert.match(deleteRouteBlock, /hermesSessionIds: Array\.from\(hermesSessionIds\)/);
 });
+
+test("approval stream bridges the Hermes approval websocket instead of dashboard event SSE", () => {
+  const approvalRouteBlock = extractBlock(
+    source,
+    'url.pathname === "/api/approvals/stream"',
+    'jsonResponse(res, 404',
+  );
+
+  assert.match(approvalRouteBlock, /\/api\/approvals\/ws/);
+  assert.doesNotMatch(approvalRouteBlock, /\/api\/events\?channel=approvals/);
+  assert.doesNotMatch(approvalRouteBlock, /Accept: "text\/event-stream"/);
+});

@@ -12063,6 +12063,8 @@ def start_server(
             if server.started:
                 await server.shutdown()
 
+    asyncio.run(_serve())
+
 # ----------------------------------------------------------------------------
 # Frontend approval endpoints (Opcao C - 2026-06-27).
 # Expoe:
@@ -12136,6 +12138,3 @@ async def _drain_approvals_ws(ws: WebSocket, queue: asyncio.Queue):
         pass
     except Exception as e:  # noqa: BLE001
         logger.debug("approvals_ws drain ended: %s", e)
-
-
-    asyncio.run(_serve())

@@ -59,9 +59,11 @@ interface ChatInterfaceProps {
 
 export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   const { user, session, signOut } = useAuth();
+  const approvalBridgeBaseUrl = useMemo(() => chatService.resolveChatbotProxyBaseUrl() ?? "", []);
+  const getApprovalAccessToken = useCallback(async () => session?.access_token ?? null, [session?.access_token]);
   const { currentRequest: approvalRequest, respond: respondToApproval } = useApprovalStream({
-    bridgeBaseUrl: chatService.resolveChatbotProxyBaseUrl() ?? "",
-    getAccessToken: async () => session?.access_token ?? null,
+    bridgeBaseUrl: approvalBridgeBaseUrl,
+    getAccessToken: getApprovalAccessToken,
   });
   const [searchParams, setSearchParams] = useSearchParams();
   const currentSessionId = searchParams.get("chat");

@@ -52,6 +52,14 @@ export function useApprovalStream({ bridgeBaseUrl, getAccessToken, onRequest }: 
   // Conecta no SSE
   useEffect(() => {
     let cancelled = false;
+    if (!bridgeBaseUrl) {
+      setConnected(false);
+      return () => {
+        cancelled = true;
+        abortRef.current?.abort();
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      };
+    }
 
     const connect = async () => {
       if (cancelled) return;
