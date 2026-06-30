@@ -574,6 +574,15 @@ async def api_auth_me(request: Request):
     """Return the verified session as JSON. Auth-required (gate enforces)."""
     sess = getattr(request.state, "session", None)
     if sess is None:
+        if not getattr(request.app.state, "auth_required", False):
+            return {
+                "user_id": "local-dashboard",
+                "email": "",
+                "display_name": "Local dashboard",
+                "org_id": "",
+                "provider": "session-token",
+                "expires_at": int(time.time()) + 3600,
+            }
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {
         "user_id": sess.user_id,

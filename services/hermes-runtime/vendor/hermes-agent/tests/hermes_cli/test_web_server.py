@@ -1904,6 +1904,25 @@ class TestWebServerEndpoints:
         except Exception:
             pass  # Not JSON — that's fine (SPA HTML)
 
+    def test_auth_me_accepts_session_token_in_insecure_mode(self):
+        """The SPA may probe /api/auth/me even when dashboard auth is token-based."""
+        import hermes_cli.web_server as web_server
+
+        previous = getattr(web_server.app.state, "auth_required", None)
+        web_server.app.state.auth_required = False
+        try:
+            resp = self.client.get("/api/auth/me")
+        finally:
+            if previous is None:
+                delattr(web_server.app.state, "auth_required")
+            else:
+                web_server.app.state.auth_required = previous
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["provider"] == "session-token"
+        assert data["user_id"] == "local-dashboard"
+
     def test_unauthenticated_api_blocked(self):
         """API requests without the session token should be rejected."""
         from starlette.testclient import TestClient
