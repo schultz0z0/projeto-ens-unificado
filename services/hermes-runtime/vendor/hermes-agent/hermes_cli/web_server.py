@@ -11,6 +11,13 @@ Usage:
 
 from contextlib import asynccontextmanager, contextmanager
 
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    BaseModel = object
+    def Field(*args, **kwargs):
+        return args[0] if args else None
+
 import asyncio
 import base64
 import binascii
