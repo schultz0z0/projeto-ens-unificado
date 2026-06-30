@@ -82,16 +82,11 @@ export function useApprovalStream({ bridgeBaseUrl, getAccessToken, onRequest }: 
           const { value, done } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          // Parse SSE: eventos separados por 
-
-, dados em "data: ..."
-          const parts = buffer.split("
-
-");
+          // Parse SSE: eventos separados por \n\n, dados em "data: ..."
+          const parts = buffer.split("\n\n");
           buffer = parts.pop() ?? "";
           for (const part of parts) {
-            const dataLine = part.split("
-").find((l) => l.startsWith("data: "));
+            const dataLine = part.split("\n").find((l) => l.startsWith("data: "));
             if (!dataLine) continue;
             try {
               const payload = JSON.parse(dataLine.slice(6));
