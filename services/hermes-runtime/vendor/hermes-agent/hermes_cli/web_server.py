@@ -11305,6 +11305,27 @@ def _safe_plugin_api_relpath(api_field: Any, *, dashboard_dir: Path) -> Optional
     return api_field
 
 
+def _safe_dashboard_asset_relpath(asset_field: Any, *, dashboard_dir: Path) -> Optional[str]:
+    """Return a safe dashboard asset path only when the file exists locally."""
+    if not isinstance(asset_field, str) or not asset_field.strip():
+        return None
+    candidate = Path(asset_field.strip())
+    if candidate.is_absolute():
+        return None
+    try:
+        resolved = (dashboard_dir / candidate).resolve()
+        base = dashboard_dir.resolve()
+    except (OSError, RuntimeError):
+        return None
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        return None
+    if not resolved.is_file():
+        return None
+    return asset_field.strip()
+
+
 def _discover_dashboard_plugins() -> list:
     """Scan plugins/*/dashboard/manifest.json for dashboard extensions.
 
@@ -11388,6 +11409,28 @@ def _discover_dashboard_plugins() -> list:
                         "not be mounted",
                         name, raw_api,
                     )
+                entry = data.get("entry", "dist/index.js")
+                if not isinstance(entry, str) or not entry.strip():
+                    entry = "dist/index.js"
+                else:
+                    entry = entry.strip()
+                css = data.get("css")
+                if isinstance(css, str):
+                    css = css.strip() or None
+                else:
+                    css = None
+                missing_frontend_assets: List[str] = []
+                if _safe_dashboard_asset_relpath(entry, dashboard_dir=dashboard_dir) is None:
+                    missing_frontend_assets.append(entry)
+                if css and _safe_dashboard_asset_relpath(css, dashboard_dir=dashboard_dir) is None:
+                    missing_frontend_assets.append(css)
+                frontend_available = not missing_frontend_assets
+                if not frontend_available:
+                    _log.warning(
+                        "Plugin %s: dashboard frontend disabled because asset(s) "
+                        "are missing or unsafe: %s",
+                        name, ", ".join(missing_frontend_assets),
+                    )
                 plugins.append({
                     "name": name,
                     "label": data.get("label", name),
@@ -11396,10 +11439,12 @@ def _discover_dashboard_plugins() -> list:
                     "version": data.get("version", "0.0.0"),
                     "tab": tab_info,
                     "slots": slots,
-                    "entry": data.get("entry", "dist/index.js"),
-                    "css": data.get("css"),
+                    "entry": entry,
+                    "css": css,
                     "has_api": bool(safe_api),
                     "source": source,
+                    "_frontend_available": frontend_available,
+                    "_missing_frontend_assets": missing_frontend_assets,
                     "_dir": str(dashboard_dir),
                     "_api_file": safe_api,
                 })
@@ -11434,7 +11479,7 @@ async def get_dashboard_plugins():
     return [
         {k: v for k, v in p.items() if not k.startswith("_")}
         for p in plugins
-        if p["name"] not in hidden
+        if p["name"] not in hidden and p.get("_frontend_available", True)
     ]
 
 

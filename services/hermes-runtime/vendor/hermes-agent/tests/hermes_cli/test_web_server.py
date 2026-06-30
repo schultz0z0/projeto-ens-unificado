@@ -4729,6 +4729,59 @@ class TestDashboardPluginManifestExtensions:
         (plug_dir / "manifest.json").write_text(json.dumps(manifest))
         return plug_dir
 
+    def test_public_plugin_loader_hides_missing_frontend_assets(self, tmp_path, monkeypatch):
+        """Backend plugin APIs may exist without a built dashboard bundle.
+
+        The public plugin loader must not advertise those manifests to the SPA,
+        otherwise the browser imports missing JS/CSS and can break unrelated
+        pages such as /mcp.
+        """
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        self._write_plugin(tmp_path, "missing-front", {
+            "name": "missing-front",
+            "label": "Missing Frontend",
+            "tab": {"path": "/missing-front"},
+            "entry": "dist/index.js",
+            "api": "plugin_api.py",
+        })
+
+        from starlette.testclient import TestClient
+        from hermes_cli import web_server
+
+        web_server._dashboard_plugins_cache = None
+        plugins = web_server._get_dashboard_plugins(force_rescan=True)
+        entry = next(p for p in plugins if p["name"] == "missing-front")
+        assert entry["_frontend_available"] is False
+        assert entry["_missing_frontend_assets"] == ["dist/index.js"]
+
+        client = TestClient(web_server.app)
+        resp = client.get("/api/dashboard/plugins")
+
+        assert resp.status_code == 200
+        assert "missing-front" not in {p["name"] for p in resp.json()}
+
+    def test_public_plugin_loader_keeps_existing_frontend_assets(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        plug_dir = self._write_plugin(tmp_path, "ready-front", {
+            "name": "ready-front",
+            "label": "Ready Frontend",
+            "tab": {"path": "/ready-front"},
+            "entry": "dist/index.js",
+        })
+        dist_dir = plug_dir / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "index.js").write_text("window.__readyFront = true;")
+
+        from starlette.testclient import TestClient
+        from hermes_cli import web_server
+
+        web_server._dashboard_plugins_cache = None
+        client = TestClient(web_server.app)
+        resp = client.get("/api/dashboard/plugins")
+
+        assert resp.status_code == 200
+        assert "ready-front" in {p["name"] for p in resp.json()}
+
     def test_override_and_hidden_carried_through(self, tmp_path, monkeypatch):
         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
         self._write_plugin(tmp_path, "skin-home", {
