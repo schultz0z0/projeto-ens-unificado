@@ -53,6 +53,10 @@ function parseEnv(raw: string): Record<string, string> {
   return env;
 }
 
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 const TRANSPORT_TONE: Record<string, "success" | "warning" | "secondary"> = {
   http: "success",
   stdio: "warning",
@@ -107,7 +111,7 @@ export default function McpPage() {
   const loadServers = useCallback(() => {
     return api
       .getMcpServers()
-      .then((res) => setServers(res.servers))
+      .then((res) => setServers(asArray(res.servers)))
       .catch((e) => showToast(`Error: ${e}`, "error"));
   }, [showToast]);
 
@@ -115,8 +119,8 @@ export default function McpPage() {
     return api
       .getMcpCatalog()
       .then((res) => {
-        setCatalog(res.entries);
-        setDiagnostics(res.diagnostics);
+        setCatalog(asArray(res.entries));
+        setDiagnostics(asArray(res.diagnostics));
       })
       .catch((e) => showToast(`Error: ${e}`, "error"));
   }, [showToast]);
@@ -174,9 +178,10 @@ export default function McpPage() {
     setTesting(server.name);
     try {
       const result = await api.testMcpServer(server.name);
-      setTestResults((prev) => ({ ...prev, [server.name]: result }));
+      const normalized = { ...result, tools: asArray(result.tools) };
+      setTestResults((prev) => ({ ...prev, [server.name]: normalized }));
       if (result.ok) {
-        showToast(`${server.name}: ${result.tools.length} tool(s)`, "success");
+        showToast(`${server.name}: ${normalized.tools.length} tool(s)`, "success");
       } else {
         showToast(`${server.name}: ${result.error ?? "Failed"}`, "error");
       }
@@ -252,9 +257,10 @@ export default function McpPage() {
   );
 
   const handleInstallClick = (entry: McpCatalogEntry) => {
-    if (entry.required_env.length > 0) {
+    const requiredEnv = asArray(entry.required_env);
+    if (requiredEnv.length > 0) {
       const initial: Record<string, string> = {};
-      entry.required_env.forEach((item) => {
+      requiredEnv.forEach((item) => {
         initial[item.name] = "";
       });
       setInstallEnv(initial);
@@ -266,7 +272,7 @@ export default function McpPage() {
 
   const handleInstallSubmit = () => {
     if (!installEntry) return;
-    const missing = installEntry.required_env.filter(
+    const missing = asArray(installEntry.required_env).filter(
       (item) => item.required && !(installEnv[item.name] ?? "").trim(),
     );
     if (missing.length > 0) {
@@ -488,7 +494,7 @@ export default function McpPage() {
               <p className="text-xs text-muted-foreground">
                 This MCP requires the following values to be configured.
               </p>
-              {installEntry.required_env.map((item) => (
+              {asArray(installEntry.required_env).map((item) => (
                 <div className="grid gap-2" key={item.name}>
                   <Label htmlFor={`install-env-${item.name}`}>
                     {item.prompt}

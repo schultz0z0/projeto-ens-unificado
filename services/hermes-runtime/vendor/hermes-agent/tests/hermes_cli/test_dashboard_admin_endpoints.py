@@ -65,6 +65,18 @@ class TestMcpEndpoints:
         srv = self.client.get("/api/mcp/servers").json()["servers"][0]
         assert srv["env"]["API_KEY"] != "sk-secret-1234567890"
 
+    def test_mcp_server_list_uses_array_contracts(self):
+        self.client.post(
+            "/api/mcp/servers",
+            json={
+                "name": "srv3",
+                "url": "https://x/mcp",
+            },
+        )
+        srv = self.client.get("/api/mcp/servers").json()["servers"][0]
+        assert isinstance(srv["args"], list)
+        assert isinstance(srv["tools"], list)
+
     def test_duplicate_rejected(self):
         self.client.post("/api/mcp/servers", json={"name": "dup", "url": "u"})
         r = self.client.post("/api/mcp/servers", json={"name": "dup", "url": "u"})
@@ -97,6 +109,7 @@ class TestMcpEndpoints:
         # carry the install/enabled status fields the UI relies on.
         for e in body["entries"]:
             assert {"name", "transport", "installed", "enabled", "needs_install"} <= set(e)
+            assert isinstance(e["required_env"], list)
 
     def test_catalog_install_unknown_404(self):
         r = self.client.post("/api/mcp/catalog/install", json={"name": "no-such-mcp-xyz"})
