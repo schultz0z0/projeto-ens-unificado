@@ -17,6 +17,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     NEXUS_GRAPH_JSON=/opt/data/graphify-out/graph.json
 
 ENV PYTHONPATH=/opt
+ENV HERMES_WEB_DIST=/opt/hermes-src/hermes_cli/web_dist
 
 # Base runtime/development dependencies expected by Hermes Desktop-like usage:
 # - curl/git/build tools for setup and integrations
@@ -35,6 +36,14 @@ RUN apt-get update && apt-get upgrade -y && \
 # Install the repo-vendored Hermes Agent source so VPS builds use this
 # monorepo/fork instead of pulling hermes-agent from PyPI.
 COPY vendor/hermes-agent /opt/hermes-src
+
+# Build dashboard assets from the vendored web source. Hermes serves the
+# compiled SPA from hermes_cli/web_dist, which is gitignored and may be stale
+# in long-lived VPS working trees if we only copy the source directory.
+WORKDIR /opt/hermes-src
+RUN npm ci --workspace web --include-workspace-root=false --no-audit --no-fund && \
+    npm run build --workspace web && \
+    rm -rf node_modules web/node_modules /root/.npm
 
 # Bootstrap the Hermes venv used by the Hostinger image. Install Hermes extras
 # from the local source, plus MCP SDK, Playwright and uv so MCP/tool
@@ -100,4 +109,3 @@ RUN chmod +x \
       /usr/local/bin/ensure-ens-rag-mcp.py
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-
