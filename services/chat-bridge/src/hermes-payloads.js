@@ -40,6 +40,32 @@ const deriveImageAspectRatio = (size) => IMAGE_GENERATE_SIZE_TO_ASPECT_RATIO[siz
 
 
 
+export const NEXUS_MEMORY_ROUTING_CONTRACT = [
+  "[Contrato Nexus de memoria nativa]",
+  "Memoria Hermes nativa permanece ativa: continue usando a memoria persistente do Hermes para continuidade, preferencias do usuario e contexto de sessao como ja funciona hoje.",
+  "Os MCPs RAG ENS e Graph somam contexto nativamente; nunca substituem a memoria persistente do Hermes.",
+  "Use MCP RAG ENS para fatos oficiais, catalogo e detalhes de cursos, conhecimento institucional, estrategias validadas, analises salvas e conteudo que precisa de fonte documental.",
+  "Use MCP Graph para relacoes persistentes, impacto, jornada, dependencias, decisoes operacionais, conexoes entre curso, persona, campanha, canal, CRM, KPI e sistemas.",
+  "Em tarefas hibridas, use Graph para mapear relacoes e RAG para validar fatos oficiais.",
+  "Nao duplique ementas, descricoes longas ou catalogo de cursos no Graph; guarde apenas referencias, relacoes, decisoes e ponteiros para o RAG quando houver fonte.",
+  "So grave conhecimento novo em RAG/Graph quando for duravel, validado ou claramente solicitado; ainda assim preserve a memoria Hermes nativa.",
+].join("\n");
+
+
+
+const withNexusMemoryRoutingContract = (messageText) => {
+  const trimmed = String(messageText ?? "").trim();
+  if (!isNexusMemoryRoutingContractEnabled()) return trimmed;
+  return [NEXUS_MEMORY_ROUTING_CONTRACT, "", "[Pedido atual do usuario]", trimmed].join("\n");
+};
+
+
+
+export const isNexusMemoryRoutingContractEnabled = () =>
+  String(process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED ?? "true").toLowerCase() !== "false";
+
+
+
 const buildImageGenerationMessageText = ({ messageText, imageOptions, imageAttachments = [] }) => {
 
   const options = imageOptions ?? {};
@@ -297,12 +323,13 @@ const buildHermesSessionChatMessage = ({
     })
 
     : messageText;
+  const routedMessageText = withNexusMemoryRoutingContract(effectiveMessageText);
 
   if (imageAttachments.length === 0) {
 
     return buildHermesRunInput({
 
-      messageText: effectiveMessageText,
+      messageText: routedMessageText,
 
       attachments,
 
@@ -318,7 +345,7 @@ const buildHermesSessionChatMessage = ({
 
   const textContent = buildHermesRunInput({
 
-    messageText: effectiveMessageText,
+    messageText: routedMessageText,
 
     attachments: nonImageAttachments,
 

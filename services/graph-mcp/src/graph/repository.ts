@@ -16,7 +16,21 @@ export type GraphQueryRow = Record<string, unknown>;
 
 export type UpsertFactInput = {
   id?: string;
-  kind: SeedNode['kind'] | 'note' | 'decision' | 'risk' | 'integration' | 'journey_stage';
+  kind: SeedNode['kind']
+    | 'note'
+    | 'decision'
+    | 'risk'
+    | 'integration'
+    | 'journey_stage'
+    | 'course_ref'
+    | 'marketing_ref'
+    | 'insight_ref'
+    | 'institutional_ref'
+    | 'persona'
+    | 'campaign'
+    | 'channel'
+    | 'offer'
+    | 'kpi';
   label: string;
   description: string;
   aliases?: string[];
@@ -98,9 +112,9 @@ export class Neo4jGraphRepository {
         '   OR any(alias IN coalesce(n.aliases, []) WHERE toLower(alias) CONTAINS toLower($query))',
         'RETURN n.id AS id, n.kind AS kind, n.label AS label, n.description AS description, n.aliases AS aliases',
         'ORDER BY n.kind, n.label',
-        'LIMIT $limit'
+        buildCypherLimit('limit')
       ].join('\n'),
-      { tenant_id: context.tenantId, query, limit: clampLimit(limit) }
+      { tenant_id: context.tenantId, query, limit: normalizeLimit(limit) }
     );
   }
 
@@ -118,9 +132,9 @@ export class Neo4jGraphRepository {
         '       neighbor.label AS label,',
         '       neighbor.description AS description,',
         '       [rel IN rels | rel.type] AS relation_types',
-        'LIMIT $limit'
+        buildCypherLimit('limit')
       ].join('\n'),
-      { tenant_id: context.tenantId, node_id: nodeId, limit: clampLimit(limit, 100) }
+      { tenant_id: context.tenantId, node_id: nodeId, limit: normalizeLimit(limit, 100) }
     );
   }
 
@@ -246,8 +260,13 @@ function sanitizeProperties(value: Record<string, unknown> | undefined): Record<
   return sanitized;
 }
 
-function clampLimit(limit: number, max = 50): number {
-  return Math.max(1, Math.min(max, Math.floor(limit || 10)));
+export function normalizeLimit(limit: number, max = 50): number {
+  const normalized = Number.isFinite(limit) ? Math.floor(limit) : 10;
+  return Math.max(1, Math.min(max, normalized));
+}
+
+export function buildCypherLimit(paramName: string): string {
+  return `LIMIT toInteger($${paramName})`;
 }
 
 function slugify(value: string): string {

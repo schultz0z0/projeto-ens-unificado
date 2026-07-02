@@ -12,6 +12,8 @@ const context = {
   runId: "run_123",
   sessionId: "nexus:session-1",
   streamedText: "",
+  tenantId: "ens",
+  userId: "user-1",
 };
 
 test("buildHermesRunSessionId creates stable short ids", () => {
@@ -168,6 +170,33 @@ test("parseHermesEventBlock extracts local artifact paths from tool completed JS
     mimeType: "image/png",
   }]);
   assert.equal(parsed.completed, false);
+});
+
+test("parseHermesEventBlock emits memory diagnostics for RAG and Graph tools", () => {
+  const rag = parseHermesEventBlock(
+    'data: {"event":"tool.started","tool_name":"ens_rag_search"}',
+    context,
+  );
+  const graph = parseHermesEventBlock(
+    'data: {"event":"tool.failed","tool_name":"nexus_graph_search","error":{"message":"Neo4j search failed"}}',
+    context,
+  );
+
+  assert.deepEqual(rag.events.find((event) => event.data?.event === "memory.tool")?.data, {
+    provider: "hermes",
+    event: "memory.tool",
+    tool_name: "ens_rag_search",
+    tool_namespace: "ens_rag",
+    memory_layer: "rag",
+    tenant_id: "ens",
+    user_id: "user-1",
+    run_id: "run_123",
+    session_id: "nexus:session-1",
+    failure: false,
+  });
+  assert.equal(graph.events.find((event) => event.data?.event === "memory.tool")?.data.memory_layer, "graph");
+  assert.equal(graph.events.find((event) => event.data?.event === "memory.tool")?.data.failure, true);
+  assert.match(graph.events.find((event) => event.data?.event === "memory.tool")?.data.error_excerpt, /Neo4j/);
 });
 
 test("parseHermesEventBlock preserves original download URL for staged image artifacts", () => {

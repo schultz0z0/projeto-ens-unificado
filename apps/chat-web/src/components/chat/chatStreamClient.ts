@@ -1,5 +1,6 @@
 import { createFilePart, guessFileNameFromUrl, isImageResource, type ChatMessageArtifactPart, type ChatMessageFilePart, type ChatMessageStatusPart } from "@/lib/chatMessageParts";
 import type { ChatProxyPayload } from "@/lib/chatProxyPayload";
+import { getTenantContext } from "@/lib/tenant-id";
 import { isAllowedStreamFileUrl } from "./chatStreamFileSafety";
 
 export type StreamStatus = {
@@ -39,11 +40,13 @@ const requestRun = async ({
 }) => {
   try {
     const baseUrl = resolveChatbotProxyBaseUrl();
+    const { Authorization: _tenantAuthorization, ...tenantContext } = await getTenantContext();
     return await fetch(`${baseUrl}/api/chat/runs`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        ...tenantContext,
       },
       body: JSON.stringify(payload),
     });

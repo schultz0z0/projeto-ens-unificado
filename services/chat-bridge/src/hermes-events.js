@@ -277,13 +277,45 @@ const extractErrorMessage = (value, depth = 0) => {
   return extractErrorMessage(value.error, depth + 1) ?? extractErrorMessage(value.response, depth + 1);
 };
 
+const extractToolName = (payload) => (
+  typeof payload.tool_name === "string"
+    ? payload.tool_name
+    : payload.tool && typeof payload.tool === "object" && typeof payload.tool.name === "string"
+      ? payload.tool.name
+      : ""
+);
+
+const classifyToolMemoryLayer = (toolName) => {
+  if (toolName.startsWith("ens_rag_")) {
+    return { tool_namespace: "ens_rag", memory_layer: "rag" };
+  }
+  if (toolName.startsWith("nexus_graph_")) {
+    return { tool_namespace: "nexus_graph", memory_layer: "graph" };
+  }
+  return { tool_namespace: "external", memory_layer: "external_tool" };
+};
+
+const buildToolMemoryMeta = (eventName, payload, context) => {
+  const toolName = extractToolName(payload);
+  if (!eventName.includes("tool") || !toolName) return null;
+
+  const failure = eventName.includes("failed") || eventName.includes("error") || Boolean(payload.error);
+  return {
+    provider: "hermes",
+    event: "memory.tool",
+    tool_name: toolName,
+    ...classifyToolMemoryLayer(toolName),
+    tenant_id: context.tenantId ?? null,
+    user_id: context.userId ?? null,
+    run_id: context.runId,
+    session_id: context.sessionId,
+    failure,
+    ...(failure ? { error_excerpt: (extractErrorMessage(payload) ?? "Tool failed").slice(0, 160) } : {}),
+  };
+};
+
 const describeStatusEvent = (eventName, payload) => {
-  const toolName =
-    typeof payload.tool_name === "string"
-      ? payload.tool_name
-      : payload.tool && typeof payload.tool === "object" && typeof payload.tool.name === "string"
-        ? payload.tool.name
-        : "";
+  const toolName = extractToolName(payload);
 
   if (eventName.includes("tool") && toolName) {
     return {
@@ -461,6 +493,8 @@ export const parseHermesEventBlock = (eventBlock, context) => {
   }
 
   const status = describeStatusEvent(eventName, parsedPayload);
+  const toolMemoryMeta = buildToolMemoryMeta(eventName, parsedPayload, context);
+  if (toolMemoryMeta) events.push({ event: "meta", data: toolMemoryMeta });
   if (status) events.push({ event: "status", data: status });
   if (extractedFiles.length > 0) events.push({ event: "files", data: { files: extractedFiles } });
 

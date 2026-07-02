@@ -14,6 +14,10 @@ import {
 
   buildHermesResponsesInput,
 
+  isNexusMemoryRoutingContractEnabled,
+
+  NEXUS_MEMORY_ROUTING_CONTRACT,
+
   selectHermesBridgeMode,
 
   shouldUseResponsesApi,
@@ -166,11 +170,73 @@ test("buildHermesSessionChatRequest leaves conversation continuity to Hermes Ses
 
 
 
-  assert.deepEqual(request, {
+  assert.equal(typeof request.message, "string");
 
-    message: "qual e minha cor escolhida?",
+  assert.match(request.message, /qual e minha cor escolhida\?/);
+
+  assert.match(request.message, /Memoria Hermes nativa permanece ativa/);
+
+  assert.doesNotMatch(request.message, /Minha cor escolhida e vermelho/);
+
+});
+
+test("buildHermesSessionChatRequest prepends native memory routing without disabling Hermes memory", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "monte uma campanha conectando curso, persona e CRM",
+
+    attachments: [],
 
   });
+
+
+
+  assert.equal(request.message.startsWith(NEXUS_MEMORY_ROUTING_CONTRACT), true);
+
+  assert.match(request.message, /Memoria Hermes nativa permanece ativa/);
+
+  assert.match(request.message, /nunca substituem a memoria persistente do Hermes/);
+
+  assert.match(request.message, /MCP RAG ENS/);
+
+  assert.match(request.message, /MCP Graph/);
+
+  assert.match(request.message, /curso, persona e CRM/);
+
+});
+
+test("memory routing contract can be disabled by environment flag for rollback", () => {
+
+  const previous = process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
+
+  process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = "false";
+
+  try {
+
+    assert.equal(isNexusMemoryRoutingContractEnabled(), false);
+
+    const request = buildHermesSessionChatRequest({
+
+      messageText: "teste simples",
+
+      attachments: [],
+
+    });
+
+    assert.deepEqual(request, {
+
+      message: "teste simples",
+
+    });
+
+  } finally {
+
+    if (previous === undefined) delete process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
+
+    else process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = previous;
+
+  }
 
 });
 
@@ -202,17 +268,21 @@ test("buildHermesSessionChatRequest sends current images as Hermes session multi
 
 
 
-  assert.deepEqual(request, {
+  assert.equal(Array.isArray(request.message), true);
 
-    message: [
+  assert.equal(request.message.length, 2);
 
-      { type: "input_text", text: "analise esta imagem" },
+  assert.equal(request.message[0].type, "input_text");
 
-      { type: "input_image", image_url: "data:image/png;base64,AAAA", detail: "auto" },
+  assert.match(request.message[0].text, /analise esta imagem/);
 
-    ],
+  assert.match(request.message[0].text, /Memoria Hermes nativa permanece ativa/);
 
-  });
+  assert.equal(request.message[1].type, "input_image");
+
+  assert.equal(request.message[1].image_url, "data:image/png;base64,AAAA");
+
+  assert.equal(request.message[1].detail, "auto");
 
 });
 test("buildHermesSessionChatRequest turns image mode into image_generate instructions", () => {

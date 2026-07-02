@@ -1,5 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import {
+  buildRagGraphSyncPlan,
+  fetchRagGraphSyncSources,
+  type RagGraphSyncCollection
+} from '../graph/ragSync.js';
 import { type Neo4jGraphRepository, type RelateInput, type UpsertFactInput } from '../graph/repository.js';
 import { resolveGraphContext } from '../graph/schema.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
@@ -24,8 +29,33 @@ const graphKindSchema = z.enum([
   'decision',
   'risk',
   'integration',
-  'journey_stage'
+  'journey_stage',
+  'course_ref',
+  'marketing_ref',
+  'insight_ref',
+  'institutional_ref',
+  'persona',
+  'campaign',
+  'channel',
+  'offer',
+  'kpi'
 ]);
+
+const ragGraphSyncCollectionSchema = z.enum(['courses', 'marketing', 'insights', 'institutional']);
+
+const validatedGraphWriteSchema = {
+  validated: z.boolean().default(false).describe('Must be true only when the user explicitly approved this durable graph write.'),
+  validation_note: z.string().optional().describe('Short note explaining who/what validated this durable graph write.')
+};
+
+export function assertValidatedGraphWrite(input: { validated?: boolean; validation_note?: string }): void {
+  if (!input.validated) {
+    throw new Error('Graph write blocked: explicit validation is required before changing durable relational memory.');
+  }
+  if (!input.validation_note?.trim()) {
+    throw new Error('Graph write blocked: validation note is required before changing durable relational memory.');
+  }
+}
 
 export function createNexusGraphMcpServer({ repository }: ServerDependencies): McpServer {
   const server = new McpServer({
@@ -58,11 +88,81 @@ export function createNexusGraphMcpServer({ repository }: ServerDependencies): M
       recommended_flow: [
         'Call nexus_graph_bootstrap for a new tenant or after deploy.',
         'Use nexus_graph_search before creating duplicate nodes.',
-        'Use nexus_graph_upsert_fact for durable business/system/product facts.',
-        'Use nexus_graph_relate to connect facts.',
+        'Use nexus_graph_upsert_fact for durable business/system/product facts only after explicit validation.',
+        'Use nexus_graph_relate to connect facts only after explicit validation.',
+        'Use nexus_graph_sync_rag_refs to sync lightweight RAG references into Graph after admin validation.',
         'Use nexus_graph_neighbors or nexus_graph_query for reasoning over relationships.'
       ]
     })
+  );
+
+  server.registerTool(
+    'nexus_graph_sync_rag_refs',
+    {
+      title: 'Sync ENS RAG References To Graph',
+      description: 'Admin-only sync that imports lightweight ENS RAG source references into Graph as relationship pointers, never full document bodies.',
+      inputSchema: {
+        ...tenantContextSchema,
+        collections: z.array(ragGraphSyncCollectionSchema).default(['courses', 'marketing', 'insights', 'institutional']),
+        limit: z.number().int().positive().max(500).default(100),
+        rag_internal_url: z.string().url().optional(),
+        bootstrap_first: z.boolean().default(true),
+        dry_run: z.boolean().default(false),
+        actor_profile: z.string().min(1).default('default'),
+        admin_mode: z.boolean().default(false),
+        ...validatedGraphWriteSchema
+      }
+    },
+    async input => {
+      try {
+        if (!input.admin_mode) {
+          throw new Error('Graph RAG sync blocked: admin_mode=true is required.');
+        }
+        assertValidatedGraphWrite(input);
+        const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
+        if (input.bootstrap_first && !input.dry_run) {
+          await repository.bootstrap(context);
+        }
+        const sources = await fetchRagGraphSyncSources({
+          ragInternalUrl: input.rag_internal_url ?? process.env.NEXUS_RAG_INTERNAL_URL ?? process.env.NEXUS_RAG_MCP_URL ?? 'http://rag-mcp:8000/internal/graph-sync/sources',
+          tenantId: context.tenantId,
+          collections: input.collections as RagGraphSyncCollection[],
+          limit: input.limit,
+          internalKey: process.env.NEXUS_INTERNAL_SYNC_KEY
+        });
+        const plan = buildRagGraphSyncPlan({ tenantId: context.tenantId, sources });
+        if (input.dry_run) {
+          return jsonToolResult({
+            ok: true,
+            dry_run: true,
+            tenant_id: context.tenantId,
+            source_count: sources.length,
+            fact_count: plan.facts.length,
+            relation_count: plan.relations.length,
+            facts: plan.facts,
+            relations: plan.relations
+          });
+        }
+
+        for (const fact of plan.facts) {
+          await repository.upsertFact(context, fact);
+        }
+        for (const relation of plan.relations) {
+          await repository.relate(context, relation);
+        }
+
+        return jsonToolResult({
+          ok: true,
+          tenant_id: context.tenantId,
+          source_count: sources.length,
+          fact_count: plan.facts.length,
+          relation_count: plan.relations.length,
+          validation_note: input.validation_note
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
   );
 
   server.registerTool(
@@ -179,11 +279,13 @@ export function createNexusGraphMcpServer({ repository }: ServerDependencies): M
         description: z.string().min(1),
         aliases: z.array(z.string()).default([]),
         source: z.string().optional(),
-        properties: z.record(z.unknown()).default({})
+        properties: z.record(z.unknown()).default({}),
+        ...validatedGraphWriteSchema
       }
     },
     async input => {
       try {
+        assertValidatedGraphWrite(input);
         const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
         const fact: UpsertFactInput = {
           id: input.id,
@@ -212,11 +314,13 @@ export function createNexusGraphMcpServer({ repository }: ServerDependencies): M
         to_id: z.string().min(1),
         type: z.string().min(1),
         description: z.string().optional(),
-        properties: z.record(z.unknown()).default({})
+        properties: z.record(z.unknown()).default({}),
+        ...validatedGraphWriteSchema
       }
     },
     async input => {
       try {
+        assertValidatedGraphWrite(input);
         const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
         const relation: RelateInput = {
           fromId: input.from_id,

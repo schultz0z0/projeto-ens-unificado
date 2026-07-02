@@ -44,3 +44,48 @@ test("approval stream bridges the Hermes approval websocket instead of dashboard
   assert.doesNotMatch(approvalRouteBlock, /\/api\/events\?channel=approvals/);
   assert.doesNotMatch(approvalRouteBlock, /Accept: "text\/event-stream"/);
 });
+
+test("Hermes headers forward tenant and user context for memory MCP routing", () => {
+  const headersBlock = extractBlock(
+    source,
+    "buildHermesHeaders(accept, run)",
+    "async fetchHermesEvents",
+  );
+
+  assert.match(headersBlock, /"X-Tenant-Id": run\.tenant_id/);
+  assert.match(headersBlock, /"X-User-Id": run\.user_id/);
+  assert.match(headersBlock, /"X-Nexus-User-Id": run\.user_id/);
+});
+
+test("created chat runs preserve trusted tenant context for downstream memory tools", () => {
+  const createRunBlock = extractBlock(
+    source,
+    "async createRun({ user, payload })",
+    "async ensureHermesSessionBinding",
+  );
+
+  assert.match(createRunBlock, /tenant_id: user\.tenant_id/);
+  assert.match(createRunBlock, /user_id: user\.id/);
+});
+
+test("bridge exposes authenticated memory diagnostics with graph health", () => {
+  const diagnosticsRouteBlock = extractBlock(
+    source,
+    'url.pathname === "/api/memory/diagnostics"',
+    'const artifactAccessMatch',
+  );
+
+  assert.match(diagnosticsRouteBlock, /const user = await verifyUser\(req\)/);
+  assert.match(diagnosticsRouteBlock, /const graphHealth = await fetchGraphHealth\(\)/);
+  assert.match(diagnosticsRouteBlock, /memory_diagnostics: run\.memory_diagnostics/);
+});
+
+test("run events update memory diagnostics from Hermes tool metadata", () => {
+  const appendEventBlock = extractBlock(
+    source,
+    "appendEvent(run, event)",
+    "async importFilesEventArtifacts",
+  );
+
+  assert.match(appendEventBlock, /applyMemoryDiagnosticEvent\(run\.memory_diagnostics, normalizedEvent\)/);
+});

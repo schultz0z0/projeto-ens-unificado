@@ -35,6 +35,16 @@ describe('white-label graph schema', () => {
     expect(plan.seedRelations.every(item => item.params.tenant_id === 'acme')).toBe(true);
   });
 
+  test('database-per-tenant strategy resolves an isolated tenant database name', () => {
+    const context = resolveGraphContext({ tenantId: 'ENS Cliente', databaseStrategy: 'database-per-tenant' });
+
+    expect(context).toMatchObject({
+      tenantId: 'ens-cliente',
+      database: 'nexus_tenant_ens-cliente',
+      databaseStrategy: 'database-per-tenant'
+    });
+  });
+
   test('read-only cypher allows MATCH and rejects writes', () => {
     expect(() => assertReadOnlyCypher('MATCH (n) RETURN n LIMIT 5')).not.toThrow();
     expect(() => assertReadOnlyCypher('CREATE (n:Thing) RETURN n')).toThrow(/read-only/i);

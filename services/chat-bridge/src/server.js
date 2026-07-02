@@ -9,6 +9,13 @@ import {
   parseHermesEventBlock,
   parseHermesStatusPayload,
 } from "./hermes-events.js";
+import {
+  applyMemoryDiagnosticEvent,
+  createInitialMemoryDiagnostics,
+} from "./memory-diagnostics.js";
+import {
+  resolveTrustedTenantId,
+} from "./tenant-context.js";
 import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
 import {
   collectArtifactUrlReplacements,
@@ -17,14 +24,15 @@ import {
   replaceArtifactUrls,
   toBridgeArtifactPath,
 } from "./artifacts.js";
-import {
-  buildHermesRunRequest,
+import {
+  buildHermesRunRequest,
   buildHermesResponsesRequest,
   buildHermesSessionChatRequest,
-  buildHermesSessionKey,
+  buildHermesSessionKey,
+  isNexusMemoryRoutingContractEnabled,
   isImageAttachment,
   selectHermesBridgeMode,
-} from "./hermes-payloads.js";
+} from "./hermes-payloads.js";
 import {
   bindHermesSessionFromResponse,
   bindHermesSessionToState,
@@ -63,11 +71,14 @@ const config = {
   artifactInternalKey: process.env.ARTIFACT_INTERNAL_KEY || "",
   artifactAccessTokenTtlSeconds: Number(process.env.ARTIFACT_ACCESS_TOKEN_TTL_SECONDS || 900),
   hermesBaseUrl: process.env.HERMES_API_BASE_URL || "",
-  hermesApiKey: process.env.HERMES_API_KEY || "",
-  hermesModelName: process.env.HERMES_MODEL_NAME || "hermes-agent",
-  hermesPollMs: Number(process.env.HERMES_RUN_POLL_MS || 2000),
-  hermesSessionsApiEnabled: process.env.HERMES_SESSIONS_API_ENABLED !== "false",
-};
+  hermesApiKey: process.env.HERMES_API_KEY || "",
+  hermesModelName: process.env.HERMES_MODEL_NAME || "hermes-agent",
+  hermesPollMs: Number(process.env.HERMES_RUN_POLL_MS || 2000),
+  hermesSessionsApiEnabled: process.env.HERMES_SESSIONS_API_ENABLED !== "false",
+  defaultTenantId: process.env.NEXUS_TENANT_ID || "ens",
+  graphMcpUrl: process.env.NEXUS_GRAPH_MCP_URL || "http://graph-mcp:8010/mcp",
+  internalSyncKey: process.env.NEXUS_INTERNAL_SYNC_KEY || "",
+};
 
 const terminalStatuses = new Set(["completed", "failed", "cancelled", "canceled", "expired", "interrupted"]);
 
@@ -110,7 +121,7 @@ const getCorsHeaders = (req) => {
   return {
     ...(allowedOrigin ? { "Access-Control-Allow-Origin": allowedOrigin, "Vary": "Origin" } : {}),
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization,Content-Type",
+    "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Tenant-Id,X-User-Id",
     "Access-Control-Max-Age": "86400",
   };
 };
@@ -135,23 +146,40 @@ const readJsonBody = async (req, maxBytes = 1_000_000) => {
   }
 };
 
-const getBearerToken = (req) => {
-  const authorization = req.headers.authorization || "";
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() || "";
-};
-
-const verifyUser = async (req) => {
-  const token = getBearerToken(req);
-  if (!token) {
-    const error = new Error("missing_bearer_token");
-    error.status = 401;
-    throw error;
-  }
-
-  if (!config.supabaseUrl || !config.supabaseAnonKey) {
-    return { id: "authenticated", token };
-  }
+const getBearerToken = (req) => {
+  const authorization = req.headers.authorization || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || "";
+};
+
+const firstHeaderValue = (value) => Array.isArray(value) ? value[0] : value;
+
+const normalizeTenantId = (value, fallback = config.defaultTenantId) => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (/^[a-z0-9_-]{3,64}$/.test(normalized)) return normalized;
+  return /^[a-z0-9_-]{3,64}$/.test(fallback) ? fallback : "ens";
+};
+
+const verifyUser = async (req) => {
+  const token = getBearerToken(req);
+  const requestedTenantId = firstHeaderValue(req.headers["x-tenant-id"]);
+  if (!token) {
+    const error = new Error("missing_bearer_token");
+    error.status = 401;
+    throw error;
+  }
+
+  if (!config.supabaseUrl || !config.supabaseAnonKey) {
+    return {
+      id: "authenticated",
+      token,
+      tenant_id: resolveTrustedTenantId({
+        requestedTenantId,
+        fallbackTenantId: config.defaultTenantId,
+        trustClientHeader: true,
+      }),
+    };
+  }
 
   const response = await fetch(new URL("/auth/v1/user", config.supabaseUrl), {
     headers: {
@@ -173,10 +201,43 @@ const verifyUser = async (req) => {
     throw error;
   }
 
-  return { id: user.id, token };
-};
-
-const buildSupabaseAdminHeaders = () => {
+  const tenantId = resolveTrustedTenantId({
+    user,
+    requestedTenantId,
+    fallbackTenantId: config.defaultTenantId,
+    trustClientHeader: false,
+  });
+
+  return { id: user.id, token, tenant_id: tenantId };
+};
+
+const buildGraphHealthUrl = () => {
+  const url = new URL(config.graphMcpUrl || "http://graph-mcp:8010/mcp");
+  url.pathname = "/health";
+  url.search = "";
+  return url;
+};
+
+const fetchGraphHealth = async () => {
+  try {
+    const response = await fetch(buildGraphHealthUrl(), {
+      headers: config.internalSyncKey ? { "X-Nexus-Internal-Key": config.internalSyncKey } : {},
+    });
+    const payload = await response.json().catch(() => ({}));
+    return {
+      ok: response.ok,
+      status: response.status,
+      ...payload,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
+const buildSupabaseAdminHeaders = () => {
   if (!config.supabaseUrl || !config.supabaseServiceRoleKey) {
     throw new Error("missing_SUPABASE_SERVICE_ROLE_KEY");
   }
@@ -508,7 +569,14 @@ class RunStore {
         if (!run?.id) return;
         if (!Array.isArray(run.events)) run.events = [];
         if (!Array.isArray(run.files)) run.files = [];
-        if (!Array.isArray(run.attachments)) run.attachments = [];
+        if (!Array.isArray(run.attachments)) run.attachments = [];
+        if (!run.memory_diagnostics) {
+          run.memory_diagnostics = createInitialMemoryDiagnostics({
+            tenantId: run.tenant_id ?? config.defaultTenantId,
+            userId: run.user_id ?? "unknown",
+            routingContractEnabled: isNexusMemoryRoutingContractEnabled(),
+          });
+        }
         if (!terminalStatuses.has(run.status)) {
           run.status = "interrupted";
           run.error_message = "Bridge reiniciou antes do run terminar.";
@@ -620,9 +688,10 @@ class HermesBridge {
       currentMessageText: validated.message_text,
     });
     const run = {
-      id: randomUUID(),
-      user_id: user.id,
-      chat_session_id: validated.session_id,
+      id: randomUUID(),
+      user_id: user.id,
+      tenant_id: user.tenant_id,
+      chat_session_id: validated.session_id,
       hermes_session_id: buildHermesRunSessionId(validated.session_id),
       hermes_run_id: null,
       hermes_response_id: null,
@@ -645,16 +714,23 @@ class HermesBridge {
           data: {
             provider: "hermes",
             event: "bridge.run.accepted",
-            run_id: null,
-            bridge_run_id: null,
+            run_id: null,
+            bridge_run_id: null,
             mode,
-          },
+            tenant_id: user.tenant_id,
+            memory_routing_contract_enabled: isNexusMemoryRoutingContractEnabled(),
+          },
         },
-      ],
-      error_message: null,
-      created_at: nowIso(),
-      updated_at: nowIso(),
-    };
+      ],
+      error_message: null,
+      memory_diagnostics: createInitialMemoryDiagnostics({
+        tenantId: user.tenant_id,
+        userId: user.id,
+        routingContractEnabled: isNexusMemoryRoutingContractEnabled(),
+      }),
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    };
     run.events[0].data.bridge_run_id = run.id;
 
     await this.store.save(run);
@@ -716,9 +792,10 @@ class HermesBridge {
   appendEvent(run, event) {
     const normalizedEvent = this.normalizeEventArtifactUrls(run, event);
     run.events.push(normalizedEvent);
+    applyMemoryDiagnosticEvent(run.memory_diagnostics, normalizedEvent);
     if (normalizedEvent.event === "delta" && typeof normalizedEvent.data?.delta === "string") {
       run.output_text += normalizedEvent.data.delta;
-    }
+    }
     if (normalizedEvent.event === "files" && Array.isArray(normalizedEvent.data?.files)) {
       const seen = new Set(run.files.map((file) => file.url));
       normalizedEvent.data.files.forEach((file) => {
@@ -828,11 +905,13 @@ class HermesBridge {
       "User-Agent": "NexusHermesBridge/1.0",
       "X-Request-Id": run.id,
       "X-Hermes-Session-Id": run.hermes_session_id,
-      "X-Hermes-Session-Key": buildHermesSessionKey({
-        userId: run.user_id,
-        sessionId: run.chat_session_id,
-      }),
-      "X-Nexus-User-Id": run.user_id,
+      "X-Hermes-Session-Key": buildHermesSessionKey({
+        userId: run.user_id,
+        sessionId: run.chat_session_id,
+      }),
+      "X-Tenant-Id": run.tenant_id,
+      "X-User-Id": run.user_id,
+      "X-Nexus-User-Id": run.user_id,
       "X-Nexus-Session-Id": run.chat_session_id,
       ...(config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {}),
     };
@@ -888,10 +967,12 @@ class HermesBridge {
     const parsed = parseHermesStatusPayload(payload, {
       requestId: run.id,
       runId: run.hermes_run_id,
-      sessionId: run.hermes_session_id,
-      conversation: run.hermes_conversation_id,
-      streamedText: run.output_text,
-    });
+      sessionId: run.hermes_session_id,
+      conversation: run.hermes_conversation_id,
+      streamedText: run.output_text,
+      tenantId: run.tenant_id,
+      userId: run.user_id,
+    });
 
     if (!parsed.terminal || !parsed.parsed) return false;
     await this.applyParsedResult(run, parsed.parsed);
@@ -940,10 +1021,12 @@ class HermesBridge {
     const parsed = parseHermesEventBlock(eventBlock, {
       requestId: run.id,
       runId: run.hermes_run_id,
-      sessionId: run.hermes_session_id,
-      conversation: run.hermes_conversation_id,
-      streamedText: run.output_text,
-    });
+      sessionId: run.hermes_session_id,
+      conversation: run.hermes_conversation_id,
+      streamedText: run.output_text,
+      tenantId: run.tenant_id,
+      userId: run.user_id,
+    });
 
     if (options.shouldRetryParsed?.(parsed)) {
       return "retry";
@@ -1373,9 +1456,53 @@ const handleRequest = async (req, res) => {
       hermesConfigured: Boolean(normalizeBaseUrl(config.hermesBaseUrl)),
       artifactServerConfigured: Boolean(config.artifactInternalUrl && config.artifactInternalKey),
       supabaseStorageConfigured: Boolean(config.supabaseUrl && (config.supabaseServiceRoleKey || config.supabaseAnonKey)),
-      supabaseStateConfigured: Boolean(config.supabaseUrl && config.supabaseServiceRoleKey),
-      attachmentBucket: config.attachmentBucket,
-    }, corsHeaders);
+      supabaseStateConfigured: Boolean(config.supabaseUrl && config.supabaseServiceRoleKey),
+      defaultTenantId: config.defaultTenantId,
+      attachmentBucket: config.attachmentBucket,
+    }, corsHeaders);
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/memory/diagnostics") {
+    const user = await verifyUser(req);
+    const runId = url.searchParams.get("run_id");
+    const graphHealth = await fetchGraphHealth();
+
+    if (runId) {
+      const run = store.get(runId);
+      if (!run || run.user_id !== user.id) {
+        jsonResponse(res, 404, { error: "run_not_found" }, corsHeaders);
+        return;
+      }
+
+      jsonResponse(res, 200, {
+        tenant_id: user.tenant_id,
+        graph_health: graphHealth,
+        run: {
+          id: run.id,
+          status: run.status,
+          memory_diagnostics: run.memory_diagnostics,
+        },
+      }, corsHeaders);
+      return;
+    }
+
+    const runs = Array.from(store.runs.values())
+      .filter((run) => run.user_id === user.id)
+      .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+      .slice(0, 10)
+      .map((run) => ({
+        id: run.id,
+        status: run.status,
+        created_at: run.created_at,
+        memory_diagnostics: run.memory_diagnostics,
+      }));
+
+    jsonResponse(res, 200, {
+      tenant_id: user.tenant_id,
+      graph_health: graphHealth,
+      runs,
+    }, corsHeaders);
     return;
   }
 

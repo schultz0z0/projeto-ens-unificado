@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/tenant-id", () => ({
+  getTenantContext: vi.fn(async () => ({
+    "X-Tenant-Id": "ens",
+    "X-User-Id": "user-1",
+  })),
+}));
+
 import { sendMessageToChatbotStream } from "./chatStreamClient";
 
 const jsonResponse = (payload: unknown, init?: ResponseInit) =>
@@ -68,5 +75,37 @@ describe("sendMessageToChatbotStream", () => {
     expect(deltas).toEqual(["Imagem pronta."]);
     expect(files).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("adds tenant and user context headers to chat run requests", async () => {
+    const doneStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("event: done\ndata: {}\n\n"));
+        controller.close();
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ run: { id: "run-1" } }, { status: 202 }))
+      .mockResolvedValueOnce(new Response(doneStream, { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await sendMessageToChatbotStream({
+      payload: { session_id: "chat-1", message_text: "teste" },
+      getAccessToken: async () => "token-1",
+      refreshAccessToken: async () => null,
+      signOut: async () => {},
+      resolveChatbotProxyBaseUrl: () => "https://bridge.solucoes-nexus.tech",
+      onDelta: () => {},
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1]?.headers).toMatchObject({
+      Authorization: "Bearer token-1",
+      "Content-Type": "application/json",
+      "X-Tenant-Id": "ens",
+      "X-User-Id": "user-1",
+    });
   });
 });
