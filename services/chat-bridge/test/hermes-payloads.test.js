@@ -62,7 +62,7 @@ test("buildHermesResponsesInput sends image attachments as multimodal image part
 
       { type: "input_text", text: "analise esta imagem" },
 
-      { type: "input_image", image_url: "data:image/png;base64,AAAA", detail: "auto" },
+      { type: "input_image", image_url: "data:image/png;base64,AAAA" },
 
     ],
 
@@ -307,7 +307,7 @@ test("buildHermesSessionChatRequest sends current images as Hermes session multi
 
   assert.equal(request.message[1].image_url, "data:image/png;base64,AAAA");
 
-  assert.equal(request.message[1].detail, "auto");
+  assert.equal("detail" in request.message[1], false);
 
 });
 test("buildHermesSessionChatRequest turns image mode into image_generate instructions", () => {

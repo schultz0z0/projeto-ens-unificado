@@ -231,7 +231,6 @@ export const buildHermesResponsesInput = ({
           content.push({
             type: "input_image",
             image_url: imageTransport === "remote" ? attachment.original_signed_url ?? attachment.signed_url : attachment.inline_data_url ?? attachment.signed_url,
-            detail: "auto",
           });
           return;
         }
@@ -256,7 +255,6 @@ export const buildHermesResponsesInput = ({
       content.push({
         type: "input_image",
         image_url: imageTransport === "remote" ? attachment.original_signed_url ?? attachment.signed_url : attachment.inline_data_url ?? attachment.signed_url,
-        detail: "auto",
       });
       return;
     }
@@ -416,7 +414,6 @@ const buildHermesSessionChatMessage = ({
 
       image_url: imageUrl,
 
-      detail: "auto",
 
     });
 
