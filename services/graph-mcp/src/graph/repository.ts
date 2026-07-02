@@ -143,17 +143,7 @@ export class Neo4jGraphRepository {
     const properties = sanitizeProperties(fact.properties);
     const rows = await this.write(
       context,
-      [
-        'MERGE (n:NexusGraphNode {tenant_id: $tenant_id, id: $id})',
-        'SET n.kind = $kind,',
-        '    n.label = $label,',
-        '    n.description = $description,',
-        '    n.aliases = $aliases,',
-        '    n.source = $source,',
-        '    n.custom_properties = $properties,',
-        '    n.updated_at = datetime()',
-        'RETURN n.id AS id, n.kind AS kind, n.label AS label, n.description AS description'
-      ].join('\n'),
+      buildUpsertFactCypher(),
       {
         tenant_id: context.tenantId,
         id,
@@ -173,15 +163,7 @@ export class Neo4jGraphRepository {
     const properties = sanitizeProperties(relation.properties);
     const rows = await this.write(
       context,
-      [
-        'MATCH (from:NexusGraphNode {tenant_id: $tenant_id, id: $from_id})',
-        'MATCH (to:NexusGraphNode {tenant_id: $tenant_id, id: $to_id})',
-        'MERGE (from)-[r:NEXUS_RELATES {tenant_id: $tenant_id, type: $type}]->(to)',
-        'SET r.description = $description,',
-        '    r.custom_properties = $properties,',
-        '    r.updated_at = datetime()',
-        'RETURN from.id AS from_id, r.type AS type, to.id AS to_id, r.description AS description'
-      ].join('\n'),
+      buildRelateCypher(),
       {
         tenant_id: context.tenantId,
         from_id: relation.fromId,
@@ -214,6 +196,36 @@ export class Neo4jGraphRepository {
       await session.close();
     }
   }
+}
+
+export function buildUpsertFactCypher(): string {
+  return [
+    'MERGE (n:NexusGraphNode {tenant_id: $tenant_id, id: $id})',
+    'SET n += $properties,',
+    '    n.tenant_id = $tenant_id,',
+    '    n.id = $id,',
+    '    n.kind = $kind,',
+    '    n.label = $label,',
+    '    n.description = $description,',
+    '    n.aliases = $aliases,',
+    '    n.source = $source,',
+    '    n.updated_at = datetime()',
+    'RETURN n.id AS id, n.kind AS kind, n.label AS label, n.description AS description'
+  ].join('\n');
+}
+
+export function buildRelateCypher(): string {
+  return [
+    'MATCH (from:NexusGraphNode {tenant_id: $tenant_id, id: $from_id})',
+    'MATCH (to:NexusGraphNode {tenant_id: $tenant_id, id: $to_id})',
+    'MERGE (from)-[r:NEXUS_RELATES {tenant_id: $tenant_id, type: $type}]->(to)',
+    'SET r += $properties,',
+    '    r.description = $description,',
+    '    r.tenant_id = $tenant_id,',
+    '    r.type = $type,',
+    '    r.updated_at = datetime()',
+    'RETURN from.id AS from_id, r.type AS type, to.id AS to_id, r.description AS description'
+  ].join('\n');
 }
 
 function recordToObject(record: { keys: readonly PropertyKey[]; get: (key: PropertyKey) => unknown }): GraphQueryRow {
