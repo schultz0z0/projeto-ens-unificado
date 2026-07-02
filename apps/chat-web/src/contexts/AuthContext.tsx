@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { AppRole, canManageValidatedWorks, isAdminRole, normalizeProfileRole } from "@/lib/roles";
 
 interface AuthContextType {
   session: Session | null;
@@ -8,12 +9,15 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
+  isManager: boolean;
+  canManageValidatedWorks: boolean;
+  normalizedRole: AppRole;
   signOut: () => Promise<void>;
 }
 
 type Profile = {
   id: string;
-  role: "user" | "admin" | "broker" | "owner" | "tenant";
+  role: "admin" | "manager" | "member" | "user" | "broker" | "owner" | "tenant";
   full_name?: string | null;
   email?: string | null;
   updated_at?: string | null;
@@ -27,6 +31,9 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   isAdmin: false,
+  isManager: false,
+  canManageValidatedWorks: false,
+  normalizedRole: "member",
   signOut: async () => {},
 });
 
@@ -95,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error("Error fetching profile:", error);
         // Fallback para evitar UI quebrada
-        setProfile({ id: userId, role: 'user', full_name: 'Usuário' });
+        setProfile({ id: userId, role: 'member', full_name: 'Usuário' });
       } else {
         setProfile(data);
       }
@@ -117,12 +124,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const normalizedRole = normalizeProfileRole(profile?.role);
   const value = {
     session,
     user,
     profile,
     loading,
-    isAdmin: profile?.role === "admin" || profile?.role === "broker",
+    normalizedRole,
+    isAdmin: isAdminRole(profile?.role),
+    isManager: normalizedRole === "manager",
+    canManageValidatedWorks: canManageValidatedWorks(profile?.role),
     signOut,
   };
 

@@ -53,10 +53,40 @@ export const NEXUS_MEMORY_ROUTING_CONTRACT = [
 
 
 
-const withNexusMemoryRoutingContract = (messageText) => {
+const buildNexusSessionContextContract = (context = {}) => {
+  const role = String(context.userRole ?? "member").trim().toLowerCase() || "member";
+  const userId = String(context.userId ?? "").trim();
+  const tenantId = String(context.tenantId ?? "ens").trim() || "ens";
+  const userName = String(context.userName ?? "").trim();
+  return [
+    "[Contexto Nexus da sessao]",
+    `tenant_id: ${tenantId}`,
+    userId ? `nexus_user_id: ${userId}` : "nexus_user_id: nao informado",
+    `nexus_user_role: ${role}`,
+    userName ? `nexus_user_name: ${userName}` : "nexus_user_name: nao informado",
+    "Roles: admin e manager podem consultar, salvar com aprovacao explicita, editar ou deprecar trabalhos validados. Member pode consultar e reutilizar trabalhos validados e pode aprovar salvar um novo trabalho gerado por ele; member nao pode editar, deprecar ou excluir trabalhos validados existentes.",
+    "Trabalhos validados sao memoria compartilhada ENS por tenant, com autoria e validacao por usuario. Tipos aceitos: copy, campanha, briefing, insight, decisao, prompt, estrategia.",
+    "Quando o usuario perguntar se ja existe algo validado, use nexus_graph_search_validated_work antes de criar do zero. Ao responder, cite quem validou e quando quando esses campos existirem.",
+    "Depois de gerar copy, campanha, briefing, insight, decisao, prompt ou estrategia com valor duravel, pergunte se o usuario aprova validar e salvar na memoria ENS. Salve somente apos aprovacao explicita.",
+    "Para salvar trabalho aprovado, use nexus_graph_save_validated_work com tenant_id, user_id, artifact_type, title, content, campos de curso/fonte quando houver, validated=true e validation_note clara.",
+    "Se nexus_user_role for member, nunca use nexus_graph_deprecate_validated_work nem tente alterar/excluir trabalho validado existente. Para admin/manager, depreque apenas quando houver pedido explicito e validacao.",
+    "Nao grave ementas, catalogos ou documentos longos como trabalho validado; para esses casos, use RAG como fonte e Graph apenas como referencia leve."
+  ].join("\n");
+};
+
+
+
+const withNexusMemoryRoutingContract = (messageText, nexusContext = {}) => {
   const trimmed = String(messageText ?? "").trim();
   if (!isNexusMemoryRoutingContractEnabled()) return trimmed;
-  return [NEXUS_MEMORY_ROUTING_CONTRACT, "", "[Pedido atual do usuario]", trimmed].join("\n");
+  return [
+    NEXUS_MEMORY_ROUTING_CONTRACT,
+    "",
+    buildNexusSessionContextContract(nexusContext),
+    "",
+    "[Pedido atual do usuario]",
+    trimmed
+  ].join("\n");
 };
 
 
@@ -175,7 +205,9 @@ const appendFileText = (lines, label, attachment, { includeUrl = true } = {}) =>
 export const buildHermesResponsesInput = ({
   messageText,
   attachments,
-  replayContextMessages = [],
+  replayContextMessages = [],
+
+  nexusContext = {},
   imageTransport = "inline",
 }) => {
   const input = replayContextMessages
@@ -216,7 +248,7 @@ export const buildHermesResponsesInput = ({
   const content = [];
   const trimmedMessage = String(messageText ?? "").trim();
   if (trimmedMessage) {
-    content.push({ type: "input_text", text: trimmedMessage });
+    content.push({ type: "input_text", text: trimmedMessage });
   }
 
   attachments.forEach((attachment) => {
@@ -306,6 +338,8 @@ const buildHermesSessionChatMessage = ({
 
   imageOptions,
 
+  nexusContext = {},
+
 }) => {
 
   const imageAttachments = attachments.filter(isImageAttachment);
@@ -323,7 +357,7 @@ const buildHermesSessionChatMessage = ({
     })
 
     : messageText;
-  const routedMessageText = withNexusMemoryRoutingContract(effectiveMessageText);
+  const routedMessageText = withNexusMemoryRoutingContract(effectiveMessageText, nexusContext);
 
   if (imageAttachments.length === 0) {
 
@@ -408,6 +442,8 @@ export const buildHermesSessionChatRequest = ({
 
   imageOptions,
 
+  nexusContext = {},
+
 }) => ({
 
   message: buildHermesSessionChatMessage({
@@ -421,6 +457,8 @@ export const buildHermesSessionChatRequest = ({
     intent,
 
     imageOptions,
+
+    nexusContext,
 
   }),
 
@@ -436,7 +474,9 @@ export const buildHermesResponsesRequest = ({
   attachments,
   conversationId,
   previousResponseId,
-  replayContextMessages = [],
+  replayContextMessages = [],
+
+  nexusContext = {},
   imageTransport = "inline",
 }) => ({
   model: modelName,
@@ -447,26 +487,32 @@ export const buildHermesResponsesRequest = ({
     : { conversation: conversationId ?? buildHermesConversationId(userId, sessionId) }),
   metadata: {
     nexus_user_id: userId,
-    nexus_session_id: sessionId,
+    nexus_session_id: sessionId,
+    nexus_tenant_id: nexusContext.tenantId ?? "",
+    nexus_user_role: nexusContext.userRole ?? "member",
     source: "nexus-ai-bridge",
   },
   input: buildHermesResponsesInput({
     messageText,
     attachments,
-    replayContextMessages,
+    replayContextMessages,
+
+    nexusContext,
     imageTransport,
   }),
 });
 
-export const buildHermesRunRequest = ({
+export const buildHermesRunRequest = ({
   sessionId,
   messageText,
   attachments,
-  replayContextMessages = [],
+  replayContextMessages = [],
+
+  nexusContext = {},
 }) => ({
   session_id: sessionId,
   input: buildHermesRunInput({
-    messageText,
+    messageText: withNexusMemoryRoutingContract(messageText, nexusContext),
     attachments,
     replayContextMessages,
   }),

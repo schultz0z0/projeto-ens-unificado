@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
 import Login from "./pages/Login";
 import UserManagement from "./pages/admin/UserManagement";
+import ValidatedWorks from "./pages/manager/ValidatedWorks";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -46,6 +47,15 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/manager/validated-works"
+              element={
+                <ProtectedRoute requireManager>
+                  <ValidatedWorks />
                 </ProtectedRoute>
               }
             />

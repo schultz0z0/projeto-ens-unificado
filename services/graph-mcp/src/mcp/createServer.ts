@@ -7,6 +7,13 @@ import {
 } from '../graph/ragSync.js';
 import { type Neo4jGraphRepository, type RelateInput, type UpsertFactInput } from '../graph/repository.js';
 import { resolveGraphContext } from '../graph/schema.js';
+import {
+  buildValidatedWorkGraphId,
+  buildValidatedWorkGraphProperties,
+  summarizeValidatedWork,
+  SupabaseValidatedWorkRepository,
+  VALIDATED_WORK_TYPES
+} from '../graph/validatedWorks.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
 
 export type ServerDependencies = {
@@ -34,6 +41,7 @@ const graphKindSchema = z.enum([
   'marketing_ref',
   'insight_ref',
   'institutional_ref',
+  'validated_work_ref',
   'persona',
   'campaign',
   'channel',
@@ -42,6 +50,7 @@ const graphKindSchema = z.enum([
 ]);
 
 const ragGraphSyncCollectionSchema = z.enum(['courses', 'marketing', 'insights', 'institutional']);
+const validatedWorkTypeSchema = z.enum(VALIDATED_WORK_TYPES);
 
 const validatedGraphWriteSchema = {
   validated: z.boolean().default(false).describe('Must be true only when the user explicitly approved this durable graph write.'),
@@ -58,6 +67,11 @@ export function assertValidatedGraphWrite(input: { validated?: boolean; validati
 }
 
 export function createNexusGraphMcpServer({ repository }: ServerDependencies): McpServer {
+  const validatedWorks = new SupabaseValidatedWorkRepository({
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+  });
+
   const server = new McpServer({
     name: 'nexus-graph-mcp',
     version: '0.1.0'
@@ -88,12 +102,155 @@ export function createNexusGraphMcpServer({ repository }: ServerDependencies): M
       recommended_flow: [
         'Call nexus_graph_bootstrap for a new tenant or after deploy.',
         'Use nexus_graph_search before creating duplicate nodes.',
+        'Use nexus_graph_search_validated_work before generating copy/campaign/briefing/insight/decision/prompt/strategy when reuse may help.',
+        'Use nexus_graph_save_validated_work only after the user explicitly approves saving the generated artifact as validated memory.',
+        'Use nexus_graph_deprecate_validated_work only for admin or manager sessions; member sessions may read and reuse but must not alter or deprecate validated memory.',
         'Use nexus_graph_upsert_fact for durable business/system/product facts only after explicit validation.',
         'Use nexus_graph_relate to connect facts only after explicit validation.',
         'Use nexus_graph_sync_rag_refs to sync lightweight RAG references into Graph after admin validation.',
         'Use nexus_graph_neighbors or nexus_graph_query for reasoning over relationships.'
       ]
     })
+  );
+
+  server.registerTool(
+    'nexus_graph_search_validated_work',
+    {
+      title: 'Search Validated ENS Work Memory',
+      description: 'Search shared tenant memory for validated work artifacts such as copy, campaign, briefing, insight, decision, prompt, or strategy.',
+      inputSchema: {
+        ...tenantContextSchema,
+        artifact_type: validatedWorkTypeSchema.optional(),
+        query: z.string().optional(),
+        related_course_title: z.string().optional(),
+        include_deprecated: z.boolean().default(false),
+        limit: z.number().int().positive().max(50).default(10)
+      }
+    },
+    async input => {
+      try {
+        const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
+        const results = await validatedWorks.search(context, {
+          artifact_type: input.artifact_type,
+          query: input.query,
+          related_course_title: input.related_course_title,
+          include_deprecated: input.include_deprecated,
+          limit: input.limit
+        });
+        return jsonToolResult({
+          ok: true,
+          tenant_id: context.tenantId,
+          count: results.length,
+          results: results.map(summarizeValidatedWork)
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'nexus_graph_save_validated_work',
+    {
+      title: 'Save Validated ENS Work Memory',
+      description: 'Save a user-approved generated artifact into shared ENS validated memory and create a lightweight Graph reference.',
+      inputSchema: {
+        ...tenantContextSchema,
+        user_id: z.string().min(1).describe('Current authenticated frontend user id. Required for author/validator audit.'),
+        artifact_type: validatedWorkTypeSchema,
+        title: z.string().min(1).max(180),
+        content: z.string().min(1).max(30000),
+        related_course_id: z.string().optional(),
+        related_course_title: z.string().optional(),
+        related_rag_source_id: z.string().optional(),
+        tags: z.array(z.string()).default([]),
+        metadata: z.record(z.unknown()).default({}),
+        ...validatedGraphWriteSchema
+      }
+    },
+    async input => {
+      try {
+        assertValidatedGraphWrite(input);
+        const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
+        const record = await validatedWorks.save(context, {
+          user_id: input.user_id,
+          artifact_type: input.artifact_type,
+          title: input.title,
+          content: input.content,
+          related_course_id: input.related_course_id,
+          related_course_title: input.related_course_title,
+          related_rag_source_id: input.related_rag_source_id,
+          tags: input.tags,
+          metadata: input.metadata,
+          validated: input.validated,
+          validation_note: input.validation_note
+        });
+        await repository.upsertFact(context, {
+          id: buildValidatedWorkGraphId(record.id),
+          kind: 'validated_work_ref',
+          label: record.title,
+          description: [
+            `${record.artifact_type} validado`,
+            record.related_course_title ? `para ${record.related_course_title}` : '',
+            record.validated_by_name ? `por ${record.validated_by_name}` : ''
+          ].filter(Boolean).join(' '),
+          aliases: [record.title, record.related_course_title ?? '', ...(record.tags ?? [])].filter(Boolean),
+          source: 'validated_work_memory',
+          properties: buildValidatedWorkGraphProperties(record)
+        });
+        return jsonToolResult({
+          ok: true,
+          tenant_id: context.tenantId,
+          record: summarizeValidatedWork(record),
+          graph_node_id: buildValidatedWorkGraphId(record.id)
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'nexus_graph_deprecate_validated_work',
+    {
+      title: 'Deprecate Validated ENS Work Memory',
+      description: 'Admin/manager-only soft delete for a validated work artifact. Member sessions must not use this tool.',
+      inputSchema: {
+        ...tenantContextSchema,
+        user_id: z.string().min(1).describe('Current authenticated frontend user id. Must be admin or manager in profiles.'),
+        id: z.string().uuid(),
+        reason: z.string().optional(),
+        ...validatedGraphWriteSchema
+      }
+    },
+    async input => {
+      try {
+        assertValidatedGraphWrite(input);
+        const context = resolveGraphContext({ tenantId: input.tenant_id, userId: input.user_id });
+        const record = await validatedWorks.deprecate(context, {
+          id: input.id,
+          reason: input.reason,
+          user_id: input.user_id
+        });
+        await repository.upsertFact(context, {
+          id: buildValidatedWorkGraphId(record.id),
+          kind: 'validated_work_ref',
+          label: record.title,
+          description: `${record.artifact_type} arquivado/deprecado na memoria validada ENS.`,
+          aliases: [record.title, record.related_course_title ?? '', ...(record.tags ?? [])].filter(Boolean),
+          source: 'validated_work_memory',
+          properties: buildValidatedWorkGraphProperties(record)
+        });
+        return jsonToolResult({
+          ok: true,
+          tenant_id: context.tenantId,
+          record: summarizeValidatedWork(record),
+          graph_node_id: buildValidatedWorkGraphId(record.id)
+        });
+      } catch (error) {
+        return toolError(error);
+      }
+    }
   );
 
   server.registerTool(

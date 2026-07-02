@@ -160,6 +160,36 @@ const normalizeTenantId = (value, fallback = config.defaultTenantId) => {
   return /^[a-z0-9_-]{3,64}$/.test(fallback) ? fallback : "ens";
 };
 
+const normalizeProfileRole = (role) => {
+  const normalized = String(role ?? "").trim().toLowerCase();
+  if (normalized === "admin" || normalized === "broker") return "admin";
+  if (normalized === "manager") return "manager";
+  return "member";
+};
+
+const getProfileDisplayName = (profile) => (
+  String(profile?.full_name ?? "").trim() ||
+  String(profile?.email ?? "").trim() ||
+  "Usuario ENS"
+);
+
+const fetchBridgeUserProfile = async (userId) => {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey) return null;
+  const params = new URLSearchParams({
+    id: `eq.${userId}`,
+    select: "id,full_name,email,role",
+    limit: "1",
+  });
+  const response = await fetch(`${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles?${params.toString()}`, {
+    headers: buildSupabaseAdminHeaders(),
+  });
+  const rows = await response.json().catch(() => []);
+  if (!response.ok || !Array.isArray(rows)) {
+    throw new Error(`profiles.fetch_failed:${response.status}`);
+  }
+  return rows[0] ?? null;
+};
+
 const verifyUser = async (req) => {
   const token = getBearerToken(req);
   const requestedTenantId = firstHeaderValue(req.headers["x-tenant-id"]);
@@ -178,6 +208,10 @@ const verifyUser = async (req) => {
         fallbackTenantId: config.defaultTenantId,
         trustClientHeader: true,
       }),
+      role: "member",
+      profile_role: "member",
+      name: "Usuario ENS",
+      email: null,
     };
   }
 
@@ -208,7 +242,24 @@ const verifyUser = async (req) => {
     trustClientHeader: false,
   });
 
-  return { id: user.id, token, tenant_id: tenantId };
+  const profile = await fetchBridgeUserProfile(user.id).catch((error) => {
+    console.warn("[chat-bridge] profile lookup failed", {
+      userId: user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  });
+  const role = normalizeProfileRole(profile?.role);
+
+  return {
+    id: user.id,
+    token,
+    tenant_id: tenantId,
+    role,
+    profile_role: profile?.role ?? role,
+    name: getProfileDisplayName(profile),
+    email: profile?.email ?? user.email ?? null,
+  };
 };
 
 const buildGraphHealthUrl = () => {
@@ -660,7 +711,16 @@ class RunStore {
   }
 }
 
-class HermesBridge {
+const buildRunNexusContext = (run) => ({
+  tenantId: run.tenant_id,
+  userId: run.user_id,
+  userRole: run.user_role || "member",
+  userName: run.user_name || "",
+  userEmail: run.user_email || "",
+});
+
+
+class HermesBridge {
   constructor({ store, hermesStateRepository }) {
     this.store = store;
     this.hermesStateRepository = hermesStateRepository;
@@ -690,6 +750,10 @@ class HermesBridge {
     const run = {
       id: randomUUID(),
       user_id: user.id,
+      user_role: user.role || "member",
+      user_profile_role: user.profile_role || user.role || "member",
+      user_name: user.name || "",
+      user_email: user.email || null,
       tenant_id: user.tenant_id,
       chat_session_id: validated.session_id,
       hermes_session_id: buildHermesRunSessionId(validated.session_id),
@@ -718,6 +782,8 @@ class HermesBridge {
             bridge_run_id: null,
             mode,
             tenant_id: user.tenant_id,
+            user_role: user.role || "member",
+            user_name: user.name || "",
             memory_routing_contract_enabled: isNexusMemoryRoutingContractEnabled(),
           },
         },
@@ -912,7 +978,8 @@ class HermesBridge {
       "X-Tenant-Id": run.tenant_id,
       "X-User-Id": run.user_id,
       "X-Nexus-User-Id": run.user_id,
-      "X-Nexus-Session-Id": run.chat_session_id,
+      "X-Nexus-User-Role": run.user_role || "member",
+      "X-Nexus-Session-Id": run.chat_session_id,
       ...(config.hermesApiKey ? { Authorization: `Bearer ${config.hermesApiKey}` } : {}),
     };
   }
@@ -922,7 +989,8 @@ class HermesBridge {
       sessionId: run.hermes_session_id,
       messageText: run.message_text,
       attachments: run.attachments,
-      replayContextMessages: run.replay_context_messages,
+      replayContextMessages: run.replay_context_messages,
+      nexusContext: buildRunNexusContext(run),
     });
     run.input = requestPayload.input;
 
@@ -1115,6 +1183,7 @@ class HermesBridge {
         intent: run.intent,
 
         imageOptions: run.image_options,
+        nexusContext: buildRunNexusContext(run),
 
       });
 
@@ -1288,7 +1357,8 @@ class HermesBridge {
       replayContextMessages: run.replay_context_messages,
       conversationId: routingState.conversationId,
       previousResponseId: routingState.previousResponseId,
-      imageTransport,
+      imageTransport,
+      nexusContext: buildRunNexusContext(run),
     });
     run.input = JSON.stringify(requestPayload.input);
 

@@ -26,6 +26,7 @@ export type UpsertFactInput = {
     | 'marketing_ref'
     | 'insight_ref'
     | 'institutional_ref'
+    | 'validated_work_ref'
     | 'persona'
     | 'campaign'
     | 'channel'

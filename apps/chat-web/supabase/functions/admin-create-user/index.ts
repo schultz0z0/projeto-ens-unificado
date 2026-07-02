@@ -68,10 +68,10 @@ const schema = z.object({
   email: z.string().email().max(320),
   password: z.string().min(8).max(72),
   full_name: z.string().min(1).max(120),
-  role: z.enum(['user', 'admin']).optional(),
+  role: z.enum(['member', 'manager', 'admin']).optional(),
 });
 
-const mapRoleToProfileRole = (role?: 'user' | 'admin') => (role === 'admin' ? 'broker' : 'tenant');
+const mapRoleToProfileRole = (role?: 'member' | 'manager' | 'admin') => role ?? 'member';
 const isAdminRole = (role: unknown) => role === 'admin' || role === 'broker';
 const getBearerToken = (authHeader: string) => authHeader.replace(/^Bearer\s+/i, '').trim();
 

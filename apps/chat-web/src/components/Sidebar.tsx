@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Image, Compass, Settings, LayoutGrid, LogOut, User, Camera, Key, Loader2, Mail, Layout, Brain } from "lucide-react";
+import { Home, MessageSquare, Image, Compass, Settings, LayoutGrid, LogOut, User, Camera, Key, Loader2, Mail, Layout, Brain, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: SidebarProps) => {
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin, canManageValidatedWorks, signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -242,6 +242,22 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
         >
           <Brain className="w-5 h-5" />
         </Button>
+
+        {canManageValidatedWorks && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
+              location.pathname === "/manager/validated-works" && "bg-brand-primary/20 text-brand-primary"
+            )}
+            onClick={() => { navigate("/manager/validated-works"); onMobileClose?.(); }}
+            aria-label="Abrir trabalhos validados"
+            title="Trabalhos Validados"
+          >
+            <ClipboardCheck className="w-5 h-5" />
+          </Button>
+        )}
 
         {/* Admin Only Link */}
         {isAdmin && (

@@ -55,6 +55,7 @@ test("Hermes headers forward tenant and user context for memory MCP routing", ()
   assert.match(headersBlock, /"X-Tenant-Id": run\.tenant_id/);
   assert.match(headersBlock, /"X-User-Id": run\.user_id/);
   assert.match(headersBlock, /"X-Nexus-User-Id": run\.user_id/);
+  assert.match(headersBlock, /"X-Nexus-User-Role": run\.user_role/);
 });
 
 test("created chat runs preserve trusted tenant context for downstream memory tools", () => {
@@ -66,6 +67,14 @@ test("created chat runs preserve trusted tenant context for downstream memory to
 
   assert.match(createRunBlock, /tenant_id: user\.tenant_id/);
   assert.match(createRunBlock, /user_id: user\.id/);
+  assert.match(createRunBlock, /user_role: user\.role/);
+  assert.match(createRunBlock, /user_name: user\.name/);
+});
+
+test("Hermes request builders receive Nexus role context", () => {
+  assert.match(source, /const buildRunNexusContext = \(run\) =>/);
+  assert.match(source, /nexusContext: buildRunNexusContext\(run\)/);
+  assert.match(source, /userRole: run\.user_role/);
 });
 
 test("bridge exposes authenticated memory diagnostics with graph health", () => {

@@ -206,6 +206,31 @@ test("buildHermesSessionChatRequest prepends native memory routing without disab
 
 });
 
+test("buildHermesSessionChatRequest includes validated work role rules for member sessions", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "tem copy validada para gestao financeira?",
+
+    attachments: [],
+
+    nexusContext: {
+      tenantId: "ens",
+      userId: "user-1",
+      userRole: "member",
+      userName: "Raphael",
+    },
+
+  });
+
+  assert.match(request.message, /nexus_user_role: member/);
+  assert.match(request.message, /nexus_graph_search_validated_work/);
+  assert.match(request.message, /nexus_graph_save_validated_work/);
+  assert.match(request.message, /nunca use nexus_graph_deprecate_validated_work/);
+  assert.match(request.message, /member nao pode editar, deprecar ou excluir/);
+
+});
+
 test("memory routing contract can be disabled by environment flag for rollback", () => {
 
   const previous = process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;

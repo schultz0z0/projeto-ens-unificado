@@ -219,6 +219,77 @@ Reexecute a sync quando:
 Com o cron semanal ativo, isso fica automatico para manutencao regular.
 Para mudancas urgentes, rode a sync manual depois da ingestao do RAG.
 
+## 11. Trabalhos validados por usuario
+
+Esta camada soma com a memoria nativa do Hermes. Ela nao isola memoria por
+usuario: a memoria validada continua compartilhada no tenant, mas cada item
+guarda autoria, usuario validador e data de validacao.
+
+Tipos aceitos:
+
+- `copy`
+- `campanha`
+- `briefing`
+- `insight`
+- `decisao`
+- `prompt`
+- `estrategia`
+
+Roles do frontend:
+
+- `admin`: administra usuarios e trabalhos validados.
+- `manager`: gerencia trabalhos validados, mas nao administra usuarios.
+- `member`: consulta e reutiliza trabalhos validados; pode aprovar salvar um
+  novo trabalho gerado por ele, mas nao edita, arquiva ou exclui trabalhos
+  validados existentes.
+
+Antes do deploy deste recurso, aplique a migration do Supabase do frontend:
+
+```bash
+npx supabase db push
+```
+
+Ou aplique manualmente o SQL:
+
+```text
+apps/chat-web/supabase/migrations/20260702143000_validated_work_memory.sql
+```
+
+Depois do deploy, no NexusAI/Hermes, confirme que as tools aparecem:
+
+```text
+Liste somente os nomes das ferramentas disponiveis no namespace mcp_nexus_graph. Nao execute nenhuma ferramenta.
+```
+
+Esperado alem das tools antigas:
+
+- `nexus_graph_search_validated_work`
+- `nexus_graph_save_validated_work`
+- `nexus_graph_deprecate_validated_work`
+
+Prompt de validacao real, sem alterar nada:
+
+```text
+Use nexus_graph_search_validated_work para tenant <tenant_id>, query "gestao", limit 5. Nao crie, altere nem depreque nada. Resuma titulo, tipo, validador e data se existirem.
+```
+
+Prompt de teste de regra `member`:
+
+```text
+Considere que minha sessao e member. Se eu pedir para excluir ou arquivar uma copy validada existente, explique que member pode consultar e reutilizar, mas nao pode alterar/deprecar/excluir memoria validada. Nao chame ferramenta de escrita.
+```
+
+Prompt de salvamento apos aprovacao explicita:
+
+```text
+Gere uma copy curta para o curso <curso>. Depois de entregar a copy, pergunte se eu aprovo validar e salvar na memoria ENS. Nao salve ate eu aprovar explicitamente.
+```
+
+Quando o usuario aprovar, o Hermes deve usar `nexus_graph_save_validated_work`
+com `tenant_id`, `user_id`, `artifact_type`, `title`, `content`,
+`validated=true` e uma `validation_note` clara. Para arquivar/deprecar, somente
+admin/manager devem usar `nexus_graph_deprecate_validated_work`.
+
 ## 11. Rollback rapido
 
 Se a camada de roteamento causar comportamento ruim, desligue somente o contrato
@@ -230,4 +301,3 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 ```
 
 Isso nao apaga memoria Hermes, RAG nem Graph.
-

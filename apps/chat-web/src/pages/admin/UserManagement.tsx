@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppRole, getRoleLabel, isAdminRole, normalizeProfileRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sidebar } from "@/components/Sidebar";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -63,9 +71,18 @@ interface Profile {
   updated_at?: string;
 }
 
-const isAdminRole = (role: string) => role === "admin" || role === "broker";
-const isMemberRole = (role: string) => role === "user" || role === "tenant" || role === "owner";
-const getRoleLabel = (role: string) => (isAdminRole(role) ? "Administrador" : "Membro");
+const ROLE_OPTIONS: Array<{ value: AppRole; label: string }> = [
+  { value: "member", label: "Membro" },
+  { value: "manager", label: "Manager" },
+  { value: "admin", label: "Administrador" },
+];
+
+const getRoleBadgeClass = (role: string) => {
+  const normalized = normalizeProfileRole(role);
+  if (normalized === "admin") return "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border-purple-500/20";
+  if (normalized === "manager") return "bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border-emerald-500/20";
+  return "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border-blue-500/20";
+};
 
 const getFunctionErrorMessage = async (error: unknown, fallback: string) => {
   if (error instanceof FunctionsHttpError) {
@@ -93,6 +110,7 @@ export default function UserManagement() {
   const [newEmail, setNewEmail] = useState("");
   const [newName, setNewName] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState<AppRole>("member");
   const [createLoading, setCreateLoading] = useState(false);
 
   // Reset Password State
@@ -112,6 +130,7 @@ export default function UserManagement() {
   const [editName, setEditName] = useState("");
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
   const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState<AppRole>("member");
   const [editHermesEnabled, setEditHermesEnabled] = useState(false);
   const [editHermesBaseUrl, setEditHermesBaseUrl] = useState("");
   const [editLoading, setEditLoading] = useState(false);
@@ -233,6 +252,7 @@ export default function UserManagement() {
         target_user_id: selectedUserForEdit.id,
         new_full_name: editName,
         new_avatar_url: avatarUrl,
+        new_role: editRole,
       });
 
       if (error) throw error;
@@ -254,6 +274,7 @@ export default function UserManagement() {
               ...p,
               full_name: editName,
               avatar_url: avatarUrl || undefined,
+              role: editRole,
               hermes_enabled: integrationRow?.hermes_enabled ?? editHermesEnabled,
               hermes_base_url: integrationRow?.hermes_base_url ?? (editHermesEnabled ? normalizedHermesBaseUrl : null),
             }
@@ -264,6 +285,7 @@ export default function UserManagement() {
       setIsEditOpen(false);
       setEditAvatarFile(null);
       setEditAvatarPreview(null);
+      setEditRole("member");
       setEditHermesEnabled(false);
       setEditHermesBaseUrl("");
       fetchProfiles();
@@ -305,7 +327,7 @@ export default function UserManagement() {
           email: newEmail,
           password: newPassword,
           full_name: newName,
-          role: "user",
+          role: newRole,
         },
       });
 
@@ -316,6 +338,7 @@ export default function UserManagement() {
       setNewEmail("");
       setNewName("");
       setNewPassword("");
+      setNewRole("member");
       fetchProfiles();
     } catch (err: unknown) {
       console.error("Erro detalhado ao criar usuário:", err);
@@ -405,7 +428,8 @@ export default function UserManagement() {
   const stats = {
     total: profiles.length,
     admins: profiles.filter(p => isAdminRole(p.role)).length,
-    users: profiles.filter(p => isMemberRole(p.role)).length
+    managers: profiles.filter(p => normalizeProfileRole(p.role) === "manager").length,
+    users: profiles.filter(p => normalizeProfileRole(p.role) === "member").length
   };
 
   return (
@@ -465,6 +489,21 @@ export default function UserManagement() {
                     placeholder="••••••••"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Papel</Label>
+                  <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
+                    <SelectTrigger id="role" className="bg-white/5 border-white/10 text-foreground focus:ring-primary/50">
+                      <SelectValue placeholder="Selecione o papel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <DialogFooter className="pt-4">
                   <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={createLoading}>
                     {createLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -476,7 +515,7 @@ export default function UserManagement() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="glass-surface border-white/10 text-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total de Usuários</CardTitle>
@@ -495,6 +534,16 @@ export default function UserManagement() {
             <CardContent>
               <div className="text-2xl font-bold">{stats.admins}</div>
               <p className="text-xs text-muted-foreground">Acesso total ao sistema</p>
+            </CardContent>
+          </Card>
+          <Card className="glass-surface border-white/10 text-foreground">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Managers</CardTitle>
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.managers}</div>
+              <p className="text-xs text-muted-foreground">Gestao de trabalhos validados</p>
             </CardContent>
           </Card>
           <Card className="glass-surface border-white/10 text-foreground">
@@ -586,12 +635,9 @@ export default function UserManagement() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={isAdminRole(profile.role) ? "default" : "secondary"} className={`
+                          <Badge variant={normalizeProfileRole(profile.role) === "member" ? "secondary" : "default"} className={`
                             capitalize
-                            ${isAdminRole(profile.role) 
-                              ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border-purple-500/20' 
-                              : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border-blue-500/20'
-                            }
+                            ${getRoleBadgeClass(profile.role)}
                           `}>
                             {getRoleLabel(profile.role)}
                           </Badge>
@@ -612,6 +658,7 @@ export default function UserManagement() {
                                 setSelectedUserForEdit(profile);
                                 setEditName(profile.full_name || "");
                                 setEditAvatarPreview(profile.avatar_url || null);
+                                setEditRole(normalizeProfileRole(profile.role));
                                 setEditHermesEnabled(Boolean(profile.hermes_enabled && profile.hermes_base_url));
                                 setEditHermesBaseUrl(profile.hermes_base_url || "");
                                 setIsEditOpen(true);
@@ -696,6 +743,7 @@ export default function UserManagement() {
           setSelectedUserForEdit(null);
           setEditAvatarFile(null);
           setEditAvatarPreview(null);
+          setEditRole("member");
           setEditHermesEnabled(false);
           setEditHermesBaseUrl("");
         }
@@ -742,6 +790,22 @@ export default function UserManagement() {
                 className="bg-white/5 border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/50"
                 placeholder="Ex: João Silva"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Papel</Label>
+              <Select value={editRole} onValueChange={(value) => setEditRole(value as AppRole)}>
+                <SelectTrigger id="edit-role" className="bg-white/5 border-white/10 text-foreground focus:ring-primary/50">
+                  <SelectValue placeholder="Selecione o papel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-4">
