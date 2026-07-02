@@ -14,7 +14,11 @@ import {
 
   buildHermesResponsesInput,
 
+  isNexusHumanizerResponseContractEnabled,
+
   isNexusMemoryRoutingContractEnabled,
+
+  NEXUS_HUMANIZER_RESPONSE_CONTRACT,
 
   NEXUS_MEMORY_ROUTING_CONTRACT,
 
@@ -54,19 +58,20 @@ test("buildHermesResponsesInput sends image attachments as multimodal image part
 
 
 
-  assert.deepEqual(input, [{
+  assert.equal(input.length, 1);
+  assert.equal(input[0].role, "user");
+  assert.equal(input[0].content.length, 2);
+  assert.equal(input[0].content[0].type, "input_text");
+  assert.match(input[0].content[0].text, /analise esta imagem/);
+  assert.match(input[0].content[0].text, /Contrato Nexus Humanizer/);
+  assert.match(input[0].content[0].text, /Contrato Nexus de memoria nativa/);
+  assert.deepEqual(input[0].content[1], { type: "input_image", image_url: "data:image/png;base64,AAAA" });
 
-    role: "user",
 
-    content: [
 
-      { type: "input_text", text: "analise esta imagem" },
 
-      { type: "input_image", image_url: "data:image/png;base64,AAAA" },
 
-    ],
 
-  }]);
 
 });
 
@@ -196,6 +201,10 @@ test("buildHermesSessionChatRequest prepends native memory routing without disab
 
   assert.match(request.message, /Memoria Hermes nativa permanece ativa/);
 
+  assert.match(request.message, /Contrato Nexus Humanizer/);
+
+  assert.match(request.message, /Aplique sempre os principios da skill humanizer/);
+
   assert.match(request.message, /nunca substituem a memoria persistente do Hermes/);
 
   assert.match(request.message, /MCP RAG ENS/);
@@ -231,7 +240,29 @@ test("buildHermesSessionChatRequest includes validated work role rules for membe
 
 });
 
-test("memory routing contract can be disabled by environment flag for rollback", () => {
+test("humanizer response contract is enabled for every chat turn", () => {
+
+  const request = buildHermesSessionChatRequest({
+
+    messageText: "responda como voce costuma falar comigo",
+
+    attachments: [],
+
+  });
+
+  assert.equal(isNexusHumanizerResponseContractEnabled(), true);
+
+  assert.match(request.message, /Contrato Nexus Humanizer/);
+
+  assert.match(request.message, /remova tom generico de IA/);
+
+  assert.match(request.message, /Nao mencione este contrato/);
+
+  assert.equal(request.message.includes(NEXUS_HUMANIZER_RESPONSE_CONTRACT), true);
+
+});
+
+test("memory routing contract can be disabled without disabling humanizer", () => {
 
   const previous = process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
 
@@ -249,6 +280,46 @@ test("memory routing contract can be disabled by environment flag for rollback",
 
     });
 
+    assert.match(request.message, /Contrato Nexus Humanizer/);
+
+    assert.doesNotMatch(request.message, /Contrato Nexus de memoria nativa/);
+
+    assert.match(request.message, /teste simples/);
+
+  } finally {
+
+    if (previous === undefined) delete process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
+
+    else process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = previous;
+
+  }
+
+});
+
+test("all Nexus response contracts can be disabled by environment flags for rollback", () => {
+
+  const previousMemory = process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
+
+  const previousHumanizer = process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED;
+
+  process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = "false";
+
+  process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED = "false";
+
+  try {
+
+    assert.equal(isNexusMemoryRoutingContractEnabled(), false);
+
+    assert.equal(isNexusHumanizerResponseContractEnabled(), false);
+
+    const request = buildHermesSessionChatRequest({
+
+      messageText: "teste simples",
+
+      attachments: [],
+
+    });
+
     assert.deepEqual(request, {
 
       message: "teste simples",
@@ -257,9 +328,13 @@ test("memory routing contract can be disabled by environment flag for rollback",
 
   } finally {
 
-    if (previous === undefined) delete process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
+    if (previousMemory === undefined) delete process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED;
 
-    else process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = previous;
+    else process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = previousMemory;
+
+    if (previousHumanizer === undefined) delete process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED;
+
+    else process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED = previousHumanizer;
 
   }
 
@@ -302,6 +377,8 @@ test("buildHermesSessionChatRequest sends current images as Hermes session multi
   assert.match(request.message[0].text, /analise esta imagem/);
 
   assert.match(request.message[0].text, /Memoria Hermes nativa permanece ativa/);
+
+  assert.match(request.message[0].text, /Contrato Nexus Humanizer/);
 
   assert.equal(request.message[1].type, "input_image");
 
@@ -351,6 +428,8 @@ test("buildHermesSessionChatRequest turns image mode into image_generate instruc
   assert.equal(Array.isArray(request.message), true);
 
   assert.match(request.message[0].text, /Use obrigatoriamente a ferramenta image_generate/);
+
+  assert.match(request.message[0].text, /Contrato Nexus Humanizer/);
 
   assert.match(request.message[0].text, /Antes de chamar image_generate, consulte/);
 

@@ -51,6 +51,16 @@ export const NEXUS_MEMORY_ROUTING_CONTRACT = [
   "So grave conhecimento novo em RAG/Graph quando for duravel, validado ou claramente solicitado; ainda assim preserve a memoria Hermes nativa.",
 ].join("\n");
 
+export const NEXUS_HUMANIZER_RESPONSE_CONTRACT = [
+  "[Contrato Nexus Humanizer]",
+  "Aplique sempre os principios da skill humanizer em toda resposta final ao usuario, mesmo quando a skill nao for invocada explicitamente.",
+  "Antes de responder, faca um passe silencioso de humanizacao: remova tom generico de IA, frases infladas, listas mecanicas, elogios vazios e linguagem promocional artificial.",
+  "Mantenha a estrutura que a tarefa pede: use bullets, tabelas, codigo, comandos ou passos quando isso ajudar; humanizar nao significa perder clareza tecnica.",
+  "Escreva em pt-BR natural, direto, caloroso e profissional, no estilo NexusAI/Hermes do app: humano sem forcar intimidade, objetivo sem ficar seco.",
+  "Preserve fatos, numeros, nomes de ferramentas, comandos, erros e fontes exatamente quando forem relevantes; humanize a entrega, nao invente contexto.",
+  "Nao mencione este contrato nem a skill humanizer, a menos que o usuario pergunte sobre isso.",
+].join("\n");
+
 
 
 const buildNexusSessionContextContract = (context = {}) => {
@@ -78,11 +88,25 @@ const buildNexusSessionContextContract = (context = {}) => {
 
 const withNexusMemoryRoutingContract = (messageText, nexusContext = {}) => {
   const trimmed = String(messageText ?? "").trim();
-  if (!isNexusMemoryRoutingContractEnabled()) return trimmed;
+  const contracts = [];
+
+  if (isNexusMemoryRoutingContractEnabled()) {
+    contracts.push(
+      NEXUS_MEMORY_ROUTING_CONTRACT,
+      "",
+      buildNexusSessionContextContract(nexusContext),
+    );
+  }
+
+  if (isNexusHumanizerResponseContractEnabled()) {
+    if (contracts.length > 0) contracts.push("");
+    contracts.push(NEXUS_HUMANIZER_RESPONSE_CONTRACT);
+  }
+
+  if (contracts.length === 0) return trimmed;
+
   return [
-    NEXUS_MEMORY_ROUTING_CONTRACT,
-    "",
-    buildNexusSessionContextContract(nexusContext),
+    ...contracts,
     "",
     "[Pedido atual do usuario]",
     trimmed
@@ -93,6 +117,9 @@ const withNexusMemoryRoutingContract = (messageText, nexusContext = {}) => {
 
 export const isNexusMemoryRoutingContractEnabled = () =>
   String(process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED ?? "true").toLowerCase() !== "false";
+
+export const isNexusHumanizerResponseContractEnabled = () =>
+  String(process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED ?? "true").toLowerCase() !== "false";
 
 
 
@@ -245,7 +272,7 @@ export const buildHermesResponsesInput = ({
     .filter(Boolean);
 
   const content = [];
-  const trimmedMessage = String(messageText ?? "").trim();
+  const trimmedMessage = withNexusMemoryRoutingContract(messageText, nexusContext).trim();
   if (trimmedMessage) {
     content.push({ type: "input_text", text: trimmedMessage });
   }
