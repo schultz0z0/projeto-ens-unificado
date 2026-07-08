@@ -1,4 +1,4 @@
-import { memo, useState, useRef, useEffect, useMemo, useCallback, Fragment, type ReactNode, type RefObject } from "react";
+import { memo, useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, Fragment, type ReactNode, type RefObject } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,8 +72,16 @@ type ChatMessagesPaneProps = {
   lastAssistantIndex: number;
   liveStatusText: string | null;
   messagesEndRef: RefObject<HTMLDivElement>;
+  messagesScrollRef: RefObject<HTMLDivElement>;
   onLoadOlderMessages: () => void;
+  scrollRequest: ChatScrollRequest;
   showPendingAssistantIndicator: boolean;
+};
+
+type ChatScrollRequest = {
+  behavior: ScrollBehavior;
+  settleLayout: boolean;
+  version: number;
 };
 
 const ChatMessagesPane = memo(function ChatMessagesPane({
@@ -87,11 +95,49 @@ const ChatMessagesPane = memo(function ChatMessagesPane({
   lastAssistantIndex,
   liveStatusText,
   messagesEndRef,
+  messagesScrollRef,
   onLoadOlderMessages,
+  scrollRequest,
   showPendingAssistantIndicator,
 }: ChatMessagesPaneProps) {
+  useLayoutEffect(() => {
+    if (scrollRequest.version === 0) return;
+
+    const scrollContainer = messagesScrollRef.current;
+    if (!scrollContainer) return;
+
+    const frameIds: number[] = [];
+    const timeoutIds: number[] = [];
+    const scrollToBottom = (behavior: ScrollBehavior) => {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior,
+      });
+    };
+
+    scrollToBottom(scrollRequest.behavior);
+
+    frameIds.push(window.requestAnimationFrame(() => {
+      scrollToBottom(scrollRequest.behavior === "smooth" ? "auto" : scrollRequest.behavior);
+
+      if (!scrollRequest.settleLayout) return;
+
+      frameIds.push(window.requestAnimationFrame(() => scrollToBottom("auto")));
+      timeoutIds.push(window.setTimeout(() => scrollToBottom("auto"), 120));
+      timeoutIds.push(window.setTimeout(() => scrollToBottom("auto"), 320));
+      timeoutIds.push(window.setTimeout(() => scrollToBottom("auto"), 700));
+      timeoutIds.push(window.setTimeout(() => scrollToBottom("auto"), 1200));
+      timeoutIds.push(window.setTimeout(() => scrollToBottom("auto"), 2000));
+    }));
+
+    return () => {
+      frameIds.forEach((frameId) => window.cancelAnimationFrame(frameId));
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
+  }, [messagesScrollRef, scrollRequest]);
+
   return (
-    <div className="space-y-6 overflow-y-auto overscroll-contain [overflow-anchor:none] p-4 md:p-8 flex-1 flex flex-col min-h-0">
+    <div ref={messagesScrollRef} className="space-y-6 overflow-y-auto overscroll-contain [overflow-anchor:none] p-4 md:p-8 flex-1 flex flex-col min-h-0">
       {(isRetrievingContext || (showPendingAssistantIndicator && liveStatusText)) && (
         <div className="flex items-center gap-2 text-xs text-text-secondary bg-white/70 border border-white/40 px-3 py-2 rounded-full self-center animate-pulse">
           <Sparkles className="w-3 h-3 text-brand-primary" />
@@ -124,7 +170,7 @@ const ChatMessagesPane = memo(function ChatMessagesPane({
           {index === lastAssistantIndex && confidenceBadges}
           <div
             className={cn(
-              "flex [content-visibility:auto] [contain-intrinsic-size:0_180px]",
+              "flex",
               message.role === "user" ? "justify-end" : "justify-start",
             )}
           >
@@ -195,8 +241,15 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   const [contextStatus, setContextStatus] = useState<"ok" | "insufficient" | null>(null);
   const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
   const [reviewState, setReviewState] = useState<string | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  const pendingInitialScrollRef = useRef(false);
+  const [scrollRequest, setScrollRequest] = useState<ChatScrollRequest>({
+    behavior: "auto",
+    settleLayout: false,
+    version: 0,
+  });
   const streamingMessageIdRef = useRef<string | null>(null);
   const streamingQueueRef = useRef("");
   const streamingRenderedContentRef = useRef("");
@@ -317,11 +370,6 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
       const page = await chatService.getMessagesPage(sessionId, { limit: PAGE_SIZE });
       const dbMessages = page.messages;
       
-      // Se o banco retornar vazio (ex: acabou de criar), não limpa se já tivermos mensagens otimistas
-      // Isso previne o "piscar" logo após criar o chat
-      if (dbMessages.length === 0 && messages.length > 0) {
-         return;
-      }
       shouldAutoScrollRef.current = true;
       setHasMoreHistory(page.hasMore);
       const hydratedMessages = await hydrateChatMessages(
@@ -332,29 +380,36 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
           created_at: m.created_at,
         })),
       );
-      setMessages((currentMessages) =>
-        reconcileHydratedMessages({
+      setMessages((currentMessages) => {
+        // Se o banco retornar vazio (ex: acabou de criar), não limpa mensagens otimistas.
+        // Isso previne o "piscar" logo após criar o chat sem recriar o loader a cada render.
+        if (dbMessages.length === 0 && currentMessages.length > 0) return currentMessages;
+
+        return reconcileHydratedMessages({
           currentMessages,
           hydratedMessages,
           activeStreamingMessageId: streamingMessageIdRef.current,
-        }),
-      );
+        });
+      });
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
       toast.error("Erro ao carregar histórico da conversa.");
     }
-  }, [messages.length]);
+  }, []);
 
   // Initialize or load session
   useEffect(() => {
     if (currentSessionId) {
       // Se tiver ID na URL, carrega as mensagens
+      pendingInitialScrollRef.current = true;
+      shouldAutoScrollRef.current = true;
       loadMessages(currentSessionId);
       // Abre a sidebar automaticamente no desktop para dar feedback visual
       if (window.innerWidth >= 1024) setIsHistoryOpen(true);
       
     } else {
       // Se não tiver ID (home), limpa as mensagens
+      pendingInitialScrollRef.current = false;
       setMessages([]);
       setHasMoreHistory(false);
     }
@@ -413,16 +468,25 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     if (window.innerWidth < 1024) setIsHistoryOpen(false);
   };
 
-  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
-  };
+  const requestScrollToBottom = useCallback((behavior: ScrollBehavior = "smooth", settleLayout = false) => {
+    setScrollRequest((current) => ({
+      behavior,
+      settleLayout,
+      version: current.version + 1,
+    }));
+  }, []);
 
   useEffect(() => {
     if (shouldAutoScrollRef.current) {
-      scrollToBottom(activeStreamingMessageId ? "auto" : "smooth");
+      const isInitialScroll = pendingInitialScrollRef.current;
+      requestScrollToBottom(
+        activeStreamingMessageId || isInitialScroll ? "auto" : "smooth",
+        isInitialScroll,
+      );
+      pendingInitialScrollRef.current = false;
     }
     shouldAutoScrollRef.current = true;
-  }, [activeStreamingMessageId, messages]);
+  }, [activeStreamingMessageId, messages, requestScrollToBottom]);
 
   const cancelStreamingRender = useCallback(() => {
     if (streamingFrameRef.current !== null) {
@@ -880,7 +944,9 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
               lastAssistantIndex={lastAssistantIndex}
               liveStatusText={liveStatusText}
               messagesEndRef={messagesEndRef}
+              messagesScrollRef={messagesScrollRef}
               onLoadOlderMessages={loadOlderMessages}
+              scrollRequest={scrollRequest}
               showPendingAssistantIndicator={showPendingAssistantIndicator}
             />
           )}
