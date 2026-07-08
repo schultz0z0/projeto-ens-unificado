@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -67,11 +67,9 @@ type ChatComposerProps = {
   menuItems: ComposerMenuItem[];
   imageGenerationMode?: boolean;
   imageGenerationOptions?: ImageGenerationOptions;
-  onChange: (value: string) => void;
   onImageGenerationOptionsChange?: (options: ImageGenerationOptions) => void;
   onExitImageGenerationMode?: () => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  onSubmit: () => void;
+  onSubmit: (value: string) => void;
   onPickFiles: (files: FileList) => void;
   onRemoveAttachment: (id: string) => void;
   onClickMic?: () => void;
@@ -153,10 +151,8 @@ export function ChatComposer({
   menuItems,
   imageGenerationMode = false,
   imageGenerationOptions,
-  onChange,
   onImageGenerationOptionsChange,
   onExitImageGenerationMode,
-  onKeyDown,
   onSubmit,
   onPickFiles,
   onRemoveAttachment,
@@ -167,9 +163,18 @@ export function ChatComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dragCounterRef = useRef(0);
   const previousValueLengthRef = useRef(0);
+  const previousExternalValueRef = useRef(value);
+  const [draftValue, setDraftValue] = useState(value);
   const [isDragActive, setIsDragActive] = useState(false);
-  const canSend = useMemo(() => value.trim().length > 0 || attachments.length > 0, [attachments.length, value]);
+  const canSend = useMemo(() => draftValue.trim().length > 0 || attachments.length > 0, [attachments.length, draftValue]);
   const canEditImageOptions = imageGenerationMode && imageGenerationOptions && onImageGenerationOptionsChange;
+
+  useEffect(() => {
+    if (value === previousExternalValueRef.current) return;
+    previousExternalValueRef.current = value;
+    previousValueLengthRef.current = 0;
+    setDraftValue(value);
+  }, [value]);
 
   const handleOpenFilePicker = () => {
     fileInputRef.current?.click();
@@ -178,7 +183,7 @@ export function ChatComposer({
   const resizeTextarea = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    if (value.length < previousValueLengthRef.current || value.length === 0) {
+    if (draftValue.length < previousValueLengthRef.current || draftValue.length === 0) {
       textarea.style.height = "auto";
     }
     const layout = getComposerTextareaLayout({
@@ -191,12 +196,29 @@ export function ChatComposer({
       textarea.style.height = layout.height;
       textarea.style.overflowY = layout.overflowY;
     }
-    previousValueLengthRef.current = value.length;
-  }, [value.length]);
+    previousValueLengthRef.current = draftValue.length;
+  }, [draftValue.length]);
 
-  useLayoutEffect(() => {
-    resizeTextarea();
-  }, [value, resizeTextarea]);
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(resizeTextarea);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [resizeTextarea]);
+
+  const handleSubmit = useCallback(() => {
+    if (!canSend || disabled) return;
+    const submittedValue = draftValue;
+    setDraftValue("");
+    previousExternalValueRef.current = "";
+    previousValueLengthRef.current = 0;
+    onSubmit(submittedValue);
+  }, [canSend, disabled, draftValue, onSubmit]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit();
+    }
+  };
 
   const handleFilesFromDataTransfer = useCallback((files: FileList | null) => {
     if (!files || files.length === 0 || disabled) return;
@@ -409,9 +431,9 @@ export function ChatComposer({
           ref={textareaRef}
           id="chat-composer-message"
           name="chat-composer-message"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
+          value={draftValue}
+          onChange={(e) => setDraftValue(e.target.value)}
+          onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={placeholder}
           disabled={disabled}
@@ -434,7 +456,7 @@ export function ChatComposer({
         <Button
           aria-label="Enviar mensagem"
           type="button"
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={disabled || !canSend}
           className="chat-send-button w-10 h-10 rounded-full shadow-glass hover:scale-105 transition-transform"
         >

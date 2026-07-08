@@ -1,4 +1,3 @@
-import { useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { Mascot } from "./Mascot";
@@ -16,8 +15,7 @@ type SuggestionCard = {
 interface ChatEmptyStateProps {
   input: string;
   onInputChange: (value: string) => void;
-  onSubmit: () => void;
-  onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSubmit: (value: string) => void;
   suggestionCards: SuggestionCard[];
   attachments: ComposerAttachment[];
   menuItems: ComposerMenuItem[];
@@ -33,7 +31,6 @@ export function ChatEmptyState({
   input,
   onInputChange,
   onSubmit,
-  onKeyDown,
   suggestionCards,
   attachments,
   menuItems,
@@ -44,10 +41,8 @@ export function ChatEmptyState({
   onPickFiles,
   onRemoveAttachment,
 }: ChatEmptyStateProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const focusInputSoon = () => {
-    window.setTimeout(() => inputRef.current?.focus(), 0);
+    window.setTimeout(() => document.getElementById("chat-composer-message")?.focus(), 0);
   };
 
   const setPrompt = (prompt: string) => {
@@ -103,8 +98,6 @@ export function ChatEmptyState({
       <div className={cn("w-full max-w-3xl pb-[calc(env(safe-area-inset-bottom)+1rem)]", "[@media(max-height:820px)]:pb-[calc(env(safe-area-inset-bottom)+0.5rem)]")}>
         <ChatComposer
           value={input}
-          onChange={onInputChange}
-          onKeyDown={onKeyDown}
           onSubmit={onSubmit}
           placeholder="Diga o que você quer criar hoje para sua marca..."
           attachments={attachments}

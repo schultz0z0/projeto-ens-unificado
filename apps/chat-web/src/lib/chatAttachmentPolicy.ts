@@ -1,5 +1,5 @@
 export const CHAT_PROXY_MAX_ATTACHMENTS = 4;
-export const CHAT_COMPOSER_ACCEPTED_FILE_TYPES = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.md,.txt,.html,.htm,.json,.rtf";
+export const CHAT_COMPOSER_ACCEPTED_FILE_TYPES = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.md,.txt,.html,.htm,.css,.js,.json,.rtf";
 
 export const CHAT_SUPPORTED_ATTACHMENT_EXTENSIONS = [
   "png",
@@ -22,6 +22,8 @@ export const CHAT_SUPPORTED_ATTACHMENT_EXTENSIONS = [
   "txt",
   "html",
   "htm",
+  "css",
+  "js",
   "json",
   "rtf",
 ];
@@ -45,6 +47,12 @@ export const CHAT_SUPPORTED_ATTACHMENT_MIME_TYPES = [
   "text/markdown",
   "text/plain",
   "text/html",
+  "text/css",
+  "text/javascript",
+  "application/javascript",
+  "application/x-javascript",
+  "text/ecmascript",
+  "application/ecmascript",
   "application/json",
   "application/rtf",
   "text/rtf",
@@ -74,6 +82,8 @@ const EXTENSION_TO_MIME_TYPE: Record<string, string> = {
   txt: "text/plain",
   html: "text/html",
   htm: "text/html",
+  css: "text/css",
+  js: "text/javascript",
   json: "application/json",
   rtf: "application/rtf",
 };

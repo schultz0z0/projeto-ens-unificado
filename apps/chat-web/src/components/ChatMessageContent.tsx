@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FileCode2, FileText, Sparkles } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   type ChatMessageTextPart,
 } from "@/lib/chatMessageParts";
 import { cn } from "@/lib/utils";
+import { getTextRenderMode, shouldExtractTextImagePreviews } from "./chat/chatMessageRendering";
 
 type ChatMessageContentProps = {
   role: "user" | "assistant";
@@ -29,7 +30,7 @@ type ChatMessageContentProps = {
   isStreaming?: boolean;
 };
 
-export function ChatMessageContent({ role, content, isStreaming = false }: ChatMessageContentProps) {
+export const ChatMessageContent = memo(function ChatMessageContent({ role, content, isStreaming = false }: ChatMessageContentProps) {
   const [previewArtifact, setPreviewArtifact] = useState<ChatMessageArtifactPart | null>(null);
   const parts = useMemo(() => parseChatMessageContent(content), [content]);
   const hasStructuredImagePart = useMemo(
@@ -38,23 +39,43 @@ export function ChatMessageContent({ role, content, isStreaming = false }: ChatM
   );
   const textImagePreviews = useMemo(
     () =>
-      role === "assistant"
+      shouldExtractTextImagePreviews({ role, isStreaming })
         ? extractRenderableImagePreviewsFromParts(parts).filter(
             (preview) => !shouldHideTextImagePreview({ textUrl: preview.url, hasStructuredImagePart }),
           )
         : [],
-    [hasStructuredImagePart, parts, role],
+    [hasStructuredImagePart, isStreaming, parts, role],
   );
 
-  const renderTextPart = (part: ChatMessageTextPart) => (
-    <div
-      key={part.id}
-      className={cn(
-        "prose prose-sm max-w-none break-words",
-        role === "user" && "prose-invert prose-a:text-white prose-a:underline",
-        role === "assistant" && "dark:prose-invert",
-      )}
-    >
+  const getTextContainerClassName = () =>
+    cn(
+      "prose prose-sm max-w-none break-words",
+      role === "user" && "prose-invert prose-a:text-white prose-a:underline",
+      role === "assistant" && "dark:prose-invert",
+    );
+
+  const renderTextPart = (part: ChatMessageTextPart) => {
+    const renderMode = getTextRenderMode({
+      role,
+      isStreaming,
+      textLength: part.text.length,
+    });
+
+    if (renderMode === "plain") {
+      return (
+        <div key={part.id} className={getTextContainerClassName()}>
+          <pre className="mb-2 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed last:mb-0">
+            {part.text}
+          </pre>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        key={part.id}
+        className={getTextContainerClassName()}
+      >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -133,7 +154,8 @@ export function ChatMessageContent({ role, content, isStreaming = false }: ChatM
         {part.text}
       </ReactMarkdown>
     </div>
-  );
+    );
+  };
 
   const renderStatusPart = (part: ChatMessageStatusPart) => {
     const toneClassName =
@@ -228,5 +250,7 @@ export function ChatMessageContent({ role, content, isStreaming = false }: ChatM
       ) : null}
     </>
   );
-}
+});
+
+ChatMessageContent.displayName = "ChatMessageContent";
 

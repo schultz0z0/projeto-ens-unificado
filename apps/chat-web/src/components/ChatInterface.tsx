@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback, Fragment } from "react";
+import { memo, useState, useRef, useEffect, useMemo, useCallback, Fragment, type ReactNode, type RefObject } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +45,10 @@ import { useApprovalStream } from "./chat/useApprovalStream";
 import { hydrateChatMessages } from "./chat/chatAttachmentHydration";
 import { reconcileHydratedMessages } from "./chat/chatMessageReconciliation";
 import { sendMessageToChatbotStream, type StreamArtifact, type StreamStatus } from "./chat/chatStreamClient";
+import {
+  getStreamingRenderChunkSize,
+  getStreamingRenderFrameDelayMs,
+} from "./chat/chatMessageRendering";
 
 interface Message {
   id: string;
@@ -56,6 +60,113 @@ interface Message {
 interface ChatInterfaceProps {
   onRequestTabChange?: (tab: HomeTab) => void;
 }
+
+type ChatMessagesPaneProps = {
+  activeStreamingMessageId: string | null;
+  confidenceBadges: ReactNode;
+  contextStatus: "ok" | "insufficient" | null;
+  displayMessages: Message[];
+  hasMoreHistory: boolean;
+  isLoadingMore: boolean;
+  isRetrievingContext: boolean;
+  lastAssistantIndex: number;
+  liveStatusText: string | null;
+  messagesEndRef: RefObject<HTMLDivElement>;
+  onLoadOlderMessages: () => void;
+  showPendingAssistantIndicator: boolean;
+};
+
+const ChatMessagesPane = memo(function ChatMessagesPane({
+  activeStreamingMessageId,
+  confidenceBadges,
+  contextStatus,
+  displayMessages,
+  hasMoreHistory,
+  isLoadingMore,
+  isRetrievingContext,
+  lastAssistantIndex,
+  liveStatusText,
+  messagesEndRef,
+  onLoadOlderMessages,
+  showPendingAssistantIndicator,
+}: ChatMessagesPaneProps) {
+  return (
+    <div className="space-y-6 overflow-y-auto overscroll-contain [overflow-anchor:none] p-4 md:p-8 flex-1 flex flex-col min-h-0">
+      {(isRetrievingContext || (showPendingAssistantIndicator && liveStatusText)) && (
+        <div className="flex items-center gap-2 text-xs text-text-secondary bg-white/70 border border-white/40 px-3 py-2 rounded-full self-center animate-pulse">
+          <Sparkles className="w-3 h-3 text-brand-primary" />
+          <span>{liveStatusText ?? "Hermes está processando sua mensagem..."}</span>
+        </div>
+      )}
+
+      {contextStatus === "insufficient" && (
+        <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50/80 border border-amber-200/60 px-3 py-2 rounded-full self-center">
+          <AlertCircle className="w-4 h-4" />
+          <span>Contexto insuficiente. A IA fez uma pergunta de clarificação.</span>
+        </div>
+      )}
+
+      {hasMoreHistory && (
+        <div className="flex justify-center mb-4">
+          <Button
+            variant="ghost"
+            onClick={onLoadOlderMessages}
+            disabled={isLoadingMore}
+            className="text-xs text-slate-500 hover:text-slate-700"
+          >
+            {isLoadingMore ? "Carregando..." : "Carregar mensagens anteriores"}
+          </Button>
+        </div>
+      )}
+
+      {displayMessages.map((message, index) => (
+        <Fragment key={message.id}>
+          {index === lastAssistantIndex && confidenceBadges}
+          <div
+            className={cn(
+              "flex [content-visibility:auto] [contain-intrinsic-size:0_180px]",
+              message.role === "user" ? "justify-end" : "justify-start",
+            )}
+          >
+            <div
+              className={cn(
+                "max-w-[80%] rounded-2xl px-6 py-4",
+                message.role === "user" ? "chat-user-bubble text-white" : "glass-surface shadow-glass",
+              )}
+            >
+              {message.role === "assistant" && (
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-brand-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-3 h-3 text-brand-primary" />
+                  </div>
+                  <span className="text-xs font-medium text-text-muted">Nexus AI</span>
+                </div>
+              )}
+              <ChatMessageContent
+                role={message.role}
+                content={message.content}
+                isStreaming={message.id === activeStreamingMessageId}
+              />
+            </div>
+          </div>
+        </Fragment>
+      ))}
+
+      {showPendingAssistantIndicator && (
+        <div className="flex justify-start">
+          <div className="glass-surface rounded-2xl px-6 py-4 shadow-glass">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce" />
+              <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce delay-75" />
+              <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce delay-150" />
+            </div>
+          </div>
+        </div>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+});
 
 export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   const { user, session, signOut } = useAuth();
@@ -266,7 +377,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     return () => window.clearInterval(intervalId);
   }, [currentSessionId, displayMessages, isTyping, loadMessages]);
 
-  const loadOlderMessages = async () => {
+  const loadOlderMessages = useCallback(async () => {
     if (!currentSessionId || isLoadingMore || !hasMoreHistory || messages.length === 0) return;
 
     const oldest = messages[0];
@@ -289,7 +400,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     } finally {
       setIsLoadingMore(false);
     }
-  };
+  }, [currentSessionId, hasMoreHistory, isLoadingMore, messages]);
 
   const handleSelectSession = (sessionId: string) => {
     setSearchParams({ chat: sessionId });
@@ -302,16 +413,16 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     if (window.innerWidth < 1024) setIsHistoryOpen(false);
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   useEffect(() => {
     if (shouldAutoScrollRef.current) {
-      scrollToBottom();
+      scrollToBottom(activeStreamingMessageId ? "auto" : "smooth");
     }
     shouldAutoScrollRef.current = true;
-  }, [messages]);
+  }, [activeStreamingMessageId, messages]);
 
   const cancelStreamingRender = useCallback(() => {
     if (streamingFrameRef.current !== null) {
@@ -348,7 +459,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     }
 
     const elapsed = timestamp - streamingLastRenderAtRef.current;
-    const minFrameMs = queue.length > 320 ? 18 : 28;
+    const minFrameMs = getStreamingRenderFrameDelayMs(queue.length);
     if (streamingLastRenderAtRef.current !== 0 && elapsed < minFrameMs) {
       streamingFrameRef.current = window.requestAnimationFrame(pumpStreamingContent);
       return;
@@ -356,11 +467,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
 
     streamingLastRenderAtRef.current = timestamp;
 
-    const chunkSize =
-      queue.length > 900 ? 18 :
-      queue.length > 500 ? 12 :
-      queue.length > 240 ? 8 :
-      queue.length > 100 ? 5 : 3;
+    const chunkSize = getStreamingRenderChunkSize(queue.length);
     const nextChunk = queue.slice(0, chunkSize);
     streamingQueueRef.current = queue.slice(chunkSize);
     streamingRenderedContentRef.current += nextChunk;
@@ -536,10 +643,11 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     }
   };
 
-  const handleSend = async () => {
-    if ((!input.trim() && attachments.length === 0) || !user || isUploadingAttachments) return;
+  const handleSend = async (submittedInput?: string) => {
+    const effectiveInput = typeof submittedInput === "string" ? submittedInput : input;
+    if ((!effectiveInput.trim() && attachments.length === 0) || !user || isUploadingAttachments) return;
 
-    const currentInput = input;
+    const currentInput = effectiveInput;
     const currentImageGenerationMode = imageGenerationMode;
     const currentImageGenerationOptions = imageGenerationOptions;
     setInput("");
@@ -721,13 +829,6 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     }
   };
 
-  const handleComposerKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   return (
     <div className="flex h-full min-h-0 relative">
       {/* Sidebar de Histórico */}
@@ -757,7 +858,6 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
               input={input}
               onInputChange={setInput}
               onSubmit={handleSend}
-              onKeyDown={handleComposerKeyDown}
               suggestionCards={suggestionCards}
               attachments={attachments}
               menuItems={composerMenuItems}
@@ -769,84 +869,26 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
               onRemoveAttachment={handleRemoveAttachment}
             />
           ) : (
-            <div className="space-y-6 overflow-y-auto overscroll-contain [overflow-anchor:none] p-4 md:p-8 flex-1 flex flex-col min-h-0">
-                {(isRetrievingContext || (showPendingAssistantIndicator && liveStatusText)) && (
-                  <div className="flex items-center gap-2 text-xs text-text-secondary bg-white/70 border border-white/40 px-3 py-2 rounded-full self-center animate-pulse">
-                    <Sparkles className="w-3 h-3 text-brand-primary" />
-                    <span>{liveStatusText ?? "Hermes está processando sua mensagem..."}</span>
-                  </div>
-                )}
-                
-                {contextStatus === "insufficient" && (
-                  <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50/80 border border-amber-200/60 px-3 py-2 rounded-full self-center">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Contexto insuficiente. A IA fez uma pergunta de clarificação.</span>
-                  </div>
-                )}
-
-                {hasMoreHistory && (
-                  <div className="flex justify-center mb-4">
-                    <Button
-                      variant="ghost"
-                      onClick={loadOlderMessages}
-                      disabled={isLoadingMore}
-                      className="text-xs text-slate-500 hover:text-slate-700"
-                    >
-                      {isLoadingMore ? "Carregando..." : "Carregar mensagens anteriores"}
-                    </Button>
-                  </div>
-                )}
-                {displayMessages.map((message, index) => (
-                  <Fragment key={message.id}>
-                    {index === lastAssistantIndex && confidenceBadges}
-                    <div
-                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={cn(
-                          "max-w-[80%] rounded-2xl px-6 py-4",
-                          message.role === "user" ? "chat-user-bubble text-white" : "glass-surface shadow-glass",
-                        )}
-                      >
-                        {message.role === "assistant" && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-6 h-6 rounded-full bg-brand-primary/20 flex items-center justify-center">
-                              <Sparkles className="w-3 h-3 text-brand-primary" />
-                            </div>
-                            <span className="text-xs font-medium text-text-muted">Nexus AI</span>
-                          </div>
-                        )}
-                        <ChatMessageContent
-                          role={message.role}
-                          content={message.content}
-                          isStreaming={message.id === activeStreamingMessageId}
-                        />
-                      </div>
-                    </div>
-                  </Fragment>
-                ))}
-
-                {showPendingAssistantIndicator && (
-                  <div className="flex justify-start">
-                    <div className="glass-surface rounded-2xl px-6 py-4 shadow-glass">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce" />
-                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce delay-75" />
-                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-bounce delay-150" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-            </div>
+            <ChatMessagesPane
+              activeStreamingMessageId={activeStreamingMessageId}
+              confidenceBadges={confidenceBadges}
+              contextStatus={contextStatus}
+              displayMessages={displayMessages}
+              hasMoreHistory={hasMoreHistory}
+              isLoadingMore={isLoadingMore}
+              isRetrievingContext={isRetrievingContext}
+              lastAssistantIndex={lastAssistantIndex}
+              liveStatusText={liveStatusText}
+              messagesEndRef={messagesEndRef}
+              onLoadOlderMessages={loadOlderMessages}
+              showPendingAssistantIndicator={showPendingAssistantIndicator}
+            />
           )}
 
           {!isEmpty && (
             <div className="shrink-0 [overflow-anchor:none] px-4 md:px-8 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
               <ChatComposer
                 value={input}
-                onChange={setInput}
-                onKeyDown={handleComposerKeyDown}
                 onSubmit={handleSend}
                 placeholder="Diga o que você quer criar hoje para sua marca..."
                 attachments={attachments}

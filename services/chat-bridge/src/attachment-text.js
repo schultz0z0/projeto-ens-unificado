@@ -1,19 +1,16 @@
 import { unzipSync } from "fflate";
 
-const MAX_EXTRACTED_TEXT_CHARS = 12_000;
-
 const getFileExtension = (fileName) => {
   const parts = String(fileName ?? "").toLowerCase().split(".");
   return parts.length > 1 ? parts[parts.length - 1] : "";
 };
 
-const truncateText = (value) =>
+const normalizeExtractedText = (value) =>
   String(value ?? "")
     .replace(/\r\n/g, "\n")
     .split("\0")
     .join("")
-    .trim()
-    .slice(0, MAX_EXTRACTED_TEXT_CHARS);
+    .trim();
 
 const decodeUtf8 = (bytes) => new TextDecoder("utf-8", { fatal: false }).decode(bytes);
 const decodeLatin1 = (bytes) => new TextDecoder("latin1").decode(bytes);
@@ -38,10 +35,10 @@ const extractPdfText = (bytes) => {
     .replace(/\s+/g, " ")
     .trim();
 
-  return truncateText(fallbackText);
+  return normalizeExtractedText(fallbackText);
 };
 
-const extractPlainText = (bytes) => truncateText(decodeUtf8(bytes));
+const extractPlainText = (bytes) => normalizeExtractedText(decodeUtf8(bytes));
 
 const extractRtfText = (bytes) => {
   const decoded = decodeLatin1(bytes);
@@ -54,7 +51,7 @@ const extractRtfText = (bytes) => {
     .replace(/\s+\n/g, "\n")
     .replace(/\n{2,}/g, "\n");
 
-  return truncateText(normalized);
+  return normalizeExtractedText(normalized);
 };
 
 const extractDocxText = (bytes) => {
@@ -75,22 +72,10 @@ const extractDocxText = (bytes) => {
     .join("\n")
     .replace(/\n{2,}/g, "\n");
 
-  return truncateText(text);
+  return normalizeExtractedText(text);
 };
 
 const stripXml = (xml) => decodeXmlEntities(String(xml ?? "").replace(/<[^>]+>/g, " "));
-
-const stripHtml = (html) =>
-  truncateText(
-    decodeXmlEntities(
-      String(html ?? "")
-        .replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/(p|div|section|article|li|h[1-6])>/gi, "\n")
-        .replace(/<[^>]+>/g, " "),
-    ).replace(/[ \t]+/g, " "),
-  );
 
 const extractPptxText = (bytes) => {
   const archive = unzipSync(bytes);
@@ -108,13 +93,13 @@ const extractPptxText = (bytes) => {
     })
     .filter(Boolean);
 
-  if (slideEntries.length > 0) return truncateText(slideEntries.join("\n"));
+  if (slideEntries.length > 0) return normalizeExtractedText(slideEntries.join("\n"));
 
   const xmlEntries = Object.entries(archive)
     .filter(([entryPath]) => entryPath.startsWith("ppt/") && entryPath.endsWith(".xml"))
     .map(([, content]) => stripXml(decodeUtf8(content)));
 
-  return truncateText(xmlEntries.join("\n"));
+  return normalizeExtractedText(xmlEntries.join("\n"));
 };
 
 const extractSharedStrings = (xml) => (
@@ -186,13 +171,13 @@ const extractXlsxText = (bytes) => {
     })
     .filter(Boolean);
 
-  return truncateText(sheetOutputs.join("\n\n"));
+  return normalizeExtractedText(sheetOutputs.join("\n\n"));
 };
 
 const extractBinaryText = (bytes) => {
   const decoded = decodeLatin1(bytes);
   const matches = decoded.match(/[A-Za-z0-9][\x20-\x7E]{3,}/g) ?? [];
-  return truncateText(matches.join("\n"));
+  return normalizeExtractedText(matches.join("\n"));
 };
 
 export const extractAttachmentText = (attachment, bytes) => {
@@ -206,7 +191,17 @@ export const extractAttachmentText = (attachment, bytes) => {
     mimeType === "text/plain" ||
     mimeType === "text/markdown" ||
     mimeType === "text/csv" ||
+    mimeType === "text/css" ||
+    mimeType === "text/javascript" ||
+    mimeType === "application/javascript" ||
+    mimeType === "application/x-javascript" ||
+    mimeType === "text/ecmascript" ||
+    mimeType === "application/ecmascript" ||
     mimeType === "application/json" ||
+    extension === "js" ||
+    extension === "css" ||
+    extension === "html" ||
+    extension === "htm" ||
     extension === "txt" ||
     extension === "md" ||
     extension === "csv" ||
@@ -216,10 +211,6 @@ export const extractAttachmentText = (attachment, bytes) => {
   }
 
   if (mimeType === "application/rtf" || mimeType === "text/rtf" || extension === "rtf") return extractRtfText(bytes);
-
-  if (mimeType === "text/html" || extension === "html" || extension === "htm") {
-    return stripHtml(decodeUtf8(bytes));
-  }
 
   if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || extension === "docx") {
     return extractDocxText(bytes);
