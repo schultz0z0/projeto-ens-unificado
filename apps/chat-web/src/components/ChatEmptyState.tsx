@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Mascot } from "./Mascot";
 import { ChatComposer, type ComposerAttachment, type ComposerMenuItem, type ImageGenerationOptions } from "./ChatComposer";
 
-export type HomeTab = "chat" | "image" | "email" | "landing";
+export type HomeTab = "chat" | "image";
 
 type SuggestionCard = {
   title: string;

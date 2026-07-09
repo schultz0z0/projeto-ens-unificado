@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Image, Compass, Settings, LayoutGrid, LogOut, User, Camera, Key, Loader2, Mail, Layout, Brain, ClipboardCheck } from "lucide-react";
+import { MessageSquare, Image, Settings, LogOut, Camera, Key, Loader2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface SidebarProps {
-  activeTab?: "chat" | "image" | "email" | "landing";
-  onTabChange?: (tab: "chat" | "image" | "email" | "landing") => void;
+  activeTab?: "chat" | "image";
+  onTabChange?: (tab: "chat" | "image") => void;
   isMobile?: boolean;
   onMobileClose?: () => void;
 }
@@ -40,7 +40,7 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
     return String(err);
   };
 
-  const handleNavigation = (tab: "chat" | "image" | "email" | "landing") => {
+  const handleNavigation = (tab: "chat" | "image") => {
     if (location.pathname === "/") {
       onTabChange?.(tab);
     }
@@ -49,7 +49,7 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
     onMobileClose?.();
   };
 
-  const isActive = (tab: "chat" | "image" | "email" | "landing") => {
+  const isActive = (tab: "chat" | "image") => {
     if (location.pathname === "/") {
       return activeTab === tab;
     }
@@ -199,48 +199,6 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
           title="Gerar Imagens"
         >
           <Image className="w-5 h-5" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
-            isActive("email") && "bg-brand-primary/20 text-brand-primary"
-          )}
-          onClick={() => handleNavigation("email")}
-          aria-label="Abrir gerador de e-mail marketing"
-          title="Gerar E-mail Marketing"
-        >
-          <Mail className="w-5 h-5" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
-            isActive("landing") && "bg-brand-primary/20 text-brand-primary"
-          )}
-          onClick={() => handleNavigation("landing")}
-          aria-label="Abrir Nexus Design"
-          title="Nexus Design (Banners)"
-        >
-          <Layout className="w-5 h-5" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
-            location.pathname === "/inteligencia-mercado" && "bg-brand-primary/20 text-brand-primary"
-          )}
-          onClick={() => { navigate("/inteligencia-mercado"); onMobileClose?.(); }}
-          aria-label="Abrir inteligência de mercado"
-          title="Inteligência de Mercado"
-        >
-          <Brain className="w-5 h-5" />
         </Button>
 
         {canManageValidatedWorks && (

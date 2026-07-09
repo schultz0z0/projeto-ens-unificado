@@ -1,68 +1,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.25.6";
-
-const canonicalizeOrigin = (raw: string) => {
-  const trimmed = raw.trim().replace(/\/+$/, '');
-  if (!trimmed) return null;
-  if (trimmed === '*') return '*';
-
-  try {
-    const url = new URL(trimmed);
-    return `${url.protocol}//${url.host}`.toLowerCase();
-  } catch {
-    return trimmed.toLowerCase();
-  }
-};
-
-const parseAllowedOrigins = () => {
-  const allowedOriginsRaw = Deno.env.get('ALLOWED_ORIGINS');
-  return (allowedOriginsRaw ? allowedOriginsRaw.split(',') : ['*'])
-    .map((origin: string) => canonicalizeOrigin(origin))
-    .filter((origin): origin is string => Boolean(origin));
-};
-
-const resolveAllowedOrigin = (origin: string | null) => {
-  const allowedOrigins = parseAllowedOrigins();
-  if (allowedOrigins.includes('*')) return '*';
-  if (!origin) return '';
-
-  const canonicalOrigin = canonicalizeOrigin(origin);
-  if (!canonicalOrigin) return '';
-
-  let originUrl: URL | null = null;
-  try {
-    originUrl = new URL(canonicalOrigin);
-  } catch {
-    originUrl = null;
-  }
-
-  const matched = allowedOrigins.some((allowedOrigin) => {
-    if (allowedOrigin === canonicalOrigin) return true;
-    if (!originUrl) return false;
-
-    try {
-      const allowedUrl = new URL(allowedOrigin);
-      return allowedUrl.host === originUrl.host && allowedUrl.protocol === originUrl.protocol;
-    } catch {
-      return allowedOrigin === originUrl.host.toLowerCase() || allowedOrigin === originUrl.hostname.toLowerCase();
-    }
-  });
-
-  return matched ? canonicalOrigin : '';
-};
-
-const getCorsHeaders = (req: Request) => {
-  const origin = req.headers.get('Origin');
-  const allowOrigin = resolveAllowedOrigin(origin);
-  const allowAll = allowOrigin === '*';
-
-  return {
-    ...(allowAll ? { 'Access-Control-Allow-Origin': '*' } : (allowOrigin ? { 'Access-Control-Allow-Origin': allowOrigin, Vary: 'Origin' } : {})),
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  }
-}
+import { buildProfileWritePayload, getCorsHeaders, parseAllowedOrigins, resolveAllowedOrigin } from "./adminCreateUserPolicy.ts";
 
 const schema = z.object({
   email: z.string().email().max(320),
@@ -76,13 +15,14 @@ const isAdminRole = (role: unknown) => role === 'admin' || role === 'broker';
 const getBearerToken = (authHeader: string) => authHeader.replace(/^Bearer\s+/i, '').trim();
 
 serve(async (req) => {
-  const cors = getCorsHeaders(req)
+  const allowedOriginsRaw = Deno.env.get('ALLOWED_ORIGINS')
+  const cors = getCorsHeaders(req, allowedOriginsRaw)
 
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405, headers: { 'Content-Type': 'application/json', ...cors } })
 
   const origin = req.headers.get('Origin')
-  if (origin && !resolveAllowedOrigin(origin)) {
+  if (origin && !resolveAllowedOrigin(origin, parseAllowedOrigins(allowedOriginsRaw))) {
     return new Response(JSON.stringify({ error: 'forbidden_origin' }), { status: 403, headers: { 'Content-Type': 'application/json', ...cors } })
   }
 
@@ -169,11 +109,12 @@ serve(async (req) => {
       )
     }
 
-    const profileUpdatePayload = {
-      full_name: parsed.data.full_name,
+    const profileUpdatePayload = buildProfileWritePayload({
+      fullName: parsed.data.full_name,
       email: parsed.data.email,
-      updated_at: new Date().toISOString(),
-    }
+      role: profileRole,
+      updatedAt: new Date().toISOString(),
+    })
 
     const { error: profileWriteError } = createdProfile
       ? await supabaseAdmin
@@ -185,7 +126,6 @@ serve(async (req) => {
           .insert({
             id,
             ...profileUpdatePayload,
-            role: profileRole,
           })
 
     if (profileWriteError) {

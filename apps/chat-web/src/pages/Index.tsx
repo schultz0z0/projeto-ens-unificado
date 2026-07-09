@@ -4,15 +4,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { ImageGenerator } from "@/components/ImageGenerator";
-import { EmailGenerator } from "@/components/EmailGenerator";
-import { LandingPageGenerator } from "@/components/LandingPageGenerator";
 
 const Index = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<"chat" | "image" | "email" | "landing">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
 
   useEffect(() => {
-    if (location.state?.tab) {
+    if (location.state?.tab === "chat" || location.state?.tab === "image") {
       setActiveTab(location.state.tab);
     }
   }, [location.state]);
@@ -27,10 +25,6 @@ const Index = () => {
         );
       case "image":
         return <ImageGenerator />;
-      case "email":
-        return <EmailGenerator />;
-      case "landing":
-        return <LandingPageGenerator />;
       default:
         return (
           <div className="relative h-[calc(100dvh-6rem)] min-h-0">

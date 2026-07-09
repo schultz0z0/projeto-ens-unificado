@@ -353,16 +353,30 @@ export default function UserManagement() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || !resetPassword) return;
+    if (resetPassword.length < 8) {
+      toast.error("A senha deve ter pelo menos 8 caracteres");
+      return;
+    }
 
     try {
       setResetLoading(true);
-      toast.error("Funcionalidade de reset via painel em manutenção. Use o fluxo de 'Esqueceu a senha'.");
-      
+
+      const { error } = await supabase.functions.invoke("admin-reset-password", {
+        body: {
+          user_id: selectedUser.id,
+          password: resetPassword,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(`Senha de ${selectedUser.full_name} redefinida com sucesso!`);
       setIsResetOpen(false);
       setSelectedUser(null);
       setResetPassword("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const fallback = err instanceof Error ? err.message : String(err);
+      const msg = await getFunctionErrorMessage(err, fallback);
       toast.error("Erro ao redefinir senha: " + msg);
     } finally {
       setResetLoading(false);
