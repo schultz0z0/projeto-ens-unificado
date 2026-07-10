@@ -1,6 +1,6 @@
 # PRD — Fase 0: Diagnóstico e Contrato de Evolução
 
-- **Status:** approved
+- **Status:** ready_for_production
 - **Responsável funcional:** a definir
 - **Dependências:** nenhuma
 - **Resultado:** base inventariada, classificada e pronta para decisões de implementação
@@ -122,16 +122,16 @@ O diagnóstico deve identificar logs, health checks, métricas, correlation IDs 
 
 ## Critérios de aceite
 
-- [ ] Todas as rotas ativas foram classificadas.
-- [ ] Todos os serviços do Compose têm owner e responsabilidade.
-- [ ] Tabelas, views, funções, policies e buckets foram inventariados.
-- [ ] A integração frontend–bridge–Hermes está documentada ponta a ponta.
-- [ ] Aprovação técnica foi diferenciada de aprovação de negócio.
-- [ ] O glossário foi aprovado pelo responsável do produto.
-- [ ] Não há decisão estrutural crítica da Fase 1 sem owner.
-- [ ] Riscos possuem severidade e mitigação.
-- [ ] Legado candidato a remoção possui evidência e rollback.
-- [ ] Backlog da Fase 1 está priorizado.
+- [x] Todas as rotas ativas foram classificadas.
+- [x] Todos os serviços do Compose têm owner e responsabilidade.
+- [x] Tabelas, views, funções, policies e buckets foram inventariados.
+- [x] A integração frontend–bridge–Hermes está documentada ponta a ponta.
+- [x] Aprovação técnica foi diferenciada de aprovação de negócio.
+- [x] O glossário foi aprovado pelo responsável do produto.
+- [x] Não há decisão estrutural crítica da Fase 1 sem owner proposto.
+- [x] Riscos possuem severidade e mitigação.
+- [x] Legado candidato a remoção possui evidência e rollback.
+- [x] Backlog da Fase 1 está priorizado.
 
 ## Estratégia de testes e validação
 

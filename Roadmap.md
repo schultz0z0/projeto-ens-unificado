@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** design aprovado; execução ainda não iniciada
+- **Status:** Fase 0 `ready_for_production`; gate VPS pendente
 - **Atualização:** 10 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -176,6 +176,8 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 ## 9. Roadmap por fases
 
 ### Fase 0: Diagnóstico e Contrato de Evolução
+
+**Estado:** `ready_for_production` — gate local aprovado; aguarda deploy e validação na VPS Linux.
 
 **Objetivo:** eliminar ambiguidades sobre o estado atual e estabelecer o contrato de evolução.
 
