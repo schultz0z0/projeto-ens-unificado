@@ -1,634 +1,438 @@
-# Roadmap Nexus AI ENS
+# Roadmap Nexus AI ENS — Marketing Operations
 
-## Visao geral
+- **Status:** design aprovado; execução ainda não iniciada
+- **Atualização:** 10 de julho de 2026
+- **Produto:** Nexus AI ENS
+- **Primeiro release de valor:** Workspace Operacional
+
+## 1. Visão
 
-O Nexus AI deve evoluir de um app com Hermes integrado para um sistema operacional de marketing da ENS.
+O Nexus AI deve evoluir de um aplicativo com o Hermes integrado para a Central de Operações de Marketing da ENS.
 
-A ideia central nao e ter apenas um chatbot, nem apenas um dashboard. O produto deve reunir planejamento, criacao, aprovacao, agenda, execucao, inteligencia e aprendizado em um unico ambiente.
+O produto reunirá planejamento, criação, calendário, produção, aprovação, execução assistida, performance e aprendizado em um único ambiente. O Hermes continuará sendo o agente central de raciocínio, mas trabalhará sobre os mesmos objetos e regras usados pelas telas.
 
-O Hermes e o cerebro operacional. A interface e o cockpit. Os servicos internos do monorepo sao a camada de execucao.
+O objetivo não é criar apenas um chatbot nem apenas um dashboard. O objetivo é tornar o Nexus AI o lugar onde o marketing da ENS pensa, organiza, produz, aprova, executa e aprende.
 
-## Modelo de interacao
+## 2. Resultado esperado
 
-O app deve manter uma area de conversa direta com o Hermes.
+O time deverá conseguir:
 
-Essa area continua sendo o espaco livre para raciocinio, perguntas, analises, criacao, diagnosticos e comandos em linguagem natural.
+- organizar campanhas por curso, produto ou iniciativa;
+- transformar briefings em planos e itens operacionais;
+- acompanhar responsáveis, datas, materiais e pendências;
+- criar e revisar conteúdo com o Hermes;
+- aprovar versões e ações sensíveis;
+- executar operações por workers determinísticos;
+- medir resultados e registrar aprendizados;
+- reutilizar conhecimento validado em campanhas futuras.
 
-Ao mesmo tempo, o app deve ter menus estruturados para as operacoes do dia a dia:
+## 3. Modelo de interação
+
+O produto terá dois caminhos complementares:
+
+1. **Telas operacionais:** o usuário navega, consulta e edita campanhas, calendário, materiais, aprovações e indicadores.
+2. **Conversa com o Hermes:** o usuário pede análises, criação, diagnóstico ou alterações em linguagem natural.
+
+Os dois caminhos operarão sobre as mesmas entidades no `marketing-ops`. Uma resposta acionável do Hermes poderá virar campanha, item, conteúdo, solicitação de aprovação ou aprendizado, respeitando confirmação, permissão e auditoria.
 
-- campanhas;
-- calendario;
-- criativos;
-- e-mail marketing;
-- WhatsApp marketing;
-- aprovacoes;
-- dashboard;
-- memoria validada;
-- administracao.
+## 4. Arquitetura atual que será preservada
 
-Essas telas nao substituem o Hermes. Elas organizam o trabalho que o Hermes ajuda a criar, ler, editar e acompanhar.
+### Frontend
 
-Na pratica, o usuario pode trabalhar de dois jeitos:
+- autenticação e sessão pelo Supabase;
+- persistência de sessões e mensagens de chat;
+- consumo de runs assíncronos da Chat Bridge;
+- reconexão do stream por cursor e snapshot;
+- exibição de arquivos e artefatos;
+- modal técnico para aprovação de comandos do Hermes.
 
-1. Pelo chat, pedindo ao Hermes para criar, revisar, analisar ou atualizar coisas.
-2. Pelas telas, navegando e editando campanhas, calendario, pecas e dashboards diretamente.
-
-Os dois caminhos devem operar sobre os mesmos dados.
-
-## Principios do produto
-
-- O Hermes nao deve ser tratado como chatbot simples. Ele e o agente central de raciocinio, memoria, criacao, analise e operacao.
-- O app deve ajudar o time a trabalhar melhor, nao apenas gerar textos ou imagens isoladas.
-- O Hermes deve ter consciencia operacional do que acontece no app, respeitando permissoes, aprovacoes e auditoria.
-- O usuario deve conseguir pedir ao Hermes para ler, criar, editar, resumir ou diagnosticar campanhas, itens de calendario, pecas, disparos, metricas e memorias.
-- Toda automacao importante deve ser rastreavel, aprovada e reversivel quando necessario.
-- O produto deve crescer como ambiente proprio da ENS, dentro do monorepo Nexus AI.
-- Nao usaremos n8n como pilar de automacao. Quando uma automacao ou agente dedicado for necessario, criaremos um servico/container proprio no compose, seguindo o modelo de bridge, MCPs e demais servicos.
-- O roadmap deve priorizar clareza operacional antes de complexidade tecnica.
-- O que funcionar deve virar memoria reutilizavel para o Hermes.
-
-## Produto-alvo
-
-O produto-alvo e uma Central de Operacoes de Marketing ENS.
-
-Ela deve permitir que o time:
-
-- planeje campanhas por curso, produto, publico, canal e janela;
-- gere estrategias e pecas com apoio do Hermes;
-- organize disparos de e-mail marketing, WhatsApp marketing, conteudo e criativos;
-- aprove materiais antes de uso;
-- acompanhe status e performance;
-- transforme aprendizados em memoria para campanhas futuras.
-
-## Pilares
-
-### 1. Hermes como copiloto operacional
-
-O Hermes deve ser o ponto de partida para perguntas, planejamento e execucao assistida.
-
-Exemplos:
-
-- "Crie uma campanha para Graduação em Gestão de Seguros."
-- "Monte uma regua de WhatsApp para fechamento de turma."
-- "Analise por que essa campanha teve baixo retorno."
-- "Transforme esse briefing em calendario de disparos."
-- "Revise essa copy pelo tom de voz da ENS."
-
-O resultado do Hermes nao deve ficar perdido no chat. Quando uma resposta gerar algo acionavel, ela deve poder virar campanha, tarefa, peca, calendario, insight ou memoria validada.
-
-### 1.1 Hermes integrado aos dados do app
-
-O Hermes deve conseguir operar sobre os dados reais do Nexus AI.
-
-Isso pode ser feito por uma camada interna de ferramentas, MCPs ou servicos proprios do monorepo.
-
-Capacidades desejadas:
-
-- listar campanhas;
-- ler detalhes de uma campanha;
-- criar campanha a partir de briefing;
-- atualizar status, objetivo, publico, canal e datas;
-- criar itens no calendario;
-- reagendar disparos;
-- gerar e anexar copies;
-- consultar pecas e criativos;
-- enviar materiais para aprovacao;
-- ler comentarios e decisoes;
-- consultar metricas e funil;
-- registrar aprendizados;
-- salvar memoria validada;
-- gerar resumos executivos.
-
-O Hermes nao deve depender de "olhar a tela" para entender o app. Ele deve ter ferramentas internas para consultar e alterar dados de forma estruturada.
-
-Para operacoes sensiveis, o Hermes deve pedir confirmacao ou passar por aprovacao:
-
-- disparar mensagens;
-- alterar campanha aprovada;
-- arquivar campanha;
-- remover dados;
-- mudar configuracoes administrativas;
-- aprovar material em nome de usuario humano.
-
-Toda acao executada pelo Hermes deve ter rastro:
-
-- quem pediu;
-- o que foi alterado;
-- quando aconteceu;
-- qual ferramenta foi usada;
-- estado anterior quando fizer sentido;
-- estado novo.
-
-### 1.2 Fila de aprovacao para acoes sensiveis
-
-Quando o Hermes precisar executar uma acao sensivel, ele nao deve simplesmente executar direto.
-
-Usuarios comuns podem pedir, construir e revisar a acao junto com o Hermes.
-
-O Hermes deve ajudar o usuario comum a idealizar, estruturar, escrever, ajustar e validar a proposta antes de qualquer aprovacao superior.
-
-Somente depois que o usuario comum validar a versao final da acao, o Hermes cria uma solicitacao de aprovacao para usuarios com role adequada, como `manager` ou `admin`.
-
-Assim, a governanca nao bloqueia a criacao. Ela controla a execucao sensivel.
-
-A solicitacao deve chegar para manager/admin como um pacote pronto para decisao.
-
-O manager/admin nao deve precisar conversar com o Hermes para explicar o que fazer. A interface deve oferecer acoes diretas, como:
-
-- aprovar;
-- rejeitar;
-- solicitar ajuste;
-- cancelar.
-
-Ao clicar em aprovar, o sistema deve acionar automaticamente o Hermes ou o servico responsavel para executar exatamente a tarefa ja preparada e validada.
-
-Isso significa que a solicitacao precisa carregar todos os dados necessarios para execucao:
-
-- acao pretendida;
-- payload estruturado;
-- conteudo final;
-- campanha relacionada;
-- publico ou segmento;
-- canal;
-- data e horario, quando houver;
-- configuracoes de envio;
-- justificativa;
-- riscos;
-- criterios de sucesso;
-- estado validado pelo usuario solicitante.
-
-Exemplos de solicitacoes:
-
-- aprovar disparo de WhatsApp;
-- aprovar disparo de e-mail;
-- aprovar alteracao em campanha ja aprovada;
-- aprovar arquivamento de campanha;
-- aprovar publicacao de peca;
-- aprovar uso de uma copy sensivel;
-- aprovar alteracao em calendario oficial;
-- aprovar criacao de automacao recorrente;
-- aprovar envio para uma lista de contatos.
-
-Essa solicitacao deve aparecer em um menu proprio de aprovacoes.
-
-Campos desejados:
-
-- titulo da acao;
-- tipo de acao;
-- campanha relacionada;
-- solicitante;
-- justificativa do Hermes;
-- impacto esperado;
-- dados que serao alterados;
-- previa do conteudo, quando houver;
-- riscos ou observacoes;
-- payload pronto para execucao;
-- versao validada pelo usuario solicitante;
-- status;
-- aprovador;
-- data da decisao;
-- comentario de aprovacao ou rejeicao.
-
-Fluxo ideal:
-
-1. Usuario comum pede algo ao Hermes.
-2. Hermes identifica que a acao final sera sensivel.
-3. Hermes ajuda o usuario a montar a proposta, conteudo, payload, calendario ou plano.
-4. Usuario comum revisa e valida a versao final.
-5. Hermes cria uma solicitacao de aprovacao ja pronta para execucao.
-6. Manager ou admin revisa no menu de aprovacoes.
-7. Manager ou admin clica em aprovar, rejeitar, solicitar ajuste ou cancelar.
-8. Um worker interno detecta a decisao.
-9. Se aprovado, o worker aciona automaticamente o Hermes ou servico responsavel para executar o pacote validado.
-10. Se rejeitado, o Hermes registra o motivo, informa o usuario solicitante e pode sugerir alternativa.
-11. Se ajuste for solicitado, o pacote volta para o usuario comum e Hermes trabalharem em nova versao.
-
-Exemplo pratico:
-
-1. Um usuario comum pede: "prepare um disparo de WhatsApp para a campanha de MBA".
-2. Hermes gera a mensagem, revisa tom de voz, checa dados da campanha e monta o envio.
-3. Usuario comum ajusta a copy e confirma que esta pronto.
-4. Hermes salva um pacote pronto: mensagem final, campanha, segmento, canal, horario, justificativa e payload de execucao.
-5. Manager/admin ve a previa, publico, campanha, data, risco e justificativa.
-6. Manager/admin clica em aprovar.
-7. Worker interno aciona Hermes ou o servico de disparo sem novo briefing.
-8. Resultado fica registrado no historico da campanha.
-
-Esse worker deve ser um servico proprio do monorepo, rodando em container no compose.
-
-Ele pode funcionar como um scheduler ou processo recorrente interno:
-
-- consulta aprovacoes pendentes de execucao;
-- aciona Hermes ou o servico responsavel;
-- registra resultado;
-- atualiza status;
-- notifica o usuario quando fizer sentido.
-
-Estados sugeridos para uma aprovacao:
-
-- pendente;
-- aprovada;
-- rejeitada;
-- expirada;
-- executando;
-- executada;
-- falhou;
-- cancelada.
-
-Essa fila vira a camada de governanca entre a inteligencia do Hermes e a operacao real do marketing.
-
-### 2. Central de Campanhas
-
-Uma campanha deve ser a unidade principal de trabalho.
-
-Cada campanha pode ter:
-
-- nome;
-- objetivo;
-- curso, produto ou iniciativa;
-- publico;
-- canal principal;
-- canais secundarios;
-- periodo;
-- status;
-- responsaveis;
-- mensagens;
-- criativos;
-- calendario;
-- performance;
-- aprendizados.
-
-Estados sugeridos:
-
-- rascunho;
-- planejada;
-- em producao;
-- em revisao;
-- aprovada;
-- agendada;
-- em andamento;
-- encerrada;
-- arquivada.
-
-### 3. Calendario de Disparos
-
-O calendario deve funcionar como a visao operacional do marketing.
-
-Ele deve organizar:
-
-- e-mails;
-- WhatsApps;
-- posts;
-- criativos;
-- lembretes comerciais;
-- datas de fechamento;
-- revisoes;
-- tarefas internas.
-
-Visoes desejadas:
-
-- mensal;
-- semanal;
-- lista;
-- por campanha;
-- por canal;
-- por responsavel;
-- por status.
-
-O calendario nao precisa comecar disparando automaticamente. Primeiro ele deve organizar a operacao. Depois pode evoluir para agendamento e execucao assistida.
-
-### 4. Esteira de criacao e aprovacao
-
-Tudo que for gerado pelo Hermes ou por ferramentas criativas deve poder entrar em uma esteira.
-
-Fluxo sugerido:
-
-1. Briefing
-2. Geracao
-3. Revisao
-4. Ajustes
-5. Aprovacao
-6. Agendamento
-7. Execucao
-8. Analise
-9. Memoria
-
-Essa esteira e importante para evitar:
-
-- campanha sem revisao;
-- copy desalinhada ao tom institucional;
-- promessa comercial nao aprovada;
-- dado de curso inventado;
-- peca perdida em conversas antigas;
-- retrabalho entre marketing, produto e comercial.
-
-### 5. Dashboard de performance
-
-O dashboard deve responder menos "quantos numeros temos?" e mais "o que precisamos fazer agora?".
-
-Indicadores possiveis:
-
-- leads;
-- leads qualificados;
-- taxa de resposta;
-- taxa de conversao;
-- matriculas;
-- custo por lead;
-- custo por matricula;
-- receita atribuida;
-- status por campanha;
-- performance por canal;
-- performance por curso;
-- gargalos por etapa.
-
-O Hermes deve interpretar os dados e gerar recomendacoes:
-
-- campanha precisa de novo angulo;
-- WhatsApp performou melhor que e-mail;
-- urgencia esta fraca;
-- CTA esta confuso;
-- falta peca para etapa final;
-- campanha sem aprendizado registrado.
-
-### 6. Memoria e inteligencia institucional
-
-O aprendizado operacional deve alimentar o Hermes.
-
-Tipos de memoria:
-
-- copies aprovadas;
-- campanhas bem-sucedidas;
-- campanhas que nao funcionaram;
-- objeções frequentes;
-- argumentos por curso;
-- tom de voz aprovado;
-- decisoes de marketing;
-- padroes de funil;
-- insights de performance;
-- restricoes legais ou institucionais;
-- boas praticas por canal.
-
-Essa memoria deve ajudar o Hermes a melhorar com o tempo e reduzir repeticao de briefing.
-
-### 7. Agentes e automacoes internas
-
-Quando uma rotina precisar rodar de forma recorrente, o caminho preferido e criar um agente ou servico interno no monorepo.
-
-Exemplos de futuros servicos:
-
-- agente de agenda de campanhas;
-- agente de revisao de copy;
-- agente de analise de performance;
-- agente de lembretes e pendencias;
-- worker de disparos;
-- worker de integracao com provedores de e-mail;
-- worker de integracao com WhatsApp;
-- servico de coleta de metricas;
-- servico de relatorios periodicos.
-
-Esses servicos devem viver como containers separados no compose, seguindo o padrao do ambiente Nexus AI.
-
-## Roadmap por fases
-
-### Fase 0: Saneamento e definicao de base
-
-Objetivo: separar o que e produto atual do que e residuo historico.
-
-Entregas:
-
-- mapear telas e modulos que realmente continuam;
-- listar codigo legado a remover futuramente;
-- listar tabelas, buckets, funcoes e policies antigas no Supabase;
-- definir nomes oficiais dos modulos;
-- definir papel de cada servico do monorepo.
-
-Resultado esperado:
-
-Um app mais compreensivel e uma base mais facil de evoluir.
-
-### Fase 1: Central de Campanhas
-
-Objetivo: criar a estrutura principal de gestao de campanhas.
-
-Entregas:
-
-- cadastro de campanha;
-- lista de campanhas;
-- status de campanha;
-- vinculo com curso, produto ou iniciativa;
-- responsavel;
-- periodo;
-- objetivo;
-- canal principal;
-- notas e briefing;
-- area para itens gerados pelo Hermes.
-
-Resultado esperado:
-
-O time passa a organizar campanhas dentro do Nexus AI.
-
-### Fase 2: Calendario Operacional
-
-Objetivo: transformar campanhas em agenda visual de execucao.
-
-Entregas:
-
-- calendario mensal;
-- visao semanal;
-- visao em lista;
-- cards de disparos e tarefas;
-- filtros por canal, campanha e status;
-- datas importantes;
-- itens de e-mail, WhatsApp, post, criativo e revisao.
-
-Resultado esperado:
-
-O app vira referencia diaria para saber o que vai sair, o que esta pendente e o que precisa de aprovacao.
-
-### Fase 3: Hermes Campaign Builder
-
-Objetivo: permitir que o Hermes transforme briefing em plano acionavel.
-
-Entregas:
-
-- criar campanha a partir do chat;
-- gerar calendario sugerido;
-- gerar sequencia de e-mails;
-- gerar sequencia de WhatsApp;
-- gerar ideias de criativos;
-- gerar checklist de campanha;
-- revisar tom de voz;
-- registrar recomendacoes no workspace da campanha.
-
-Resultado esperado:
-
-O Hermes deixa de responder apenas em conversa e passa a construir objetos reais dentro do app.
-
-### Fase 4: Esteira de aprovacao
-
-Objetivo: criar governanca para materiais e decisoes.
-
-Entregas:
-
-- status de peca;
-- comentarios;
-- historico de versoes;
-- aprovacao por responsavel;
-- rejeicao com motivo;
-- comparacao entre versoes;
-- registro de quem aprovou e quando.
-
-Resultado esperado:
-
-O time ganha controle editorial e institucional sem perder velocidade.
-
-### Fase 5: Execucao assistida
-
-Objetivo: preparar o caminho para disparos e rotinas automatizadas.
-
-Entregas:
-
-- marcar item como pronto para disparo;
-- criar fila de execucao;
-- registrar payloads de envio;
-- criar worker interno para processar envios;
-- integrar provedores de e-mail quando definido;
-- integrar provedor de WhatsApp quando definido;
-- manter aprovacao humana antes de disparos sensiveis.
-
-Resultado esperado:
-
-O Nexus AI passa de planejamento para operacao real, mantendo controle e rastreabilidade.
-
-### Fase 6: Dashboard e diagnostico
-
-Objetivo: conectar execucao com leitura de resultado.
-
-Entregas:
-
-- painel por campanha;
-- painel por canal;
-- painel por curso;
-- funil basico;
-- comparativo entre campanhas;
-- recomendacoes do Hermes;
-- registro de aprendizados.
-
-Resultado esperado:
-
-O app nao apenas mostra numeros. Ele orienta decisoes.
-
-### Fase 7: Hermes proativo
-
-Objetivo: fazer o sistema alertar e sugerir antes que o usuario precise perguntar.
-
-Entregas:
-
-- alertas de campanha sem proximo passo;
-- alerta de fechamento de turma;
-- alerta de peca pendente;
-- alerta de campanha sem revisao;
-- sugestoes semanais de otimizacao;
-- resumo diario ou semanal;
-- agente de acompanhamento de calendario.
-
-Resultado esperado:
-
-O Nexus AI vira um parceiro operacional continuo do marketing.
-
-## Modulos desejados
-
-### Home / Chat Hermes
-
-Entrada principal para raciocinio, criacao, analise e comandos.
-
-### Campanhas
-
-Gestao de campanhas, briefing, status, materiais e aprendizados.
-
-### Calendario
-
-Agenda de disparos, tarefas e revisoes.
-
-### Criativos
-
-Geracao e organizacao de pecas visuais.
-
-### E-mail Marketing
-
-Criacao, revisao e futura execucao de e-mails.
-
-### WhatsApp Marketing
-
-Criacao, revisao e futura execucao de mensagens e reguas.
-
-### Aprovacoes
-
-Fila de materiais pendentes de revisao.
-
-### Dashboard
-
-Performance, funil, diagnosticos e recomendacoes.
-
-### Memoria Validada
-
-Base de conhecimento operacional que o Hermes consulta e melhora com o tempo.
+### Chat Bridge
+
+- validação do JWT do Supabase;
+- resolução de usuário, papel e tenant;
+- criação e persistência de runs;
+- sessões e continuidade do Hermes;
+- SSE, reconexão e normalização de eventos;
+- anexos, arquivos e Artifact Server;
+- transporte entre frontend e Hermes.
+
+### Hermes
+
+- raciocínio e continuidade de conversa;
+- memória nativa;
+- ferramentas, skills e MCPs;
+- consulta ao RAG ENS e ao Nexus Graph;
+- geração de texto, análise, arquivos e imagens.
+
+### Memória e conhecimento
+
+- RAG: fatos oficiais, cursos, ofertas e documentos;
+- Graph: relações, decisões e trabalhos validados;
+- Supabase: dados transacionais e operacionais;
+- Artifact Server/Storage: arquivos e entregáveis;
+- memória nativa do Hermes: continuidade e preferências.
+
+## 5. Arquitetura-alvo
+
+```text
+Frontend
+   │ JWT Supabase
+   ▼
+Marketing Ops API ───────────────┐
+   │                             │
+   │ regras, permissões          │ ferramentas MCP
+   │ auditoria e validação       │
+   ▼                             ▼
+Supabase                    Hermes Agent
+   ▲                             ▲
+   │                             │
+   │                       Chat Bridge
+   │                  sessões, runs, SSE,
+   │                  anexos e artefatos
+   │
+Workers futuros
+aprovações, agenda e execução
+```
+
+### Marketing Ops
+
+Será criado um serviço/container próprio com:
+
+- API autenticada para o frontend;
+- interface MCP para o Hermes;
+- regras de domínio compartilhadas;
+- autorização, idempotência e auditoria;
+- acesso transacional ao Supabase;
+- eventos usados posteriormente por notificações e workers.
+
+### Limite da Chat Bridge
+
+A Chat Bridge continuará responsável por conversa, sessões, runs, streaming, anexos e artefatos. CRUD de campanhas, calendário, aprovações de negócio e execução não serão incorporados à bridge.
+
+### Limite do Hermes
+
+O Hermes poderá consultar, propor e solicitar alterações. Ele não será o executor direto de disparos nem a fonte oficial do estado de campanhas. Workers executarão payloads aprovados de forma determinística.
+
+## 6. Princípios
+
+- campanha é a unidade principal de organização;
+- frontend e Hermes usam o mesmo domínio;
+- negar acesso por padrão;
+- toda mutação relevante é auditável;
+- operações repetidas são idempotentes;
+- nenhum tenant confia em identificadores enviados pelo cliente sem validação;
+- aprovação técnica do Hermes é diferente de aprovação editorial e operacional;
+- conteúdo aprovado é versionado e imutável;
+- mudanças após aprovação exigem nova decisão;
+- execução real exige worker, outbox e rastreabilidade;
+- métricas são instrumentadas desde a fundação;
+- memória validada complementa, mas não substitui, dados transacionais;
+- clareza operacional vem antes de automação avançada;
+- n8n não será o pilar da automação do produto;
+- cada fase exige validação local e homologação na VPS.
+
+## 7. Papéis iniciais
+
+### Member
+
+- cria e edita rascunhos permitidos;
+- participa de campanhas;
+- solicita revisão e aprovação;
+- consulta e reutiliza memória validada;
+- não administra usuários nem aprova ações reservadas.
+
+### Manager
+
+- possui as capacidades de member;
+- revisa materiais;
+- aprova ou rejeita dentro do escopo definido;
+- gerencia trabalhos validados;
+- acompanha operação e indicadores.
 
 ### Admin
 
-Usuarios, permissoes, configuracoes e governanca.
+- possui as capacidades de manager;
+- administra usuários, integrações e configurações;
+- gerencia políticas e operações reservadas;
+- acessa diagnósticos e controles administrativos.
 
-## Limpeza futura
+A matriz completa será definida e testada na Fase 1.
 
-Como o repositorio tem historico de experimentos, sera importante criar uma fase especifica de limpeza.
+## 8. Modelo operacional resumido
 
-Alvos:
+Entidades previstas:
 
-- telas descartadas;
-- componentes antigos;
-- rotas nao usadas;
-- migrations obsoletas;
-- tabelas antigas no Supabase;
-- buckets nao utilizados;
-- edge functions antigas;
-- scripts de teste soltos;
-- documentos historicos que confundem a direcao atual.
+- campanhas e participantes;
+- itens operacionais e calendário;
+- conteúdos e versões;
+- solicitações e decisões de aprovação;
+- pacotes de ação imutáveis;
+- jobs e tentativas de execução;
+- auditoria e eventos de domínio;
+- métricas e aprendizados.
 
-Essa limpeza deve ser feita com cuidado, porque o monorepo representa o ambiente Nexus AI completo da ENS.
+Estados de campanha, conteúdo, aprovação e execução serão separados. Uma copy rejeitada não tornará a campanha inteira rejeitada.
 
-## Nao objetivos por enquanto
+## 9. Roadmap por fases
 
-Neste momento, nao priorizar:
+### Fase 0: Diagnóstico e Contrato de Evolução
 
-- automacao externa via n8n;
-- disparo automatico sem aprovacao;
-- dashboard complexo antes de ter campanhas organizadas;
-- market intelligence avancado antes da central operacional estar solida;
-- refatoracao tecnica grande antes de definir o produto-alvo;
-- multiplos canais profundamente integrados ao mesmo tempo.
+**Objetivo:** eliminar ambiguidades sobre o estado atual e estabelecer o contrato de evolução.
 
-## Prioridade recomendada
+**Entregas:**
 
-A melhor ordem inicial e:
+- inventário de telas, serviços, tabelas, buckets, funções e integrações;
+- classificação de componentes: manter, adaptar, migrar, arquivar ou remover;
+- glossário e nomes oficiais;
+- mapa de responsabilidades;
+- decisões arquiteturais;
+- estratégia de migrations, backup e rollback;
+- matriz inicial de permissões;
+- gates local e VPS.
 
-1. Central de Campanhas
-2. Calendario Operacional
-3. Hermes Campaign Builder
-4. Aprovacoes
-5. Execucao assistida
-6. Dashboard
-7. Hermes proativo
+**Saída:** backlog classificado, riscos conhecidos e nenhuma decisão estrutural crítica em aberto.
 
-Essa ordem cria valor rapido sem depender de integracoes complexas logo no inicio.
+**PRD:** [Fase 0 — Diagnóstico e Contrato de Evolução](docs/prds/phase-0-diagnostico-contrato-evolucao.md)
 
-## Norte do produto
+### Fase 1: Fundação do Marketing Ops
 
-O Nexus AI deve se tornar o lugar onde o marketing da ENS pensa, planeja, produz, aprova, executa e aprende.
+**Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
+
+**Entregas:**
+
+- container `marketing-ops`;
+- API autenticada e MCP;
+- modelo de dados canônico;
+- tenant, RBAC e RLS;
+- delegação confiável do ator;
+- auditoria imutável;
+- idempotência e concorrência otimista;
+- eventos de domínio e instrumentação;
+- health checks e contratos.
+
+**Saída:** frontend e Hermes acessam com segurança o mesmo domínio básico.
+
+**PRD:** [Fase 1 — Fundação do Marketing Ops](docs/prds/phase-1-fundacao-marketing-ops.md)
+
+### Fase 2: Workspace Operacional MVP
+
+**Objetivo:** entregar o primeiro release de valor para campanhas reais.
+
+**Entregas:**
+
+- cadastro, edição, lista, busca e filtros de campanhas;
+- workspace detalhado;
+- objetivo, público, curso/produto, período e canais;
+- responsáveis e participantes;
+- briefing, notas, anexos e materiais;
+- estados válidos e timeline;
+- histórico e permissões;
+- UX responsiva, erros e estados vazios.
+
+**Saída:** o time organiza campanhas no Nexus AI sem depender de planilhas paralelas.
+
+**PRD:** [Fase 2 — Workspace Operacional MVP](docs/prds/phase-2-workspace-operacional-mvp.md)
+
+### Fase 3: Calendário e Esteira de Produção
+
+**Objetivo:** transformar campanhas em trabalho planejado e acompanhável.
+
+**Entregas:**
+
+- itens operacionais vinculados à campanha;
+- calendário mensal, semanal e lista;
+- tarefas, mensagens, posts, peças, revisões e marcos;
+- responsáveis, prazos, prioridade e dependências;
+- conteúdos em rascunho e versões;
+- estados de produção;
+- notificações internas básicas.
+
+**Saída:** o Nexus AI vira a referência diária da produção de marketing.
+
+**PRD:** [Fase 3 — Calendário e Esteira de Produção](docs/prds/phase-3-calendario-esteira-producao.md)
+
+### Fase 4: Hermes Campaign Operator
+
+**Objetivo:** permitir que o Hermes leia e opere objetos reais do produto.
+
+**Entregas:**
+
+- ferramentas MCP de consulta e mutação controlada;
+- criação de campanha em rascunho;
+- atualização com confirmação;
+- geração de calendário e itens;
+- criação e vínculo de conteúdo;
+- revisão pelo tom de voz ENS;
+- conversão de resposta do chat em objeto;
+- auditoria correlacionada com chat e run.
+
+**Saída:** resultados acionáveis deixam de ficar presos no histórico da conversa.
+
+**PRD:** [Fase 4 — Hermes Campaign Operator](docs/prds/phase-4-hermes-campaign-operator.md)
+
+### Fase 5: Governança e Aprovações
+
+**Objetivo:** criar controle editorial e institucional sem bloquear a criação.
+
+**Entregas:**
+
+- aprovação editorial e autorização de ações sensíveis;
+- versão congelada para decisão;
+- comentários e solicitação de ajustes;
+- aprovar, rejeitar, cancelar e expirar;
+- fila para manager/admin;
+- segregação de funções;
+- payload imutável para execução;
+- notificações e trilha de decisão.
+
+**Saída:** nenhum material ou pacote sensível avança sem governança adequada.
+
+**PRD:** [Fase 5 — Governança e Aprovações](docs/prds/phase-5-governanca-aprovacoes.md)
+
+### Fase 6: Execução Assistida Piloto
+
+**Objetivo:** executar um canal real com controle humano e rastreabilidade.
+
+**Entregas:**
+
+- escolha de um único canal piloto;
+- outbox transacional;
+- worker separado;
+- idempotência e prevenção de duplicidade;
+- retry, backoff, dead-letter e reprocessamento;
+- consentimento, opt-out e LGPD;
+- prévia e teste de envio;
+- aprovação humana obrigatória;
+- estados e histórico da execução.
+
+**Saída:** uma operação real é executada com segurança e evidência.
+
+**PRD:** [Fase 6 — Execução Assistida Piloto](docs/prds/phase-6-execucao-assistida-piloto.md)
+
+### Fase 7: Performance, Diagnóstico e Aprendizado
+
+**Objetivo:** fechar o ciclo entre planejamento, execução e resultado.
+
+**Entregas:**
+
+- ingestão e qualidade de métricas;
+- painel por campanha, canal e curso;
+- funil e comparativos;
+- recomendações do Hermes;
+- hipóteses e aprendizados;
+- promoção de conhecimento validado para RAG/Graph;
+- rastreabilidade da fonte e da confiança.
+
+**Saída:** o produto explica o que aconteceu e orienta a próxima ação.
+
+**PRD:** [Fase 7 — Performance, Diagnóstico e Aprendizado](docs/prds/phase-7-performance-diagnostico-aprendizado.md)
+
+### Fase 8: Hermes Proativo e Escala Operacional
+
+**Objetivo:** antecipar problemas e oportunidades usando dados confiáveis.
+
+**Entregas:**
+
+- alertas de campanha sem próximo passo;
+- prazos, fechamentos e aprovações vencendo;
+- anomalias de performance;
+- resumos diários e semanais;
+- sugestões de otimização;
+- automações recorrentes controladas;
+- preferências, limites e frequência;
+- avaliação da qualidade das recomendações.
+
+**Saída:** o Hermes atua como parceiro operacional contínuo, sem executar ações sensíveis sem autorização.
+
+**PRD:** [Fase 8 — Hermes Proativo e Escala Operacional](docs/prds/phase-8-hermes-proativo-escala.md)
+
+## 10. Dependências
+
+```text
+Fase 0
+  → Fase 1
+      → Fase 2 (primeiro release de valor)
+          → Fase 3
+              → Fase 4
+                  → Fase 5
+                      → Fase 6
+                          → Fase 7
+                              → Fase 8
+```
+
+Instrumentação começa na Fase 1, mesmo que dashboards sejam entregues na Fase 7. Segurança, testes, auditoria, observabilidade e documentação são requisitos transversais.
+
+## 11. Gates obrigatórios
+
+### Gate local
+
+- migrations em ambiente limpo;
+- testes unitários, integração, contrato e E2E aplicáveis;
+- build, lint e typecheck;
+- RLS, tenant e papéis;
+- persistência após reinício;
+- falhas e recuperação;
+- backup e rollback;
+- evidências registradas.
+
+### Gate VPS Linux
+
+Depois do deploy realizado pelo responsável:
+
+- health checks dos containers;
+- migrations e políticas;
+- comunicação entre serviços;
+- volumes e permissões Linux;
+- DNS, TLS, CORS e envs;
+- smoke tests com dados identificados como teste;
+- logs e correlação;
+- persistência após reinício;
+- backup confirmado;
+- rollback verificável;
+- aceite funcional.
+
+Enquanto o gate da VPS não for concluído, a fase ficará como **pronta para produção**, nunca como **concluída**.
+
+## 12. Definition of Done
+
+Uma fase estará concluída somente quando:
+
+- requisitos obrigatórios e critérios de aceite estiverem atendidos;
+- testes automatizados estiverem verdes;
+- não houver falha crítica ou alta conhecida;
+- segurança, RLS e papéis estiverem validados;
+- auditoria e observabilidade estiverem funcionando;
+- documentação, backup e rollback estiverem atualizados;
+- gate local estiver registrado;
+- deploy na VPS tiver sido realizado;
+- gate de produção estiver aprovado;
+- pendências restantes estiverem formalmente fora do escopo.
+
+## 13. Não objetivos globais
+
+- usar n8n como orquestrador central;
+- disparar automaticamente sem aprovação adequada;
+- integrar vários canais profundamente ao mesmo tempo;
+- usar Graph ou memória do Hermes como banco transacional;
+- colocar regras de campanhas dentro da Chat Bridge;
+- criar dashboard complexo antes de dados confiáveis;
+- remover legado sem inventário, evidência e rollback;
+- declarar uma fase concluída apenas porque o código foi implementado.
+
+## 14. Documentos do programa
+
+- [Design aprovado](docs/plans/2026-07-10-nexus-marketing-ops-roadmap-design.md)
+- [Plano documental e de preparação](docs/plans/2026-07-10-nexus-marketing-ops-program.md)
+- [Índice de PRDs](docs/prds/README.md)
+
+## 15. Norte do produto
 
 Se uma campanha nasce fora do Nexus AI, ela deve poder entrar nele.
 
-Se uma campanha nasce no Hermes, ela deve virar operacao.
+Se uma campanha nasce no Hermes, ela deve virar operação rastreável.
 
-Se uma campanha performa bem, ela deve virar memoria.
+Se uma campanha performa bem, ela deve virar conhecimento validado.
 
-Se uma campanha performa mal, ela deve virar aprendizado.
+Se uma campanha performa mal, ela deve virar aprendizado acionável.
+
+Se uma ação é sensível, ela deve ser preparada, aprovada e executada exatamente como foi decidida.
