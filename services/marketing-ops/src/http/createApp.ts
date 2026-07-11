@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import express, { type NextFunction, type Request, type Response } from 'express';
+import express, { type NextFunction, type Request, type Response, type Router } from 'express';
 import { AppError, appError, errorEnvelope } from '../errors.js';
 import type { Logger } from '../observability/logger.js';
 import type { MetricsRegistry } from '../observability/metrics.js';
@@ -8,6 +8,7 @@ export interface AppDependencies {
   readiness: () => Promise<boolean>;
   logger: Logger;
   metrics: MetricsRegistry;
+  router?: Router;
 }
 
 declare global {
@@ -39,6 +40,7 @@ export function createApp(deps: AppDependencies) {
       next(appError('dependency_unavailable', 503, 'Database is unavailable'));
     }
   });
+  if (deps.router) app.use(deps.router);
   app.use((_request, _response, next) => next(appError('not_found', 404, 'Route not found')));
   app.use((error: unknown, request: Request, response: Response, _next: NextFunction) => {
     const normalized = error instanceof AppError ? error : appError('internal_error', 500, 'Internal server error');

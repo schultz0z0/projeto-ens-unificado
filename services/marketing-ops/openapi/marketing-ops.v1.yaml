@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: Nexus Marketing Ops API
+  version: 1.0.0
+servers:
+  - url: /v1
+paths:
+  /capabilities:
+    get:
+      operationId: getCapabilities
+      responses:
+        '200': { description: Current contract and feature flags }
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Tenant-scoped campaigns }
+    post:
+      operationId: createCampaign
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses:
+        '201': { description: Draft created }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /campaigns/{id}:
+    get:
+      operationId: getCampaign
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Campaign }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: updateCampaign
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200': { description: Draft updated }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /campaigns/{id}/archive:
+    post:
+      operationId: archiveCampaign
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200': { description: Campaign archived }
+  /campaigns/{campaignId}/items:
+    post:
+      operationId: createCampaignItem
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      responses:
+        '201': { description: Item draft created }
+  /campaigns/{campaignId}/items/{itemId}:
+    patch:
+      operationId: updateCampaignItem
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200': { description: Item draft updated }
+  /audit-events:
+    get:
+      operationId: listAuditEvents
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Tenant audit events for manager or admin }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 128 } }
+    IfMatch: { name: If-Match, in: header, required: true, schema: { type: string } }
+  responses:
+    Conflict: { description: Idempotency or optimistic concurrency conflict }
+    NotFound: { description: Resource is absent or inaccessible }

@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { loadConfig } from './config.js';
 import { createPool } from './db/pool.js';
 import { createApp } from './http/createApp.js';
+import { createApiRouter } from './http/routes/index.js';
+import { verifySupabaseBearer } from './auth/supabaseAuth.js';
 import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
 
@@ -9,9 +11,19 @@ const config = loadConfig(process.env);
 const logger = createLogger();
 const metrics = createMetrics();
 const pool = createPool(config.databaseUrl);
+const router = createApiRouter({
+  pool,
+  corsOrigins: config.corsOrigins,
+  features: config.features,
+  verifyToken: (token) => verifySupabaseBearer(token, {
+    supabaseUrl: config.supabaseUrl,
+    anonKey: config.supabaseAnonKey
+  })
+});
 const app = createApp({
   logger,
   metrics,
+  router,
   readiness: async () => {
     await pool.query('select 1');
     return true;

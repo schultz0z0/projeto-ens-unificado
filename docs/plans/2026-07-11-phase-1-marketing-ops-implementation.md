@@ -299,19 +299,19 @@ Run: `git commit -m "feat: adiciona dominio idempotente de drafts"`.
 
 **Interfaces:** endpoints definidos em `docs/phase-1/design.md`; mutações exigem `Idempotency-Key` e retornam `X-Correlation-Id`.
 
-- [ ] **Step 1: Escrever testes HTTP vermelhos**
+- [x] **Step 1: Escrever testes HTTP vermelhos**
 
 Cobrir auth, CORS, payload, rate limit, paginação, filtros, erros, idempotência e ETag/version.
 
-- [ ] **Step 2: Implementar rotas sobre o domínio**
+- [x] **Step 2: Implementar rotas sobre o domínio**
 
 Não duplicar SQL ou regra nas rotas.
 
-- [ ] **Step 3: Validar OpenAPI**
+- [x] **Step 3: Validar OpenAPI**
 
 Testar que toda rota e código de erro está no YAML e que exemplos respeitam schemas.
 
-- [ ] **Step 4: Verificar GREEN e commit**
+- [x] **Step 4: Verificar GREEN e commit**
 
 Run: `npm test && npm run typecheck && npm run build`.
 
