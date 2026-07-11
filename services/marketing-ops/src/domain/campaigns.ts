@@ -8,34 +8,40 @@ import { writeDomainEvent } from './events.js';
 import { executeIdempotentCommand } from './idempotency.js';
 
 export interface Campaign {
-  id: string; tenantId: string; name: string; status: 'draft' | 'archived'; version: number;
+  id: string; tenantId: string; name: string; courseSlug: string | null; status: 'draft' | 'archived'; version: number;
   createdBy: string; updatedBy: string; createdAt: string; updatedAt: string; archivedAt: string | null;
 }
 
 interface CampaignRow {
-  id: string; tenant_id: string; name: string; status: 'draft' | 'archived'; version: string;
+  id: string; tenant_id: string; name: string; course_slug: string | null; status: 'draft' | 'archived'; version: string;
   created_by: string; updated_by: string; created_at: Date; updated_at: Date; archived_at: Date | null;
 }
 
 function mapCampaign(row: CampaignRow): Campaign {
   return {
-    id: row.id, tenantId: row.tenant_id, name: row.name, status: row.status, version: Number(row.version),
+    id: row.id, tenantId: row.tenant_id, name: row.name, courseSlug: row.course_slug,
+    status: row.status, version: Number(row.version),
     createdBy: row.created_by, updatedBy: row.updated_by, createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(), archivedAt: row.archived_at?.toISOString() ?? null
   };
 }
 
-export async function createCampaignDraft(context: CommandContext, input: { name: string; idempotencyKey: string }): Promise<Campaign> {
+export async function createCampaignDraft(
+  context: CommandContext,
+  input: { name: string; courseSlug?: string; idempotencyKey: string }
+): Promise<Campaign> {
   authorize(context.actor, 'campaign.create');
   const name = input.name.trim();
   if (!name) throw appError('validation_error', 400, 'Campaign name is required');
   return withActorTransaction(context.pool, context.actor, context.correlationId, (client) =>
-    executeIdempotentCommand(client, context, 'campaign.create', input.idempotencyKey, { name }, async () => {
+    executeIdempotentCommand(client, context, 'campaign.create', input.idempotencyKey, {
+      name, courseSlug: input.courseSlug ?? null
+    }, async () => {
       const campaignId = randomUUID();
       await client.query(`
-        insert into marketing_ops.campaigns (id, tenant_id, name, created_by, updated_by)
-        values ($1, $2, $3, $4, $4)
-      `, [campaignId, context.actor.tenantId, name, context.actor.userId]);
+        insert into marketing_ops.campaigns (id, tenant_id, name, course_slug, created_by, updated_by)
+        values ($1, $2, $3, $4, $5, $5)
+      `, [campaignId, context.actor.tenantId, name, input.courseSlug ?? null, context.actor.userId]);
       await context.faultInjector?.('after_entity');
       await client.query(`
         insert into marketing_ops.campaign_members (tenant_id, campaign_id, user_id, member_role, created_by)

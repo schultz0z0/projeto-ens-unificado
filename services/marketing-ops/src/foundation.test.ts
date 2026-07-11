@@ -57,7 +57,9 @@ describe('runtime foundation', () => {
     const metrics = createMetrics();
     metrics.increment('marketing_ops_requests_total', { route: '/health', status: '200' });
     metrics.increment('marketing_ops_requests_total', { route: '/health', status: '200' });
+    metrics.set('marketing_ops_outbox_unpublished', 3);
     expect(metrics.render()).toContain('marketing_ops_requests_total{route="/health",status="200"} 2');
+    expect(metrics.render()).toContain('marketing_ops_outbox_unpublished 3');
   });
 
   it('serves health without dependencies and readiness through its probe', async () => {
@@ -75,5 +77,35 @@ describe('runtime foundation', () => {
     const app = createApp({ readiness: async () => true, logger: createLogger(() => undefined), metrics: createMetrics() });
     const response = await request(app).get('/health').set('X-Correlation-Id', '2f6bcb89-5ef3-4d83-80c8-530fcb369773');
     expect(response.headers['x-correlation-id']).toBe('2f6bcb89-5ef3-4d83-80c8-530fcb369773');
+  });
+
+  it('protects Prometheus metrics with the internal key', async () => {
+    const app = createApp({
+      readiness: async () => true,
+      logger: createLogger(() => undefined),
+      metrics: createMetrics(),
+      internalKey: 'metrics-secret',
+      outboxDepth: async () => 4
+    });
+    expect((await request(app).get('/metrics')).status).toBe(401);
+    const response = await request(app).get('/metrics').set('X-Internal-Key', 'metrics-secret');
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toContain('text/plain');
+    expect(response.text).toContain('marketing_ops_requests_total');
+    expect(response.text).toContain('marketing_ops_outbox_unpublished 4');
+  });
+
+  it('rate limits abusive clients with an explicit retry window', async () => {
+    const app = createApp({
+      readiness: async () => true,
+      logger: createLogger(() => undefined),
+      metrics: createMetrics(),
+      rateLimit: { max: 1, windowMs: 60_000 }
+    });
+    expect((await request(app).get('/health')).status).toBe(200);
+    const limited = await request(app).get('/health');
+    expect(limited.status).toBe(429);
+    expect(limited.headers['retry-after']).toBe('60');
+    expect(limited.body.error.code).toBe('rate_limited');
   });
 });

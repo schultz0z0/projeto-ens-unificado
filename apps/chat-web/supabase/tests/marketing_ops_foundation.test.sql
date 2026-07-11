@@ -1,9 +1,52 @@
 begin;
 
-select plan(88);
+select plan(95);
 
 select has_schema('marketing_ops', 'marketing_ops schema exists');
 select has_schema('marketing_ops_private', 'private helper schema exists');
+
+select is(
+  (select count(*)::integer from marketing_ops.tenants where slug = 'ens' and active),
+  1,
+  'ENS tenant is bootstrapped idempotently'
+);
+select has_function(
+  'marketing_ops_private',
+  'sync_ens_profile_membership',
+  array[]::text[],
+  'profile membership sync function exists'
+);
+select has_trigger(
+  'public',
+  'profiles',
+  'profiles_sync_ens_marketing_membership',
+  'profiles synchronize ENS memberships'
+);
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+values (
+  '00000000-0000-0000-0000-000000000000', '55555555-5555-4555-8555-555555555555',
+  'authenticated', 'authenticated', 'membership-sync@local.test', crypt('local-test-password', gen_salt('bf')),
+  now(), '', '', '', '', '{"provider":"email","providers":["email"]}', '{}', now(), now()
+)
+on conflict (id) do nothing;
+
+insert into public.profiles (id, email, full_name, role, tenant_id)
+values ('55555555-5555-4555-8555-555555555555', 'membership-sync@local.test', 'Membership Sync', 'manager', 'ens')
+on conflict (id) do update set role = excluded.role, tenant_id = excluded.tenant_id;
+
+select is(
+  (select count(*)::integer from marketing_ops.memberships
+   where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+     and user_id = '55555555-5555-4555-8555-555555555555'
+     and role = 'manager' and active),
+  1,
+  'profile changes synchronize a trusted active membership'
+);
 
 select has_table('marketing_ops', 'tenants', 'tenants table exists');
 select has_table('marketing_ops', 'memberships', 'memberships table exists');
@@ -88,6 +131,9 @@ select ok(exists (select 1 from pg_constraint where conname = 'campaigns_version
 select ok(exists (select 1 from pg_constraint where conname = 'campaign_items_version_positive'), 'item versions must be positive');
 select ok(exists (select 1 from pg_constraint where conname = 'campaigns_archive_consistent'), 'campaign archive state is consistent');
 select ok(exists (select 1 from pg_constraint where conname = 'idempotency_records_request_hash_format'), 'request hashes have a fixed format');
+select has_column('marketing_ops', 'campaigns', 'course_slug', 'campaigns support course filtering');
+select ok(exists (select 1 from pg_constraint where conname = 'campaigns_course_slug_format'), 'course slugs have a constrained format');
+select has_index('marketing_ops', 'campaigns', 'campaigns_tenant_course_updated_idx', 'campaign course and period index exists');
 
 select has_index('marketing_ops', 'campaigns', 'campaigns_tenant_status_updated_idx', 'campaign list index exists');
 select has_index('marketing_ops', 'campaigns', 'campaigns_tenant_created_by_idx', 'campaign owner index exists');
@@ -137,16 +183,16 @@ reset role;
 select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
 set local role authenticated;
-select results_eq($$select count(*)::bigint from marketing_ops.campaigns$$, array[2::bigint], 'manager sees all campaigns in the selected tenant');
-select results_eq($$select count(*)::bigint from marketing_ops.audit_events$$, array[1::bigint], 'manager can read tenant audit events');
+select results_eq($$select count(*)::bigint from marketing_ops.campaigns where id in ('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222')$$, array[2::bigint], 'manager sees all seeded campaigns in the selected tenant');
+select results_eq($$select count(*)::bigint from marketing_ops.audit_events where id = 'd1111111-1111-4111-8111-111111111111'$$, array[1::bigint], 'manager can read seeded tenant audit events');
 select is(marketing_ops_private.current_actor_role('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid)::text, 'manager', 'manager role comes from membership');
 reset role;
 
 select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
 set local role authenticated;
-select results_eq($$select count(*)::bigint from marketing_ops.campaigns$$, array[2::bigint], 'admin sees all campaigns in the selected tenant');
-select results_eq($$select count(*)::bigint from marketing_ops.audit_events$$, array[1::bigint], 'admin can read tenant audit events');
+select results_eq($$select count(*)::bigint from marketing_ops.campaigns where id in ('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222')$$, array[2::bigint], 'admin sees all seeded campaigns in the selected tenant');
+select results_eq($$select count(*)::bigint from marketing_ops.audit_events where id = 'd1111111-1111-4111-8111-111111111111'$$, array[1::bigint], 'admin can read seeded tenant audit events');
 reset role;
 
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);

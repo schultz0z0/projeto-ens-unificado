@@ -24,6 +24,13 @@ const router = createApiRouter({
 const app = createApp({
   logger,
   metrics,
+  internalKey: config.internalKey,
+  outboxDepth: async () => {
+    const result = await pool.query<{ count: string }>(
+      'select count(*) from marketing_ops.domain_events where published_at is null and available_at <= now()'
+    );
+    return Number(result.rows[0]?.count ?? 0);
+  },
   router,
   readiness: async () => {
     await pool.query('select 1');

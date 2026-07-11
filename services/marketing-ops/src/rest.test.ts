@@ -22,7 +22,13 @@ function app(features = { read: true, write: true }) {
       return { id: '11111111-1111-4111-8111-111111111111', email: 'member@local.test' };
     }
   });
-  return createApp({ readiness: async () => true, logger: createLogger(() => undefined), metrics: createMetrics(), router });
+  return createApp({
+    readiness: async () => true,
+    logger: createLogger(() => undefined),
+    metrics: createMetrics(),
+    internalKey: 'test-internal-key',
+    router
+  });
 }
 
 describe('Marketing Ops REST v1', () => {
@@ -63,6 +69,38 @@ describe('Marketing Ops REST v1', () => {
     expect(listed.body.data.some((campaign: { id: string }) => campaign.id === created.body.data.id)).toBe(true);
   });
 
+  it('filters by course, status, owner and period with cursor pagination', async () => {
+    const headers = {
+      Authorization: 'Bearer valid-member',
+      'X-Tenant-Id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    };
+    const first = await request(app()).post('/v1/campaigns').set(headers)
+      .set('Idempotency-Key', randomUUID()).send({ name: 'Course campaign one', courseSlug: 'course-one' });
+    const second = await request(app()).post('/v1/campaigns').set(headers)
+      .set('Idempotency-Key', randomUUID()).send({ name: 'Course campaign two', courseSlug: 'course-one' });
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+
+    const query = new URLSearchParams({
+      course: 'course-one', status: 'draft', owner: '11111111-1111-4111-8111-111111111111',
+      from: '2000-01-01T00:00:00.000Z', to: '2100-01-01T00:00:00.000Z', limit: '1'
+    });
+    const pageOne = await request(app()).get(`/v1/campaigns?${query}`).set(headers);
+    expect(pageOne.status).toBe(200);
+    expect(pageOne.body.data).toHaveLength(1);
+    expect(pageOne.body.data[0]).toMatchObject({
+      courseSlug: 'course-one',
+      createdBy: '11111111-1111-4111-8111-111111111111'
+    });
+    expect(pageOne.body.page.nextCursor).toEqual(expect.any(String));
+
+    query.set('cursor', pageOne.body.page.nextCursor);
+    const pageTwo = await request(app()).get(`/v1/campaigns?${query}`).set(headers);
+    expect(pageTwo.status).toBe(200);
+    expect(pageTwo.body.data).toHaveLength(1);
+    expect(pageTwo.body.data[0].id).not.toBe(pageOne.body.data[0].id);
+  });
+
   it('maps stale If-Match to a version conflict', async () => {
     const created = await request(app()).post('/v1/campaigns')
       .set('Authorization', 'Bearer valid-member').set('Idempotency-Key', randomUUID())
@@ -85,5 +123,15 @@ describe('Marketing Ops REST v1', () => {
       .set('Authorization', 'Bearer valid-member').set('Idempotency-Key', randomUUID()).send({ name: 'Disabled' });
     expect(disabled.status).toBe(503);
     expect(disabled.body.error.code).toBe('feature_disabled');
+  });
+
+  it('answers trusted CORS preflight without authentication', async () => {
+    const response = await request(app()).options('/v1/campaigns')
+      .set('Origin', 'http://frontend.local')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'authorization,content-type,idempotency-key,x-tenant-id');
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-methods']).toContain('POST');
+    expect(response.headers['access-control-allow-headers']).toContain('Authorization');
   });
 });

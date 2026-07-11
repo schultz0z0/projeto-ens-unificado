@@ -16,6 +16,19 @@ describe('Marketing Ops frontend contracts', () => {
     expect((fetch.mock.calls[1]?.[1]?.headers as Headers).get('Authorization')).toBe('Bearer token-2');
   });
 
+  it('serializes campaign filters and preserves cursor pagination', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      data: [], page: { limit: 10, count: 0, nextCursor: 'next-page' }
+    }), { status: 200 }));
+    const client = createMarketingOpsClient({ baseUrl: 'https://ops.local', getAccessToken: async () => 'token', fetch });
+    const result = await client.listCampaigns({
+      course: 'course-one', status: 'draft', owner: '11111111-1111-4111-8111-111111111111',
+      from: '2026-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z', limit: 10, cursor: 'cursor-one'
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe('https://ops.local/v1/campaigns?course=course-one&status=draft&owner=11111111-1111-4111-8111-111111111111&from=2026-01-01T00%3A00%3A00.000Z&to=2026-12-31T23%3A59%3A59.999Z&limit=10&cursor=cursor-one');
+    expect(result.page).toEqual({ limit: 10, count: 0, nextCursor: 'next-page' });
+  });
+
   it('throws a typed API error without trusting client tenant authority', async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { code: 'tenant_forbidden', message: 'Denied', correlationId: 'corr-x' } }), { status: 403 }));
     const client = createMarketingOpsClient({ baseUrl: 'https://ops.local', getAccessToken: async () => 'token', fetch, tenantId: 'ens' });

@@ -1,5 +1,6 @@
 export interface MetricsRegistry {
   increment(name: string, labels?: Record<string, string>, amount?: number): void;
+  set(name: string, value: number, labels?: Record<string, string>): void;
   render(): string;
 }
 
@@ -13,6 +14,12 @@ export function createMetrics(): MetricsRegistry {
       const current = counters.get(key) ?? { name, labels: ordered, value: 0 };
       current.value += amount;
       counters.set(key, current);
+    },
+    set(name, value, labels = {}) {
+      if (!/^[a-zA-Z_:][a-zA-Z0-9_:]*$/.test(name)) throw new Error('invalid metric name');
+      if (!Number.isFinite(value)) throw new Error('invalid metric value');
+      const ordered = Object.fromEntries(Object.entries(labels).sort(([a], [b]) => a.localeCompare(b)));
+      counters.set(`${name}:${JSON.stringify(ordered)}`, { name, labels: ordered, value });
     },
     render() {
       return [...counters.values()].sort((a, b) => a.name.localeCompare(b.name)).map(({ name, labels, value }) => {
