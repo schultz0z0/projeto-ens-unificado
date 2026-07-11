@@ -16,6 +16,8 @@ import {
 import {
   resolveTrustedTenantId,
 } from "./tenant-context.js";
+import { validateBridgeRuntimeConfig } from "./runtime-config.js";
+import { issueMarketingOpsDelegation, redactMarketingOpsDelegation } from "./marketing-ops-delegation.js";
 import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
 import {
   collectArtifactUrlReplacements,
@@ -50,16 +52,18 @@ import {
   isHermesSessionApiUnavailableError,
 } from "./hermes-sessions.js";
 
-const config = {
+const runtimeConfig = validateBridgeRuntimeConfig(process.env);
+const config = {
   port: Number(process.env.BRIDGE_PORT || 8080),
   dataDir: process.env.BRIDGE_DATA_DIR || "/app/data",
   allowedOrigins: (process.env.BRIDGE_ALLOWED_ORIGINS || "https://chat.solucoes-nexus.tech")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
-  supabaseUrl: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "",
-  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
-  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  supabaseUrl: runtimeConfig.supabaseUrl,
+  supabaseAnonKey: runtimeConfig.supabaseAnonKey,
+  supabaseServiceRoleKey: runtimeConfig.supabaseServiceRoleKey,
+  allowInsecureLocalAuth: runtimeConfig.allowInsecureLocalAuth,
   attachmentBucket: process.env.CHAT_ATTACHMENTS_BUCKET || process.env.VITE_CHAT_ATTACHMENTS_BUCKET || CHAT_ATTACHMENT_BUCKET,
   supabaseOutputsBucket: process.env.SUPABASE_OUTPUTS_BUCKET || "image-gen-outputs",
   supabaseGeneratedImagesPrefix: process.env.SUPABASE_GENERATED_IMAGES_PREFIX || "hermes-chat-images",
@@ -78,6 +82,13 @@ const config = {
   defaultTenantId: process.env.NEXUS_TENANT_ID || "ens",
   graphMcpUrl: process.env.NEXUS_GRAPH_MCP_URL || "http://graph-mcp:8010/mcp",
   internalSyncKey: process.env.NEXUS_INTERNAL_SYNC_KEY || "",
+  marketingOpsDelegation: {
+    activeKid: process.env.MARKETING_OPS_DELEGATION_ACTIVE_KID || "",
+    activeKey: process.env.MARKETING_OPS_DELEGATION_ACTIVE_KEY || "",
+    issuer: process.env.MARKETING_OPS_DELEGATION_ISSUER || "nexus-chat-bridge",
+    audience: process.env.MARKETING_OPS_DELEGATION_AUDIENCE || "nexus-marketing-ops",
+    ttlSeconds: Number(process.env.MARKETING_OPS_DELEGATION_TTL_SECONDS || 90),
+  },
 };
 
 const terminalStatuses = new Set(["completed", "failed", "cancelled", "canceled", "expired", "interrupted"]);
@@ -177,7 +188,7 @@ const fetchBridgeUserProfile = async (userId) => {
   if (!config.supabaseUrl || !config.supabaseServiceRoleKey) return null;
   const params = new URLSearchParams({
     id: `eq.${userId}`,
-    select: "id,full_name,email,role",
+    select: "id,full_name,email,role,tenant_id",
     limit: "1",
   });
   const response = await fetch(`${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles?${params.toString()}`, {
@@ -200,6 +211,11 @@ const verifyUser = async (req) => {
   }
 
   if (!config.supabaseUrl || !config.supabaseAnonKey) {
+    if (!config.allowInsecureLocalAuth) {
+      const error = new Error("supabase_auth_not_configured");
+      error.status = 503;
+      throw error;
+    }
     return {
       id: "authenticated",
       token,
@@ -235,20 +251,19 @@ const verifyUser = async (req) => {
     throw error;
   }
 
-  const tenantId = resolveTrustedTenantId({
-    user,
-    requestedTenantId,
-    fallbackTenantId: config.defaultTenantId,
-    trustClientHeader: false,
-  });
-
-  const profile = await fetchBridgeUserProfile(user.id).catch((error) => {
-    console.warn("[chat-bridge] profile lookup failed", {
-      userId: user.id,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  });
+  let profile;
+  try {
+    profile = await fetchBridgeUserProfile(user.id);
+  } catch (error) {
+    if (!config.allowInsecureLocalAuth) throw error;
+    profile = null;
+  }
+  if (!profile && !config.allowInsecureLocalAuth) {
+    const error = new Error("active_profile_required");
+    error.status = 403;
+    throw error;
+  }
+  const tenantId = normalizeTenantId(profile?.tenant_id, config.defaultTenantId);
   const role = normalizeProfileRole(profile?.role);
 
   return {
@@ -719,6 +734,20 @@ const buildRunNexusContext = (run) => ({
   userEmail: run.user_email || "",
 });
 
+const issueRunMarketingOpsDelegation = async (run) => {
+  if (!config.marketingOpsDelegation.activeKey) return "";
+  const scopes = ["campaign:read", "campaign:write", "item:write"];
+  if (run.user_role === "manager" || run.user_role === "admin") scopes.push("audit:read");
+  return issueMarketingOpsDelegation({
+    userId: run.user_id,
+    tenantId: run.tenant_id,
+    role: run.user_role || "member",
+    chatSessionId: run.chat_session_id,
+    runId: run.id,
+    correlationId: run.id,
+  }, scopes, config.marketingOpsDelegation);
+};
+
 
 class HermesBridge {
   constructor({ store, hermesStateRepository }) {
@@ -984,15 +1013,17 @@ class HermesBridge {
     };
   }
 
-  async createHermesRun(run, hermesBaseUrl) {
-    const requestPayload = buildHermesRunRequest({
+  async createHermesRun(run, hermesBaseUrl) {
+    const marketingOpsDelegation = await issueRunMarketingOpsDelegation(run);
+    const requestPayload = buildHermesRunRequest({
       sessionId: run.hermes_session_id,
       messageText: run.message_text,
       attachments: run.attachments,
       replayContextMessages: run.replay_context_messages,
       nexusContext: buildRunNexusContext(run),
-    });
-    run.input = requestPayload.input;
+      marketingOpsDelegation,
+    });
+    run.input = redactMarketingOpsDelegation(requestPayload.input);
 
     const response = await fetch(new URL("/v1/runs", hermesBaseUrl.origin), {
       method: "POST",
@@ -1171,6 +1202,7 @@ class HermesBridge {
 
 
     while (!terminalStatuses.has(run.status)) {
+      const marketingOpsDelegation = await issueRunMarketingOpsDelegation(run);
 
       const requestPayload = buildHermesSessionChatRequest({
 
@@ -1184,14 +1216,15 @@ class HermesBridge {
 
         imageOptions: run.image_options,
         nexusContext: buildRunNexusContext(run),
+        marketingOpsDelegation,
 
       });
 
-      run.input = typeof requestPayload.message === "string"
+      run.input = redactMarketingOpsDelegation(typeof requestPayload.message === "string"
 
         ? requestPayload.message
 
-        : JSON.stringify(requestPayload.message);
+        : JSON.stringify(requestPayload.message));
 
 
 
@@ -1348,7 +1381,8 @@ class HermesBridge {
 
 
   async fetchHermesResponse(run, hermesBaseUrl, routingState, imageTransport) {
-    const requestPayload = buildHermesResponsesRequest({
+    const marketingOpsDelegation = await issueRunMarketingOpsDelegation(run);
+    const requestPayload = buildHermesResponsesRequest({
       modelName: config.hermesModelName,
       userId: run.user_id,
       sessionId: run.chat_session_id,
@@ -1359,8 +1393,9 @@ class HermesBridge {
       previousResponseId: routingState.previousResponseId,
       imageTransport,
       nexusContext: buildRunNexusContext(run),
-    });
-    run.input = JSON.stringify(requestPayload.input);
+      marketingOpsDelegation,
+    });
+    run.input = redactMarketingOpsDelegation(JSON.stringify(requestPayload.input));
 
     return await fetch(new URL("/v1/responses", hermesBaseUrl.origin), {
       method: "POST",

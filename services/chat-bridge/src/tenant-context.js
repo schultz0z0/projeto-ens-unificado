@@ -10,9 +10,7 @@ export const resolveTrustedTenantId = ({
   fallbackTenantId = "ens",
   trustClientHeader = false,
 } = {}) => {
-  const metadataTenant =
-    user?.app_metadata?.tenant_id
-    || user?.user_metadata?.tenant_id;
+  const metadataTenant = user?.app_metadata?.tenant_id;
 
   if (metadataTenant) {
     return normalizeTenantId(metadataTenant, fallbackTenantId);

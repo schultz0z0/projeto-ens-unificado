@@ -6,10 +6,11 @@ export type ActorRole = 'member' | 'manager' | 'admin';
 export interface Actor { userId: string; tenantId: string; tenantSlug: string; role: ActorRole }
 
 const uuid = z.string().uuid();
+const tenantSelector = z.string().min(2).max(64).regex(/^[a-z0-9-]+$/i);
 
 export async function resolveActor(pool: Pool, userId: string, requestedTenantId?: string): Promise<Actor> {
   uuid.parse(userId);
-  if (requestedTenantId) uuid.parse(requestedTenantId);
+  if (requestedTenantId) tenantSelector.parse(requestedTenantId);
   const result = await pool.query<{
     user_id: string; tenant_id: string; tenant_slug: string; role: ActorRole;
   }>(`
@@ -19,7 +20,7 @@ export async function resolveActor(pool: Pool, userId: string, requestedTenantId
     where membership.user_id = $1
       and membership.active
       and tenant.active
-      and ($2::uuid is null or membership.tenant_id = $2::uuid)
+      and ($2::text is null or membership.tenant_id::text = $2::text or tenant.slug = lower($2::text))
     order by tenant.slug
     limit 2
   `, [userId, requestedTenantId ?? null]);

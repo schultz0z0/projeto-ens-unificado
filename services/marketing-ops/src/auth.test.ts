@@ -25,6 +25,8 @@ describe('trusted actor boundary', () => {
     const actor = await resolveActor(pool, '11111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
     expect(actor).toMatchObject({ role: 'member', tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' });
     await expect(resolveActor(pool, '11111111-1111-4111-8111-111111111111', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')).rejects.toMatchObject({ code: 'tenant_forbidden' });
+    const bySlug = await resolveActor(pool, '11111111-1111-4111-8111-111111111111', 'ens');
+    expect(bySlug.tenantId).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
   });
 
   it('enforces the permission matrix', () => {

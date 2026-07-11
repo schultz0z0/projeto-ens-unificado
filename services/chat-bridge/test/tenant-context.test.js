@@ -28,6 +28,15 @@ test("trusted tenant resolution ignores client tenant headers for authenticated 
   assert.equal(tenantId, "ens");
 });
 
+test("trusted tenant resolution never accepts user_metadata authority", () => {
+  const tenantId = resolveTrustedTenantId({
+    user: { app_metadata: {}, user_metadata: { tenant_id: "spoofed" } },
+    fallbackTenantId: "ens",
+    trustClientHeader: false,
+  });
+  assert.equal(tenantId, "ens");
+});
+
 test("trusted tenant resolution can trust client header only for no-Supabase local fallback", () => {
   const tenantId = resolveTrustedTenantId({
     requestedTenantId: "ens",

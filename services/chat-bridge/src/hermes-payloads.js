@@ -364,6 +364,7 @@ const buildHermesSessionChatMessage = ({
   imageOptions,
 
   nexusContext = {},
+  marketingOpsDelegation = "",
 
 }) => {
 
@@ -382,7 +383,10 @@ const buildHermesSessionChatMessage = ({
     })
 
     : messageText;
-  const routedMessageText = withNexusMemoryRoutingContract(effectiveMessageText, nexusContext);
+  const routedMessageText = withMarketingOpsDelegation(
+    withNexusMemoryRoutingContract(effectiveMessageText, nexusContext),
+    marketingOpsDelegation,
+  );
 
   if (imageAttachments.length === 0) {
 
@@ -467,6 +471,7 @@ export const buildHermesSessionChatRequest = ({
   imageOptions,
 
   nexusContext = {},
+  marketingOpsDelegation = "",
 
 }) => ({
 
@@ -483,6 +488,7 @@ export const buildHermesSessionChatRequest = ({
     imageOptions,
 
     nexusContext,
+    marketingOpsDelegation,
 
   }),
 
@@ -501,8 +507,9 @@ export const buildHermesResponsesRequest = ({
   replayContextMessages = [],
 
   nexusContext = {},
-  imageTransport = "inline",
-}) => ({
+  imageTransport = "inline",
+  marketingOpsDelegation = "",
+}) => ({
   model: modelName,
   store: true,
   stream: true,
@@ -517,7 +524,7 @@ export const buildHermesResponsesRequest = ({
     source: "nexus-ai-bridge",
   },
   input: buildHermesResponsesInput({
-    messageText,
+    messageText: withMarketingOpsDelegation(messageText, marketingOpsDelegation),
     attachments,
     replayContextMessages,
 
@@ -533,11 +540,16 @@ export const buildHermesRunRequest = ({
   replayContextMessages = [],
 
   nexusContext = {},
-}) => ({
+  marketingOpsDelegation = "",
+}) => ({
   session_id: sessionId,
   input: buildHermesRunInput({
-    messageText: withNexusMemoryRoutingContract(messageText, nexusContext),
+    messageText: withMarketingOpsDelegation(
+      withNexusMemoryRoutingContract(messageText, nexusContext),
+      marketingOpsDelegation,
+    ),
     attachments,
     replayContextMessages,
   }),
 });
+import { withMarketingOpsDelegation } from "./marketing-ops-delegation.js";

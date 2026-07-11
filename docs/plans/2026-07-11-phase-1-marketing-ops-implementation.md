@@ -365,23 +365,23 @@ Commit: `feat: expoe mcp com delegacao confiavel`.
 - `withMarketingOpsDelegation(message, token): message`
 - `redactMarketingOpsDelegation(input): input`
 
-- [ ] **Step 1: Testes vermelhos de hardening**
+- [x] **Step 1: Testes vermelhos de hardening**
 
 `user_metadata` ignorado; produção sem Supabase falha; fallback local exige flag explícita; papel sempre vem do perfil.
 
-- [ ] **Step 2: Testes vermelhos de emissão**
+- [x] **Step 2: Testes vermelhos de emissão**
 
 Claims, TTL, `kid`, scopes e correlação exatos; token não persiste em `run.input` nem aparece em logs.
 
-- [ ] **Step 3: Implementar com `jose` pinado**
+- [x] **Step 3: Implementar com `jose` pinado**
 
 Emitir somente chave ativa e injetar o token no contexto técnico da run Hermes; redigir persistência diagnóstica.
 
-- [ ] **Step 4: Verificar 55 testes existentes + novos**
+- [x] **Step 4: Verificar 55 testes existentes + novos**
 
 Run: `npm test`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Commit: `feat: endurece bridge e delega ator ao marketing ops`.
 
