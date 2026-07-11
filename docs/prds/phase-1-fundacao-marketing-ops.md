@@ -1,6 +1,6 @@
 # PRD — Fase 1: Fundação do Marketing Ops
 
-- **Status:** draft
+- **Status:** in_progress
 - **Dependência:** Fase 0 concluída
 - **Resultado:** domínio operacional seguro e compartilhado pelo frontend e pelo Hermes
 

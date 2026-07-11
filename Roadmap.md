@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 autorizada para início
+- **Status:** Fase 0 `production_validated`; Fase 1 `in_progress`
 - **Atualização:** 11 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -197,6 +197,8 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 **PRD:** [Fase 0 — Diagnóstico e Contrato de Evolução](docs/prds/phase-0-diagnostico-contrato-evolucao.md)
 
 ### Fase 1: Fundação do Marketing Ops
+
+**Estado:** `in_progress` — implementação local iniciada em 11 de julho de 2026.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 
