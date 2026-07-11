@@ -17,9 +17,10 @@ def load_script():
     return module
 
 
-def test_ensure_server_registers_rag_and_graph_mcp(tmp_path, monkeypatch):
+def test_ensure_server_registers_rag_graph_and_marketing_ops_mcp(tmp_path, monkeypatch):
     monkeypatch.setenv("ENS_RAG_MCP_URL", "http://rag-mcp:8000/mcp")
     monkeypatch.setenv("NEXUS_GRAPH_MCP_URL", "http://graph-mcp:8010/mcp")
+    monkeypatch.setenv("NEXUS_MARKETING_OPS_MCP_URL", "http://marketing-ops:8091/mcp")
     module = load_script()
 
     config_path = tmp_path / "config.yaml"
@@ -29,6 +30,8 @@ def test_ensure_server_registers_rag_and_graph_mcp(tmp_path, monkeypatch):
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     assert config["mcp_servers"]["nexus_rag"]["url"] == "http://rag-mcp:8000/mcp"
     assert config["mcp_servers"]["nexus_graph"]["url"] == "http://graph-mcp:8010/mcp"
+    assert config["mcp_servers"]["nexus_marketing_ops"]["url"] == "http://marketing-ops:8091/mcp"
+    assert config["mcp_servers"]["nexus_marketing_ops"]["sampling"]["enabled"] is False
     assert config["mcp_servers"]["nexus_graph"]["sampling"]["enabled"] is False
 
 

@@ -28,6 +28,12 @@ def managed_mcp_servers() -> dict[str, dict]:
             "connect_timeout": int(os.environ.get("NEXUS_GRAPH_MCP_CONNECT_TIMEOUT", "30")),
             "sampling": {"enabled": False},
         },
+        "nexus_marketing_ops": {
+            "url": os.environ.get("NEXUS_MARKETING_OPS_MCP_URL", "http://marketing-ops:8091/mcp"),
+            "timeout": int(os.environ.get("NEXUS_MARKETING_OPS_MCP_TIMEOUT", "120")),
+            "connect_timeout": int(os.environ.get("NEXUS_MARKETING_OPS_MCP_CONNECT_TIMEOUT", "15")),
+            "sampling": {"enabled": False},
+        },
     }
 
 

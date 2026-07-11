@@ -396,19 +396,19 @@ Commit: `feat: endurece bridge e delega ator ao marketing ops`.
 
 **Interfaces:** servidor `nexus_marketing_ops` em `http://marketing-ops:8091/mcp`, sampling desabilitado.
 
-- [ ] **Step 1: Teste Python vermelho**
+- [x] **Step 1: Teste Python vermelho**
 
 Exigir terceiro MCP preservando custom servers e sem alterar URLs do RAG/Graph.
 
-- [ ] **Step 2: Implementar registro idempotente**
+- [x] **Step 2: Implementar registro idempotente**
 
 Adicionar URL/timeouts sem chave de ator estática; a delegação é argumento por tool.
 
-- [ ] **Step 3: Verificar testes Hermes Docker**
+- [x] **Step 3: Verificar testes Hermes Docker**
 
 Run: `python -m pytest services/hermes-runtime/docker/tests -q`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Commit: `feat: registra marketing ops no hermes`.
 
