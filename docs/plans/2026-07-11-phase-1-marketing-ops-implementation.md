@@ -230,19 +230,19 @@ Run: `git commit -m "feat: cria scaffold observavel do marketing ops"`.
 - `authorize(actor, permission): void`
 - `withActorTransaction(actor, correlationId, fn): Promise<T>`
 
-- [ ] **Step 1: Testes vermelhos de auth e RBAC**
+- [x] **Step 1: Testes vermelhos de auth e RBAC**
 
 Cobrir token ausente/inválido/expirado, tenant forjado, papel enviado pelo cliente, membership inativa e matriz completa.
 
-- [ ] **Step 2: Testes vermelhos de contexto PostgreSQL**
+- [x] **Step 2: Testes vermelhos de contexto PostgreSQL**
 
 Provar que claims locais são definidos e que rollback sempre ocorre em erro.
 
-- [ ] **Step 3: Implementar e verificar GREEN**
+- [x] **Step 3: Implementar e verificar GREEN**
 
 Run: `npm test` com `MARKETING_OPS_TEST_DATABASE_URL` apontando ao Supabase local.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run: `git commit -m "feat: aplica identidade tenant e rbac"`.
 

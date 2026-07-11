@@ -5,6 +5,7 @@ export interface AppConfig {
   port: number;
   databaseUrl: string;
   supabaseUrl: string;
+  supabaseAnonKey: string;
   corsOrigins: string[];
   internalKey: string;
   delegation: {
@@ -43,6 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   const databaseUrl = requiredProductionValue(env, 'DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:54322/postgres', production);
   const supabaseUrl = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_URL', 'http://127.0.0.1:54321', production);
   const internalKey = requiredProductionValue(env, 'MARKETING_OPS_INTERNAL_KEY', 'local-test-internal-key-at-least-32-bytes', production);
+  const supabaseAnonKey = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_ANON_KEY', 'local-test-anon-key', production);
   const previousKid = env.MARKETING_OPS_DELEGATION_PREVIOUS_KID?.trim();
   const previousKey = env.MARKETING_OPS_DELEGATION_PREVIOUS_KEY?.trim();
   if (Boolean(previousKid) !== Boolean(previousKey)) {
@@ -66,6 +68,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     port: z.coerce.number().int().min(1).max(65535).parse(env.MARKETING_OPS_PORT ?? 8091),
     databaseUrl,
     supabaseUrl,
+    supabaseAnonKey,
     corsOrigins: (env.MARKETING_OPS_CORS_ORIGINS ?? 'http://127.0.0.1:8088,http://localhost:5173')
       .split(',').map((value) => value.trim()).filter(Boolean),
     internalKey,

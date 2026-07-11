@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
-import pg from 'pg';
 import { loadConfig } from './config.js';
+import { createPool } from './db/pool.js';
 import { createApp } from './http/createApp.js';
 import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
@@ -8,7 +8,7 @@ import { createMetrics } from './observability/metrics.js';
 const config = loadConfig(process.env);
 const logger = createLogger();
 const metrics = createMetrics();
-const pool = new pg.Pool({ connectionString: config.databaseUrl, max: 10 });
+const pool = createPool(config.databaseUrl);
 const app = createApp({
   logger,
   metrics,
