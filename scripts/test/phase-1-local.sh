@@ -30,9 +30,13 @@ docker compose --env-file .env.example build marketing-ops
 docker compose --env-file .env.example up -d --no-deps marketing-ops
 
 pushd services/marketing-ops >/dev/null
-export MARKETING_OPS_E2E="true"
 export MARKETING_OPS_TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 npm test
+if command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoProfile -Command "\$env:MARKETING_OPS_E2E='true'; npm test -- --run test/integration/e2e.test.ts"
+else
+  MARKETING_OPS_E2E=true npm test -- --run test/integration/e2e.test.ts
+fi
 npm run typecheck
 npm run build
 npm audit --audit-level=moderate

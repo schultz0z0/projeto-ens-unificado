@@ -1,6 +1,6 @@
 # Design técnico — Fase 1: Fundação do Marketing Ops
 
-- **Status:** `approved_for_implementation`
+- **Status:** `implemented_and_validated_locally`
 - **Data:** 2026-07-11
 - **Origem:** PRD da Fase 1, backlog F1-001–F1-108 e ADRs 0001–0005
 

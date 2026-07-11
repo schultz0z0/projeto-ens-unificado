@@ -25,7 +25,7 @@ Uma fase só entra em implementação quando:
 | Fase | PRD | Resultado principal | Dependência | Status atual |
 |---|---|---|---|---|
 | 0 | [Diagnóstico e Contrato de Evolução](phase-0-diagnostico-contrato-evolucao.md) | Base inventariada e decisões registradas | — | `completed` |
-| 1 | [Fundação do Marketing Ops](phase-1-fundacao-marketing-ops.md) | Domínio seguro compartilhado | Fase 0 | `in_progress` |
+| 1 | [Fundação do Marketing Ops](phase-1-fundacao-marketing-ops.md) | Domínio seguro compartilhado | Fase 0 | `ready_for_production` |
 | 2 | [Workspace Operacional MVP](phase-2-workspace-operacional-mvp.md) | Primeiro release utilizável | Fase 1 | `draft` |
 | 3 | [Calendário e Esteira de Produção](phase-3-calendario-esteira-producao.md) | Operação diária planejada | Fase 2 | `draft` |
 | 4 | [Hermes Campaign Operator](phase-4-hermes-campaign-operator.md) | Hermes opera objetos reais | Fases 1–3 | `draft` |

@@ -4,7 +4,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 
 ## Status
 
-- **Fase:** `in_progress`
+- **Fase:** `ready_for_production`
 - **Início:** 2026-07-11
 - **Branch:** `codex/phase-1-marketing-ops`
 - **Dependência:** Fase 0 `production_validated`
@@ -27,13 +27,16 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 | Entregável | Estado inicial |
 |---|---|
 | Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
-| Schema, RLS, grants e pgTAP | `validated_locally` (90 testes de banco) |
-| Serviço, API e MCP | `implemented_locally` |
-| Hardening da Bridge e delegação Hermes | `implemented_locally` |
-| SDK frontend e feature flags | `implemented_locally` |
+| Supabase do app em produção | `deployed_and_validated` ([evidência](supabase-deployment.md)) |
+| Schema, RLS, grants e pgTAP | `validated_locally` (97 testes de banco) |
+| Serviço, API e MCP | `validated_locally` (32 testes + 2 E2E) |
+| Hardening da Bridge e delegação Hermes | `validated_locally` |
+| SDK frontend e feature flags | `validated_locally` (125 testes frontend) |
 | Compose, observabilidade e runbooks | `validated_locally` |
 | Gate local | `validated_locally` ([evidência](local-validation.md)) |
 | Gate VPS | `pending_user_deploy` |
+
+Rastreabilidade requisito a requisito: [requirements-traceability.md](requirements-traceability.md). Riscos residuais: [risk-register.md](risk-register.md). Checklist de produção: [vps-validation.md](vps-validation.md).
 
 ## Regras de evidência
 

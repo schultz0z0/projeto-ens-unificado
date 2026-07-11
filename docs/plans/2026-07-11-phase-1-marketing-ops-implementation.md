@@ -522,23 +522,23 @@ Commit: `test: valida fase 1 localmente`.
 
 **Interfaces:** cada requisito F1-RF e item F1-001–F1-108 aponta para código, teste e evidência.
 
-- [ ] **Step 1: Revisar requisito por requisito**
+- [x] **Step 1: Revisar requisito por requisito**
 
 Nenhum checkbox fecha apenas por existência de código; exigir teste/evidência.
 
-- [ ] **Step 2: Atualizar estado correto**
+- [x] **Step 2: Atualizar estado correto**
 
 Se gate local passar, usar `ready_for_production`; `vps-validation.md` permanece `pending_user_deploy` até evidência real.
 
-- [ ] **Step 3: Executar revisão de segurança e código da branch inteira**
+- [x] **Step 3: Executar revisão de segurança e código da branch inteira**
 
 Inspecionar diff desde `b3fc5dd`, procurar falhas de auth, tenant, RLS, replay, secrets, concorrência, transação e rollback; corrigir achados antes de concluir.
 
-- [ ] **Step 4: Verificação final fresca**
+- [x] **Step 4: Verificação final fresca**
 
 Reexecutar comando único da fase, `git diff --check`, links Markdown e status Git.
 
-- [ ] **Step 5: Commit final**
+- [x] **Step 5: Commit final**
 
 Commit: `docs: registra gate local da fase 1`.
 

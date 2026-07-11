@@ -4,12 +4,24 @@
 
 Entregar a fundação segura e observável do `marketing-ops`, sem construir ainda o workspace completo nem executar canais reais.
 
+## Estado de execução em 2026-07-11
+
+| Faixa | Estado | Evidência |
+|---|---|---|
+| F1-001–F1-002 | `validated_locally` | baseline, ambiente local e bootstrap reproduzível |
+| F1-003 | `deployed_and_validated` | backup, adoção da cadeia oficial e validação do Supabase do app |
+| F1-004–F1-013 | `validated_locally` | suites Bridge/Marketing Ops/Hermes/frontend/banco e Compose |
+| F1-014 | `pending_vps_validation` | gate local aprovado; checklist Ubuntu pendente |
+| F1-101–F1-108 | `validated_locally`/`documented` | SDK, flags, versão, filtros, deep links, LGPD, audit e runbooks |
+
+A matriz detalhada por ID está em `docs/phase-1/requirements-traceability.md`.
+
 ## Regras de entrada
 
 - inventários, ADRs, glossário e responsabilidades da Fase 0 aceitos;
 - nenhum `BLOCKER` abaixo pode ser ignorado por feature flag;
 - ambiente de desenvolvimento separado da produção;
-- push/deploy continuam sob responsabilidade do usuário.
+- deploy dos containers na VPS e homologação final continuam sob responsabilidade do usuário; o deploy Supabase pode ser executado pela automação autorizada após o gate local.
 
 ## P0 — bloqueadores
 
@@ -52,11 +64,11 @@ Entregar a fundação segura e observável do `marketing-ops`, sem construir ain
 | F1-203 | política de promoção RAG/Graph | 4/7 | Knowledge |
 | F1-204 | dashboards operacionais avançados | 7 | Data/Product |
 
-## Decisões abertas
+## Decisões e pendências externas
 
 | ID | Decisão aberta | Default até decisão | Owner |
 |---|---|---|---|
-| D-01 | formato de assinatura/delegação | MCP write desligado | Plataforma/Security |
+| D-01 | formato de assinatura/delegação | resolvido: JWT HS256 curto, scopes, `kid` e anti-replay | Plataforma/Security |
 | D-02 | owner definitivo de catálogo ENS | somente leitura via RAG | Produto |
 | D-03 | retenção de chat/artefatos | preservar, acesso restrito | Compliance/Produto |
 | D-04 | importação do RAG marketing antigo | quarentena; não escrever no RAG MCP | Marketing/Knowledge |

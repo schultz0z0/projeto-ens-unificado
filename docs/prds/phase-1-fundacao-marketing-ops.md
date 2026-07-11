@@ -1,6 +1,6 @@
 # PRD — Fase 1: Fundação do Marketing Ops
 
-- **Status:** in_progress
+- **Status:** ready_for_production
 - **Dependência:** Fase 0 concluída
 - **Resultado:** domínio operacional seguro e compartilhado pelo frontend e pelo Hermes
 
@@ -156,19 +156,19 @@ Campos finais e SQL serão decididos no design técnico, mantendo estes invarian
 
 ## Critérios de aceite
 
-- [ ] Container sobe localmente e responde health/readiness.
-- [ ] API rejeita token ausente, inválido ou expirado.
-- [ ] Tenant enviado pelo cliente não permite acesso cruzado.
-- [ ] Matriz de papéis possui testes positivos e negativos.
-- [ ] MCP lê o mesmo registro criado pela API.
-- [ ] Mutação MCP exige delegação válida.
-- [ ] Idempotência impede duplicidade.
-- [ ] Versão obsoleta gera conflito, sem sobrescrita.
-- [ ] Auditoria e evento são gravados na mesma transação.
-- [ ] Falha transacional não deixa evento órfão.
-- [ ] Logs permitem rastrear API/MCP até o banco.
-- [ ] Nenhum secret aparece no bundle do frontend.
-- [ ] Migrations possuem caminho de rollback validado.
+- [x] Container sobe localmente e responde health/readiness.
+- [x] API rejeita token ausente, inválido ou expirado.
+- [x] Tenant enviado pelo cliente não permite acesso cruzado.
+- [x] Matriz de papéis possui testes positivos e negativos.
+- [x] MCP lê o mesmo registro criado pela API.
+- [x] Mutação MCP exige delegação válida.
+- [x] Idempotência impede duplicidade.
+- [x] Versão obsoleta gera conflito, sem sobrescrita.
+- [x] Auditoria e evento são gravados na mesma transação.
+- [x] Falha transacional não deixa evento órfão.
+- [x] Logs permitem rastrear API/MCP até o banco.
+- [x] Nenhum secret aparece no bundle do frontend.
+- [x] Migrations possuem caminho de rollback validado.
 
 ## Testes
 
@@ -223,13 +223,15 @@ Token inválido, tenant forjado, papel forjado, delegação expirada, replay, ma
 | Auditoria armazenar dados sensíveis | Redação e allowlist de campos |
 | Infra antecipada demais | Implementar apenas capacidades consumidas pela Fase 2 |
 
-## Decisões abertas bloqueantes
+## Decisões bloqueantes resolvidas
 
-- linguagem/framework do serviço;
-- formato da delegação e integração com o runtime Hermes;
-- política de retenção da auditoria;
-- publicação inicial de eventos: polling/outbox ou broker futuro.
+- serviço em TypeScript/Node.js 22 com Express;
+- delegação JWT HS256 curta, versionada, com rotação por `kid` e anti-replay;
+- auditoria append-only sem expurgo automático nesta fase;
+- publicação inicial por outbox PostgreSQL, preparada para polling futuro.
+
+A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`.
 
 ## Gate de saída
 
-A Fase 2 inicia quando API, MCP, identidade, tenant, RBAC, RLS, auditoria, idempotência, concorrência, eventos e observabilidade mínima estiverem validados localmente. A fase só fica concluída após homologação na VPS.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A Fase 1 só fica `completed` após homologação na VPS Ubuntu registrada em `docs/phase-1/vps-validation.md`.
