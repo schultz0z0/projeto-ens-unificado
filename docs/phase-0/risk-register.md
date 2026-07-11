@@ -16,7 +16,7 @@
 | R-002 | `BLOCKER` | Alta | `open` | `tenant-context.js` aceita `user_metadata.tenant_id` | usuário pode influenciar contexto de tenant | aceitar somente vínculo server-side/`app_metadata`; testes cross-tenant | Plataforma/Security | 1 |
 | R-003 | `BLOCKER` | Média | `open` | Bridge aceita Bearer não vazio e header de tenant quando Supabase não está configurado | falha de env pode virar bypass de autenticação | fail-closed fora de teste e validação obrigatória no startup | Plataforma/Security | 1 |
 | R-004 | `BLOCKER` | Alta | `open` | `.env` central declara produção; Docker/Supabase local isolado não está disponível | desenvolvimento/migrations podem atingir produção ou ficar sem teste real | provisionar Supabase de desenvolvimento/preview separado e política explícita de ambientes | DevOps/Data | 1 |
-| R-005 | `BLOCKER` | Certa | `pending_user_deploy` | ADR 0005 e `vps-validation.md` | Fase 0 não pode virar `production_validated` | usuário faz push/deploy e executa gate VPS com evidências | DevOps/Usuário | 0 |
+| R-005 | `CLOSED` | Certa | `production_validated_2026-07-11` | ADR 0005 e `vps-validation.md` | Bloqueio encerrado após deploy e aceite funcional na VPS | nenhuma; preservar evidências e runbook | DevOps/Usuário | 0 |
 | R-006 | `HIGH` | Certa | `resolved_local` | security gate inicialmente encontrou 14 altas e 6 moderadas | supply chain e CVEs em runtime/build | lockfile atualizado sem `--force`; 120 testes e security gate repetidos; 0 vulnerabilidades | Frontend/Security | 0 |
 | R-007 | `HIGH` | Média | `open` | funções `SECURITY DEFINER` no schema `public` | bypass de RLS/superfície RPC excessiva | revisar `EXECUTE`, ator, `search_path`; advisors e testes de negação | Backend/Security | 1 |
 | R-008 | `HIGH` | Média | `open` | `validated_works.tenant_id` default `ens`; isolamento real não provado | vazamento cross-tenant futuro | modelo de membership, tenant obrigatório e policies testadas | Backend/Data | 1 |
@@ -45,4 +45,4 @@
 
 ## Regra de aceite
 
-Riscos transferidos são formalmente fora do escopo de implementação da Fase 0, mas mantêm owner e fase. `BLOCKER` da Fase 1 precisa ser resolvido antes de mutações operacionais; `R-005` é o único bloqueio externo para o status global da Fase 0.
+Riscos transferidos são formalmente fora do escopo de implementação da Fase 0, mas mantêm owner e fase. `BLOCKER` da Fase 1 precisa ser resolvido antes de mutações operacionais. O antigo bloqueio externo `R-005` foi encerrado com a homologação VPS de 2026-07-11.

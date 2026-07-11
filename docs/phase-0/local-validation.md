@@ -1,5 +1,7 @@
 # Validação local — Fase 0
 
+> Registro histórico do gate local executado antes do deploy. O gate VPS foi aprovado posteriormente em 2026-07-11; consulte [vps-validation.md](vps-validation.md) para o encerramento global da fase.
+
 ## Status
 
 - **Estado:** `pass_with_environment_limits`

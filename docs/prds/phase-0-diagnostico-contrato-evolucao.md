@@ -1,6 +1,6 @@
 # PRD — Fase 0: Diagnóstico e Contrato de Evolução
 
-- **Status:** ready_for_production
+- **Status:** completed
 - **Responsável funcional:** a definir
 - **Dependências:** nenhuma
 - **Resultado:** base inventariada, classificada e pronta para decisões de implementação

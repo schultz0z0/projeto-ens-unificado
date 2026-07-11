@@ -4,11 +4,11 @@ Este diretório reúne a linha de base verificável do Nexus AI antes da impleme
 
 ## Status
 
-- **Fase:** `ready_for_production`
+- **Fase:** `production_validated`
 - **Gate local:** `pass`
-- **Gate VPS:** `pending_user_deploy`
+- **Gate VPS:** `pass`
 - **Branch:** `main`, por decisão explícita do usuário
-- **Publicação:** nenhum `git push` ou deploy autorizado nesta etapa
+- **Publicação:** `git pull` e deploy executados pelo usuário na VPS; aceite funcional registrado em 2026-07-11
 - **Plano:** [2026-07-10-phase-0-diagnostic-implementation.md](../plans/2026-07-10-phase-0-diagnostic-implementation.md)
 - **PRD:** [phase-0-diagnostico-contrato-evolucao.md](../prds/phase-0-diagnostico-contrato-evolucao.md)
 
@@ -31,7 +31,7 @@ Este diretório reúne a linha de base verificável do Nexus AI antes da impleme
 | Backlog da Fase 1 | [phase-1-backlog.md](phase-1-backlog.md) | `completed` |
 | Runbook de deploy VPS | [vps-deployment-runbook.md](vps-deployment-runbook.md) | `completed` |
 | Evidência local | [local-validation.md](local-validation.md) | `pass` |
-| Validação VPS | [vps-validation.md](vps-validation.md) | `pending_user_deploy` |
+| Validação VPS | [vps-validation.md](vps-validation.md) | `pass` |
 
 ## Evidências
 
