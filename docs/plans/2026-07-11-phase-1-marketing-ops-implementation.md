@@ -266,23 +266,23 @@ Run: `git commit -m "feat: aplica identidade tenant e rbac"`.
 - `createCampaignItemDraft(ctx, campaignId, input): Promise<CampaignItem>`
 - `updateCampaignItemDraft(ctx, campaignId, itemId, expectedVersion, input): Promise<CampaignItem>`
 
-- [ ] **Step 1: Testes vermelhos de hash/idempotência/versão**
+- [x] **Step 1: Testes vermelhos de hash/idempotência/versão**
 
 Mesmo payload deve gerar mesmo hash; mesma key/payload retorna resultado; payload divergente conflita; versão obsoleta não altera linha.
 
-- [ ] **Step 2: Testes vermelhos de atomicidade**
+- [x] **Step 2: Testes vermelhos de atomicidade**
 
 Injetar falha depois do write e provar ausência de entidade, auditoria e evento órfão.
 
-- [ ] **Step 3: Implementar comandos mínimos**
+- [x] **Step 3: Implementar comandos mínimos**
 
 Cada comando grava entidade, `audit_events`, `domain_events` e `idempotency_records` na mesma transação.
 
-- [ ] **Step 4: Verificar GREEN**
+- [x] **Step 4: Verificar GREEN**
 
 Run: unitários e integração contra Supabase local.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run: `git commit -m "feat: adiciona dominio idempotente de drafts"`.
 
