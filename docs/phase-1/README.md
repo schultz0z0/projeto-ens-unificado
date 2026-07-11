@@ -28,10 +28,10 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 |---|---|
 | Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
 | Schema, RLS, grants e pgTAP | `validated_locally` (90 testes de banco) |
-| Serviço, API e MCP | `pending` |
-| Hardening da Bridge e delegação Hermes | `pending` |
-| SDK frontend e feature flags | `pending` |
-| Compose, observabilidade e runbooks | `pending` |
+| Serviço, API e MCP | `implemented_locally` |
+| Hardening da Bridge e delegação Hermes | `implemented_locally` |
+| SDK frontend e feature flags | `implemented_locally` |
+| Compose, observabilidade e runbooks | `validated_locally` |
 | Gate local | `pending` |
 | Gate VPS | `pending_user_deploy` |
 

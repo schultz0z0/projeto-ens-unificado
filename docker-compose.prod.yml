@@ -15,6 +15,14 @@
 # discovers the containers through the Docker provider and routes by labels.
 
 services:
+  marketing-ops:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.rule=Host(`${NEXUS_PUBLIC_MARKETING_OPS_HOST:-ops.solucoes-nexus.tech}`)
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.entrypoints=websecure
+      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.loadbalancer.server.port=8091
+
   app-frontend:
     labels:
       - traefik.enable=true

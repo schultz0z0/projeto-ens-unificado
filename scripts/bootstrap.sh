@@ -36,4 +36,5 @@ fi
 chmod +x scripts/**/*.sh scripts/*.sh 2>/dev/null || true
 
 echo "Bootstrap concluído em: $ROOT"
+echo "Marketing Ops nao usa volume local; o estado permanece no Supabase do app."
 echo "Para producao VPS: docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --build"

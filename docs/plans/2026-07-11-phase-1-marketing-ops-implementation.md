@@ -457,19 +457,19 @@ Commit: `feat: adiciona sdk frontend do marketing ops`.
 
 **Interfaces:** serviço interno `marketing-ops:8091`, porta host opcional loopback, health/readiness e volume inexistente porque estado é PostgreSQL.
 
-- [ ] **Step 1: Escrever checks de Compose que falham sem serviço**
+- [x] **Step 1: Escrever checks de Compose que falham sem serviço**
 
 Validar serviço, network, healthcheck, dependências, envs e ausência de secrets em build args.
 
-- [ ] **Step 2: Adicionar serviço e variáveis globais**
+- [x] **Step 2: Adicionar serviço e variáveis globais**
 
 Separar URL pública, origins, database URL, internal key, feature flags e keyring; manter RAG intocado.
 
-- [ ] **Step 3: Documentar deploy, backup, restore, rollback, SLO e retenção**
+- [x] **Step 3: Documentar deploy, backup, restore, rollback, SLO e retenção**
 
 Runbook inclui baseline history repair apenas após dump/hash/schema diff e nunca em teste automatizado de produção.
 
-- [ ] **Step 4: Verificar Compose e commit**
+- [x] **Step 4: Verificar Compose e commit**
 
 Run: `docker compose --env-file .env.example config` e `bash scripts/validate.sh`.
 

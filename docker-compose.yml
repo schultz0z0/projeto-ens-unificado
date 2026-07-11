@@ -1,6 +1,43 @@
 name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}
 
 services:
+  marketing-ops:
+    image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops:latest
+    build:
+      context: ./services/marketing-ops
+      dockerfile: Dockerfile
+    container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MARKETING_OPS_PORT: "8091"
+      DATABASE_URL: ${NEXUS_SUPABASE_DATABASE_URL:-}
+      NEXUS_APP_SUPABASE_URL: ${NEXUS_APP_SUPABASE_URL:-}
+      NEXUS_APP_SUPABASE_ANON_KEY: ${NEXUS_APP_SUPABASE_ANON_KEY:-}
+      MARKETING_OPS_CORS_ORIGINS: ${NEXUS_MARKETING_OPS_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}
+      MARKETING_OPS_INTERNAL_KEY: ${NEXUS_MARKETING_OPS_INTERNAL_KEY:-CHANGE_ME_STRONG_RANDOM}
+      MARKETING_OPS_DELEGATION_ACTIVE_KID: ${NEXUS_MARKETING_OPS_DELEGATION_ACTIVE_KID:-v1}
+      MARKETING_OPS_DELEGATION_ACTIVE_KEY: ${NEXUS_MARKETING_OPS_DELEGATION_ACTIVE_KEY:-CHANGE_ME_STRONG_RANDOM_AT_LEAST_32_BYTES}
+      MARKETING_OPS_DELEGATION_PREVIOUS_KID: ${NEXUS_MARKETING_OPS_DELEGATION_PREVIOUS_KID:-}
+      MARKETING_OPS_DELEGATION_PREVIOUS_KEY: ${NEXUS_MARKETING_OPS_DELEGATION_PREVIOUS_KEY:-}
+      MARKETING_OPS_DELEGATION_ISSUER: nexus-chat-bridge
+      MARKETING_OPS_DELEGATION_AUDIENCE: nexus-marketing-ops
+      MARKETING_OPS_DELEGATION_MAX_TTL_SECONDS: ${NEXUS_MARKETING_OPS_DELEGATION_MAX_TTL_SECONDS:-120}
+      MARKETING_OPS_FEATURE_READ: ${NEXUS_MARKETING_OPS_FEATURE_READ:-false}
+      MARKETING_OPS_FEATURE_WRITE: ${NEXUS_MARKETING_OPS_FEATURE_WRITE:-false}
+    ports:
+      - "127.0.0.1:${NEXUS_MARKETING_OPS_PORT:-8091}:8091"
+    expose:
+      - "8091"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8091/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ens-internal
+
   rag-mcp:
     image: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-rag-mcp:latest
     build:
@@ -142,6 +179,7 @@ services:
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
       NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant-user}
       NEXUS_GRAPH_MCP_URL: ${NEXUS_GRAPH_MCP_URL:-http://graph-mcp:8010/mcp}
+      NEXUS_MARKETING_OPS_MCP_URL: ${NEXUS_MARKETING_OPS_MCP_URL:-http://marketing-ops:8091/mcp}
       NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-ens}
       NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
       NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
@@ -161,6 +199,8 @@ services:
       rag-mcp:
         condition: service_healthy
       graph-mcp:
+        condition: service_healthy
+      marketing-ops:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}/health >/dev/null || exit 1"]
@@ -196,6 +236,7 @@ services:
       SUPABASE_UPLOAD_BACKOFF_SECONDS: ${NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS:-2}
       NEXUS_GRAPH_BACKEND: ${NEXUS_GRAPH_BACKEND:-neo4j-multi-tenant-user}
       NEXUS_GRAPH_MCP_URL: ${NEXUS_GRAPH_MCP_URL:-http://graph-mcp:8010/mcp}
+      NEXUS_MARKETING_OPS_MCP_URL: ${NEXUS_MARKETING_OPS_MCP_URL:-http://marketing-ops:8091/mcp}
       NEXUS_TENANT_ID: ${NEXUS_TENANT_ID:-ens}
       NEXUS_GRAPH_URL: ${NEXUS_GRAPH_URL:-bolt://neo4j:7687}
       NEXUS_NEO4J_USER: ${NEXUS_NEO4J_USER:-neo4j}
@@ -230,12 +271,18 @@ services:
     container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-app-bridge
     restart: unless-stopped
     environment:
+      NODE_ENV: production
       BRIDGE_PORT: "8080"
       BRIDGE_ALLOWED_ORIGINS: ${NEXUS_CHAT_ALLOWED_ORIGINS:-http://127.0.0.1:8088,http://localhost:8088}
       BRIDGE_DATA_DIR: /app/data
       SUPABASE_URL: ${NEXUS_APP_SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${NEXUS_APP_SUPABASE_ANON_KEY:-}
       SUPABASE_SERVICE_ROLE_KEY: ${NEXUS_APP_SUPABASE_SERVICE_ROLE_KEY:-}
+      MARKETING_OPS_DELEGATION_ACTIVE_KID: ${NEXUS_MARKETING_OPS_DELEGATION_ACTIVE_KID:-v1}
+      MARKETING_OPS_DELEGATION_ACTIVE_KEY: ${NEXUS_MARKETING_OPS_DELEGATION_ACTIVE_KEY:-CHANGE_ME_STRONG_RANDOM_AT_LEAST_32_BYTES}
+      MARKETING_OPS_DELEGATION_ISSUER: nexus-chat-bridge
+      MARKETING_OPS_DELEGATION_AUDIENCE: nexus-marketing-ops
+      MARKETING_OPS_DELEGATION_TTL_SECONDS: ${NEXUS_MARKETING_OPS_DELEGATION_TTL_SECONDS:-90}
       CHAT_ATTACHMENTS_BUCKET: ${NEXUS_CHAT_ATTACHMENTS_BUCKET:-chat-attachments}
       SUPABASE_OUTPUTS_BUCKET: ${NEXUS_SUPABASE_OUTPUTS_BUCKET:-image-gen-outputs}
       SUPABASE_GENERATED_IMAGES_PREFIX: ${NEXUS_SUPABASE_GENERATED_IMAGES_PREFIX:-hermes-chat-images}
@@ -270,6 +317,8 @@ services:
       hermes-api:
         condition: service_healthy
       artifact-server:
+        condition: service_healthy
+      marketing-ops:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
@@ -388,6 +437,11 @@ services:
         VITE_IMAGE_GENERATOR_API_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
         VITE_API_BASE_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
         NEXT_PUBLIC_API_BASE_URL: ${NEXUS_PUBLIC_DESIGNER_API_URL:-http://127.0.0.1:8090}
+        VITE_MARKETING_OPS_URL: ${NEXUS_PUBLIC_MARKETING_OPS_URL:-http://127.0.0.1:8091}
+        VITE_MARKETING_OPS_ENABLED: ${NEXUS_MARKETING_OPS_FRONTEND_ENABLED:-false}
+        VITE_MARKETING_OPS_READ: ${NEXUS_MARKETING_OPS_FRONTEND_READ:-false}
+        VITE_MARKETING_OPS_WRITE: ${NEXUS_MARKETING_OPS_FRONTEND_WRITE:-false}
+        VITE_MARKETING_OPS_KILL_SWITCH: ${NEXUS_MARKETING_OPS_FRONTEND_KILL_SWITCH:-false}
     container_name: ${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-app-frontend
     restart: unless-stopped
     ports:
