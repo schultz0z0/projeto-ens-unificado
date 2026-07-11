@@ -32,7 +32,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 | Hardening da Bridge e delegação Hermes | `implemented_locally` |
 | SDK frontend e feature flags | `implemented_locally` |
 | Compose, observabilidade e runbooks | `validated_locally` |
-| Gate local | `pending` |
+| Gate local | `validated_locally` ([evidência](local-validation.md)) |
 | Gate VPS | `pending_user_deploy` |
 
 ## Regras de evidência

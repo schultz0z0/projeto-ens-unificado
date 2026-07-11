@@ -484,27 +484,27 @@ Commit: `feat: integra marketing ops ao compose`.
 
 **Interfaces:** comando único `bash scripts/test/phase-1-local.sh`.
 
-- [ ] **Step 1: Subir Supabase local e Compose da fase**
+- [x] **Step 1: Subir Supabase local e Compose da fase**
 
 Buildar imagem, iniciar dependências necessárias e aguardar health/readiness.
 
-- [ ] **Step 2: Executar E2E REST/MCP**
+- [x] **Step 2: Executar E2E REST/MCP**
 
 Criar draft via API, ler via MCP, repetir idempotência, forçar versão obsoleta, negar cross-tenant e provar rollback atômico.
 
-- [ ] **Step 3: Reiniciar serviço e provar persistência**
+- [x] **Step 3: Reiniciar serviço e provar persistência**
 
 Recriar somente `marketing-ops`, reler dados e validar outbox/auditoria.
 
-- [ ] **Step 4: Executar todos os gates**
+- [x] **Step 4: Executar todos os gates**
 
 Monorepo validation; testes/build/typecheck de Bridge, Marketing Ops, RAG, Graph, Artifact e frontend; pgTAP; advisors; audits; Compose; scan de secrets/bundle.
 
-- [ ] **Step 5: Registrar evidências exatas**
+- [x] **Step 5: Registrar evidências exatas**
 
 `local-validation.md` lista comandos, versões, contagens, duração, limitações e resultado sem secrets.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Commit: `test: valida fase 1 localmente`.
 
