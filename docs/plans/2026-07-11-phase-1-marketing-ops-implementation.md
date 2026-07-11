@@ -93,35 +93,35 @@ Run: `git commit -m "test: torna gates locais reproduziveis"`.
 - Produces: cadeia limpa reproduzível do app e procedimento exato de reparo de histórico para deploy.
 - Preserves: migrations históricas sem exclusão.
 
-- [ ] **Step 1: Inicializar pelo CLI oficial**
+- [x] **Step 1: Inicializar pelo CLI oficial**
 
 Run: `npx supabase init` em `apps/chat-web`.
 
 Expected: `supabase/config.toml` criado sem sobrescrever migrations.
 
-- [ ] **Step 2: Inspecionar remoto sem imprimir credenciais**
+- [x] **Step 2: Inspecionar remoto sem imprimir credenciais**
 
 Carregar nomes `NEXUS_SUPABASE_ACCESS_TOKEN`, `NEXUS_SUPABASE_PROJECT_REF` e `NEXUS_SUPABASE_DB_PASSWORD` do `.env` raiz apenas no processo. Executar `supabase link`, `migration list`, `db advisors --type security` e dumps schema/data para `%TEMP%`.
 
 Expected: conexão somente leitura, arquivos de backup fora do Git e relatório sem valores secretos.
 
-- [ ] **Step 3: Gerar baseline pelo CLI**
+- [x] **Step 3: Gerar baseline pelo CLI**
 
 Run: `npx supabase migration new app_schema_baseline` e preencher o arquivo com dump schema-only revisado do remoto.
 
 Expected: arquivo nomeado pelo CLI.
 
-- [ ] **Step 4: Arquivar cadeia histórica quebrada**
+- [x] **Step 4: Arquivar cadeia histórica quebrada**
 
 Mover os arquivos anteriores para `legacy_migrations` e registrar versões, razão, hash do dump e comandos de reparo em `supabase-baseline.md`.
 
-- [ ] **Step 5: Validar bootstrap limpo**
+- [x] **Step 5: Validar bootstrap limpo**
 
 Run: `npx supabase start`, `npx supabase db reset --local --no-seed`, `npx supabase db lint --local --level error --fail-on error`.
 
 Expected: baseline aplicado do zero e lint sem erro.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run: `git commit -m "chore: reconcilia baseline do supabase do app"`.
 

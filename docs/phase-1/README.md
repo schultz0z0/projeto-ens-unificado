@@ -26,7 +26,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 
 | Entregável | Estado inicial |
 |---|---|
-| Baseline e ambiente Supabase local | `in_progress` |
+| Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
 | Schema, RLS, grants e pgTAP | `pending` |
 | Serviço, API e MCP | `pending` |
 | Hardening da Bridge e delegação Hermes | `pending` |
