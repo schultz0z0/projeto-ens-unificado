@@ -188,29 +188,29 @@ Run: `git commit -m "feat: cria fundacao transacional do marketing ops"`.
 - `createMetrics(): MetricsRegistry`
 - `createApp(deps): Express`
 
-- [ ] **Step 1: Criar package e instalar versões exatas**
+- [x] **Step 1: Criar package e instalar versões exatas**
 
 Instalar sem ranges: MCP `1.29.0`, Express `4.22.2`, Zod `3.25.76`, `pg` `8.22.0`, `jose` `6.2.3`, TypeScript `5.9.3`, Vitest `3.2.6`, `@types/pg` `8.20.0`, `@types/express` `4.17.25` e `@types/node` `22.19.20`.
 
-- [ ] **Step 2: Escrever testes de config/erro/log/métricas**
+- [x] **Step 2: Escrever testes de config/erro/log/métricas**
 
 Testar placeholders, produção fail-closed, redaction, envelope estável, contadores e correlation ID.
 
-- [ ] **Step 3: Observar RED**
+- [x] **Step 3: Observar RED**
 
 Run: `npm test`.
 
 Expected: módulos ausentes.
 
-- [ ] **Step 4: Implementar scaffold mínimo**
+- [x] **Step 4: Implementar scaffold mínimo**
 
 Health deve responder sem banco; readiness deve consultar dependências; shutdown encerra HTTP e pool com `SIGTERM`/`SIGINT`.
 
-- [ ] **Step 5: Verificar GREEN/build/typecheck**
+- [x] **Step 5: Verificar GREEN/build/typecheck**
 
 Run: `npm test`, `npm run typecheck`, `npm run build`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run: `git commit -m "feat: cria scaffold observavel do marketing ops"`.
 

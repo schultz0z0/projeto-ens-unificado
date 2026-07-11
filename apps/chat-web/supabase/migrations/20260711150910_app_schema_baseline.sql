@@ -313,7 +313,7 @@ BEGIN
 
   -- 2. Obter Instance ID (Necessário para multi-tenancy do Supabase, padrão é um UUID fixo ou nulo)
   SELECT instance_id INTO admin_instance_id FROM auth.users WHERE id = auth.uid();
-  
+
   -- Fallback se não encontrar (comum em setups locais ou single-tenant)
   IF admin_instance_id IS NULL THEN
      SELECT instance_id INTO admin_instance_id FROM auth.users LIMIT 1;
