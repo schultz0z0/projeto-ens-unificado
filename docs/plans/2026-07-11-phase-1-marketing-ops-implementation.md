@@ -28,20 +28,20 @@
 **Files:**
 - Modify: `scripts/validate.sh`
 - Modify: `apps/chat-web/package.json`
-- Create: `apps/chat-web/vitest.config.ts`
+- Modify: `apps/chat-web/vite.config.ts`
 - Test: `scripts/validate.sh`
 - Test: `apps/chat-web/src/**/*.test.ts`
 
 **Interfaces:**
 - Produces: `npm test`, `npm run typecheck` e `bash scripts/validate.sh` reproduzíveis sem secrets reais.
 
-- [ ] **Step 1: Reproduzir as duas falhas atuais**
+- [x] **Step 1: Reproduzir as duas falhas atuais**
 
 Run: `bash scripts/validate.sh` e `npm test` em `apps/chat-web`.
 
 Expected: falha por diretório `packages/` ausente e por env Supabase de teste ausente.
 
-- [ ] **Step 2: Corrigir o validador de roots**
+- [x] **Step 2: Corrigir o validador de roots**
 
 Usar apenas roots existentes ao chamar `find`:
 
@@ -51,9 +51,9 @@ search_roots=(apps services infra scripts docs)
 nested_git_count=$(find "${search_roots[@]}" -name .git -print | wc -l | tr -d ' ')
 ```
 
-- [ ] **Step 3: Criar configuração Vitest segura**
+- [x] **Step 3: Criar configuração Vitest segura**
 
-`vitest.config.ts` deve usar valores locais não secretos apenas em teste:
+`vite.config.ts` deve usar valores locais não secretos apenas em teste, preservando plugins e aliases existentes:
 
 ```ts
 export default defineConfig({
@@ -68,13 +68,13 @@ export default defineConfig({
 
 Adicionar scripts `test` e `typecheck` ao package do frontend.
 
-- [ ] **Step 4: Verificar os gates reparados**
+- [x] **Step 4: Verificar os gates reparados**
 
 Run: `bash scripts/validate.sh`, `npm test`, `npm run typecheck` e `npm run build`.
 
 Expected: exit `0` em todos.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run: `git commit -m "test: torna gates locais reproduziveis"`.
 

@@ -24,10 +24,13 @@ for f in "${required[@]}"; do
   fi
 done
 
-nested_git_count=$(find apps services packages infra scripts docs -name .git -print | wc -l | tr -d ' ')
+search_roots=(apps services infra scripts docs)
+[ -d packages ] && search_roots+=(packages)
+
+nested_git_count=$(find "${search_roots[@]}" -name .git -print | wc -l | tr -d ' ')
 if [ "$nested_git_count" != "0" ]; then
   echo "ERRO: existem .git internos:" >&2
-  find apps services packages infra scripts docs -name .git -print >&2
+  find "${search_roots[@]}" -name .git -print >&2
   exit 1
 fi
 
@@ -39,13 +42,13 @@ bash -n scripts/bootstrap.sh scripts/env/load-root-env.sh scripts/dev/*.sh scrip
 }
 echo "OK: scripts shell sintaticamente válidos"
 
-if command -v docker >/dev/null 2>&1; then
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   docker compose --env-file .env.example config >/tmp/projeto-ens-compose-config.yaml
   echo "OK: docker compose config válido (/tmp/projeto-ens-compose-config.yaml)"
   echo "Serviços:"
   docker compose --env-file .env.example config --services
 else
-  echo "AVISO: docker não encontrado; pulando validação de compose"
+  echo "AVISO: docker compose indisponível neste shell; pulando validação de compose"
 fi
 
 echo "Validação concluída."
