@@ -331,19 +331,19 @@ Commit: `feat: expoe api v1 do marketing ops`.
 - `verifyDelegation(token, requiredScopes, operation?): Promise<DelegatedActor>`
 - `createMarketingOpsMcpServer(deps): McpServer`
 
-- [ ] **Step 1: Testes vermelhos de token**
+- [x] **Step 1: Testes vermelhos de token**
 
 Cobrir assinatura, `kid`, issuer, audience, TTL, `nbf`, tenant, role, scope, replay e rotação ativa/anterior.
 
-- [ ] **Step 2: Testes vermelhos de tools**
+- [x] **Step 2: Testes vermelhos de tools**
 
 Health/capabilities funcionam sem delegação; domínio falha sem token; API e MCP leem o mesmo registro; write exige idempotência.
 
-- [ ] **Step 3: Implementar MCP stateless Streamable HTTP**
+- [x] **Step 3: Implementar MCP stateless Streamable HTTP**
 
 Registrar tools versionadas descritas no design e mapear erros ao resultado MCP seguro.
 
-- [ ] **Step 4: Verificar GREEN e commit**
+- [x] **Step 4: Verificar GREEN e commit**
 
 Commit: `feat: expoe mcp com delegacao confiavel`.
 

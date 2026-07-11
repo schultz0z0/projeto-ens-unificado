@@ -15,6 +15,7 @@ const router = createApiRouter({
   pool,
   corsOrigins: config.corsOrigins,
   features: config.features,
+  keyring: config.delegation,
   verifyToken: (token) => verifySupabaseBearer(token, {
     supabaseUrl: config.supabaseUrl,
     anonKey: config.supabaseAnonKey

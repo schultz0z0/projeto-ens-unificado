@@ -6,12 +6,15 @@ import { registerAudit } from './audit.js';
 import { registerCampaigns } from './campaigns.js';
 import { registerCapabilities } from './capabilities.js';
 import { registerItems } from './items.js';
+import type { DelegationKeyring } from '../../delegation/claims.js';
+import { createMcpRouter } from '../../mcp/http.js';
 
 export interface ApiRouterDependencies {
   pool: Pool;
   corsOrigins: string[];
   features: { read: boolean; write: boolean };
   verifyToken: (token: string) => Promise<SupabaseUser>;
+  keyring?: DelegationKeyring;
 }
 
 export function createApiRouter(deps: ApiRouterDependencies): Router {
@@ -22,5 +25,6 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerCampaigns(router, deps.pool, deps.features);
   registerItems(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
+  if (deps.keyring) router.use(createMcpRouter({ pool: deps.pool, features: deps.features, keyring: deps.keyring }));
   return router;
 }
