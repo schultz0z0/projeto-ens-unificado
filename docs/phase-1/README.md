@@ -10,7 +10,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 - **Dependência:** Fase 0 `production_validated`
 - **PRD:** [phase-1-fundacao-marketing-ops.md](../prds/phase-1-fundacao-marketing-ops.md)
 - **Design técnico:** [design.md](design.md)
-- **Plano:** em elaboração a partir do design técnico aprovado
+- **Plano:** [2026-07-11-phase-1-marketing-ops-implementation.md](../plans/2026-07-11-phase-1-marketing-ops-implementation.md)
 
 ## Contrato de ambientes
 
