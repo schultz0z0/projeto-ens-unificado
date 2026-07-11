@@ -75,4 +75,3 @@ As versões a reparar devem ser copiadas da listagem obtida no próprio deploy, 
 - `NEXUS_SUPABASE_PROJECT_REF`, `NEXUS_SUPABASE_DATABASE_URL` e credenciais operacionais correspondem ao projeto do app usado por esta cadeia.
 - `NEXUS_RAG_SUPABASE_*` pertence ao RAG e não foi lido para dump, link, migration, teste ou advisor desta etapa.
 - o access token legado disponível localmente não foi aceito pelo CLI atual; a inspeção usou a conexão PostgreSQL do app via pooler, sem persistir ou imprimir a senha.
-

@@ -52,7 +52,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
 
 
 --
--- Name: EXTENSION "pg_stat_statements"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "pg_stat_statements"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "pg_stat_statements" IS 'track planning and execution statistics of all SQL statements executed';
@@ -66,7 +66,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm" WITH SCHEMA "extensions";
 
 
 --
--- Name: EXTENSION "pg_trgm"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "pg_trgm"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "pg_trgm" IS 'text similarity measurement and index searching based on trigrams';
@@ -80,7 +80,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
 
 
 --
--- Name: EXTENSION "pgcrypto"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "pgcrypto"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "pgcrypto" IS 'cryptographic functions';
@@ -94,7 +94,7 @@ CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
 
 
 --
--- Name: EXTENSION "supabase_vault"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "supabase_vault"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "supabase_vault" IS 'Supabase Vault Extension';
@@ -108,7 +108,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 --
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
@@ -122,7 +122,7 @@ CREATE EXTENSION IF NOT EXISTS "vector" WITH SCHEMA "public";
 
 
 --
--- Name: EXTENSION "vector"; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION "vector"; Type: COMMENT; Schema: -; Owner:
 --
 
 -- COMMENT ON EXTENSION "vector" IS 'vector data type and ivfflat and hnsw access methods';
@@ -504,9 +504,9 @@ CREATE OR REPLACE FUNCTION "public"."is_admin"() RETURNS boolean
     AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 
-    FROM public.profiles 
-    WHERE id = auth.uid() 
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
     AND role = 'admin'
   );
 END;
@@ -5256,4 +5256,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 --
 
 -- \unrestrict 2MamsL147WTNhh1PkpXvYCtpeFhpinlNkGoL6aoWKFJQeKWjGmwqqTbU0mNiYnM
-

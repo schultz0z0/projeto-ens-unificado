@@ -136,33 +136,33 @@ Run: `git commit -m "chore: reconcilia baseline do supabase do app"`.
 - Produces tables: `marketing_ops.tenants`, `memberships`, `campaigns`, `campaign_members`, `campaign_items`, `audit_events`, `domain_events`, `idempotency_records`, `delegation_uses`, `schema_versions`.
 - Produces helpers: `marketing_ops_private.current_tenant_id()`, `current_actor_role(text)`, `can_access_campaign(uuid)`.
 
-- [ ] **Step 1: Escrever testes pgTAP antes da migration**
+- [x] **Step 1: Escrever testes pgTAP antes da migration**
 
 Cobrir existência, PK/FK/checks, índices de RLS, grants explícitos, ausência de grants `anon`, imutabilidade de auditoria, member/manager/admin e cross-tenant.
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `npx supabase test db --local supabase/tests/marketing_ops_foundation.test.sql`.
 
 Expected: falha porque schema/tabelas não existem.
 
-- [ ] **Step 3: Criar migration pelo CLI e implementar o mínimo**
+- [x] **Step 3: Criar migration pelo CLI e implementar o mínimo**
 
 Run: `npx supabase migration new marketing_ops_foundation`.
 
 A migration deve criar schemas privados, tipos, tabelas, índices, triggers de imutabilidade, policies e grants na mesma transação lógica.
 
-- [ ] **Step 4: Seed local identificado**
+- [x] **Step 4: Seed local identificado**
 
 Criar três usuários Auth de teste e memberships `member`, `manager`, `admin` no tenant `ens`, além de um segundo tenant isolado.
 
-- [ ] **Step 5: Observar GREEN e advisors**
+- [x] **Step 5: Observar GREEN e advisors**
 
 Run: `npx supabase db reset --local`, `npx supabase test db --local supabase/tests`, `npx supabase db advisors --local --type security --fail-on error`.
 
 Expected: pgTAP verde, zero advisor de erro.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run: `git commit -m "feat: cria fundacao transacional do marketing ops"`.
 
