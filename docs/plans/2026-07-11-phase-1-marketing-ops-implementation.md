@@ -426,19 +426,19 @@ Commit: `feat: registra marketing ops no hermes`.
 - `marketingOpsFlags(env)`
 - `campaignDeepLink(id)` e `parseMarketingOpsDeepLink(url)`
 
-- [ ] **Step 1: Testes vermelhos**
+- [x] **Step 1: Testes vermelhos**
 
 Cobrir refresh de token por chamada, correlation ID, erros tipados, flags default off/kill switch e IDs sem cópia de estado.
 
-- [ ] **Step 2: Implementar SDK sem adicionar telas da Fase 2**
+- [x] **Step 2: Implementar SDK sem adicionar telas da Fase 2**
 
 O client não contém service role nem tenant confiável; `X-Tenant-Id` é apenas seleção validada no servidor.
 
-- [ ] **Step 3: Verificar frontend completo**
+- [x] **Step 3: Verificar frontend completo**
 
 Run: test, typecheck, lint, build e security gate.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Commit: `feat: adiciona sdk frontend do marketing ops`.
 
