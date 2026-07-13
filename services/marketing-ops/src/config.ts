@@ -17,10 +17,15 @@ export interface AppConfig {
     audience: string;
     maxTtlSeconds: number;
   };
+  delegationRefresh: {
+    url: string;
+    internalKey: string;
+    timeoutMs: number;
+  };
   features: { read: boolean; write: boolean };
 }
 
-const placeholderPattern = /^(change-?me|replace-?me|example|placeholder|secret|postgres)$/i;
+const placeholderPattern = /^(?:(?:change|replace)[-_]?me|example|placeholder|secret|postgres)(?:[-_].*)?$/i;
 
 function requiredProductionValue(env: NodeJS.ProcessEnv, name: string, fallback: string, production: boolean): string {
   const value = env[name]?.trim();
@@ -44,6 +49,12 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   const databaseUrl = requiredProductionValue(env, 'DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:54322/postgres', production);
   const supabaseUrl = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_URL', 'http://127.0.0.1:54321', production);
   const internalKey = requiredProductionValue(env, 'MARKETING_OPS_INTERNAL_KEY', 'local-test-internal-key-at-least-32-bytes', production);
+  const delegationRefreshUrl = requiredProductionValue(
+    env,
+    'MARKETING_OPS_DELEGATION_REFRESH_URL',
+    'http://127.0.0.1:8081/internal/marketing-ops/delegations/refresh',
+    production
+  );
   const supabaseAnonKey = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_ANON_KEY', 'local-test-anon-key', production);
   const previousKid = env.MARKETING_OPS_DELEGATION_PREVIOUS_KID?.trim();
   const previousKey = env.MARKETING_OPS_DELEGATION_PREVIOUS_KEY?.trim();
@@ -73,6 +84,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
       .split(',').map((value) => value.trim()).filter(Boolean),
     internalKey,
     delegation,
+    delegationRefresh: {
+      url: z.string().url().parse(delegationRefreshUrl),
+      internalKey,
+      timeoutMs: z.coerce.number().int().min(100).max(10_000).parse(env.MARKETING_OPS_DELEGATION_REFRESH_TIMEOUT_MS ?? 2_000)
+    },
     features: {
       read: booleanValue(env.MARKETING_OPS_FEATURE_READ),
       write: booleanValue(env.MARKETING_OPS_FEATURE_WRITE)

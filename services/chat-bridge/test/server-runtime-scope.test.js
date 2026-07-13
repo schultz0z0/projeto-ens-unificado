@@ -89,6 +89,20 @@ test("bridge exposes authenticated memory diagnostics with graph health", () => 
   assert.match(diagnosticsRouteBlock, /memory_diagnostics: run\.memory_diagnostics/);
 });
 
+test("bridge exposes an authenticated delegation refresh only for active stored runs", () => {
+  const refreshRouteBlock = extractBlock(
+    source,
+    'url.pathname === "/internal/marketing-ops/delegations/refresh"',
+    'url.pathname === "/api/memory/diagnostics"',
+  );
+
+  assert.match(refreshRouteBlock, /isValidDelegationRefreshKey/);
+  assert.match(refreshRouteBlock, /req\.headers\["x-internal-key"\]/);
+  assert.match(refreshRouteBlock, /store\.get\(claims\.run_id\)/);
+  assert.match(refreshRouteBlock, /refreshMarketingOpsDelegation/);
+  assert.match(refreshRouteBlock, /delegation_token: refreshed/);
+});
+
 test("run events update memory diagnostics from Hermes tool metadata", () => {
   const appendEventBlock = extractBlock(
     source,

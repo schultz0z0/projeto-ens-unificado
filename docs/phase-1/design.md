@@ -64,7 +64,7 @@ A Chat Bridge emite um token com:
 - `chat_session_id`, `run_id` e `correlation_id`;
 - `jti`, `iat`, `nbf`, `exp`, `kid` e `contract_version=1`.
 
-O token expira em no máximo 120 segundos. A Bridge nunca persiste o token em seu ledger e redige diagnósticos. O Hermes recebe a delegação apenas no contexto técnico da run para fornecê-la às tools do MCP; o token expirado não mantém autoridade em histórico. O Marketing Ops verifica assinatura, key id, issuer, audience, janela temporal, scopes, membership atual e replay antes de qualquer acesso de domínio.
+O token expira em no máximo 120 segundos. A Bridge nunca persiste o token em seu ledger e redige diagnósticos. O Hermes recebe a delegação apenas no contexto técnico da run para fornecê-la às tools do MCP; o token expirado não mantém autoridade em histórico. Se o JWT expirar durante o raciocínio do Hermes, o Marketing Ops faz um único pedido interno autenticado ao Bridge. A renovação só ocorre enquanto a run pai estiver `running`, dentro da janela máxima configurada, com usuário, tenant, papel, sessão e correlação idênticos; o `jti` é preservado para não enfraquecer o anti-replay. O Marketing Ops então verifica novamente assinatura, key id, issuer, audience, janela temporal, scopes, membership atual e replay antes de qualquer acesso de domínio.
 
 ### Domínio transacional
 

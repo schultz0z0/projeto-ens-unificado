@@ -1,7 +1,7 @@
 # Rastreabilidade da Fase 1
 
 - **Estado:** `ready_for_production`
-- **Data da revisão:** 2026-07-11
+- **Data da revisão:** 2026-07-13
 - **Escopo:** Supabase do app, Marketing Ops, Bridge, Hermes, frontend e Compose
 - **Exclusão confirmada:** nenhuma migration ou operação no Supabase do RAG
 
@@ -12,7 +12,7 @@
 | F1-RF-01 Serviço independente | `services/marketing-ops`, Dockerfile e Compose | foundation tests, build Linux, health/readiness | `validated_locally` |
 | F1-RF-02 API autenticada | `auth/*`, middleware REST e transação com ator | auth/rest/E2E e pgTAP cross-tenant | `validated_locally` |
 | F1-RF-03 Interface MCP | MCP Streamable HTTP e tools `*_v1` | MCP contract tests e E2E com cliente oficial | `validated_locally` |
-| F1-RF-04 Delegação Hermes | emissor Bridge, verificador Marketing Ops e registro Hermes | Bridge 60 testes e MCP replay/scope/TTL | `validated_locally` |
+| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, verificador Marketing Ops e registro Hermes | Bridge 65 testes e MCP replay/scope/TTL/refresh | `validated_locally` |
 | F1-RF-05 Modelo transacional | schemas `marketing_ops` e `marketing_ops_private` | reset limpo e 97 testes pgTAP | `validated_locally` |
 | F1-RF-06 Tenant | memberships confiáveis, RLS e contexto transacional | testes de tenant forjado e segundo tenant | `validated_locally` |
 | F1-RF-07 Papéis | matriz member/manager/admin | testes positivos e negativos de RBAC/RLS | `validated_locally` |
@@ -41,7 +41,7 @@
 | F1-011 | tools MCP v1 sobre o mesmo domínio | `validated_locally` |
 | F1-012 | writes atômicos e idempotentes | `validated_locally` |
 | F1-013 | logs redigidos e métricas de request/latência/erro/outbox | `validated_locally` |
-| F1-014 | gate único, backup, rollback e checklist VPS | `pending_vps_validation` |
+| F1-014 | gate único, backup, rollback e checklist VPS | `validation_in_progress` |
 
 ## Backlog P1
 
@@ -67,4 +67,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é a homologação do deploy dos containers na VPS Ubuntu. Até essa evidência, o estado não deve avançar para `production_validated` ou `completed`.
+O único gate aberto da Fase 1 é concluir a homologação na VPS Ubuntu, incluindo o reteste da renovação de delegação após restart. Até essa evidência, o estado não deve avançar para `production_validated` ou `completed`.

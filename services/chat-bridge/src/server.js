@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { decodeJwt } from "jose";
 import WebSocket from "ws";
 
 import {
@@ -17,7 +18,12 @@ import {
   resolveTrustedTenantId,
 } from "./tenant-context.js";
 import { validateBridgeRuntimeConfig } from "./runtime-config.js";
-import { issueMarketingOpsDelegation, redactMarketingOpsDelegation } from "./marketing-ops-delegation.js";
+import {
+  isValidDelegationRefreshKey,
+  issueMarketingOpsDelegation,
+  redactMarketingOpsDelegation,
+  refreshMarketingOpsDelegation,
+} from "./marketing-ops-delegation.js";
 import { prepareHermesAttachments, CHAT_ATTACHMENT_BUCKET } from "./attachments.js";
 import {
   collectArtifactUrlReplacements,
@@ -85,10 +91,15 @@ const config = {
   marketingOpsDelegation: {
     activeKid: process.env.MARKETING_OPS_DELEGATION_ACTIVE_KID || "",
     activeKey: process.env.MARKETING_OPS_DELEGATION_ACTIVE_KEY || "",
+    previousKid: process.env.MARKETING_OPS_DELEGATION_PREVIOUS_KID || "",
+    previousKey: process.env.MARKETING_OPS_DELEGATION_PREVIOUS_KEY || "",
     issuer: process.env.MARKETING_OPS_DELEGATION_ISSUER || "nexus-chat-bridge",
     audience: process.env.MARKETING_OPS_DELEGATION_AUDIENCE || "nexus-marketing-ops",
     ttlSeconds: Number(process.env.MARKETING_OPS_DELEGATION_TTL_SECONDS || 90),
+    maxTtlSeconds: Number(process.env.MARKETING_OPS_DELEGATION_MAX_TTL_SECONDS || 120),
+    refreshWindowSeconds: Number(process.env.MARKETING_OPS_DELEGATION_REFRESH_WINDOW_SECONDS || 900),
   },
+  marketingOpsDelegationRefreshKey: process.env.MARKETING_OPS_DELEGATION_REFRESH_KEY || "",
 };
 
 const terminalStatuses = new Set(["completed", "failed", "cancelled", "canceled", "expired", "interrupted"]);
@@ -1565,6 +1576,36 @@ const handleRequest = async (req, res) => {
       defaultTenantId: config.defaultTenantId,
       attachmentBucket: config.attachmentBucket,
     }, corsHeaders);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/internal/marketing-ops/delegations/refresh") {
+    if (!config.marketingOpsDelegationRefreshKey) {
+      jsonResponse(res, 503, { error: "delegation_refresh_not_configured" });
+      return;
+    }
+    if (!isValidDelegationRefreshKey(
+      req.headers["x-internal-key"],
+      config.marketingOpsDelegationRefreshKey,
+    )) {
+      jsonResponse(res, 401, { error: "unauthorized" });
+      return;
+    }
+
+    const payload = await readJsonBody(req, 32_768);
+    const token = typeof payload.delegation_token === "string" ? payload.delegation_token : "";
+    try {
+      const claims = decodeJwt(token);
+      const run = typeof claims.run_id === "string" ? store.get(claims.run_id) : null;
+      const refreshed = await refreshMarketingOpsDelegation(token, run, config.marketingOpsDelegation);
+      const refreshedClaims = decodeJwt(refreshed);
+      jsonResponse(res, 200, {
+        delegation_token: refreshed,
+        expires_at: new Date(refreshedClaims.exp * 1000).toISOString(),
+      });
+    } catch {
+      jsonResponse(res, 401, { error: "delegation_refresh_denied" });
+    }
     return;
   }
 

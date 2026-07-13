@@ -22,6 +22,31 @@ describe('runtime foundation', () => {
     })).toThrow(/placeholder/i);
   });
 
+  it('requires the internal delegation refresh endpoint in production', () => {
+    expect(() => loadConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://postgres:strong-password@db:5432/postgres',
+      NEXUS_APP_SUPABASE_URL: 'https://app.supabase.co',
+      NEXUS_APP_SUPABASE_ANON_KEY: 'production-anon-key',
+      MARKETING_OPS_INTERNAL_KEY: 'production-internal-key-at-least-32-bytes',
+      MARKETING_OPS_DELEGATION_ACTIVE_KID: 'v1',
+      MARKETING_OPS_DELEGATION_ACTIVE_KEY: 'production-delegation-key-at-least-32-bytes'
+    })).toThrow(/MARKETING_OPS_DELEGATION_REFRESH_URL/);
+  });
+
+  it('rejects underscore-style Compose placeholder secrets in production', () => {
+    expect(() => loadConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://postgres:strong-password@db:5432/postgres',
+      NEXUS_APP_SUPABASE_URL: 'https://app.supabase.co',
+      NEXUS_APP_SUPABASE_ANON_KEY: 'production-anon-key',
+      MARKETING_OPS_INTERNAL_KEY: 'CHANGE_ME_STRONG_RANDOM',
+      MARKETING_OPS_DELEGATION_ACTIVE_KID: 'v1',
+      MARKETING_OPS_DELEGATION_ACTIVE_KEY: 'production-delegation-key-at-least-32-bytes',
+      MARKETING_OPS_DELEGATION_REFRESH_URL: 'http://app-bridge:8080/internal/marketing-ops/delegations/refresh'
+    })).toThrow(/MARKETING_OPS_INTERNAL_KEY.*placeholder/i);
+  });
+
   it('provides harmless defaults only in tests', () => {
     const config = loadConfig({ NODE_ENV: 'test' });
     expect(config.port).toBe(8091);

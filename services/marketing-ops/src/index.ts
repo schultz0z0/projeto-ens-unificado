@@ -6,6 +6,7 @@ import { createApiRouter } from './http/routes/index.js';
 import { verifySupabaseBearer } from './auth/supabaseAuth.js';
 import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
+import { createDelegationRefresher } from './delegation/refresher.js';
 
 const config = loadConfig(process.env);
 const logger = createLogger();
@@ -16,6 +17,7 @@ const router = createApiRouter({
   corsOrigins: config.corsOrigins,
   features: config.features,
   keyring: config.delegation,
+  refreshDelegation: createDelegationRefresher(config.delegationRefresh),
   verifyToken: (token) => verifySupabaseBearer(token, {
     supabaseUrl: config.supabaseUrl,
     anonKey: config.supabaseAnonKey

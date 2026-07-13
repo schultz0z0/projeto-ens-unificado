@@ -1,4 +1,4 @@
-const placeholder = /^(change-?me|replace-?me|placeholder|example|secret)$/i;
+const placeholder = /^(?:(?:change|replace)[-_]?me|placeholder|example|secret)(?:[-_].*)?$/i;
 
 const value = (env, names) => names.map((name) => env[name]?.trim()).find(Boolean) || "";
 
@@ -19,5 +19,18 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
   if (production && (!activeKid || !activeKey || placeholder.test(activeKey))) {
     throw new Error("MARKETING_OPS_DELEGATION_ACTIVE_KID and MARKETING_OPS_DELEGATION_ACTIVE_KEY are required in production");
   }
-  return { production, allowInsecureLocalAuth, supabaseUrl, supabaseAnonKey, supabaseServiceRoleKey, activeKid, activeKey };
+  const delegationRefreshKey = value(env, ["MARKETING_OPS_DELEGATION_REFRESH_KEY"]);
+  if (production && (!delegationRefreshKey || placeholder.test(delegationRefreshKey))) {
+    throw new Error("MARKETING_OPS_DELEGATION_REFRESH_KEY is required in production");
+  }
+  return {
+    production,
+    allowInsecureLocalAuth,
+    supabaseUrl,
+    supabaseAnonKey,
+    supabaseServiceRoleKey,
+    activeKid,
+    activeKey,
+    delegationRefreshKey,
+  };
 };

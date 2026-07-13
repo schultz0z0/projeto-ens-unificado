@@ -234,4 +234,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A Fase 1 só fica `completed` após homologação na VPS Ubuntu registrada em `docs/phase-1/vps-validation.md`.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS começou e já confirmou probes, criação, leitura, atualização, auditoria/outbox e persistência após restart. A correção de renovação da delegação expirada ainda exige reteste; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.

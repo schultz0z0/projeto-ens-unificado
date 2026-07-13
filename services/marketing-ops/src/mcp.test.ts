@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { SignJWT } from 'jose';
 import pg from 'pg';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { verifyDelegation } from './delegation/verifier.js';
 import { createMarketingOpsMcpServer } from './mcp/createServer.js';
 
@@ -12,14 +12,19 @@ const activeKey = 'active-local-delegation-key-at-least-32-bytes';
 const keyring = { activeKid: 'v2', activeKey, previousKid: 'v1', previousKey: 'previous-local-delegation-key-32-bytes', issuer: 'nexus-chat-bridge', audience: 'nexus-marketing-ops', maxTtlSeconds: 120 };
 afterAll(() => pool.end());
 
-async function token(overrides: Record<string, unknown> = {}, key = activeKey, kid = 'v2', ttlSeconds = 60) {
-  const now = Math.floor(Date.now() / 1000);
+async function token(
+  overrides: Record<string, unknown> = {},
+  key = activeKey,
+  kid = 'v2',
+  ttlSeconds = 60,
+  issuedAt = Math.floor(Date.now() / 1000)
+) {
   return new SignJWT({
     tenant_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', actor_role: 'member',
     scopes: ['campaign:read', 'campaign:write'], chat_session_id: randomUUID(), run_id: randomUUID(),
     correlation_id: randomUUID(), contract_version: 1, ...overrides
   }).setProtectedHeader({ alg: 'HS256', kid }).setIssuer('nexus-chat-bridge').setAudience('nexus-marketing-ops')
-    .setSubject('11111111-1111-4111-8111-111111111111').setJti(randomUUID()).setIssuedAt(now).setNotBefore(now - 1).setExpirationTime(now + ttlSeconds)
+    .setSubject('11111111-1111-4111-8111-111111111111').setJti(randomUUID()).setIssuedAt(issuedAt).setNotBefore(issuedAt - 1).setExpirationTime(issuedAt + ttlSeconds)
     .sign(new TextEncoder().encode(key));
 }
 
@@ -40,6 +45,27 @@ describe('delegation and MCP', () => {
     const operation = { name: 'campaign.create', idempotencyKey: randomUUID(), requestHash: 'a'.repeat(64) };
     await verifyDelegation(signed, ['campaign:write'], { pool, keyring, operation });
     await expect(verifyDelegation(signed, ['campaign:write'], { pool, keyring, operation })).rejects.toMatchObject({ code: 'delegation_replay' });
+  });
+
+  it('renews once when a valid delegation expires during the Hermes run', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const expired = await token({}, activeKey, 'v2', 60, now - 120);
+    const fresh = await token();
+    const refreshDelegation = vi.fn().mockResolvedValue(fresh);
+
+    const delegated = await verifyDelegation(expired, ['campaign:read'], {
+      pool,
+      keyring,
+      refreshDelegation
+    });
+
+    expect(refreshDelegation).toHaveBeenCalledOnce();
+    expect(refreshDelegation).toHaveBeenCalledWith(expired);
+    expect(delegated).toMatchObject({
+      userId: '11111111-1111-4111-8111-111111111111',
+      role: 'member',
+      tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    });
   });
 
   it('canonicalizes a tenant slug before consuming a mutation delegation', async () => {

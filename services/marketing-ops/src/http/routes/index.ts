@@ -15,6 +15,7 @@ export interface ApiRouterDependencies {
   features: { read: boolean; write: boolean };
   verifyToken: (token: string) => Promise<SupabaseUser>;
   keyring?: DelegationKeyring;
+  refreshDelegation?: (token: string) => Promise<string>;
 }
 
 export function createApiRouter(deps: ApiRouterDependencies): Router {
@@ -25,6 +26,11 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerCampaigns(router, deps.pool, deps.features);
   registerItems(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
-  if (deps.keyring) router.use(createMcpRouter({ pool: deps.pool, features: deps.features, keyring: deps.keyring }));
+  if (deps.keyring) router.use(createMcpRouter({
+    pool: deps.pool,
+    features: deps.features,
+    keyring: deps.keyring,
+    ...(deps.refreshDelegation ? { refreshDelegation: deps.refreshDelegation } : {})
+  }));
   return router;
 }

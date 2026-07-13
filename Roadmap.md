@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production`
-- **Atualização:** 11 de julho de 2026
+- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com homologação VPS em andamento
+- **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados em 11 de julho de 2026; homologação VPS pendente.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; deploy VPS iniciado em 12 de julho e homologação em andamento. Persistência real foi confirmada em 13 de julho; a correção de renovação da delegação aguarda reteste final na VPS.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

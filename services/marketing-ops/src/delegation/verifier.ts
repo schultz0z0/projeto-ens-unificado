@@ -1,4 +1,4 @@
-import { decodeProtectedHeader, jwtVerify } from 'jose';
+import { decodeProtectedHeader, errors as joseErrors, jwtVerify } from 'jose';
 import type { Pool } from 'pg';
 import { AppError, appError } from '../errors.js';
 import { resolveActor, type Actor } from '../auth/actor.js';
@@ -9,10 +9,17 @@ export interface DelegatedActor extends Actor {
 }
 export interface MutationUse { name: string; idempotencyKey: string; requestHash: string }
 
+export interface DelegationVerifierDependencies {
+  pool: Pool;
+  keyring: DelegationKeyring;
+  operation?: MutationUse;
+  refreshDelegation?: (token: string) => Promise<string>;
+}
+
 export async function verifyDelegation(
   token: string,
   requiredScopes: string[],
-  deps: { pool: Pool; keyring: DelegationKeyring; operation?: MutationUse }
+  deps: DelegationVerifierDependencies
 ): Promise<DelegatedActor> {
   try {
     const header = decodeProtectedHeader(token);
@@ -21,10 +28,20 @@ export async function verifyDelegation(
     if (header.kid === deps.keyring.activeKid) rawKey = deps.keyring.activeKey;
     else if (header.kid === deps.keyring.previousKid) rawKey = deps.keyring.previousKey;
     if (!rawKey) throw appError('delegation_invalid', 401, 'Delegation key id is unknown');
-    const verified = await jwtVerify(token, new TextEncoder().encode(rawKey), {
-      algorithms: ['HS256'], issuer: deps.keyring.issuer, audience: deps.keyring.audience,
-      clockTolerance: 2, requiredClaims: ['sub', 'jti', 'iat', 'nbf', 'exp']
-    });
+    let verified;
+    try {
+      verified = await jwtVerify(token, new TextEncoder().encode(rawKey), {
+        algorithms: ['HS256'], issuer: deps.keyring.issuer, audience: deps.keyring.audience,
+        clockTolerance: 2, requiredClaims: ['sub', 'jti', 'iat', 'nbf', 'exp']
+      });
+    } catch (error) {
+      if (error instanceof joseErrors.JWTExpired && deps.refreshDelegation) {
+        const refreshed = await deps.refreshDelegation(token);
+        const { refreshDelegation: _refreshDelegation, ...singleAttemptDeps } = deps;
+        return verifyDelegation(refreshed, requiredScopes, singleAttemptDeps);
+      }
+      throw error;
+    }
     const claims = delegationClaimsSchema.parse(verified.payload);
     if (claims.exp - claims.iat > deps.keyring.maxTtlSeconds || claims.exp <= claims.iat) {
       throw appError('delegation_invalid', 401, 'Delegation lifetime is invalid');

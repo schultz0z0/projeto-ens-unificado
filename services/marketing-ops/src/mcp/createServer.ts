@@ -13,6 +13,7 @@ import { errorToolResult, jsonToolResult } from './toolResults.js';
 
 export interface MarketingOpsMcpDependencies {
   pool: Pool; features: { read: boolean; write: boolean }; keyring: DelegationKeyring;
+  refreshDelegation?: (token: string) => Promise<string>;
 }
 
 export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): McpServer {

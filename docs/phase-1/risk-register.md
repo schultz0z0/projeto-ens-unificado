@@ -1,12 +1,12 @@
 # Registro de riscos da Fase 1
 
-- **Revisão:** 2026-07-11
+- **Revisão:** 2026-07-13
 - **Estado:** riscos bloqueantes mitigados; riscos residuais aceitos para rollout controlado
 
 | ID | Risco | Mitigação/evidência | Residual | Owner |
 |---|---|---|---|---|
 | R-01 | acesso cross-tenant | membership servidor-side, contexto RLS, force RLS e testes negativos | baixo | Backend/Security |
-| R-02 | delegação MCP forjada/reutilizada | HS256 com `kid`, issuer/audience, TTL, scopes, membership atual e JTI | baixo | Plataforma |
+| R-02 | delegação MCP forjada/reutilizada ou expirada durante o raciocínio | HS256 com `kid`, TTL, scopes, membership atual e JTI; renovação interna limitada à run ativa, contexto idêntico e mesmo JTI | baixo | Plataforma |
 | R-03 | duplicidade ou perda parcial | idempotência, versão e entidade/audit/outbox na mesma transação | baixo | Backend |
 | R-04 | baseline remoto divergente | dumps externos, hashes, history repair explícito e dry-run antes do push | médio até o deploy | Data |
 | R-05 | segredo no frontend/log | build args públicos allowlisted, security gate e logger recursivamente redigido | baixo | Security |
