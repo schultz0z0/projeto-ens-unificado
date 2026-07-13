@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; deploy VPS iniciado em 12 de julho e homologação em andamento. Persistência de domínio foi confirmada em 13 de julho. O transporte efêmero e o scrub seletivo das delegações foram validados na VPS pelos testes 13 e 14; restam os testes manuais 15–20 para fechar a fase.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; deploy VPS iniciado em 12 de julho e homologação em andamento. Persistência de domínio foi confirmada em 13 de julho. Os testes 13 e 14 passaram, mas o teste 15 revelou uma delegação antiga ainda recuperável em `messages.tool_calls`. A correção determinística no executor Hermes, a redaction de persistência/replay e os cenários 15–20 foram validados localmente; resta redeploy e repetição final na VPS para fechar a fase.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

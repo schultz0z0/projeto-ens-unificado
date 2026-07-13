@@ -20,7 +20,7 @@ A Fase 1 adiciona um serviço independente `marketing-ops` que oferece REST ao f
 | Autenticação REST | validação do bearer pelo Supabase Auth do app |
 | Tenant e papel | resolvidos por `marketing_ops.memberships`, nunca por argumento ou `user_metadata` |
 | Persistência | PostgreSQL direto com transações e contexto RLS por requisição |
-| Delegação Hermes | JWT interno HS256 curto, versionado, com rotação por `kid`, claims mínimos e transporte efêmero fora do histórico |
+| Delegação Hermes | JWT interno HS256 curto, versionado, com rotação por `kid`, claims mínimos, transporte efêmero e binding determinístico no executor |
 | Anti-replay | `jti` associado à mutação e à idempotency key; reuso divergente é conflito |
 | Eventos | tabela outbox `domain_events`, preparada para polling com `FOR UPDATE SKIP LOCKED` |
 | Retenção de auditoria | sem expurgo automático na Fase 1; registros permanecem imutáveis até política de compliance posterior |
@@ -138,7 +138,8 @@ O envelope estável contém `code`, `message`, `correlation_id` e `details` segu
 - grants explícitos na mesma migration;
 - service role nunca enviada ao navegador;
 - keyring aceita chave ativa e anterior durante rotação;
-- delegações técnicas não são persistidas no histórico; blocos legados são removidos seletivamente no startup;
+- o executor substitui qualquer `delegation_token` escolhido pelo modelo pelo token efêmero do turno imediatamente antes de cada tool Marketing Ops;
+- delegações técnicas são redigidas de `tool_calls` antes da persistência, dos snapshots e do replay; blocos e argumentos legados são removidos seletivamente no startup;
 - flags não substituem autorização.
 
 ## Observabilidade
@@ -151,6 +152,7 @@ Logs JSON incluem serviço, versão, request ID, correlation ID, origem, rota/to
 - pgTAP para schema, constraints, grants, RLS, imutabilidade e cross-tenant;
 - integração com Supabase local descartável;
 - contrato OpenAPI e MCP;
+- gate MCP local dos testes de produção 15–20 para item, auditoria, concorrência, idempotência, papéis e tenant forjado;
 - API e MCP lendo o mesmo registro;
 - falha injetada provando rollback sem audit/event órfão;
 - hardening negativo da Bridge;

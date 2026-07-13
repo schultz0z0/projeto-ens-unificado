@@ -6,7 +6,7 @@
 | ID | Risco | Mitigação/evidência | Residual | Owner |
 |---|---|---|---|---|
 | R-01 | acesso cross-tenant | membership servidor-side, contexto RLS, force RLS e testes negativos | baixo | Backend/Security |
-| R-02 | delegação MCP forjada, reutilizada, expirada ou recuperada do histórico | HS256 com `kid`, TTL, scopes, membership atual e JTI; renovação limitada à run ativa; transporte por prompt efêmero e scrub seletivo de blocos legados no SessionDB | baixo | Plataforma |
+| R-02 | delegação MCP forjada, reutilizada, expirada ou recuperada do histórico | HS256 com `kid`, TTL, scopes, membership atual e JTI; renovação limitada à run ativa; binding do token atual no executor; redaction de `tool_calls` na persistência/replay; scrub seletivo de conteúdo e argumentos legados | baixo após redeploy | Plataforma |
 | R-03 | duplicidade ou perda parcial | idempotência, versão e entidade/audit/outbox na mesma transação | baixo | Backend |
 | R-04 | baseline remoto divergente | dumps externos, hashes, history repair explícito e dry-run antes do push | médio até o deploy | Data |
 | R-05 | segredo no frontend/log | build args públicos allowlisted, security gate e logger recursivamente redigido | baixo | Security |

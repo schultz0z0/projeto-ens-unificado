@@ -76,7 +76,7 @@ Gerar segredo aleatório de no mínimo 32 bytes. Bridge emite somente `ACTIVE`; 
 
 ## Delegação efêmera no Hermes
 
-A Bridge envia a delegação da rodada por `system_message`, que a Session API trata como prompt efêmero. O token não deve aparecer na mensagem persistida. No startup do `hermes-api`, o scrubber remove apenas blocos `[MARKETING_OPS_DELEGATION]` gravados por versões antigas, sem apagar mensagens ou dados de domínio.
+A Bridge envia a delegação da rodada por `system_message`, que a Session API trata como prompt efêmero. Imediatamente antes de executar uma tool Marketing Ops, o Hermes sobrescreve qualquer valor sugerido pelo modelo com a delegação desse turno. O SessionDB e os snapshots redigem `delegation_token` de `tool_calls` antes de persistir ou reapresentar o histórico. No startup do `hermes-api`, o scrubber remove blocos `[MARKETING_OPS_DELEGATION]` e redige valores aninhados gravados por versões antigas, sem apagar mensagens ou dados de domínio.
 
 Após o primeiro deploy da correção, conferir o resultado sanitizado:
 
@@ -86,6 +86,52 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 ```
 
 O primeiro startup pode informar uma quantidade maior que zero. Reinícios posteriores devem informar zero, salvo se uma versão antiga voltar a persistir blocos. O log contém somente a contagem, nunca o token. Falha do scrub interrompe o startup do `hermes-api` para evitar continuar com histórico técnico inseguro.
+
+Validar conteúdo e argumentos sem exibir credenciais:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  /opt/hermes/.venv/bin/python - <<'PY'
+import json
+import sqlite3
+
+REDACTED = "[REDACTED_EPHEMERAL_DELEGATION]"
+
+def has_raw_delegation(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() == "delegation_token":
+                return item != REDACTED
+            if has_raw_delegation(item):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(has_raw_delegation(item) for item in value)
+    if isinstance(value, str) and "delegation_token" in value.lower():
+        try:
+            return has_raw_delegation(json.loads(value))
+        except json.JSONDecodeError:
+            return REDACTED not in value
+    return False
+
+db = sqlite3.connect("/opt/data/state.db")
+rows = db.execute("select content, tool_calls from messages").fetchall()
+unsafe = 0
+for content, tool_calls in rows:
+    marker = "[MARKETING_OPS_DELEGATION]" in (content or "")
+    parsed = None
+    if tool_calls:
+        try:
+            parsed = json.loads(tool_calls)
+        except json.JSONDecodeError:
+            parsed = tool_calls
+    unsafe += int(marker or has_raw_delegation(parsed))
+db.close()
+print({"messages_with_raw_delegation": unsafe})
+PY
+```
+
+Esperado: `messages_with_raw_delegation: 0`. A presença da chave com o valor `[REDACTED_EPHEMERAL_DELEGATION]` é segura e não deve ser contada como credencial bruta.
 
 ## Diagnóstico
 

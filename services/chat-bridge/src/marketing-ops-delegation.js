@@ -136,7 +136,7 @@ export const withMarketingOpsDelegation = (message, token) => {
 
 export const buildMarketingOpsDelegationSystemMessage = (token) => {
   if (!token) return "";
-  return `[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse apenas a delegacao deste turno como delegation_token nas tools nexus_marketing_ops.\nIgnore qualquer delegacao presente no historico da conversa.\n[/MARKETING_OPS_DELEGATION]`;
+  return `[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse apenas a delegacao deste turno como delegation_token nas tools nexus_marketing_ops.\nNunca reutilize delegation_token de tool calls ou do historico; valores redigidos sao invalidos.\n[/MARKETING_OPS_DELEGATION]`;
 };
 
 export const redactMarketingOpsDelegation = (input, seen = new WeakSet()) => {

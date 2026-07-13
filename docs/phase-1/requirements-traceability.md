@@ -12,7 +12,7 @@
 | F1-RF-01 Serviço independente | `services/marketing-ops`, Dockerfile e Compose | foundation tests, build Linux, health/readiness | `validated_locally` |
 | F1-RF-02 API autenticada | `auth/*`, middleware REST e transação com ator | auth/rest/E2E e pgTAP cross-tenant | `validated_locally` |
 | F1-RF-03 Interface MCP | MCP Streamable HTTP e tools `*_v1` | MCP contract tests e E2E com cliente oficial | `validated_locally` |
-| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, transporte efêmero Hermes e verificador Marketing Ops | Bridge 66, Hermes 5 e MCP replay/scope/TTL/refresh | `validated_locally` |
+| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, transporte efêmero, binding no executor, redaction no SessionDB e verificador Marketing Ops | Bridge 66, Hermes 10 e MCP replay/scope/TTL/refresh | `validated_locally` |
 | F1-RF-05 Modelo transacional | schemas `marketing_ops` e `marketing_ops_private` | reset limpo e 97 testes pgTAP | `validated_locally` |
 | F1-RF-06 Tenant | memberships confiáveis, RLS e contexto transacional | testes de tenant forjado e segundo tenant | `validated_locally` |
 | F1-RF-07 Papéis | matriz member/manager/admin | testes positivos e negativos de RBAC/RLS | `validated_locally` |
@@ -67,4 +67,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é concluir os testes manuais 15–20 na VPS Ubuntu. Os passos 13 e 14 aprovaram o transporte efêmero e o scrub do SessionDB, com zero delegações persistidas após o uso. Até a evidência restante, o estado geral não deve avançar para `production_validated` ou `completed`.
+O único gate aberto da Fase 1 é redeployar o hardening e concluir os testes manuais 15–20 na VPS Ubuntu. Os equivalentes 15–20 passaram por MCP contra o Supabase local real, mas o teste 15 de produção anterior revelou tokens legados em `messages.tool_calls`, canal que a consulta antiga de `content` não cobria. Até a nova evidência VPS, o estado geral não deve avançar para `production_validated` ou `completed`.

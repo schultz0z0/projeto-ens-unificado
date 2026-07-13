@@ -228,7 +228,7 @@ Token inválido, tenant forjado, papel forjado, delegação expirada, replay, ma
 
 - serviço em TypeScript/Node.js 22 com Express;
 - delegação JWT HS256 curta, versionada, com rotação por `kid` e anti-replay;
-- delegação entregue por prompt efêmero da run e scrub seletivo de blocos legados do SessionDB;
+- delegação entregue por prompt efêmero da run, vinculada no executor e redigida de `tool_calls`; scrub seletivo de conteúdo e argumentos legados do SessionDB;
 - auditoria append-only sem expurgo automático nesta fase;
 - publicação inicial por outbox PostgreSQL, preparada para polling futuro.
 
@@ -236,4 +236,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS já confirmou probes, criação, leitura, atualização, auditoria/outbox, persistência após restart e os passos 13 e 14 do transporte efêmero, com zero delegações novas no SessionDB. Restam os testes manuais 15–20; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS já confirmou probes, criação, leitura, atualização, auditoria/outbox, persistência após restart e os passos 13 e 14. O teste 15 revelou que a checagem anterior cobria somente `messages.content`, enquanto argumentos antigos ainda existiam em `messages.tool_calls`. O binding determinístico e a redaction foram aprovados localmente, inclusive nos equivalentes 15–20; a Fase 1 só fica `completed` após redeploy, repetição dos testes na VPS e fechamento em `docs/phase-1/vps-validation.md`.

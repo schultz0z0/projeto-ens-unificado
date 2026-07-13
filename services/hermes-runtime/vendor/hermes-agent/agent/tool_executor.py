@@ -29,6 +29,7 @@ from agent.display import (
     _detect_tool_failure,
 )
 from agent.tool_guardrails import ToolGuardrailDecision
+from agent.marketing_ops_delegation import bind_current_marketing_ops_delegation
 from agent.tool_dispatch_helpers import (
     _is_destructive_command,
     _is_multimodal_tool_result,
@@ -221,7 +222,12 @@ def _run_agent_tool_execution_middleware(
 
     def _execute(next_args: dict) -> Any:
         nonlocal observed_args
-        observed_args = next_args if isinstance(next_args, dict) else function_args
+        candidate_args = next_args if isinstance(next_args, dict) else function_args
+        observed_args = bind_current_marketing_ops_delegation(
+            function_name,
+            candidate_args,
+            getattr(agent, "ephemeral_system_prompt", None),
+        )
         return execute(observed_args)
 
     from hermes_cli.middleware import run_tool_execution_middleware
@@ -319,6 +325,11 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
             function_args=function_args,
             effective_task_id=effective_task_id,
             tool_call_id=getattr(tool_call, "id", "") or "",
+        )
+        function_args = bind_current_marketing_ops_delegation(
+            function_name,
+            function_args,
+            getattr(agent, "ephemeral_system_prompt", None),
         )
 
         # ── Block evaluation (BEFORE checkpoint preflight) ───────────
@@ -824,6 +835,11 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             function_args=function_args,
             effective_task_id=effective_task_id,
             tool_call_id=getattr(tool_call, "id", "") or "",
+        )
+        function_args = bind_current_marketing_ops_delegation(
+            function_name,
+            function_args,
+            getattr(agent, "ephemeral_system_prompt", None),
         )
 
         # Check plugin hooks for a block directive before executing.

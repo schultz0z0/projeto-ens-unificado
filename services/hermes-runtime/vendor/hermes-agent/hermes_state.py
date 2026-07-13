@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 from agent.memory_manager import sanitize_context
+from agent.marketing_ops_delegation import redact_marketing_ops_delegations
 from hermes_constants import get_hermes_home
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
@@ -2405,7 +2406,10 @@ class SessionDB:
             json.dumps(codex_message_items)
             if codex_message_items else None
         )
-        tool_calls_json = json.dumps(tool_calls) if tool_calls else None
+        tool_calls_json = (
+            json.dumps(redact_marketing_ops_delegations(tool_calls))
+            if tool_calls else None
+        )
         # Multimodal content (list of parts) must be JSON-encoded: sqlite3
         # cannot bind list/dict parameters directly.
         stored_content = self._encode_content(content)
@@ -2499,7 +2503,10 @@ class SessionDB:
                 codex_message_items_json = (
                     json.dumps(codex_message_items) if codex_message_items else None
                 )
-                tool_calls_json = json.dumps(tool_calls) if tool_calls else None
+                tool_calls_json = (
+                    json.dumps(redact_marketing_ops_delegations(tool_calls))
+                    if tool_calls else None
+                )
                 # Accept either `platform_message_id` (new explicit name) or
                 # `message_id` (yuanbao's existing convention on message dicts).
                 platform_msg_id = (
@@ -2573,7 +2580,9 @@ class SessionDB:
                 msg["content"] = self._decode_content(msg["content"])
             if msg.get("tool_calls"):
                 try:
-                    msg["tool_calls"] = json.loads(msg["tool_calls"])
+                    msg["tool_calls"] = redact_marketing_ops_delegations(
+                        json.loads(msg["tool_calls"])
+                    )
                 except (json.JSONDecodeError, TypeError):
                     logger.warning("Failed to deserialize tool_calls in get_messages, falling back to []")
                     msg["tool_calls"] = []
@@ -2640,7 +2649,9 @@ class SessionDB:
                 msg["content"] = self._decode_content(msg["content"])
             if msg.get("tool_calls"):
                 try:
-                    msg["tool_calls"] = json.loads(msg["tool_calls"])
+                    msg["tool_calls"] = redact_marketing_ops_delegations(
+                        json.loads(msg["tool_calls"])
+                    )
                 except (json.JSONDecodeError, TypeError):
                     logger.warning(
                         "Failed to deserialize tool_calls in get_messages_around, falling back to []"
@@ -2762,7 +2773,9 @@ class SessionDB:
                 msg["content"] = self._decode_content(msg["content"])
             if msg.get("tool_calls"):
                 try:
-                    msg["tool_calls"] = json.loads(msg["tool_calls"])
+                    msg["tool_calls"] = redact_marketing_ops_delegations(
+                        json.loads(msg["tool_calls"])
+                    )
                 except (json.JSONDecodeError, TypeError):
                     logger.warning(
                         "Failed to deserialize tool_calls in get_anchored_view, falling back to []"
@@ -2885,7 +2898,9 @@ class SessionDB:
                 msg["tool_name"] = row["tool_name"]
             if row["tool_calls"]:
                 try:
-                    msg["tool_calls"] = json.loads(row["tool_calls"])
+                    msg["tool_calls"] = redact_marketing_ops_delegations(
+                        json.loads(row["tool_calls"])
+                    )
                 except (json.JSONDecodeError, TypeError):
                     logger.warning("Failed to deserialize tool_calls in conversation replay, falling back to []")
                     msg["tool_calls"] = []

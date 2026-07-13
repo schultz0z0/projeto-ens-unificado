@@ -29,8 +29,8 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 | Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
 | Supabase do app em produção | `deployed_and_validated` ([evidência](supabase-deployment.md)) |
 | Schema, RLS, grants e pgTAP | `validated_locally` (97 testes de banco) |
-| Serviço, API e MCP | `validated_locally` (38 testes + 2 E2E) |
-| Hardening da Bridge e delegação Hermes | `production_validated` (Bridge 66 e Hermes 5 testes; delegação efêmera, renovação vinculada à run ativa, scrub de 13 mensagens legadas e zero nova persistência) |
+| Serviço, API e MCP | `validated_locally` (42 testes + 2 E2E) |
+| Hardening da Bridge e delegação Hermes | `validated_locally` (Bridge 66 e Hermes 10 testes; token do turno vinculado no executor, redaction de `tool_calls` e scrub legado; redeploy VPS pendente) |
 | SDK frontend e feature flags | `validated_locally` (125 testes frontend) |
 | Compose, observabilidade e runbooks | `validated_locally` |
 | Gate local | `validated_locally` ([evidência](local-validation.md)) |

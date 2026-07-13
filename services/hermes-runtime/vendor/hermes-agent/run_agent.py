@@ -135,6 +135,7 @@ from tools.browser_tool import cleanup_browser
 from agent.memory_manager import sanitize_context
 from agent.error_classifier import FailoverReason
 from agent.redact import redact_sensitive_text
+from agent.marketing_ops_delegation import redact_marketing_ops_delegations
 from agent.model_metadata import (
     estimate_request_tokens_rough,  # noqa: F401  # re-exported for tests that mock.patch("run_agent.estimate_request_tokens_rough")
     is_local_endpoint,
@@ -2266,6 +2267,9 @@ class AIAgent:
                 if "content" in msg:
                     msg = dict(msg)
                     msg["content"] = self._redact_message_content(msg.get("content"))
+                if msg.get("tool_calls"):
+                    msg = dict(msg)
+                    msg["tool_calls"] = redact_marketing_ops_delegations(msg["tool_calls"])
                 cleaned.append(msg)
 
             # Guard: never overwrite a larger session log with fewer messages.

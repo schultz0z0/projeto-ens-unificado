@@ -58,9 +58,15 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - no primeiro startup corrigido, o scrub removeu 13 mensagens com delegações legadas;
 - o passo 13 listou em nova sessão a campanha `2da6ee84-5783-4556-a47d-8d7beff06d16`, nome `Teste Fase 1 Produção Atualizado`, versão 2;
 - o passo 14 consultou os detalhes da mesma campanha na rodada seguinte, sem `delegation_invalid`;
-- a consulta sanitizada posterior ao SessionDB retornou `persisted_delegation_messages: 0`, comprovando que a delegação atual não voltou ao histórico.
+- a consulta sanitizada posterior ao SessionDB retornou `persisted_delegation_messages: 0`, mas verificava apenas `messages.content` e não cobria `messages.tool_calls`;
+- no passo 15, a criação do item não ocorreu: o Hermes recuperou de uma tool call anterior uma delegação já expirada e recebeu `delegation_invalid`;
+- causa raiz complementar: o transporte por `system_message` já era efêmero, porém o próprio SessionDB persistia os argumentos gerados pelo modelo na coluna `tool_calls` e os reapresentava em rodadas futuras;
+- correção local: imediatamente antes de toda execução de tool Marketing Ops, o runtime substitui o valor escolhido pelo modelo pela delegação efêmera do turno; valores de delegação são redigidos antes de persistência, snapshot e replay;
+- o scrub de startup agora cobre tanto blocos em `content` quanto valores aninhados em `tool_calls`, sem imprimir tokens e de forma idempotente;
+- os equivalentes aos passos 15–20 passaram via MCP contra o Supabase local real; a regressão completa aprovou Marketing Ops 42 + 2 E2E, Bridge 66, Hermes 10, RAG 26, Graph 18, Artifact 8, frontend 125 e 97 pgTAP;
+- imagens Linux de Bridge e Hermes foram reconstruídas sem cache; dentro da imagem, os gates confirmaram binding do token atual, ausência de token bruto na persistência/replay e scrub legado.
 
-Os passos 13 e 14 estão aprovados. Restam os testes manuais 15–20 para item, auditoria, concorrência, idempotência, matriz de permissões e isolamento de tenant. As falhas anteriores não criaram, alteraram ou removeram registros de domínio, e a correção não exigiu `.env`, migration, bootstrap ou deploy Supabase.
+Os passos 13 e 14 estão aprovados. O passo 15 anterior falhou antes da mutação e deve ser repetido após o novo deploy; depois seguem 16–20 para auditoria, concorrência, idempotência, matriz de permissões e isolamento de tenant. A correção não exige `.env`, migration, bootstrap ou deploy Supabase.
 
 ## Fechamento
 
