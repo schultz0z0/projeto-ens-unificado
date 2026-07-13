@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com hardening conversacional validado localmente e aceite VPS pendente
+- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com aceite real executado e correção final validada localmente, aguardando redeploy e reteste
 - **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS já confirmou probes, persistência, criação, leitura, atualização, item, auditoria, conflito de versão, idempotência e comportamento `admin`/`member`. O uso real revelou que o Hermes ainda podia pedir campos técnicos e executar mutações sem uma confirmação consolidada. O hardening de plano assinado, confirmação única posterior e bloqueio de mutações diretas passou integralmente no ambiente local; resta redeploy e aceite conversacional final na VPS para fechar a fase.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. O aceite automatizado no app real comprovou plano antes da escrita, confirmação única, criação simples e multi-ação, mas encontrou uma incompatibilidade quando o Hermes enviou `expected_version` como string numa revisão e uma ambiguidade após confirmação repetida. A normalização de versão e o endurecimento do contrato/skill passaram integralmente no gate local; resta redeploy e reteste focado para fechar a fase.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

@@ -12,7 +12,7 @@
 | pgTAP | 2 arquivos, 97 testes, todos aprovados |
 | DB lint | zero erro |
 | Security advisor | zero erro; 15 warnings legados do baseline público |
-| Marketing Ops unit/integration | 52 testes, incluindo 2 E2E de container, aprovados |
+| Marketing Ops unit/integration | 53 testes, incluindo 2 E2E de container, aprovados |
 | Bridge | 69 testes aprovados |
 | Hermes runtime/config | 13 testes Python aprovados |
 | Frontend SDK | 125 testes totais, typecheck, lint sem erros e build aprovados |
@@ -45,7 +45,7 @@ A rodada final aprovou:
 | pgTAP | 97/97 |
 | DB lint | zero erro |
 | Security advisor | zero erro; 15 warnings legados |
-| Marketing Ops | 52/52, incluindo 2 E2E contra o container Linux; typecheck e build aprovados |
+| Marketing Ops | 53/53, incluindo 2 E2E contra o container Linux; typecheck e build aprovados |
 | Chat Bridge | 69/69; audit de produção com zero vulnerabilidades |
 | Hermes runtime | 13/13 |
 | RAG MCP | 26/26; typecheck e build aprovados |
@@ -56,3 +56,9 @@ A rodada final aprovou:
 | Compose | configurações base e produção aprovadas |
 
 Os 10 avisos de lint e o alerta de chunk do frontend são preexistentes. Durante a inspeção da imagem, um pipe legado mascarava a falha do `npm ci` do `pptx-studio`; o Dockerfile passou a usar o Chromium do sistema e a falhar fechado, e a imagem final confirmou `dom-to-pptx` instalado. O Supabase descartável foi encerrado, as portas oficiais foram restauradas e não houve alteração em `.env`, migrations ou Supabase remoto. O hardening está `validated_locally`; o fechamento da Fase 1 continua condicionado ao redeploy e ao aceite conversacional na VPS.
+
+## Correção posterior ao aceite automatizado
+
+O aceite no app real reproduziu uma revisão de plano em que o Hermes enviou `expected_version` como string numérica. O schema do MCP recusou a chamada antes da normalização interna. Por TDD, o contrato passou a aceitar número ou string decimal positiva na fronteira e a normalizar para inteiro antes de assinar o plano. O teste comprova também que a chamada atravessa a validação do SDK MCP, em vez de falhar com `-32602`.
+
+O contrato da Bridge e a skill do operador foram reforçados para não pedir confirmação de um plano revisado antes de `prepare_plan` concluir, resumir recusas sem códigos, scopes, IDs ou detalhes de transporte e encerrar após o resultado do Marketing Ops sem propor gravações em outros sistemas. A rodada canônica final levou 147,5 segundos e aprovou 97 pgTAP, Marketing Ops 53/53, Hermes 13/13, Bridge 69/69 e todas as suítes, typechecks, builds, audits e Compose restantes. As imagens Linux de `app-bridge` e `hermes-api` foram reconstruídas sem cache. O Supabase local foi encerrado, as portas oficiais foram restauradas e não houve mudança em `.env`, migration ou Supabase remoto.

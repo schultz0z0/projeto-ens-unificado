@@ -14,6 +14,8 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 - **Plano:** [2026-07-11-phase-1-marketing-ops-implementation.md](../plans/2026-07-11-phase-1-marketing-ops-implementation.md)
 - **Plano do hardening:** [2026-07-13-phase-1-marketing-ops-conversational-confirmation.md](../plans/2026-07-13-phase-1-marketing-ops-conversational-confirmation.md)
 
+O aceite automatizado no app de produção foi executado com os três papéis. Criação, plano multi-ação, RBAC e isolamento passaram; a revisão de plano revelou uma incompatibilidade de `expected_version` textual, já corrigida e validada localmente. O único gate restante é publicar essa correção e repetir o fluxo de revisão em produção.
+
 ## Contrato de ambientes
 
 - o `.env` da raiz é a fonte global de configuração do monorepo;
@@ -31,7 +33,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 | Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
 | Supabase do app em produção | `deployed_and_validated` ([evidência](supabase-deployment.md)) |
 | Schema, RLS, grants e pgTAP | `validated_locally` (97 testes de banco) |
-| Serviço, API e MCP | `validated_locally` (52 testes, incluindo 2 E2E de container) |
+| Serviço, API e MCP | `validated_locally` (53 testes, incluindo 2 E2E de container) |
 | Hardening da Bridge e delegação Hermes | `validated_locally` (Bridge 69 e Hermes 13 testes; token do turno vinculado no executor, redaction de `tool_calls`, scrub legado e build fail-closed do `pptx-studio`) |
 | Confirmação conversacional de mutações | `validated_locally` (plano assinado sem persistência, confirmação única posterior, execução exata e bloqueio de tools diretas; redeploy VPS pendente) |
 | SDK frontend e feature flags | `validated_locally` (125 testes frontend) |

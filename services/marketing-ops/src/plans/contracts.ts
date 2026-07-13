@@ -3,6 +3,10 @@ import { z } from 'zod/v4';
 const planRef = z.string().min(1).max(64).regex(/^[a-z][a-z0-9-]*$/);
 const courseSlug = z.string().regex(/^[a-z0-9][a-z0-9-]{1,127}$/);
 const uuid = z.string().uuid();
+const positiveInteger = z.union([
+  z.number().int().positive(),
+  z.string().regex(/^[1-9]\d*$/)
+]).transform((value) => typeof value === 'string' ? Number(value) : value);
 
 const createCampaignAction = z.object({
   type: z.literal('campaign.create_draft'),
@@ -14,7 +18,7 @@ const createCampaignAction = z.object({
 const updateCampaignAction = z.object({
   type: z.literal('campaign.update_draft'),
   campaign_id: uuid,
-  expected_version: z.number().int().positive(),
+  expected_version: positiveInteger,
   name: z.string().trim().min(1).max(200)
 }).strict();
 

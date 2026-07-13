@@ -159,3 +159,6 @@ def test_bundled_marketing_ops_operator_skill_teaches_casual_confirmed_planning(
     assert "marketing_ops_execute_plan_v1" in skill
     assert "single confirmation" in skill.lower()
     assert "nada foi salvo ainda" in skill.lower()
+    assert "do not expose raw error codes" in skill.lower()
+    assert "revised plan has been successfully prepared" in skill.lower()
+    assert "do not offer, start, or interpret a repeated confirmation" in skill.lower()

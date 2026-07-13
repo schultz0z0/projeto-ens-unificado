@@ -244,6 +244,9 @@ test("buildHermesSessionChatRequest enforces conversational planning for Marketi
   assert.match(request.system_message, /marketing_ops_execute_plan_v1/);
   assert.match(request.system_message, /Nada e persistido antes da confirmacao/);
   assert.match(request.system_message, /course_slug e opcional/);
+  assert.match(request.system_message, /nao exponha codigos brutos/);
+  assert.match(request.system_message, /plano revisado como pronto/);
+  assert.match(request.system_message, /nao ofereca nem inicie gravacoes em Graph/);
   assert.doesNotMatch(request.message, /Contrato Nexus Marketing Ops/);
 });
 

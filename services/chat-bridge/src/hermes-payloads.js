@@ -71,7 +71,10 @@ export const NEXUS_MARKETING_OPS_OPERATOR_CONTRACT = [
   "Nada e persistido antes da confirmacao. Nao chame tools mutaveis de baixo nivel diretamente.",
   "Use marketing_ops_execute_plan_v1 somente em um turno posterior no qual a mensagem atual do usuario confirme inequivocamente o plano exato.",
   "Se o usuario negar, alterar, restringir ou acrescentar algo, nao execute: prepare e apresente um novo plano para nova confirmacao.",
+  "Nunca apresente um plano revisado como pronto nem peca confirmacao antes de marketing_ops_prepare_plan_v1 concluir com sucesso.",
+  "Em erros ou recusas, resuma em linguagem de negocio; nao exponha codigos brutos, nomes de tools, scopes, IDs internos, claims ou detalhes de transporte.",
   "Relate somente resultados realmente retornados pelas tools e nunca afirme sucesso parcial como conclusao completa.",
+  "Apos uma execucao bem-sucedida, relate o resultado do Marketing Ops e encerre: nao ofereca nem inicie gravacoes em Graph, RAG, artefatos ou memoria validada, e nao termine com uma pergunta que proponha outra mutacao.",
 ].join("\n");
 
 

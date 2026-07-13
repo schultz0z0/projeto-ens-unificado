@@ -6,6 +6,7 @@ import pg from 'pg';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import { verifyDelegation } from './delegation/verifier.js';
 import { createMarketingOpsMcpServer } from './mcp/createServer.js';
+import { marketingOpsPlanActionsSchema } from './plans/contracts.js';
 
 const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' });
 const activeKey = 'active-local-delegation-key-at-least-32-bytes';
@@ -103,6 +104,37 @@ describe('delegation and MCP', () => {
     expect(result.isError).not.toBe(true);
     await client.close();
     await server.close();
+  });
+
+  it('normalizes a numeric string version before signing an update plan', async () => {
+    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const client = new Client({ name: 'plan-version-test-client', version: '1.0.0' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const actions = [{
+        type: 'campaign.update_draft' as const,
+        campaign_id: randomUUID(),
+        expected_version: '1',
+        name: 'Campanha revisada'
+      }];
+      const [normalizedAction] = marketingOpsPlanActionsSchema.parse(actions);
+      if (normalizedAction?.type !== 'campaign.update_draft') throw new Error('normalized_update_action_missing');
+      expect(normalizedAction.expected_version).toBe(1);
+
+      const prepared = await client.callTool({
+        name: 'marketing_ops_prepare_plan_v1',
+        arguments: {
+          delegation_token: 'invalid-diagnostic-token',
+          actions
+        }
+      });
+      expect(toolPayload(prepared).error.code).toBe('delegation_invalid');
+    } finally {
+      await client.close();
+      await server.close();
+    }
   });
 
   it('prepares without writes and executes one exact multi-action plan after confirmation', async () => {

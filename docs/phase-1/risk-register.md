@@ -17,5 +17,7 @@
 | R-10 | bundle frontend grande | registrado como dívida F1-201; sem regressão funcional da fundação | médio, não bloqueante | Frontend |
 | R-11 | diferenças Windows/Ubuntu | gate Windows/Docker Desktop e checklist de build/smoke Ubuntu | médio até homologação | DevOps |
 | R-12 | ativação prematura | rollout read/write separado e kill switch cliente | baixo | Produto/DevOps |
+| R-13 | Hermes serializa versão numérica como texto e bloqueia revisão de plano | fronteira MCP aceita número ou string decimal positiva e normaliza para inteiro; teste cobre validação do SDK antes da assinatura | baixo após redeploy | Backend |
+| R-14 | confirmação repetida autoriza escrita alheia ao plano recém-executado | contrato e skill encerram após o resultado do Marketing Ops e proíbem oferecer ou interpretar a repetição para Graph, RAG, artefatos ou memória validada | baixo após redeploy | Plataforma/Produto |
 
 Nenhum risco residual autoriza escrever no Supabase do RAG ou pular backup, dry-run e confirmação do projeto do app.

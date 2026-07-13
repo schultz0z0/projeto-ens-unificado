@@ -31,8 +31,11 @@ O Hermes:
 - omite `course_slug` quando o usuario nao pedir vinculo com curso;
 - resolve versao atual por leitura antes de planejar uma edicao;
 - nao mostra `delegation_token`, `idempotency_key`, `expected_version`, scopes ou nomes MCP;
+- normaliza internamente versoes numericas serializadas como texto pelo modelo;
 - apresenta todas as mutacoes planejadas em linguagem natural;
-- informa explicitamente que nada foi salvo e pede uma confirmacao unica.
+- informa explicitamente que nada foi salvo e pede uma confirmacao unica;
+- so apresenta uma revisao como pronta depois de `prepare_plan_v1` concluir;
+- encerra depois do resultado e nao reaproveita uma confirmacao para gravacoes em outros sistemas.
 
 ### Plano assinado e sem persistencia de dominio
 

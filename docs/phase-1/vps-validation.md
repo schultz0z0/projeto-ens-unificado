@@ -73,19 +73,36 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 
 Os testes de domínio 13–19 acima comprovaram a fundação, mas o pedido técnico de `course_slug` mostrou que o comportamento ainda não era adequado para usuários reais. O hardening posterior transforma toda mutação do Hermes em um plano conversacional com confirmação única e está aprovado apenas localmente. O teste de tenant forjado possui cobertura automatizada local, mas o aceite final de produção será repetido junto com o fluxo conversacional. A correção não exige `.env`, migration, bootstrap ou deploy Supabase.
 
+## Aceite automatizado no app de produção
+
+Em 13 de julho de 2026, o fluxo final foi executado diretamente em `https://app.solucoes-nexus.tech/` com contas de teste dos papéis `admin`, `manager` e `member`, sem registrar credenciais no repositório:
+
+- `member`: pedido casual de campanha mais e-mail gerou um plano único, informou que nada havia sido salvo e não pediu `course_slug`; a consulta anterior à confirmação comprovou ausência da campanha. Auditoria ampla foi recusada e a tentativa de outro tenant não retornou dados externos;
+- `manager` e `admin`: auditoria do tenant ENS foi permitida, enquanto `member` permaneceu sem esse escopo;
+- `admin`: uma campanha simples foi preparada e criada somente após confirmação; outro plano criou em uma confirmação a campanha `59feb425-f973-4537-83f1-db3826c53825` e o item `db33acc6-3fdc-449b-b590-47bb15d83f19`;
+- repetir a frase de confirmação não duplicou campanha ou item do Marketing Ops, mas o Hermes a associou a uma pergunta posterior e criou uma memória validada alheia ao plano. O contrato e a skill locais agora encerram a resposta depois do resultado e proíbem oferecer ou interpretar essa repetição como autorização para outras gravações;
+- a revisão `sim, mas use outro nome` não executou o plano anterior e a leitura confirmou nome e versão inalterados. Porém, o preparo revisado falhou fechado porque `expected_version` chegou como string e o SDK MCP exigia número;
+- as respostas ainda expuseram códigos, nomes de tools, scopes e IDs internos. O contrato e a skill locais agora exigem resumo em linguagem de negócio;
+- uma indisponibilidade transitória do MCP ocorreu no primeiro pedido de `member`; o retry recuperou o planejamento, e nenhuma escrita ocorreu durante a falha;
+- os dados criados foram preservados como evidência auditável do teste; nenhuma limpeza destrutiva foi executada em produção.
+
+A correção aceita número ou string decimal positiva na fronteira MCP e normaliza para inteiro antes da assinatura. O gate local posterior aprovou 97 pgTAP, Marketing Ops 53/53, Hermes 13/13, Bridge 69/69, demais suítes/builds/audits e as imagens Linux sem cache. Ela não exige `.env`, migration, bootstrap nem deploy Supabase.
+
 ## Hardening pendente de deploy
 
-- [ ] commit de confirmação conversacional presente na VPS;
-- [ ] imagens `marketing-ops`, `app-bridge` e `hermes-api` reconstruídas sem cache;
-- [ ] build do `hermes-api` instala `dom-to-pptx` sem baixar Chromium redundante e não mascara falha do `npm ci`;
-- [ ] pedido casual com campanha e item apresenta um único plano e informa que nada foi salvo;
-- [ ] consulta antes da confirmação comprova ausência dos objetos;
-- [ ] confirmação em nova mensagem executa exatamente as duas ações;
-- [ ] retry não duplica campanha, item, auditoria ou outbox;
+- [x] commit de confirmação conversacional presente na VPS;
+- [x] imagens `marketing-ops`, `app-bridge` e `hermes-api` reconstruídas sem cache;
+- [x] build do `hermes-api` instala `dom-to-pptx` sem baixar Chromium redundante e não mascara falha do `npm ci`;
+- [x] pedido casual com campanha e item apresenta um único plano e informa que nada foi salvo;
+- [x] consulta antes da confirmação comprova ausência dos objetos;
+- [x] confirmação em nova mensagem executa exatamente as duas ações;
+- [x] retry não duplica campanha, item, auditoria ou outbox;
 - [ ] `sim, mas altere...` prepara novo plano sem executar o anterior;
-- [ ] `member` não é questionado sobre `course_slug` e continua sem acesso à auditoria ampla;
-- [ ] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
+- [x] `member` não é questionado sobre `course_slug` e continua sem acesso à auditoria ampla;
+- [x] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
 - [ ] logs não contêm segredo, token bruto, `internal_error` ou falso sucesso.
+
+O próximo redeploy precisa reconstruir somente `marketing-ops`, `app-bridge` e `hermes-api`. Depois, repetir a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
 
 ## Fechamento
 
