@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com matriz real aprovada e binding determinístico do plano validado localmente, aguardando redeploy do Hermes e reteste administrativo focado
+- **Status:** Fases 0 e 1 `production_validated`; Fase 1 concluída em 13 de julho de 2026 após gate local, deploy Ubuntu e aceite funcional com os três papéis
 - **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. Os fluxos de `member` e `manager`, o preparo revisado sem mutação e a confirmação natural já foram comprovados. A terceira rodada mostrou que o modelo ainda podia copiar um `plan_token` inválido e tentar executar um plano revisado no mesmo turno. O runtime agora vincula o último plano preparado e bloqueia deterministicamente execução sem confirmação posterior; o gate completo e a imagem Linux passaram. Resta redeploy somente do `hermes-api` e reteste administrativo focado para fechar a fase.
+**Estado:** `production_validated` — gates local e VPS aprovados; fase concluída em 13 de julho de 2026. A produção confirmou probes, métricas protegidas, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC, isolamento de tenant e o fluxo conversacional de plano revisado. A confirmação natural executou exatamente uma alteração, persistida em versão 2 e registrada na auditoria, sem mutação no turno de revisão nem falso circuit breaker.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

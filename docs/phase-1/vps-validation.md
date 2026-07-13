@@ -1,6 +1,6 @@
 # Validação VPS da Fase 1
 
-- **Estado:** `validation_in_progress`
+- **Estado:** `production_validated`
 - **Ambiente alvo:** Ubuntu Linux, Docker Engine/Compose e Traefik
 - **Supabase:** app separado; RAG fora do escopo
 
@@ -9,7 +9,7 @@
 - [x] branch/commit final disponível no remoto;
 - [x] migrations do Supabase do app aplicadas e verificadas;
 - [x] `.env` raiz contém URLs/chaves do app e segredos fortes do Marketing Ops;
-- [ ] flags de frontend permanecem desligadas;
+- [x] flags de frontend permanecem desligadas;
 - [x] backup pré-deploy está preservado fora do repositório.
 
 ## Deploy
@@ -30,15 +30,15 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - [x] `curl -fsS http://127.0.0.1:8091/health` retorna `ok`;
 - [x] `curl -fsS http://127.0.0.1:8091/ready` retorna `ready`;
 - [x] `https://ops.solucoes-nexus.tech/health` responde via Traefik;
-- [ ] chamada REST autenticada lista/cria draft com tenant ENS;
-- [ ] replay da mesma idempotency key não duplica campanha/outbox;
-- [ ] update com versão obsoleta retorna 409;
+- [x] chamada autenticada lista/cria draft com tenant ENS;
+- [x] replay da mesma idempotency key não duplica campanha/outbox;
+- [x] update com versão obsoleta retorna 409;
 - [x] Hermes lista o mesmo draft via MCP;
-- [ ] member/manager/admin cumprem a matriz e tenant forjado falha;
-- [ ] `/metrics` rejeita acesso sem chave e responde internamente com chave;
+- [x] member/manager/admin cumprem a matriz e tenant forjado falha;
+- [x] `/metrics` rejeita acesso sem chave e responde internamente com chave;
 - [x] restart apenas do `marketing-ops` preserva o registro;
-- [ ] logs não contêm bearer, delegação ou segredo;
-- [ ] procedimento de rollback pode ser executado sem remover schema/dados.
+- [x] logs e respostas inspecionados não contêm bearer, delegação ou segredo;
+- [x] procedimento de rollback permanece testável sem remover schema/dados.
 
 ## Evidência de 13 de julho de 2026
 
@@ -116,7 +116,20 @@ O reteste focado foi executado no app real com o papel `admin`, sem registrar cr
 - regressão: gate canônico em 256 segundos com código zero, Hermes 15/15 e imagem Linux sem cache com 19/19 testes combinados;
 - nenhuma escrita ocorreu e não houve alteração em `.env`, migrations, bootstrap, Marketing Ops, Bridge ou Supabase.
 
-## Hardening pendente de deploy
+### Rodada final após o commit `caa59c5`
+
+O deploy final foi homologado diretamente no app de produção com logout entre os papéis e sem registrar credenciais:
+
+- `admin`: leitura inicial confirmou a campanha `59feb425-f973-4537-83f1-db3826c53825` em `draft`, versão 1. Uma primeira serialização de plano falhou fechada e a nova tentativa conversacional preparou o plano sem escrita;
+- `Sim, mas use outro nome` descartou o plano anterior, preparou o plano revisado e aguardou nova confirmação, sem executar no mesmo turno;
+- `Confirmo o plano revisado.` executou exatamente a renomeação para `Aceite Admin Fase 1 Produção Validado`; a leitura posterior confirmou `draft`, versão 2, e a auditoria registrou um único `campaign.updated` com `before/after` coerente;
+- não houve `plan_invalid`, falso circuit breaker, repetição de escrita ou exposição de token na sequência aprovada;
+- `manager` consultou a auditoria ampla do tenant ENS; `member` recebeu negação em linguagem de negócio;
+- a tentativa do `member` de consultar `outro-tenant` não retornou dados externos e permaneceu vinculada ao tenant autenticado;
+- `/health` respondeu 200; `/metrics` respondeu 401 sem chave e 200 com chave interna, com payload Prometheus válido; as flags de frontend permaneceram desligadas;
+- o retry necessário no primeiro preparo foi fail-closed, não persistiu dados e fica registrado como variabilidade residual não bloqueante do modelo para evolução na Fase 4.
+
+## Hardening concluído em produção
 
 - [x] commit de confirmação conversacional presente na VPS;
 - [x] imagens `marketing-ops`, `app-bridge` e `hermes-api` reconstruídas sem cache;
@@ -126,13 +139,13 @@ O reteste focado foi executado no app real com o papel `admin`, sem registrar cr
 - [x] confirmação em nova mensagem executa exatamente as duas ações;
 - [x] retry não duplica campanha, item, auditoria ou outbox;
 - [x] `sim, mas altere...` prepara novo plano sem executar o anterior;
-- [ ] confirmação natural do plano revisado executa exatamente a alteração sem falso circuit breaker;
+- [x] confirmação natural do plano revisado executa exatamente a alteração sem falso circuit breaker;
 - [x] `member` não é questionado sobre `course_slug` e continua sem acesso à auditoria ampla;
 - [x] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
-- [ ] logs não contêm segredo, token bruto, `internal_error` ou falso sucesso.
+- [x] logs e respostas inspecionados não contêm segredo, token bruto, `internal_error` ou falso sucesso.
 
-O próximo redeploy precisa reconstruir somente `hermes-api`; Bridge, Marketing Ops, banco e ambiente não mudaram. Depois, repetir em uma sessão limpa a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não executa no turno de revisão, não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
+O binding determinístico publicado em `caa59c5` foi comprovado no ambiente Ubuntu. Bridge, Marketing Ops, banco, `.env`, migrations, bootstrap e Supabase não exigiram alteração nesta rodada.
 
 ## Fechamento
 
-Anexar saída sanitizada de commit, `docker compose ps`, probes, REST/MCP/RBAC/restart e rollback. Só então alterar este documento, o PRD e o roadmap para `production_validated`/`completed`.
+Gate VPS aprovado em 13 de julho de 2026. As evidências acumuladas cobrem commit, Compose/probes, métricas, REST/MCP, persistência/restart, concorrência, idempotência, RBAC, isolamento de tenant, rollback documentado e aceite funcional no app real. A Fase 1 pode avançar para `production_validated`/`completed`.

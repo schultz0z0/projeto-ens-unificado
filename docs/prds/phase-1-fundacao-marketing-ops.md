@@ -1,6 +1,6 @@
 # PRD — Fase 1: Fundação do Marketing Ops
 
-- **Status:** ready_for_production
+- **Status:** completed
 - **Dependência:** Fase 0 concluída
 - **Resultado:** domínio operacional seguro e compartilhado pelo frontend e pelo Hermes
 
@@ -246,4 +246,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS confirmou probes, CRUD controlado, auditoria/outbox, persistência, concorrência, idempotência, matriz `admin`/`manager`/`member` e isolamento de tenant. A terceira rodada confirmou a Bridge e o circuit breaker, mas revelou dependência residual da cópia do `plan_token` pelo modelo e tentativa de executar revisão no mesmo turno. O runtime agora vincula o último plano preparado e exige confirmação posterior também antes da chamada MCP; o gate completo e a imagem Linux passaram. A Fase 1 só fica `completed` após redeploy do `hermes-api`, reteste administrativo focado e fechamento em `docs/phase-1/vps-validation.md`.
+Os gates local e VPS estão aprovados e a fundação está `production_validated`/`completed`. A homologação confirmou probes e métricas, CRUD controlado, auditoria/outbox, persistência, concorrência, idempotência, matriz `admin`/`manager`/`member`, isolamento de tenant e confirmação conversacional. No aceite final, o runtime vinculou o último plano revisado, recusou execução antecipada, aceitou a confirmação natural em mensagem posterior e persistiu exatamente uma alteração auditada. A Fase 1 foi concluída em 13 de julho de 2026 e a Fase 2 pode ser iniciada sem ativar as superfícies de frontend mantidas fora deste escopo.

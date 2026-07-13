@@ -1,6 +1,6 @@
 # Rastreabilidade da Fase 1
 
-- **Estado:** `ready_for_production`
+- **Estado:** `production_validated`
 - **Data da revisão:** 2026-07-13
 - **Escopo:** Supabase do app, Marketing Ops, Bridge, Hermes, frontend e Compose
 - **Exclusão confirmada:** nenhuma migration ou operação no Supabase do RAG
@@ -23,7 +23,7 @@
 | F1-RF-12 Eventos | outbox `domain_events` atômico | domínio e falha injetada sem órfão | `validated_locally` |
 | F1-RF-13 Erros | `AppError`, envelopes REST e resultados MCP | foundation/rest/MCP tests | `validated_locally` |
 | F1-RF-14 Capacidades | endpoints/tools com contrato e flags | capabilities e kill-switch tests | `validated_locally` |
-| F1-RF-15 Confirmação conversacional | plano assinado stateless, confirmação inequívoca posterior e gate do executor Hermes | testes de token/executor/MCP, ciclo multi-ação, retry idempotente e imagens Linux | `validated_locally` |
+| F1-RF-15 Confirmação conversacional | plano assinado stateless, confirmação inequívoca posterior e gate do executor Hermes | testes de token/executor/MCP, ciclo multi-ação, retry idempotente, imagem Linux e aceite final no app de produção | `production_validated` |
 
 ## Backlog P0
 
@@ -42,7 +42,7 @@
 | F1-011 | tools MCP v1 sobre o mesmo domínio | `validated_locally` |
 | F1-012 | writes atômicos e idempotentes | `validated_locally` |
 | F1-013 | logs redigidos e métricas de request/latência/erro/outbox | `validated_locally` |
-| F1-014 | gate único, backup, rollback e checklist VPS | `validation_in_progress` |
+| F1-014 | gate único, backup, rollback e checklist VPS | `production_validated` |
 
 ## Backlog P1
 
@@ -68,4 +68,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é publicar o binding determinístico do plano no `hermes-api` e repetir a confirmação administrativa na VPS Ubuntu. Produção já comprovou pedido casual, ausência de persistência antes da confirmação, execução simples e multi-ação, auditoria por `admin`/`manager`, recusa por `member`, isolamento de tenant, preparo correto de plano revisado, confirmação natural reconhecida e circuit breaker saudável. A terceira rodada falhou fechada porque o modelo copiou um `plan_token` inválido e, em sessão isolada, tentou executar uma revisão no mesmo turno. As duas condições possuem regressão TDD, gate canônico e imagem Linux aprovados. Até o redeploy e o reteste focado, o estado geral não deve avançar para `production_validated` ou `completed`.
+Todos os requisitos P0 e o gate VPS estão fechados. O app de produção comprovou pedido casual, ausência de persistência antes da confirmação, execução simples e multi-ação, auditoria por `admin`/`manager`, recusa por `member`, isolamento de tenant, revisão de plano sem execução antecipada, confirmação natural posterior, binding determinístico do plano e circuit breaker saudável. A leitura final confirmou uma única alteração persistida e auditada. A Fase 1 está `production_validated` e concluída em 13 de julho de 2026.
