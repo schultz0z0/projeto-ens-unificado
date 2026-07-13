@@ -102,6 +102,20 @@ Uma nova rodada foi executada no app real com os três papéis, sem registrar cr
 - regressão: gate canônico com código zero, Bridge 69/69, Hermes 13/13 e teste dedicado do circuit breaker 4/4 dentro da imagem Linux. `app-bridge` e `hermes-api` foram reconstruídos sem cache e inspecionados;
 - nenhuma escrita ocorreu nesta rodada e não houve alteração em `.env`, migrations, bootstrap ou Supabase.
 
+### Terceira rodada após o commit `394eaf5`
+
+O reteste focado foi executado no app real com o papel `admin`, sem registrar credenciais e com logout ao final:
+
+- leitura inicial confirmou a campanha `59feb425-f973-4537-83f1-db3826c53825` com nome `Aceite Admin Multiação Fase 1`, status `draft` e versão 1;
+- o primeiro preparo teve uma recusa transitória, mas o retry na mesma sessão preparou o plano sem abrir o circuit breaker;
+- `Sim, mas use o nome “Aceite Admin Multiação Fase 1 Validado”` preparou um plano revisado e pediu confirmação; uma leitura independente confirmou nome e versão ainda inalterados;
+- `Confirmo o plano revisado.` alcançou `marketing_ops_execute_plan_v1`, comprovando a correção da Bridge, mas a execução recebeu `plan_invalid`; nenhuma mutação ocorreu e o servidor não foi marcado como indisponível;
+- uma sessão limpa reproduziu o comportamento variável: após `Sim, mas use outro nome`, o Hermes preparou o novo plano e tentou executá-lo no mesmo turno. A delegação corretamente não possuía confirmação e o backend recusou todas as tentativas;
+- causa raiz: o runtime substituía a delegação efêmera, mas deixava o modelo copiar `plan_token` do tool result entre turnos. O resultado MCP possui envelope de conteúdo não confiável e duas camadas JSON, tornando essa cópia não determinística;
+- correção local: ambos os executores extraem e vinculam o token do último `prepare_plan` bem-sucedido. Uma guarda fail-closed bloqueia `execute_plan` sem confirmação atual e instrui a não repetir no mesmo turno; o backend continua verificando assinatura e todos os vínculos de autoridade;
+- regressão: gate canônico em 256 segundos com código zero, Hermes 15/15 e imagem Linux sem cache com 19/19 testes combinados;
+- nenhuma escrita ocorreu e não houve alteração em `.env`, migrations, bootstrap, Marketing Ops, Bridge ou Supabase.
+
 ## Hardening pendente de deploy
 
 - [x] commit de confirmação conversacional presente na VPS;
@@ -117,7 +131,7 @@ Uma nova rodada foi executada no app real com os três papéis, sem registrar cr
 - [x] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
 - [ ] logs não contêm segredo, token bruto, `internal_error` ou falso sucesso.
 
-O próximo redeploy precisa reconstruir somente `app-bridge` e `hermes-api`; o código, banco e ambiente do `marketing-ops` não mudaram. Depois, repetir a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
+O próximo redeploy precisa reconstruir somente `hermes-api`; Bridge, Marketing Ops, banco e ambiente não mudaram. Depois, repetir em uma sessão limpa a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não executa no turno de revisão, não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
 
 ## Fechamento
 

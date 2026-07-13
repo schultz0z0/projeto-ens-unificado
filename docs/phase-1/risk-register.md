@@ -21,5 +21,6 @@
 | R-14 | confirmação repetida autoriza escrita alheia ao plano recém-executado | contrato e skill encerram após o resultado do Marketing Ops e proíbem oferecer ou interpretar a repetição para Graph, RAG, artefatos ou memória validada | baixo após redeploy | Plataforma/Produto |
 | R-15 | confirmação natural inequívoca não recebe delegação autorizada por estar fora da allowlist exata | allowlist inclui as duas formulações observadas em produção e mantém teste negativo para confirmação condicional | baixo após redeploy | Plataforma |
 | R-16 | rejeições de negócio MCP abrem o circuit breaker e simulam indisponibilidade de servidor saudável | respostas estruturadas de tool comprovam conectividade e zeram o contador; somente erros de transporte/sessão/conexão incrementam o breaker; suíte dedicada 4/4 na imagem Linux | baixo após redeploy | Plataforma |
+| R-17 | modelo copia `plan_token` inválido ou tenta executar revisão no mesmo turno | runtime vincula o token do último preparo bem-sucedido e bloqueia `execute_plan` sem `confirmation_intent` atual; backend mantém todas as verificações criptográficas; imagem Linux 19/19 | baixo após redeploy | Plataforma |
 
 Nenhum risco residual autoriza escrever no Supabase do RAG ou pular backup, dry-run e confirmação do projeto do app.

@@ -31,7 +31,9 @@ from agent.display import (
 from agent.tool_guardrails import ToolGuardrailDecision
 from agent.marketing_ops_delegation import (
     bind_current_marketing_ops_delegation,
+    bind_latest_marketing_ops_plan_token,
     marketing_ops_direct_mutation_block_message,
+    marketing_ops_plan_execution_block_message,
 )
 from agent.tool_dispatch_helpers import (
     _is_destructive_command,
@@ -340,6 +342,11 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
             function_args,
             getattr(agent, "ephemeral_system_prompt", None),
         )
+        function_args = bind_latest_marketing_ops_plan_token(
+            function_name,
+            function_args,
+            messages,
+        )
 
         # ── Block evaluation (BEFORE checkpoint preflight) ───────────
         # We must know whether the tool will execute before touching
@@ -363,9 +370,15 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
             )
         else:
             confirmation_block = marketing_ops_direct_mutation_block_message(function_name)
+            if confirmation_block is None:
+                confirmation_block = marketing_ops_plan_execution_block_message(
+                    function_name,
+                    function_args,
+                )
             if confirmation_block is not None:
+                confirmation_error_type = confirmation_block.split(":", 1)[0]
                 block_result = json.dumps(
-                    {"error": {"code": "confirmation_plan_required", "message": confirmation_block}},
+                    {"error": {"code": confirmation_error_type, "message": confirmation_block}},
                     ensure_ascii=False,
                 )
                 _emit_terminal_post_tool_call(
@@ -376,7 +389,7 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
                     effective_task_id=effective_task_id,
                     tool_call_id=getattr(tool_call, "id", "") or "",
                     status="blocked",
-                    error_type="confirmation_plan_required",
+                    error_type=confirmation_error_type,
                     error_message=confirmation_block,
                     middleware_trace=list(middleware_trace),
                 )
@@ -869,6 +882,11 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             function_args,
             getattr(agent, "ephemeral_system_prompt", None),
         )
+        function_args = bind_latest_marketing_ops_plan_token(
+            function_name,
+            function_args,
+            messages,
+        )
 
         # Check plugin hooks for a block directive before executing.
         _block_msg: Optional[str] = None
@@ -881,6 +899,13 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             if _block_msg is not None:
                 _block_error_type = "confirmation_plan_required"
             else:
+                _block_msg = marketing_ops_plan_execution_block_message(
+                    function_name,
+                    function_args,
+                )
+                if _block_msg is not None:
+                    _block_error_type = "confirmation_required"
+            if _block_msg is None:
                 try:
                     from hermes_cli.plugins import get_pre_tool_call_block_message
                     _block_msg = get_pre_tool_call_block_message(

@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com matriz real aprovada e dois hardenings finais validados localmente, aguardando redeploy e reteste administrativo focado
+- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com matriz real aprovada e binding determinístico do plano validado localmente, aguardando redeploy do Hermes e reteste administrativo focado
 - **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. A segunda rodada automatizada aprovou os fluxos de `member` e `manager` e comprovou que a revisão administrativa agora prepara um novo plano sem mutação antecipada. A execução final revelou duas falhas fechadas: frases naturais de confirmação fora da allowlist conservadora da Bridge e erros de negócio MCP contabilizados indevidamente como indisponibilidade. Ambos os hardenings passaram no gate local completo e nas imagens Linux; resta redeploy de `app-bridge`/`hermes-api` e reteste administrativo focado para fechar a fase.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. Os fluxos de `member` e `manager`, o preparo revisado sem mutação e a confirmação natural já foram comprovados. A terceira rodada mostrou que o modelo ainda podia copiar um `plan_token` inválido e tentar executar um plano revisado no mesmo turno. O runtime agora vincula o último plano preparado e bloqueia deterministicamente execução sem confirmação posterior; o gate completo e a imagem Linux passaram. Resta redeploy somente do `hermes-api` e reteste administrativo focado para fechar a fase.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

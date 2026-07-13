@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import sys
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 VENDOR_ROOT = Path(__file__).resolve().parents[2] / "vendor" / "hermes-agent"
 sys.path.insert(0, str(VENDOR_ROOT))
 
+from agent import marketing_ops_delegation as marketing_ops  # noqa: E402
 from agent.marketing_ops_delegation import (  # noqa: E402
     REDACTED_DELEGATION,
     bind_current_marketing_ops_delegation,
@@ -24,6 +26,27 @@ def delegation_prompt(token: str) -> str:
         "Use apenas a delegacao deste turno.\n"
         "[/MARKETING_OPS_DELEGATION]"
     )
+
+
+def delegation_token(*, confirmation_intent: bool) -> str:
+    payload = base64.urlsafe_b64encode(
+        json.dumps({"confirmation_intent": confirmation_intent}).encode()
+    ).decode().rstrip("=")
+    return f"header.{payload}.signature"
+
+
+def prepared_plan_result(token: str) -> dict[str, str]:
+    result = json.dumps({"result": json.dumps({"plan_token": token})})
+    return {
+        "role": "tool",
+        "name": "mcp_nexus_marketing_ops_marketing_ops_prepare_plan_v1",
+        "content": (
+            '<untrusted_tool_result source="mcp_nexus_marketing_ops_marketing_ops_prepare_plan_v1">\n'
+            "External data.\n\n"
+            f"{result}\n"
+            "</untrusted_tool_result>"
+        ),
+    }
 
 
 def test_current_turn_delegation_replaces_model_selected_stale_token() -> None:
@@ -53,6 +76,43 @@ def test_delegation_binding_does_not_touch_unrelated_tools() -> None:
     )
 
     assert bound == original
+
+
+def test_execute_plan_binds_latest_successfully_prepared_token() -> None:
+    assert hasattr(marketing_ops, "bind_latest_marketing_ops_plan_token")
+    original = {"plan_token": "model-selected-invalid-token"}
+    messages = [
+        prepared_plan_result("old-plan-token-that-is-long-enough"),
+        prepared_plan_result("revised-plan-token-that-is-long-enough"),
+    ]
+
+    bound = marketing_ops.bind_latest_marketing_ops_plan_token(
+        "mcp_nexus_marketing_ops_marketing_ops_execute_plan_v1",
+        original,
+        messages,
+    )
+
+    assert bound["plan_token"] == "revised-plan-token-that-is-long-enough"
+    assert original["plan_token"] == "model-selected-invalid-token"
+
+
+def test_execute_plan_requires_current_turn_confirmation() -> None:
+    assert hasattr(marketing_ops, "marketing_ops_plan_execution_block_message")
+    tool_name = "mcp_nexus_marketing_ops_marketing_ops_execute_plan_v1"
+
+    blocked = marketing_ops.marketing_ops_plan_execution_block_message(
+        tool_name,
+        {"delegation_token": delegation_token(confirmation_intent=False)},
+    )
+    allowed = marketing_ops.marketing_ops_plan_execution_block_message(
+        tool_name,
+        {"delegation_token": delegation_token(confirmation_intent=True)},
+    )
+
+    assert blocked is not None
+    assert "confirmation_required" in blocked
+    assert "do not retry" in blocked.lower()
+    assert allowed is None
 
 
 def test_tool_call_redaction_handles_nested_json_arguments() -> None:
@@ -118,6 +178,8 @@ def test_runtime_wires_binding_into_both_tool_execution_paths() -> None:
     state = (VENDOR_ROOT / "hermes_state.py").read_text()
 
     assert executor.count("bind_current_marketing_ops_delegation(") >= 3
+    assert executor.count("bind_latest_marketing_ops_plan_token(") >= 2
+    assert executor.count("marketing_ops_plan_execution_block_message(") >= 2
     assert "candidate_args = next_args if isinstance(next_args, dict)" in executor
     assert "redact_marketing_ops_delegations(tool_calls)" in state
 
