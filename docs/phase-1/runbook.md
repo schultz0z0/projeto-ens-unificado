@@ -133,6 +133,23 @@ PY
 
 Esperado: `messages_with_raw_delegation: 0`. A presença da chave com o valor `[REDACTED_EPHEMERAL_DELEGATION]` é segura e não deve ser contada como credencial bruta.
 
+## Confirmação conversacional do Marketing Ops
+
+Leituras continuam imediatas. Criação e alteração feitas pelo Hermes seguem obrigatoriamente `preparar plano -> apresentar ações -> aguardar -> executar após confirmação explícita`. O plano fica somente no chat e em um JWT assinado; preparar o plano não grava campanha, item, auditoria, evento ou idempotência no domínio.
+
+Uma confirmação autoriza o plano inteiro, uma única vez. Frases fechadas como `confirmo o plano` e `pode executar o plano` são aceitas. Mensagens com negação, condição ou alteração, como `sim, mas troque o título`, não carregam intenção de confirmação; o Hermes deve preparar um plano substituto e pedir nova confirmação.
+
+O fluxo reutiliza as chaves `NEXUS_MARKETING_OPS_DELEGATION_*`. Não exige migration, bootstrap, deploy Supabase nem atualização obrigatória do `.env`. O contrato conversacional da Bridge fica ativo por padrão. Para rollback emergencial apenas da instrução textual, `NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED=false` pode ser definido no `app-bridge`; isso não desativa os gates de segurança do runtime e do Marketing Ops.
+
+Erros específicos:
+
+- `confirmation_required`: não houve confirmação explícita em mensagem posterior;
+- `plan_expired`: o plano deve ser preparado novamente;
+- `plan_invalid`: assinatura, ator, tenant, sessão ou payload não coincidem;
+- `confirmation_plan_required`: o Hermes tentou uma tool mutável de baixo nível e deve usar o fluxo de plano.
+
+Após deploy, o aceite mínimo deve usar linguagem casual: solicitar campanha e item na mesma mensagem, verificar que o Hermes apenas apresenta o plano, confirmar em uma mensagem seguinte e então consultar os objetos e auditoria. Um segundo cenário deve pedir uma alteração após a apresentação; nada pode ser gravado até o novo plano ser confirmado.
+
 ## Diagnóstico
 
 - `/health`: processo HTTP vivo, sem consultar banco.

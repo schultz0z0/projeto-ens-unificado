@@ -12,12 +12,12 @@
 | pgTAP | 2 arquivos, 97 testes, todos aprovados |
 | DB lint | zero erro |
 | Security advisor | zero erro; 15 warnings legados do baseline público |
-| Marketing Ops unit/integration | 42 testes + 2 E2E de container aprovados |
-| Bridge | 66 testes aprovados |
-| Hermes runtime/config | 10 testes Python aprovados |
+| Marketing Ops unit/integration | 52 testes, incluindo 2 E2E de container, aprovados |
+| Bridge | 69 testes aprovados |
+| Hermes runtime/config | 13 testes Python aprovados |
 | Frontend SDK | 125 testes totais, typecheck, lint sem erros e build aprovados |
 | Compose | base e produção válidos; structural check aprovado |
-| Imagem Linux | `projeto-ens-marketing-ops:latest` construída com Node 22 Alpine e audit limpo |
+| Imagens Linux | `marketing-ops`, `app-bridge` e `hermes-api` construídas sem cache e inspecionadas |
 | Container | `/health` e `/ready` aprovados |
 | REST E2E | GoTrue real, create, replay idempotente, update v2 e stale 409 |
 | MCP E2E | cliente oficial leu via tool o registro criado por REST |
@@ -32,3 +32,27 @@ Em 13 de julho de 2026, a correção de renovação da delegação passou novame
 Ainda em 13 de julho, o diagnóstico do teste 14 comprovou que versões anteriores da Bridge colocavam o bloco de delegação dentro da mensagem persistida pelo SessionDB do Hermes. A correção foi conduzida por TDD: os testes falharam antes da implementação e passaram depois, cobrindo o transporte em `system_message` efêmero e o scrub idempotente de uma ou várias delegações legadas sem alterar o restante da conversa. O reset, lint, advisors e os 97 pgTAP passaram no WSL; como o executável `docker` dessa sessão apontava para um socket Podman inativo, o restante do gate foi executado no Docker Desktop nativo e aprovou Marketing Ops 38 testes + 2 E2E, Bridge 66, Hermes 5, RAG 26, Graph 18, Artifact 8 e frontend 125, além de typechecks, builds, audits, Compose base/produção e `git diff --check`. As imagens Linux de `app-bridge` e `hermes-api` foram reconstruídas e inspecionadas. As portas Supabase temporárias foram restauradas e não houve alteração de `.env`, migration ou Supabase remoto.
 
 O teste manual 15 revelou um segundo canal legado: argumentos de tools eram persistidos em `messages.tool_calls`, embora `messages.content` já estivesse limpo. O novo teste TDD reproduz um token obsoleto selecionado do histórico e comprova que o executor o substitui pelo token efêmero do turno. A persistência e todos os caminhos de replay do SessionDB, além do snapshot JSON opcional, redigem valores `delegation_token`; o scrub de startup cobre `content` e `tool_calls`. A validação fresca aprovou Marketing Ops 42 testes + 2 E2E, Bridge 66, Hermes 10, RAG 26, Graph 18, Artifact 8, frontend 125, 97 pgTAP, typechecks, builds, audits e Compose base/produção. Uma suíte MCP com Supabase local real aprovou os equivalentes aos testes manuais 15–20. As imagens Linux de Bridge e Hermes foram reconstruídas sem cache e executaram os gates de binding, persistência/replay e scrub. As portas temporárias foram restauradas; `.env`, migrations e Supabase remoto não foram alterados.
+
+## Hardening de confirmação conversacional
+
+Em 13 de julho de 2026, a inconsistência observada com um usuário `member` foi transformada em requisito de produto: o Hermes não pode exigir campos técnicos e não pode persistir nenhuma mutação antes de uma confirmação humana única para o plano completo. A implementação foi conduzida por TDD e validou plano assinado stateless, vínculo a ator/tenant/sessão, expiração e rotação de chave, recusa no mesmo turno, recusa sem confirmação, adulteração, execução de campanha mais item, idempotência de retry, resultado parcial e bloqueio das tools mutáveis diretas no runtime.
+
+A rodada final aprovou:
+
+| Gate | Resultado final |
+|---|---|
+| Supabase do app local | migrations/seed aplicados em portas alternativas temporárias; RAG não acessado |
+| pgTAP | 97/97 |
+| DB lint | zero erro |
+| Security advisor | zero erro; 15 warnings legados |
+| Marketing Ops | 52/52, incluindo 2 E2E contra o container Linux; typecheck e build aprovados |
+| Chat Bridge | 69/69; audit de produção com zero vulnerabilidades |
+| Hermes runtime | 13/13 |
+| RAG MCP | 26/26; typecheck e build aprovados |
+| Graph MCP | 18/18; typecheck e build aprovados |
+| Artifact Server | 8/8 |
+| Frontend | 125/125; typecheck, lint sem erros e build aprovados |
+| Imagens Linux | `marketing-ops`, `app-bridge` e `hermes-api` reconstruídas sem cache e inspecionadas |
+| Compose | configurações base e produção aprovadas |
+
+Os 10 avisos de lint e o alerta de chunk do frontend são preexistentes. Durante a inspeção da imagem, um pipe legado mascarava a falha do `npm ci` do `pptx-studio`; o Dockerfile passou a usar o Chromium do sistema e a falhar fechado, e a imagem final confirmou `dom-to-pptx` instalado. O Supabase descartável foi encerrado, as portas oficiais foram restauradas e não houve alteração em `.env`, migrations ou Supabase remoto. O hardening está `validated_locally`; o fechamento da Fase 1 continua condicionado ao redeploy e ao aceite conversacional na VPS.

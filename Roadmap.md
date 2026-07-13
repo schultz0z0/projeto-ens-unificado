@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com homologação VPS em andamento
+- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com hardening conversacional validado localmente e aceite VPS pendente
 - **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; deploy VPS iniciado em 12 de julho e homologação em andamento. Persistência de domínio foi confirmada em 13 de julho. Os testes 13 e 14 passaram, mas o teste 15 revelou uma delegação antiga ainda recuperável em `messages.tool_calls`. A correção determinística no executor Hermes, a redaction de persistência/replay e os cenários 15–20 foram validados localmente; resta redeploy e repetição final na VPS para fechar a fase.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS já confirmou probes, persistência, criação, leitura, atualização, item, auditoria, conflito de versão, idempotência e comportamento `admin`/`member`. O uso real revelou que o Hermes ainda podia pedir campos técnicos e executar mutações sem uma confirmação consolidada. O hardening de plano assinado, confirmação única posterior e bloqueio de mutações diretas passou integralmente no ambiente local; resta redeploy e aceite conversacional final na VPS para fechar a fase.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 
@@ -213,6 +213,11 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 - idempotência e concorrência otimista;
 - eventos de domínio e instrumentação;
 - health checks e contratos.
+- plano conversacional stateless e assinado para mutações do Hermes;
+- confirmação humana única para o plano completo, sem persistência antecipada;
+- skill de operador e gate no runtime contra mutações diretas.
+
+As três últimas entregas são um hardening da superfície de escrita da Fase 1 e antecipam somente a base mínima do Hermes Campaign Operator e da autorização humana. Fases 4 e 5 permanecem planejadas e não são consideradas iniciadas ou concluídas por esta antecipação.
 
 **Saída:** frontend e Hermes acessam com segurança o mesmo domínio básico.
 

@@ -65,8 +65,27 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - o scrub de startup agora cobre tanto blocos em `content` quanto valores aninhados em `tool_calls`, sem imprimir tokens e de forma idempotente;
 - os equivalentes aos passos 15–20 passaram via MCP contra o Supabase local real; a regressão completa aprovou Marketing Ops 42 + 2 E2E, Bridge 66, Hermes 10, RAG 26, Graph 18, Artifact 8, frontend 125 e 97 pgTAP;
 - imagens Linux de Bridge e Hermes foram reconstruídas sem cache; dentro da imagem, os gates confirmaram binding do token atual, ausência de token bruto na persistência/replay e scrub legado.
+- após o redeploy dessa correção, o passo 15 criou o item `35bcfb4f-ff73-47ff-b6b4-6477e907fb11` na campanha de teste;
+- o passo 16 retornou os três eventos esperados de criação da campanha, atualização e criação do item para o usuário `admin`;
+- o passo 17 recusou `expected_version=1` com `version_conflict`/409 e uma nova leitura confirmou nome e versão inalterados;
+- o passo 18 repetiu a chave `teste-idempotencia-fase1-producao`, devolveu a mesma campanha `bd6aacc8-5602-4ad1-9a7f-bf90e9bc8bc4` e a listagem confirmou ausência de duplicata;
+- no passo 19, um usuário `member` criou e listou a própria campanha, enquanto a auditoria ampla foi corretamente recusada com 403. A primeira pergunta indevida por `course_slug` expôs uma inconsistência conversacional, embora a operação tenha funcionado após o usuário pedir vínculo nulo.
 
-Os passos 13 e 14 estão aprovados. O passo 15 anterior falhou antes da mutação e deve ser repetido após o novo deploy; depois seguem 16–20 para auditoria, concorrência, idempotência, matriz de permissões e isolamento de tenant. A correção não exige `.env`, migration, bootstrap ou deploy Supabase.
+Os testes de domínio 13–19 acima comprovaram a fundação, mas o pedido técnico de `course_slug` mostrou que o comportamento ainda não era adequado para usuários reais. O hardening posterior transforma toda mutação do Hermes em um plano conversacional com confirmação única e está aprovado apenas localmente. O teste de tenant forjado possui cobertura automatizada local, mas o aceite final de produção será repetido junto com o fluxo conversacional. A correção não exige `.env`, migration, bootstrap ou deploy Supabase.
+
+## Hardening pendente de deploy
+
+- [ ] commit de confirmação conversacional presente na VPS;
+- [ ] imagens `marketing-ops`, `app-bridge` e `hermes-api` reconstruídas sem cache;
+- [ ] build do `hermes-api` instala `dom-to-pptx` sem baixar Chromium redundante e não mascara falha do `npm ci`;
+- [ ] pedido casual com campanha e item apresenta um único plano e informa que nada foi salvo;
+- [ ] consulta antes da confirmação comprova ausência dos objetos;
+- [ ] confirmação em nova mensagem executa exatamente as duas ações;
+- [ ] retry não duplica campanha, item, auditoria ou outbox;
+- [ ] `sim, mas altere...` prepara novo plano sem executar o anterior;
+- [ ] `member` não é questionado sobre `course_slug` e continua sem acesso à auditoria ampla;
+- [ ] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
+- [ ] logs não contêm segredo, token bruto, `internal_error` ou falso sucesso.
 
 ## Fechamento
 

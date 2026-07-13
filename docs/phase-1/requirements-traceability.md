@@ -12,7 +12,7 @@
 | F1-RF-01 Serviço independente | `services/marketing-ops`, Dockerfile e Compose | foundation tests, build Linux, health/readiness | `validated_locally` |
 | F1-RF-02 API autenticada | `auth/*`, middleware REST e transação com ator | auth/rest/E2E e pgTAP cross-tenant | `validated_locally` |
 | F1-RF-03 Interface MCP | MCP Streamable HTTP e tools `*_v1` | MCP contract tests e E2E com cliente oficial | `validated_locally` |
-| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, transporte efêmero, binding no executor, redaction no SessionDB e verificador Marketing Ops | Bridge 66, Hermes 10 e MCP replay/scope/TTL/refresh | `validated_locally` |
+| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, transporte efêmero, binding no executor, redaction no SessionDB e verificador Marketing Ops | Bridge 69, Hermes 13 e MCP replay/scope/TTL/refresh | `validated_locally` |
 | F1-RF-05 Modelo transacional | schemas `marketing_ops` e `marketing_ops_private` | reset limpo e 97 testes pgTAP | `validated_locally` |
 | F1-RF-06 Tenant | memberships confiáveis, RLS e contexto transacional | testes de tenant forjado e segundo tenant | `validated_locally` |
 | F1-RF-07 Papéis | matriz member/manager/admin | testes positivos e negativos de RBAC/RLS | `validated_locally` |
@@ -23,6 +23,7 @@
 | F1-RF-12 Eventos | outbox `domain_events` atômico | domínio e falha injetada sem órfão | `validated_locally` |
 | F1-RF-13 Erros | `AppError`, envelopes REST e resultados MCP | foundation/rest/MCP tests | `validated_locally` |
 | F1-RF-14 Capacidades | endpoints/tools com contrato e flags | capabilities e kill-switch tests | `validated_locally` |
+| F1-RF-15 Confirmação conversacional | plano assinado stateless, confirmação inequívoca posterior e gate do executor Hermes | testes de token/executor/MCP, ciclo multi-ação, retry idempotente e imagens Linux | `validated_locally` |
 
 ## Backlog P0
 
@@ -67,4 +68,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é redeployar o hardening e concluir os testes manuais 15–20 na VPS Ubuntu. Os equivalentes 15–20 passaram por MCP contra o Supabase local real, mas o teste 15 de produção anterior revelou tokens legados em `messages.tool_calls`, canal que a consulta antiga de `content` não cobria. Até a nova evidência VPS, o estado geral não deve avançar para `production_validated` ou `completed`.
+O único gate aberto da Fase 1 é publicar o hardening de confirmação conversacional e repetir o aceite na VPS Ubuntu. Os testes manuais anteriores comprovaram item, auditoria, conflito de versão, idempotência e matriz `admin`/`member`; a nova rodada deve confirmar que um pedido casual gera somente um plano, que nada é persistido antes de uma confirmação única posterior e que alterações no plano exigem nova confirmação. Até essa evidência VPS, o estado geral não deve avançar para `production_validated` ou `completed`.

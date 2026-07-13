@@ -4,6 +4,8 @@ USER root
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     HERMES_SOURCE_DIR=/opt/hermes-src \
     NEXUS_GRAPH_BACKEND=neo4j-multi-tenant-user \
@@ -73,11 +75,11 @@ RUN chmod +x /opt/graphify_backend.py /opt/memory_store.py /opt/memory_api.py /o
 # Esta skill precisa de: dom-to-pptx, adm-zip, playwright (Node)
 COPY vendor/hermes-agent/skills/marketing/pptx-studio /opt/pptx-studio
 WORKDIR /opt/pptx-studio
-RUN npm ci --omit=dev --no-audit --no-fund 2>&1 | tail -5 && \
-    node scripts/patch-dom-to-pptx.js 2>&1 | tail -5 && \
+RUN npm ci --omit=dev --no-audit --no-fund && \
+    node scripts/patch-dom-to-pptx.js && \
     # Compila primitives/ em dist/styles.css (timeline, comparison, quote, stats)
     # Se primitives/*.css mudar, o dist/ e regenerado automaticamente
-    npm run build:css:full 2>&1 | tail -3 && \
+    npm run build:css:full && \
     # Smoke test: garantir que o build gerou output nao-vazio
     test -s primitives/dist/styles.css && echo "OK: dist/styles.css compiled ($(wc -c < primitives/dist/styles.css) bytes)" || \
         (echo "FATAL: dist/styles.css vazio apos build" && exit 1) && \

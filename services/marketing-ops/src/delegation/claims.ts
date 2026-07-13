@@ -8,6 +8,7 @@ export const delegationClaimsSchema = z.object({
   chat_session_id: z.string().uuid(),
   run_id: z.string().uuid(),
   correlation_id: z.string().uuid(),
+  confirmation_intent: z.boolean().optional().default(false),
   jti: z.string().min(8),
   iat: z.number().int(),
   nbf: z.number().int(),

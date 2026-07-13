@@ -11,6 +11,7 @@ sys.path.insert(0, str(VENDOR_ROOT))
 from agent.marketing_ops_delegation import (  # noqa: E402
     REDACTED_DELEGATION,
     bind_current_marketing_ops_delegation,
+    marketing_ops_direct_mutation_block_message,
     redact_marketing_ops_delegations,
 )
 from hermes_state import SessionDB  # noqa: E402
@@ -119,3 +120,42 @@ def test_runtime_wires_binding_into_both_tool_execution_paths() -> None:
     assert executor.count("bind_current_marketing_ops_delegation(") >= 3
     assert "candidate_args = next_args if isinstance(next_args, dict)" in executor
     assert "redact_marketing_ops_delegations(tool_calls)" in state
+
+
+def test_runtime_blocks_direct_marketing_ops_mutations_but_allows_plan_flow() -> None:
+    for tool_name in (
+        "nexus_marketing_ops_marketing_ops_create_campaign_draft_v1",
+        "nexus_marketing_ops_marketing_ops_update_campaign_draft_v1",
+        "nexus_marketing_ops_marketing_ops_create_campaign_item_draft_v1",
+    ):
+        blocked = marketing_ops_direct_mutation_block_message(tool_name)
+        assert blocked is not None
+        assert "confirmation_plan_required" in blocked
+
+    for tool_name in (
+        "nexus_marketing_ops_marketing_ops_list_campaigns_v1",
+        "nexus_marketing_ops_marketing_ops_prepare_plan_v1",
+        "nexus_marketing_ops_marketing_ops_execute_plan_v1",
+        "nexus_rag_search",
+    ):
+        assert marketing_ops_direct_mutation_block_message(tool_name) is None
+
+    executor = (VENDOR_ROOT / "agent" / "tool_executor.py").read_text()
+    assert executor.count("marketing_ops_direct_mutation_block_message(") >= 3
+
+
+def test_bundled_marketing_ops_operator_skill_teaches_casual_confirmed_planning() -> None:
+    skill = (
+        VENDOR_ROOT
+        / "skills"
+        / "marketing"
+        / "marketing-ops-operator"
+        / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    assert "course_slug" in skill
+    assert "optional" in skill.lower()
+    assert "marketing_ops_prepare_plan_v1" in skill
+    assert "marketing_ops_execute_plan_v1" in skill
+    assert "single confirmation" in skill.lower()
+    assert "nada foi salvo ainda" in skill.lower()

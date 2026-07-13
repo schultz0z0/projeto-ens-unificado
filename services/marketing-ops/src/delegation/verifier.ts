@@ -6,6 +6,7 @@ import { delegationClaimsSchema, type DelegationKeyring } from './claims.js';
 
 export interface DelegatedActor extends Actor {
   scopes: string[]; jti: string; correlationId: string; chatSessionId: string; runId: string;
+  confirmationIntent: boolean; expiresAt: number;
 }
 export interface MutationUse { name: string; idempotencyKey: string; requestHash: string }
 
@@ -14,6 +15,20 @@ export interface DelegationVerifierDependencies {
   keyring: DelegationKeyring;
   operation?: MutationUse;
   refreshDelegation?: (token: string) => Promise<string>;
+}
+
+export async function consumeDelegationUse(
+  pool: Pool,
+  actor: DelegatedActor,
+  operation: MutationUse
+): Promise<void> {
+  const used = await pool.query(`
+    insert into marketing_ops.delegation_uses
+      (jti, tenant_id, actor_id, operation, idempotency_key, request_hash, expires_at)
+    values ($1, $2, $3, $4, $5, $6, to_timestamp($7))
+    on conflict do nothing returning jti
+  `, [actor.jti, actor.tenantId, actor.userId, operation.name, operation.idempotencyKey, operation.requestHash, actor.expiresAt]);
+  if (used.rowCount === 0) throw appError('delegation_replay', 409, 'Delegation was already consumed');
 }
 
 export async function verifyDelegation(
@@ -52,19 +67,14 @@ export async function verifyDelegation(
     const actor = await resolveActor(deps.pool, claims.sub, claims.tenant_id);
     if (actor.role !== claims.actor_role) throw appError('delegation_stale', 403, 'Delegated role no longer matches current membership');
 
-    if (deps.operation) {
-      const used = await deps.pool.query(`
-        insert into marketing_ops.delegation_uses
-          (jti, tenant_id, actor_id, operation, idempotency_key, request_hash, expires_at)
-        values ($1, $2, $3, $4, $5, $6, to_timestamp($7))
-        on conflict do nothing returning jti
-      `, [claims.jti, actor.tenantId, claims.sub, deps.operation.name, deps.operation.idempotencyKey, deps.operation.requestHash, claims.exp]);
-      if (used.rowCount === 0) throw appError('delegation_replay', 409, 'Delegation was already consumed');
-    }
-    return {
+    const delegatedActor: DelegatedActor = {
       ...actor, scopes: claims.scopes, jti: claims.jti, correlationId: claims.correlation_id,
-      chatSessionId: claims.chat_session_id, runId: claims.run_id
+      chatSessionId: claims.chat_session_id, runId: claims.run_id,
+      confirmationIntent: claims.confirmation_intent,
+      expiresAt: claims.exp
     };
+    if (deps.operation) await consumeDelegationUse(deps.pool, delegatedActor, deps.operation);
+    return delegatedActor;
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw appError('delegation_invalid', 401, 'Delegation is invalid or expired');

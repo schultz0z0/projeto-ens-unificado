@@ -29,7 +29,10 @@ from agent.display import (
     _detect_tool_failure,
 )
 from agent.tool_guardrails import ToolGuardrailDecision
-from agent.marketing_ops_delegation import bind_current_marketing_ops_delegation
+from agent.marketing_ops_delegation import (
+    bind_current_marketing_ops_delegation,
+    marketing_ops_direct_mutation_block_message,
+)
 from agent.tool_dispatch_helpers import (
     _is_destructive_command,
     _is_multimodal_tool_result,
@@ -218,6 +221,12 @@ def _run_agent_tool_execution_middleware(
     tool_call_id: str,
     execute,
 ) -> tuple[Any, dict]:
+    confirmation_block = marketing_ops_direct_mutation_block_message(function_name)
+    if confirmation_block is not None:
+        return json.dumps(
+            {"error": {"code": "confirmation_plan_required", "message": confirmation_block}},
+            ensure_ascii=False,
+        ), function_args
     observed_args = function_args
 
     def _execute(next_args: dict) -> Any:
@@ -353,6 +362,25 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
                 middleware_trace=list(middleware_trace),
             )
         else:
+            confirmation_block = marketing_ops_direct_mutation_block_message(function_name)
+            if confirmation_block is not None:
+                block_result = json.dumps(
+                    {"error": {"code": "confirmation_plan_required", "message": confirmation_block}},
+                    ensure_ascii=False,
+                )
+                _emit_terminal_post_tool_call(
+                    agent,
+                    function_name=function_name,
+                    function_args=function_args,
+                    result=block_result,
+                    effective_task_id=effective_task_id,
+                    tool_call_id=getattr(tool_call, "id", "") or "",
+                    status="blocked",
+                    error_type="confirmation_plan_required",
+                    error_message=confirmation_block,
+                    middleware_trace=list(middleware_trace),
+                )
+        if _ts_scope_block is None and block_result is None:
             try:
                 from hermes_cli.plugins import get_pre_tool_call_block_message
                 block_message = get_pre_tool_call_block_message(
@@ -849,20 +877,24 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             _block_msg = _ts_scope_block
             _block_error_type = "tool_scope_block"
         else:
-            try:
-                from hermes_cli.plugins import get_pre_tool_call_block_message
-                _block_msg = get_pre_tool_call_block_message(
-                    function_name,
-                    function_args,
-                    task_id=effective_task_id or "",
-                    session_id=getattr(agent, "session_id", "") or "",
-                    tool_call_id=getattr(tool_call, "id", "") or "",
-                    turn_id=getattr(agent, "_current_turn_id", "") or "",
-                    api_request_id=getattr(agent, "_current_api_request_id", "") or "",
-                    middleware_trace=list(middleware_trace),
-                )
-            except Exception:
-                pass
+            _block_msg = marketing_ops_direct_mutation_block_message(function_name)
+            if _block_msg is not None:
+                _block_error_type = "confirmation_plan_required"
+            else:
+                try:
+                    from hermes_cli.plugins import get_pre_tool_call_block_message
+                    _block_msg = get_pre_tool_call_block_message(
+                        function_name,
+                        function_args,
+                        task_id=effective_task_id or "",
+                        session_id=getattr(agent, "session_id", "") or "",
+                        tool_call_id=getattr(tool_call, "id", "") or "",
+                        turn_id=getattr(agent, "_current_turn_id", "") or "",
+                        api_request_id=getattr(agent, "_current_api_request_id", "") or "",
+                        middleware_trace=list(middleware_trace),
+                    )
+                except Exception:
+                    pass
 
         _guardrail_block_decision: ToolGuardrailDecision | None = None
         if _block_msg is None:

@@ -10,7 +10,9 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 - **Dependência:** Fase 0 `production_validated`
 - **PRD:** [phase-1-fundacao-marketing-ops.md](../prds/phase-1-fundacao-marketing-ops.md)
 - **Design técnico:** [design.md](design.md)
+- **Design do hardening conversacional:** [conversational-confirmation-design.md](conversational-confirmation-design.md)
 - **Plano:** [2026-07-11-phase-1-marketing-ops-implementation.md](../plans/2026-07-11-phase-1-marketing-ops-implementation.md)
+- **Plano do hardening:** [2026-07-13-phase-1-marketing-ops-conversational-confirmation.md](../plans/2026-07-13-phase-1-marketing-ops-conversational-confirmation.md)
 
 ## Contrato de ambientes
 
@@ -29,8 +31,9 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 | Baseline e ambiente Supabase local | `validated_locally` ([evidência](supabase-baseline.md)) |
 | Supabase do app em produção | `deployed_and_validated` ([evidência](supabase-deployment.md)) |
 | Schema, RLS, grants e pgTAP | `validated_locally` (97 testes de banco) |
-| Serviço, API e MCP | `validated_locally` (42 testes + 2 E2E) |
-| Hardening da Bridge e delegação Hermes | `validated_locally` (Bridge 66 e Hermes 10 testes; token do turno vinculado no executor, redaction de `tool_calls` e scrub legado; redeploy VPS pendente) |
+| Serviço, API e MCP | `validated_locally` (52 testes, incluindo 2 E2E de container) |
+| Hardening da Bridge e delegação Hermes | `validated_locally` (Bridge 69 e Hermes 13 testes; token do turno vinculado no executor, redaction de `tool_calls`, scrub legado e build fail-closed do `pptx-studio`) |
+| Confirmação conversacional de mutações | `validated_locally` (plano assinado sem persistência, confirmação única posterior, execução exata e bloqueio de tools diretas; redeploy VPS pendente) |
 | SDK frontend e feature flags | `validated_locally` (125 testes frontend) |
 | Compose, observabilidade e runbooks | `validated_locally` |
 | Gate local | `validated_locally` ([evidência](local-validation.md)) |

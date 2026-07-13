@@ -16,6 +16,8 @@ import {
 
   isNexusHumanizerResponseContractEnabled,
 
+  isNexusMarketingOpsOperatorContractEnabled,
+
   isNexusMemoryRoutingContractEnabled,
 
   NEXUS_HUMANIZER_RESPONSE_CONTRACT,
@@ -230,6 +232,21 @@ test("buildHermesSessionChatRequest prepends native memory routing without disab
 
 });
 
+test("buildHermesSessionChatRequest enforces conversational planning for Marketing Ops", () => {
+  const request = buildHermesSessionChatRequest({
+    messageText: "crie uma campanha de volta as aulas e um email de boas-vindas",
+    attachments: [],
+    nexusContext: { tenantId: "ens", userId: "user-1", userRole: "member" },
+  });
+
+  assert.match(request.system_message, /Contrato Nexus Marketing Ops/);
+  assert.match(request.system_message, /marketing_ops_prepare_plan_v1/);
+  assert.match(request.system_message, /marketing_ops_execute_plan_v1/);
+  assert.match(request.system_message, /Nada e persistido antes da confirmacao/);
+  assert.match(request.system_message, /course_slug e opcional/);
+  assert.doesNotMatch(request.message, /Contrato Nexus Marketing Ops/);
+});
+
 test("buildHermesSessionChatRequest includes validated work role rules for member sessions", () => {
 
   const request = buildHermesSessionChatRequest({
@@ -317,15 +334,21 @@ test("all Nexus response contracts can be disabled by environment flags for roll
 
   const previousHumanizer = process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED;
 
+  const previousMarketingOps = process.env.NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED;
+
   process.env.NEXUS_MEMORY_ROUTING_CONTRACT_ENABLED = "false";
 
   process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED = "false";
+
+  process.env.NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED = "false";
 
   try {
 
     assert.equal(isNexusMemoryRoutingContractEnabled(), false);
 
     assert.equal(isNexusHumanizerResponseContractEnabled(), false);
+
+    assert.equal(isNexusMarketingOpsOperatorContractEnabled(), false);
 
     const request = buildHermesSessionChatRequest({
 
@@ -350,6 +373,10 @@ test("all Nexus response contracts can be disabled by environment flags for roll
     if (previousHumanizer === undefined) delete process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED;
 
     else process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED = previousHumanizer;
+
+    if (previousMarketingOps === undefined) delete process.env.NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED;
+
+    else process.env.NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED = previousMarketingOps;
 
   }
 

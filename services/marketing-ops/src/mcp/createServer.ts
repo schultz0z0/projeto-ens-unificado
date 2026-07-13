@@ -3,11 +3,14 @@ import type { Pool } from 'pg';
 import { z } from 'zod/v4';
 import type { DelegationKeyring } from '../delegation/claims.js';
 import { appError } from '../errors.js';
-import { verifyDelegation } from '../delegation/verifier.js';
+import { consumeDelegationUse, verifyDelegation } from '../delegation/verifier.js';
 import { createCampaignDraft, updateCampaignDraft } from '../domain/campaigns.js';
 import { hashCanonicalPayload } from '../domain/hash.js';
 import { createCampaignItemDraft } from '../domain/items.js';
 import { getCampaign, listAuditEvents, listCampaigns } from '../domain/queries.js';
+import { marketingOpsPlanActionsSchema, requiredScopesForPlan } from '../plans/contracts.js';
+import { executeMarketingOpsPlan } from '../plans/executor.js';
+import { issueMarketingOpsPlan, verifyMarketingOpsPlan } from '../plans/token.js';
 import { delegationToken, idempotencyKey, uuid } from './contracts.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
 
@@ -20,7 +23,12 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   const server = new McpServer({ name: 'nexus-marketing-ops', version: '1.0.0' });
   server.registerTool('marketing_ops_capabilities_v1', {
     title: 'Marketing Ops capabilities', description: 'Returns contract version and active feature flags.', inputSchema: {}
-  }, async () => jsonToolResult({ contractVersion: 1, features: deps.features, delegationRequiredForDomain: true }));
+  }, async () => jsonToolResult({
+    contractVersion: 1,
+    features: deps.features,
+    delegationRequiredForDomain: true,
+    conversationalConfirmationRequiredForWrites: true
+  }));
 
   server.registerTool('marketing_ops_list_campaigns_v1', {
     title: 'List campaigns', description: 'Lists campaigns visible to the delegated actor.',
@@ -62,13 +70,73 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
     } catch (error) { return errorToolResult(error); }
   });
 
+  server.registerTool('marketing_ops_prepare_plan_v1', {
+    title: 'Prepare Marketing Ops mutation plan',
+    description: 'Validates and signs an exact mutation plan without writing domain data. Present every action naturally and ask the user for one explicit confirmation before execution.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      actions: marketingOpsPlanActionsSchema
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
+      const scopes = requiredScopesForPlan(input.actions);
+      const actor = await verifyDelegation(input.delegation_token, scopes, deps);
+      const prepared = await issueMarketingOpsPlan(actor, input.actions, deps.keyring);
+      return jsonToolResult({
+        plan_token: prepared.token,
+        plan: {
+          id: prepared.planId,
+          hash: prepared.planHash,
+          expires_at: new Date(prepared.expiresAt * 1000).toISOString(),
+          actions: prepared.actions
+        },
+        persisted: false,
+        confirmation_required: true
+      });
+    } catch (error) { return errorToolResult(error); }
+  });
+
+  server.registerTool('marketing_ops_execute_plan_v1', {
+    title: 'Execute confirmed Marketing Ops plan',
+    description: 'Executes only the exact signed plan from an earlier turn. Requires a fresh delegation proving one explicit user confirmation for the complete plan.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      plan_token: z.string().min(20)
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
+      const actor = await verifyDelegation(input.delegation_token, [], deps);
+      const plan = await verifyMarketingOpsPlan(input.plan_token, actor, deps.keyring);
+      const scopes = requiredScopesForPlan(plan.actions);
+      if (!scopes.every((scope) => actor.scopes.includes(scope))) {
+        throw appError('delegation_scope_denied', 403, 'Delegation does not grant the required plan scopes');
+      }
+      await consumeDelegationUse(deps.pool, actor, {
+        name: `plan.execute:${plan.plan_id}`,
+        idempotencyKey: plan.plan_id,
+        requestHash: plan.plan_hash
+      });
+      const data = await executeMarketingOpsPlan({
+        pool: deps.pool,
+        actor,
+        correlationId: actor.correlationId,
+        origin: 'mcp'
+      }, plan);
+      return jsonToolResult({ data });
+    } catch (error) { return errorToolResult(error); }
+  });
+
   server.registerTool('marketing_ops_create_campaign_draft_v1', {
-    title: 'Create campaign draft', description: 'Creates an idempotent campaign draft for the delegated actor.',
+    title: 'Create campaign draft',
+    description: 'Creates an idempotent campaign draft for the delegated actor. course_slug is optional; omit it to create an unlinked draft and do not ask for it unless the user requests a course link.',
     inputSchema: {
       delegation_token: delegationToken,
       idempotency_key: idempotencyKey,
       name: z.string().min(1).max(200),
       course_slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,127}$/).optional()
+        .describe('Optional course slug. Omit it to create an unlinked draft; never require it from the user.')
     }
   }, async (input) => {
     try {

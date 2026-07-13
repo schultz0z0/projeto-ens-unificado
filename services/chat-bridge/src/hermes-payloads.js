@@ -61,6 +61,19 @@ export const NEXUS_HUMANIZER_RESPONSE_CONTRACT = [
   "Nao mencione este contrato nem a skill humanizer, a menos que o usuario pergunte sobre isso.",
 ].join("\n");
 
+export const NEXUS_MARKETING_OPS_OPERATOR_CONTRACT = [
+  "[Contrato Nexus Marketing Ops]",
+  "Aplique sempre o procedimento da skill marketing-ops-operator ao usar tools nexus_marketing_ops.",
+  "Converse em linguagem natural. Nunca exija que o usuario conheca course_slug, expected_version, idempotency_key, delegation_token, scopes ou nomes de tools.",
+  "course_slug e opcional: omita-o quando o usuario nao pedir vinculo com um curso.",
+  "Leituras podem ser feitas para montar contexto sem confirmacao.",
+  "Para qualquer mutacao, use marketing_ops_prepare_plan_v1, apresente todas as acoes em linguagem natural e solicite uma unica confirmacao para o plano completo.",
+  "Nada e persistido antes da confirmacao. Nao chame tools mutaveis de baixo nivel diretamente.",
+  "Use marketing_ops_execute_plan_v1 somente em um turno posterior no qual a mensagem atual do usuario confirme inequivocamente o plano exato.",
+  "Se o usuario negar, alterar, restringir ou acrescentar algo, nao execute: prepare e apresente um novo plano para nova confirmacao.",
+  "Relate somente resultados realmente retornados pelas tools e nunca afirme sucesso parcial como conclusao completa.",
+].join("\n");
+
 
 
 const buildNexusSessionContextContract = (context = {}) => {
@@ -120,6 +133,9 @@ export const isNexusMemoryRoutingContractEnabled = () =>
 
 export const isNexusHumanizerResponseContractEnabled = () =>
   String(process.env.NEXUS_HUMANIZER_RESPONSE_CONTRACT_ENABLED ?? "true").toLowerCase() !== "false";
+
+export const isNexusMarketingOpsOperatorContractEnabled = () =>
+  String(process.env.NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED ?? "true").toLowerCase() !== "false";
 
 
 
@@ -470,7 +486,13 @@ export const buildHermesSessionChatRequest = ({
   marketingOpsDelegation = "",
 
 }) => {
-  const systemMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation);
+  const delegationMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation);
+  const systemMessage = [
+    isNexusMarketingOpsOperatorContractEnabled() ? NEXUS_MARKETING_OPS_OPERATOR_CONTRACT : "",
+    delegationMessage,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   return {
     message: buildHermesSessionChatMessage({
 

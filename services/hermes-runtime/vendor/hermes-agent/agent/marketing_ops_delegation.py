@@ -8,6 +8,13 @@ from typing import Any
 
 
 REDACTED_DELEGATION = "[REDACTED_EPHEMERAL_DELEGATION]"
+_DIRECT_MUTATION_TOOLS = frozenset(
+    {
+        "marketing_ops_create_campaign_draft_v1",
+        "marketing_ops_update_campaign_draft_v1",
+        "marketing_ops_create_campaign_item_draft_v1",
+    }
+)
 
 _DELEGATION_BLOCK = re.compile(
     r"\[MARKETING_OPS_DELEGATION\][\s\S]*?"
@@ -44,6 +51,18 @@ def bind_current_marketing_ops_delegation(
         return function_args
 
     return {**function_args, "delegation_token": token}
+
+
+def marketing_ops_direct_mutation_block_message(function_name: str) -> str | None:
+    """Force Hermes mutations through the signed plan/confirmation contract."""
+    normalized_name = str(function_name or "").lower()
+    if any(normalized_name.endswith(tool_name) for tool_name in _DIRECT_MUTATION_TOOLS):
+        return (
+            "confirmation_plan_required: direct Marketing Ops mutations are blocked. "
+            "Use marketing_ops_prepare_plan_v1, present the complete plan to the user, "
+            "then use marketing_ops_execute_plan_v1 only after explicit confirmation."
+        )
+    return None
 
 
 def redact_marketing_ops_delegations(value: Any) -> Any:

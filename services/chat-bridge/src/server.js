@@ -19,6 +19,7 @@ import {
 } from "./tenant-context.js";
 import { validateBridgeRuntimeConfig } from "./runtime-config.js";
 import {
+  isExplicitMarketingOpsConfirmation,
   isValidDelegationRefreshKey,
   issueMarketingOpsDelegation,
   redactMarketingOpsDelegation,
@@ -756,6 +757,7 @@ const issueRunMarketingOpsDelegation = async (run) => {
     chatSessionId: run.chat_session_id,
     runId: run.id,
     correlationId: run.id,
+    confirmationIntent: isExplicitMarketingOpsConfirmation(run.message_text),
   }, scopes, config.marketingOpsDelegation);
 };
 

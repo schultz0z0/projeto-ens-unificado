@@ -97,6 +97,12 @@ Erros devem ter código estável, mensagem segura, status HTTP/MCP, correlation 
 
 API e MCP devem informar versão e capacidades habilitadas para permitir rollout compatível.
 
+### F1-RF-15 — Confirmação conversacional de mutações
+
+Quando o Hermes iniciar uma criação ou alteração no Marketing Ops, deve primeiro preparar e apresentar em linguagem natural um plano completo, sem persistir objetos de domínio. Uma única confirmação explícita do usuário, enviada em mensagem posterior, autoriza exatamente as ações assinadas naquele plano. Negação, ambiguidade ou alteração solicitada invalida a confirmação e exige novo plano. Campos técnicos como `course_slug`, `expected_version`, `idempotency_key`, scopes e tokens devem ser administrados internamente.
+
+Este requisito é um hardening da superfície mínima de escrita entregue na Fase 1. Ele antecipa apenas o mecanismo básico de operação conversacional e autorização humana previsto nas Fases 4 e 5, sem entregar o escopo completo dessas fases.
+
 ## Modelo inicial
 
 ### `campaigns`
@@ -170,6 +176,9 @@ Campos finais e SQL serão decididos no design técnico, mantendo estes invarian
 - [x] Logs permitem rastrear API/MCP até o banco.
 - [x] Nenhum secret aparece no bundle do frontend.
 - [x] Migrations possuem caminho de rollback validado.
+- [x] Pedido casual de múltiplas ações gera um único plano sem persistência antecipada.
+- [x] Execução exige confirmação explícita em mensagem posterior e aplica somente o plano assinado.
+- [x] Retry confirmado é idempotente e mutações diretas do Hermes são bloqueadas.
 
 ## Testes
 
@@ -229,6 +238,7 @@ Token inválido, tenant forjado, papel forjado, delegação expirada, replay, ma
 - serviço em TypeScript/Node.js 22 com Express;
 - delegação JWT HS256 curta, versionada, com rotação por `kid` e anti-replay;
 - delegação entregue por prompt efêmero da run, vinculada no executor e redigida de `tool_calls`; scrub seletivo de conteúdo e argumentos legados do SessionDB;
+- mutações do Hermes passam por plano JWT stateless, confirmação única posterior e execução idempotente; as chaves de delegação existentes assinam também o plano;
 - auditoria append-only sem expurgo automático nesta fase;
 - publicação inicial por outbox PostgreSQL, preparada para polling futuro.
 
@@ -236,4 +246,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS já confirmou probes, criação, leitura, atualização, auditoria/outbox, persistência após restart e os passos 13 e 14. O teste 15 revelou que a checagem anterior cobria somente `messages.content`, enquanto argumentos antigos ainda existiam em `messages.tool_calls`. O binding determinístico e a redaction foram aprovados localmente, inclusive nos equivalentes 15–20; a Fase 1 só fica `completed` após redeploy, repetição dos testes na VPS e fechamento em `docs/phase-1/vps-validation.md`.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS já confirmou probes, CRUD controlado, auditoria/outbox, persistência, concorrência, idempotência e parte da matriz de papéis. O binding determinístico, a redaction e o novo ciclo de plano mais confirmação passaram localmente; a Fase 1 só fica `completed` após redeploy, aceite conversacional na VPS e fechamento em `docs/phase-1/vps-validation.md`.

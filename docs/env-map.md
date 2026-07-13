@@ -55,6 +55,7 @@ A env central usa `NEXUS_*`. O código dos serviços ainda recebe os nomes antig
 | `NEXUS_CHAT_ALLOWED_ORIGINS` | `BRIDGE_ALLOWED_ORIGINS` |
 | `NEXUS_CHAT_BRIDGE_PORT` | `BRIDGE_PORT` em dev local |
 | `NEXUS_BRIDGE_HERMES_ARTIFACTS_DIR` | `HERMES_ARTIFACTS_BRIDGE_DIR` |
+| `NEXUS_MARKETING_OPS_OPERATOR_CONTRACT_ENABLED` | flag opcional da instrução conversacional da Bridge; padrão `true`, rollback emergencial `false` |
 
 ## Artifact Server
 

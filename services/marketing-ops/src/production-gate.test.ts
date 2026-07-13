@@ -42,23 +42,25 @@ afterAll(async () => {
 async function delegation(
   role: keyof typeof users,
   scopes: string[],
-  tenantId = tenantEns
+  tenantId = tenantEns,
+  options: { chatSessionId?: string; jti?: string; confirmationIntent?: boolean } = {}
 ) {
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({
     tenant_id: tenantId,
     actor_role: role,
     scopes,
-    chat_session_id: randomUUID(),
+    chat_session_id: options.chatSessionId ?? randomUUID(),
     run_id: randomUUID(),
     correlation_id: randomUUID(),
+    confirmation_intent: options.confirmationIntent === true,
     contract_version: 1
   })
     .setProtectedHeader({ alg: 'HS256', kid: 'v2' })
     .setIssuer('nexus-chat-bridge')
     .setAudience('nexus-marketing-ops')
     .setSubject(users[role])
-    .setJti(randomUUID())
+    .setJti(options.jti ?? randomUUID())
     .setIssuedAt(now)
     .setNotBefore(now - 1)
     .setExpirationTime(now + 60)
@@ -76,6 +78,43 @@ async function call(name: string, args: Record<string, unknown>) {
 }
 
 describe('Phase 1 production manual tests 15-20', () => {
+  it('requires a later explicit confirmation for one conversational multi-action plan', async () => {
+    const chatSessionId = randomUUID();
+    const campaignName = `Plano conversacional local ${randomUUID()}`;
+    const preparation = await delegation(
+      'member',
+      ['campaign:read', 'campaign:write', 'item:write'],
+      tenantEns,
+      { chatSessionId, jti: randomUUID() }
+    );
+    const prepared = await call('marketing_ops_prepare_plan_v1', {
+      delegation_token: preparation,
+      actions: [
+        { type: 'campaign.create_draft', ref: 'campaign-main', name: campaignName },
+        {
+          type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
+          title: 'Email conversacional', content: { text: 'Conteudo confirmado' }
+        }
+      ]
+    });
+    expect(prepared.payload).toMatchObject({ persisted: false, confirmation_required: true });
+    const before = await pool.query('select count(*)::int as count from marketing_ops.campaigns where name = $1', [campaignName]);
+    expect(before.rows[0].count).toBe(0);
+
+    const confirmed = await delegation(
+      'member',
+      ['campaign:read', 'campaign:write', 'item:write'],
+      tenantEns,
+      { chatSessionId, jti: randomUUID(), confirmationIntent: true }
+    );
+    const executed = await call('marketing_ops_execute_plan_v1', {
+      delegation_token: confirmed,
+      plan_token: prepared.payload.plan_token
+    });
+    expect(executed.payload.data).toMatchObject({ status: 'completed' });
+    expect(executed.payload.data.completed).toHaveLength(2);
+  });
+
   it('15-16 creates an item and exposes its audit event to admin', async () => {
     const campaign = await call('marketing_ops_create_campaign_draft_v1', {
       delegation_token: await delegation('admin', ['campaign:write']),

@@ -22,6 +22,8 @@ A Fase 1 adiciona um serviço independente `marketing-ops` que oferece REST ao f
 | Persistência | PostgreSQL direto com transações e contexto RLS por requisição |
 | Delegação Hermes | JWT interno HS256 curto, versionado, com rotação por `kid`, claims mínimos, transporte efêmero e binding determinístico no executor |
 | Anti-replay | `jti` associado à mutação e à idempotency key; reuso divergente é conflito |
+| Confirmação conversacional | toda mutação iniciada pelo Hermes exige plano assinado e uma confirmação explícita em mensagem posterior |
+| Plano pendente | stateless no token assinado; nenhum objeto de domínio é persistido antes da confirmação |
 | Eventos | tabela outbox `domain_events`, preparada para polling com `FOR UPDATE SKIP LOCKED` |
 | Retenção de auditoria | sem expurgo automático na Fase 1; registros permanecem imutáveis até política de compliance posterior |
 | Rollout | flags desligadas por padrão; leitura e escrita ativadas separadamente |
@@ -63,8 +65,23 @@ A Chat Bridge emite um token com:
 - `scopes` mínimos;
 - `chat_session_id`, `run_id` e `correlation_id`;
 - `jti`, `iat`, `nbf`, `exp`, `kid` e `contract_version=1`.
+- `confirmation_intent`, derivado pela Bridge apenas de uma frase inequívoca do usuário no turno atual.
 
 O token expira em no máximo 120 segundos. A Bridge nunca persiste o token em seu ledger e redige diagnósticos. Na Session API, o token atual é enviado em `system_message`, convertido pelo Hermes em prompt efêmero da run; ele não entra em `message` nem no SessionDB. Um scrub idempotente no startup do `hermes-api` remove exclusivamente blocos técnicos `[MARKETING_OPS_DELEGATION]` persistidos por versões anteriores e preserva o restante das mensagens. Se o JWT expirar durante o raciocínio do Hermes, o Marketing Ops faz um único pedido interno autenticado ao Bridge. A renovação só ocorre enquanto a run pai estiver `running`, dentro da janela máxima configurada, com usuário, tenant, papel, sessão e correlação idênticos; o `jti` é preservado para não enfraquecer o anti-replay. O Marketing Ops então verifica novamente assinatura, key id, issuer, audience, janela temporal, scopes, membership atual e replay antes de qualquer acesso de domínio.
+
+### Confirmação conversacional de mutações
+
+O Hermes traduz pedidos casuais para ações internas sem pedir `course_slug`, `expected_version`, `idempotency_key`, scopes ou tokens ao usuário. Leituras continuam imediatas. Para criar ou alterar objetos, o runtime aceita somente este ciclo:
+
+1. `marketing_ops_prepare_plan_v1` valida as ações e emite um plano JWT assinado, vinculado a ator, tenant, sessão e hash do payload;
+2. o Hermes apresenta todas as ações em linguagem natural, informa que nada foi salvo e encerra o turno;
+3. uma nova mensagem inequívoca, como `confirmo o plano`, faz a Bridge assinar `confirmation_intent=true` na delegação fresca;
+4. `marketing_ops_execute_plan_v1` verifica plano, confirmação, identidade, sessão, scopes, prazo e anti-replay antes da execução sequencial;
+5. cada ação usa idempotência derivada de `plan_id` e índice, permitindo retry seguro e resultado parcial explícito.
+
+Confirmação no mesmo turno da preparação é recusada. Negação, ambiguidade ou pedido de alteração não confirmam o plano; o Hermes deve preparar e apresentar uma nova versão. O executor do fork bloqueia as três tools mutáveis de baixo nível, enquanto leituras e as tools `prepare`/`execute` permanecem disponíveis. As tools v1 de baixo nível continuam registradas apenas por compatibilidade de contrato e testes diretos, não como caminho do Hermes.
+
+Esse mecanismo é hardening da Fase 1 porque protege as mutações fundacionais já expostas. Ele antecipa somente o mínimo do operador da Fase 4 e da autorização humana da Fase 5; não entrega nem conclui essas fases.
 
 ### Domínio transacional
 
@@ -120,8 +137,10 @@ Mutações exigem `Idempotency-Key`; todas aceitam/retornam `X-Correlation-Id`. 
 - `marketing_ops_create_campaign_draft`;
 - `marketing_ops_update_campaign_draft`;
 - `marketing_ops_create_item_draft`.
+- `marketing_ops_prepare_plan_v1`;
+- `marketing_ops_execute_plan_v1`.
 
-Health/capabilities não recebem autoridade de negócio. Todas as tools de domínio exigem delegação; mutações também exigem idempotency key e scope específico. REST e MCP chamam os mesmos comandos/queries.
+Health/capabilities não recebem autoridade de negócio. Todas as tools de domínio exigem delegação; mutações também exigem idempotency key e scope específico. REST e MCP chamam os mesmos comandos/queries. O contrato de capabilities sinaliza `conversationalConfirmationRequiredForWrites=true` para clientes MCP.
 
 ## Erros
 

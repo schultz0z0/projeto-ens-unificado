@@ -98,6 +98,68 @@ test("delegation has exact short-lived claims and active kid", async () => {
   assert.equal(verified.payload.exp - verified.payload.iat, 90);
 });
 
+test("explicit conversational confirmation is conservative", () => {
+  assert.equal(typeof marketingOpsDelegation.isExplicitMarketingOpsConfirmation, "function");
+  for (const message of [
+    "Confirmo",
+    "Aprovo o plano",
+    "Pode executar",
+    "Sim, pode executar o plano",
+  ]) {
+    assert.equal(marketingOpsDelegation.isExplicitMarketingOpsConfirmation(message), true, message);
+  }
+  for (const message of [
+    "Sim, mas altere o titulo",
+    "Nao execute",
+    "Pode executar somente o email",
+    "Talvez",
+    "Crie a campanha",
+  ]) {
+    assert.equal(marketingOpsDelegation.isExplicitMarketingOpsConfirmation(message), false, message);
+  }
+});
+
+test("delegation signs and refreshes the confirmation intent from the user turn", async () => {
+  const issued = await issueMarketingOpsDelegation({
+    userId: activeRun.user_id,
+    tenantId: activeRun.tenant_id,
+    role: activeRun.user_role,
+    chatSessionId: activeRun.chat_session_id,
+    runId: activeRun.id,
+    correlationId: activeRun.id,
+    confirmationIntent: true,
+  }, ["campaign:read", "campaign:write"], refreshKeyring);
+  assert.equal(decodeJwt(issued).confirmation_intent, true);
+
+  const issuedAt = Math.floor(Date.now() / 1000) - 120;
+  const expiredConfirmed = await new SignJWT({
+    tenant_id: activeRun.tenant_id,
+    actor_role: activeRun.user_role,
+    scopes: ["campaign:read", "campaign:write"],
+    chat_session_id: activeRun.chat_session_id,
+    run_id: activeRun.id,
+    correlation_id: activeRun.id,
+    confirmation_intent: true,
+    contract_version: 1,
+  })
+    .setProtectedHeader({ alg: "HS256", kid: refreshKeyring.activeKid })
+    .setIssuer(refreshKeyring.issuer)
+    .setAudience(refreshKeyring.audience)
+    .setSubject(activeRun.user_id)
+    .setJti("confirmed-delegation-jti")
+    .setIssuedAt(issuedAt)
+    .setNotBefore(issuedAt - 1)
+    .setExpirationTime(issuedAt + 90)
+    .sign(new TextEncoder().encode(refreshKeyring.activeKey));
+
+  const refreshed = await marketingOpsDelegation.refreshMarketingOpsDelegation(
+    expiredConfirmed,
+    activeRun,
+    refreshKeyring,
+  );
+  assert.equal(decodeJwt(refreshed).confirmation_intent, true);
+});
+
 test("technical delegation is redacted before persistence or logging", () => {
   const fakeToken = "eyJhbGciOiJIUzI1NiIsImtpZCI6InYyIn0.payload.signature";
   const message = withMarketingOpsDelegation("Create a campaign", fakeToken);

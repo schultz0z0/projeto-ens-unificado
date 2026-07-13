@@ -17,15 +17,23 @@ async function token(
   key = activeKey,
   kid = 'v2',
   ttlSeconds = 60,
-  issuedAt = Math.floor(Date.now() / 1000)
+  issuedAt = Math.floor(Date.now() / 1000),
+  jti = randomUUID()
 ) {
   return new SignJWT({
     tenant_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', actor_role: 'member',
     scopes: ['campaign:read', 'campaign:write'], chat_session_id: randomUUID(), run_id: randomUUID(),
     correlation_id: randomUUID(), contract_version: 1, ...overrides
   }).setProtectedHeader({ alg: 'HS256', kid }).setIssuer('nexus-chat-bridge').setAudience('nexus-marketing-ops')
-    .setSubject('11111111-1111-4111-8111-111111111111').setJti(randomUUID()).setIssuedAt(issuedAt).setNotBefore(issuedAt - 1).setExpirationTime(issuedAt + ttlSeconds)
+    .setSubject('11111111-1111-4111-8111-111111111111').setJti(jti).setIssuedAt(issuedAt).setNotBefore(issuedAt - 1).setExpirationTime(issuedAt + ttlSeconds)
     .sign(new TextEncoder().encode(key));
+}
+
+function toolPayload(result: unknown): Record<string, any> {
+  const content = (result as { content?: unknown } | null)?.content;
+  const first = (content as Array<{ text?: unknown }> | undefined)?.[0];
+  if (!first || typeof first.text !== 'string') throw new Error('tool_text_result_missing');
+  return JSON.parse(first.text);
 }
 
 describe('delegation and MCP', () => {
@@ -82,8 +90,117 @@ describe('delegation and MCP', () => {
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
     const tools = await client.listTools();
     expect(tools.tools.map((tool) => tool.name)).toContain('marketing_ops_create_campaign_draft_v1');
+    const createCampaign = tools.tools.find((tool) => tool.name === 'marketing_ops_create_campaign_draft_v1') as {
+      description?: string;
+      inputSchema: { required?: string[]; properties?: Record<string, unknown> };
+    } | undefined;
+    expect(createCampaign?.description).toContain('course_slug is optional');
+    expect(createCampaign?.inputSchema.required ?? []).not.toContain('course_slug');
+    expect(createCampaign?.inputSchema.properties?.course_slug).toMatchObject({
+      description: expect.stringContaining('Optional')
+    });
     const result = await client.callTool({ name: 'marketing_ops_capabilities_v1', arguments: {} });
     expect(result.isError).not.toBe(true);
+    await client.close();
+    await server.close();
+  });
+
+  it('prepares without writes and executes one exact multi-action plan after confirmation', async () => {
+    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const client = new Client({ name: 'plan-test-client', version: '1.0.0' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+    const tools = await client.listTools();
+    expect(tools.tools.map((tool) => tool.name)).toEqual(expect.arrayContaining([
+      'marketing_ops_prepare_plan_v1',
+      'marketing_ops_execute_plan_v1'
+    ]));
+
+    const sessionId = randomUUID();
+    const preparationJti = randomUUID();
+    const campaignName = `Conversational plan ${randomUUID()}`;
+    const preparationToken = await token({
+      chat_session_id: sessionId,
+      scopes: ['campaign:read', 'campaign:write', 'item:write'],
+      confirmation_intent: false
+    }, activeKey, 'v2', 60, Math.floor(Date.now() / 1000), preparationJti);
+    const actions = [
+      { type: 'campaign.create_draft', ref: 'campaign-main', name: campaignName },
+      {
+        type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
+        title: 'Boas-vindas', content: { text: 'Ola' }
+      }
+    ];
+    const prepared = await client.callTool({
+      name: 'marketing_ops_prepare_plan_v1',
+      arguments: { delegation_token: preparationToken, actions }
+    });
+    expect(prepared.isError).not.toBe(true);
+    const preparedPayload = toolPayload(prepared);
+    const before = await pool.query('select count(*)::int as count from marketing_ops.campaigns where name = $1', [campaignName]);
+    expect(before.rows[0].count).toBe(0);
+
+    const sameTurn = await client.callTool({
+      name: 'marketing_ops_execute_plan_v1',
+      arguments: { delegation_token: preparationToken, plan_token: preparedPayload.plan_token }
+    });
+    expect(toolPayload(sameTurn).error.code).toBe('confirmation_required');
+
+    const laterUnconfirmedToken = await token({
+      chat_session_id: sessionId,
+      scopes: ['campaign:read', 'campaign:write', 'item:write'],
+      confirmation_intent: false
+    }, activeKey, 'v2', 60, Math.floor(Date.now() / 1000), randomUUID());
+    const laterUnconfirmed = await client.callTool({
+      name: 'marketing_ops_execute_plan_v1',
+      arguments: { delegation_token: laterUnconfirmedToken, plan_token: preparedPayload.plan_token }
+    });
+    expect(toolPayload(laterUnconfirmed).error.code).toBe('confirmation_required');
+
+    const confirmationToken = await token({
+      chat_session_id: sessionId,
+      scopes: ['campaign:read', 'campaign:write', 'item:write'],
+      confirmation_intent: true
+    }, activeKey, 'v2', 60, Math.floor(Date.now() / 1000), randomUUID());
+    const executed = await client.callTool({
+      name: 'marketing_ops_execute_plan_v1',
+      arguments: { delegation_token: confirmationToken, plan_token: preparedPayload.plan_token }
+    });
+    expect(executed.isError).not.toBe(true);
+    const executedPayload = toolPayload(executed);
+    expect(executedPayload.data).toMatchObject({ status: 'completed' });
+    expect(executedPayload.data.completed).toHaveLength(2);
+
+    const persisted = await pool.query(`
+      select c.id, count(i.id)::int as items
+      from marketing_ops.campaigns c
+      left join marketing_ops.campaign_items i on i.campaign_id = c.id
+      where c.name = $1
+      group by c.id
+    `, [campaignName]);
+    expect(persisted.rows).toHaveLength(1);
+    expect(persisted.rows[0].items).toBe(1);
+
+    const retryToken = await token({
+      chat_session_id: sessionId,
+      scopes: ['campaign:read', 'campaign:write', 'item:write'],
+      confirmation_intent: true
+    }, activeKey, 'v2', 60, Math.floor(Date.now() / 1000), randomUUID());
+    const retry = await client.callTool({
+      name: 'marketing_ops_execute_plan_v1',
+      arguments: { delegation_token: retryToken, plan_token: preparedPayload.plan_token }
+    });
+    const retryPayload = toolPayload(retry);
+    expect(retryPayload.data).toMatchObject({ status: 'completed' });
+    expect(retryPayload.data.completed.map((entry: { data: { id: string } }) => entry.data.id))
+      .toEqual(executedPayload.data.completed.map((entry: { data: { id: string } }) => entry.data.id));
+    const afterRetry = await pool.query(`
+      select
+        (select count(*)::int from marketing_ops.campaigns where name = $1) as campaigns,
+        (select count(*)::int from marketing_ops.campaign_items where campaign_id = $2) as items
+    `, [campaignName, persisted.rows[0].id]);
+    expect(afterRetry.rows[0]).toEqual({ campaigns: 1, items: 1 });
+
     await client.close();
     await server.close();
   });

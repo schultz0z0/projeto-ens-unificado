@@ -17,6 +17,32 @@ const defaultConfig = () => ({
 });
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const explicitConfirmationPhrases = new Set([
+  "sim",
+  "sim confirmo",
+  "sim pode executar",
+  "sim pode executar o plano",
+  "confirmo",
+  "confirmo o plano",
+  "confirmo o plano acima",
+  "aprovo",
+  "aprovo o plano",
+  "aprovado",
+  "pode executar",
+  "pode executar o plano",
+  "pode prosseguir",
+]);
+
+export const isExplicitMarketingOpsConfirmation = (message) => {
+  if (typeof message !== "string") return false;
+  const normalized = message
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return explicitConfirmationPhrases.has(normalized);
+};
 
 const validateDelegationClaims = (claims) => {
   const valid =
@@ -47,6 +73,7 @@ export const issueMarketingOpsDelegation = async (context, scopes, config = defa
     chat_session_id: context.chatSessionId,
     run_id: context.runId,
     correlation_id: context.correlationId,
+    confirmation_intent: context.confirmationIntent === true,
     contract_version: 1,
   })
     .setProtectedHeader({ alg: "HS256", kid: config.activeKid })
@@ -115,6 +142,7 @@ export const refreshMarketingOpsDelegation = async (token, run, config = default
     runId: claims.run_id,
     correlationId: claims.correlation_id,
     jti: claims.jti,
+    confirmationIntent: claims.confirmation_intent === true,
   }, claims.scopes, config);
 };
 
