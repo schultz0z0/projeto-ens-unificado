@@ -6,7 +6,7 @@
 
 ## Pré-condições
 
-- [ ] branch/commit final disponível no remoto;
+- [x] branch/commit final disponível no remoto;
 - [x] migrations do Supabase do app aplicadas e verificadas;
 - [x] `.env` raiz contém URLs/chaves do app e segredos fortes do Marketing Ops;
 - [ ] flags de frontend permanecem desligadas;
@@ -54,8 +54,13 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - causa raiz final: a Bridge enviava a delegação dentro da mensagem do usuário para a Session API, que a persistia. Em uma rodada posterior, o modelo podia reutilizar um token ligado a uma run já terminal, cuja renovação era corretamente negada;
 - correção local: a delegação atual segue em `system_message` efêmero e nunca entra em `message`; no startup, o `hermes-api` remove de modo idempotente somente os blocos técnicos legados e preserva o conteúdo conversacional;
 - regressões locais: Marketing Ops 38 testes + 2 E2E, Bridge 66, Hermes 5, RAG 26, Graph 18, Artifact 8, frontend 125, 97 pgTAP, typechecks/builds/audits, Compose base/produção e imagens Linux aprovados.
+- o commit `fa04953` foi publicado em `main` e implantado na VPS; `hermes-api`, `app-bridge` e `marketing-ops` permaneceram saudáveis;
+- no primeiro startup corrigido, o scrub removeu 13 mensagens com delegações legadas;
+- o passo 13 listou em nova sessão a campanha `2da6ee84-5783-4556-a47d-8d7beff06d16`, nome `Teste Fase 1 Produção Atualizado`, versão 2;
+- o passo 14 consultou os detalhes da mesma campanha na rodada seguinte, sem `delegation_invalid`;
+- a consulta sanitizada posterior ao SessionDB retornou `persisted_delegation_messages: 0`, comprovando que a delegação atual não voltou ao histórico.
 
-O reteste dos passos 13 e 14 permanece obrigatório depois do deploy da correção final. As falhas não criaram, alteraram ou removeram registros de domínio, e esta correção não exige `.env`, migration, bootstrap ou deploy Supabase.
+Os passos 13 e 14 estão aprovados. Restam os testes manuais 15–20 para item, auditoria, concorrência, idempotência, matriz de permissões e isolamento de tenant. As falhas anteriores não criaram, alteraram ou removeram registros de domínio, e a correção não exigiu `.env`, migration, bootstrap ou deploy Supabase.
 
 ## Fechamento
 

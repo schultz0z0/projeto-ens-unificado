@@ -236,4 +236,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS começou e já confirmou probes, criação, leitura, atualização, auditoria/outbox e persistência após restart. O transporte efêmero e o scrub das delegações legadas estão validados localmente, mas os passos 13 e 14 ainda exigem reteste na VPS; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS já confirmou probes, criação, leitura, atualização, auditoria/outbox, persistência após restart e os passos 13 e 14 do transporte efêmero, com zero delegações novas no SessionDB. Restam os testes manuais 15–20; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.

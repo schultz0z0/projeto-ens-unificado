@@ -67,4 +67,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é concluir a homologação na VPS Ubuntu, incluindo o reteste dos passos 13 e 14 após o transporte efêmero e o scrub do SessionDB. Até essa evidência, o estado não deve avançar para `production_validated` ou `completed`.
+O único gate aberto da Fase 1 é concluir os testes manuais 15–20 na VPS Ubuntu. Os passos 13 e 14 aprovaram o transporte efêmero e o scrub do SessionDB, com zero delegações persistidas após o uso. Até a evidência restante, o estado geral não deve avançar para `production_validated` ou `completed`.
