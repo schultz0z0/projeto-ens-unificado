@@ -19,5 +19,7 @@
 | R-12 | ativação prematura | rollout read/write separado e kill switch cliente | baixo | Produto/DevOps |
 | R-13 | Hermes serializa versão numérica como texto e bloqueia revisão de plano | fronteira MCP aceita número ou string decimal positiva e normaliza para inteiro; teste cobre validação do SDK antes da assinatura | baixo após redeploy | Backend |
 | R-14 | confirmação repetida autoriza escrita alheia ao plano recém-executado | contrato e skill encerram após o resultado do Marketing Ops e proíbem oferecer ou interpretar a repetição para Graph, RAG, artefatos ou memória validada | baixo após redeploy | Plataforma/Produto |
+| R-15 | confirmação natural inequívoca não recebe delegação autorizada por estar fora da allowlist exata | allowlist inclui as duas formulações observadas em produção e mantém teste negativo para confirmação condicional | baixo após redeploy | Plataforma |
+| R-16 | rejeições de negócio MCP abrem o circuit breaker e simulam indisponibilidade de servidor saudável | respostas estruturadas de tool comprovam conectividade e zeram o contador; somente erros de transporte/sessão/conexão incrementam o breaker; suíte dedicada 4/4 na imagem Linux | baixo após redeploy | Plataforma |
 
 Nenhum risco residual autoriza escrever no Supabase do RAG ou pular backup, dry-run e confirmação do projeto do app.

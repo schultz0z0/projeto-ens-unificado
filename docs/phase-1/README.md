@@ -14,7 +14,7 @@ Este diretório reúne design, execução, validações e operação da Fase 1. 
 - **Plano:** [2026-07-11-phase-1-marketing-ops-implementation.md](../plans/2026-07-11-phase-1-marketing-ops-implementation.md)
 - **Plano do hardening:** [2026-07-13-phase-1-marketing-ops-conversational-confirmation.md](../plans/2026-07-13-phase-1-marketing-ops-conversational-confirmation.md)
 
-O aceite automatizado no app de produção foi executado com os três papéis. Criação, plano multi-ação, RBAC e isolamento passaram; a revisão de plano revelou uma incompatibilidade de `expected_version` textual, já corrigida e validada localmente. O único gate restante é publicar essa correção e repetir o fluxo de revisão em produção.
+O aceite automatizado no app de produção foi executado com os três papéis. Criação, plano multi-ação, RBAC e isolamento passaram. Após o primeiro redeploy, a revisão de plano também passou sem mutação antecipada; a confirmação natural não foi reconhecida pela allowlist conservadora da Bridge e as recusas de negócio acionaram indevidamente o circuit breaker do MCP. As duas correções passaram no gate local completo. O único gate restante é publicar `app-bridge`/`hermes-api` e repetir o fluxo administrativo focado.
 
 ## Contrato de ambientes
 

@@ -102,6 +102,8 @@ test("explicit conversational confirmation is conservative", () => {
   assert.equal(typeof marketingOpsDelegation.isExplicitMarketingOpsConfirmation, "function");
   for (const message of [
     "Confirmo",
+    "Confirmo o plano revisado.",
+    "Confirmo. Execute esse plano novo agora.",
     "Aprovo o plano",
     "Pode executar",
     "Sim, pode executar o plano",
@@ -110,6 +112,7 @@ test("explicit conversational confirmation is conservative", () => {
   }
   for (const message of [
     "Sim, mas altere o titulo",
+    "Confirmo, mas troque o nome",
     "Nao execute",
     "Pode executar somente o email",
     "Talvez",

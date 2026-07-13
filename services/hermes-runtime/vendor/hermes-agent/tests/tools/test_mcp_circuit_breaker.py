@@ -128,6 +128,43 @@ def test_circuit_breaker_half_opens_after_cooldown(monkeypatch, tmp_path):
         _cleanup(mcp_tool, "srv")
 
 
+def test_tool_level_errors_do_not_trip_connectivity_breaker(monkeypatch, tmp_path):
+    """A responsive MCP server must stay reachable when a tool rejects input."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+
+    from tools import mcp_tool
+    from tools.mcp_tool import _make_tool_handler
+
+    call_count = {"n": 0}
+
+    async def _call_tool_rejects(*a, **kw):
+        call_count["n"] += 1
+        result = MagicMock()
+        result.isError = True
+        block = MagicMock()
+        block.text = '{"code":"confirmation_required","status":409}'
+        result.content = [block]
+        result.structuredContent = None
+        return result
+
+    _install_stub_server(mcp_tool, "srv", _call_tool_rejects)
+    mcp_tool._ensure_mcp_loop()
+
+    try:
+        handler = _make_tool_handler("srv", "tool1", 10.0)
+        attempts = mcp_tool._CIRCUIT_BREAKER_THRESHOLD + 1
+
+        for _ in range(attempts):
+            parsed = json.loads(handler({}))
+            assert "error" in parsed
+            assert "unreachable" not in parsed["error"].lower()
+
+        assert call_count["n"] == attempts
+        assert mcp_tool._server_error_counts.get("srv", 0) == 0
+    finally:
+        _cleanup(mcp_tool, "srv")
+
+
 def test_circuit_breaker_reopens_on_probe_failure(monkeypatch, tmp_path):
     """If the half-open probe fails, the breaker must re-arm the
     cooldown (not let every subsequent call through).

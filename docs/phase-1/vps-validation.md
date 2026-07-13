@@ -88,6 +88,20 @@ Em 13 de julho de 2026, o fluxo final foi executado diretamente em `https://app.
 
 A correção aceita número ou string decimal positiva na fronteira MCP e normaliza para inteiro antes da assinatura. O gate local posterior aprovou 97 pgTAP, Marketing Ops 53/53, Hermes 13/13, Bridge 69/69, demais suítes/builds/audits e as imagens Linux sem cache. Ela não exige `.env`, migration, bootstrap nem deploy Supabase.
 
+### Segunda rodada após o redeploy
+
+Uma nova rodada foi executada no app real com os três papéis, sem registrar credenciais no repositório e com logout ao final:
+
+- `member`: um pedido casual de campanha mais e-mail apresentou um único plano, não pediu `course_slug`, IDs, versão ou idempotency key; uma consulta em sessão separada comprovou que nada havia sido persistido antes da confirmação. Auditoria ampla foi recusada e a tentativa de consultar `outro-tenant` não retornou dados externos;
+- `manager`: a auditoria do tenant ENS foi permitida e retornou eventos coerentes de criação, atualização e item;
+- `admin`: a campanha `59feb425-f973-4537-83f1-db3826c53825` permaneceu em `draft`, versão 1. O pedido de alteração preparou um plano e a revisão do nome preparou corretamente um novo plano, sem o erro `-32602` e sem mutação antecipada;
+- a frase natural `Confirmo o plano revisado.` não recebeu `confirmation_intent`, pois a allowlist exata da Bridge não continha essa formulação. A execução foi recusada e o registro permaneceu inalterado;
+- depois das recusas esperadas, o Hermes anunciou o MCP como indisponível. Sondas públicas executadas no mesmo momento mostraram `/health`, `/ready` e capabilities saudáveis;
+- causa raiz: o circuit breaker do fork incrementava falha de servidor para qualquer `result.isError`, inclusive rejeição estruturada de negócio que comprovava conectividade;
+- correção local: a Bridge reconhece as duas confirmações naturais inequívocas observadas e mantém a recusa de mensagens condicionais; o circuit breaker zera o contador ao receber resposta estruturada da tool e só incrementa em falhas de transporte, sessão ou conexão;
+- regressão: gate canônico com código zero, Bridge 69/69, Hermes 13/13 e teste dedicado do circuit breaker 4/4 dentro da imagem Linux. `app-bridge` e `hermes-api` foram reconstruídos sem cache e inspecionados;
+- nenhuma escrita ocorreu nesta rodada e não houve alteração em `.env`, migrations, bootstrap ou Supabase.
+
 ## Hardening pendente de deploy
 
 - [x] commit de confirmação conversacional presente na VPS;
@@ -97,12 +111,13 @@ A correção aceita número ou string decimal positiva na fronteira MCP e normal
 - [x] consulta antes da confirmação comprova ausência dos objetos;
 - [x] confirmação em nova mensagem executa exatamente as duas ações;
 - [x] retry não duplica campanha, item, auditoria ou outbox;
-- [ ] `sim, mas altere...` prepara novo plano sem executar o anterior;
+- [x] `sim, mas altere...` prepara novo plano sem executar o anterior;
+- [ ] confirmação natural do plano revisado executa exatamente a alteração sem falso circuit breaker;
 - [x] `member` não é questionado sobre `course_slug` e continua sem acesso à auditoria ampla;
 - [x] tentativa de outro tenant permanece negada/vinculada ao tenant autenticado;
 - [ ] logs não contêm segredo, token bruto, `internal_error` ou falso sucesso.
 
-O próximo redeploy precisa reconstruir somente `marketing-ops`, `app-bridge` e `hermes-api`. Depois, repetir a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
+O próximo redeploy precisa reconstruir somente `app-bridge` e `hermes-api`; o código, banco e ambiente do `marketing-ops` não mudaram. Depois, repetir a revisão de nome, confirmar o plano revisado e consultar o registro; também verificar que a resposta não exibe detalhes internos nem propõe outra gravação. Só esses itens e a inspeção sanitizada de logs permanecem abertos.
 
 ## Fechamento
 

@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com aceite real executado e correção final validada localmente, aguardando redeploy e reteste
+- **Status:** Fase 0 `production_validated`; Fase 1 `ready_for_production` com matriz real aprovada e dois hardenings finais validados localmente, aguardando redeploy e reteste administrativo focado
 - **Atualização:** 13 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -198,7 +198,7 @@ Estados de campanha, conteúdo, aprovação e execução serão separados. Uma c
 
 ### Fase 1: Fundação do Marketing Ops
 
-**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. O aceite automatizado no app real comprovou plano antes da escrita, confirmação única, criação simples e multi-ação, mas encontrou uma incompatibilidade quando o Hermes enviou `expected_version` como string numa revisão e uma ambiguidade após confirmação repetida. A normalização de versão e o endurecimento do contrato/skill passaram integralmente no gate local; resta redeploy e reteste focado para fechar a fase.
+**Estado:** `ready_for_production` — implementação e gate local aprovados; a VPS confirmou probes, persistência, CRUD controlado, item, auditoria, concorrência, idempotência, RBAC e isolamento de tenant. A segunda rodada automatizada aprovou os fluxos de `member` e `manager` e comprovou que a revisão administrativa agora prepara um novo plano sem mutação antecipada. A execução final revelou duas falhas fechadas: frases naturais de confirmação fora da allowlist conservadora da Bridge e erros de negócio MCP contabilizados indevidamente como indisponibilidade. Ambos os hardenings passaram no gate local completo e nas imagens Linux; resta redeploy de `app-bridge`/`hermes-api` e reteste administrativo focado para fechar a fase.
 
 **Objetivo:** criar o domínio operacional compartilhado pelo frontend e pelo Hermes.
 

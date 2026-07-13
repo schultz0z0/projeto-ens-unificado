@@ -25,6 +25,8 @@ const explicitConfirmationPhrases = new Set([
   "confirmo",
   "confirmo o plano",
   "confirmo o plano acima",
+  "confirmo o plano revisado",
+  "confirmo execute esse plano novo agora",
   "aprovo",
   "aprovo o plano",
   "aprovado",
