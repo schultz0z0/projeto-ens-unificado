@@ -130,4 +130,4 @@
 - [x] Build and inspect the Linux images for `app-bridge`, `hermes-api` and `marketing-ops`.
 - [x] Run `git diff --check`, inspect secrets and verify `.env`/Supabase migrations remain unchanged.
 - [x] Record exact test counts and classify this as Phase 1 hardening that does not complete Phases 4 or 5.
-- [ ] Commit to `main`, push only after all gates pass, and provide the VPS redeploy and conversational acceptance steps.
+- [x] Commit to `main`, push only after all gates pass, and provide the VPS redeploy and conversational acceptance steps.
