@@ -20,7 +20,7 @@ A Fase 1 adiciona um serviço independente `marketing-ops` que oferece REST ao f
 | Autenticação REST | validação do bearer pelo Supabase Auth do app |
 | Tenant e papel | resolvidos por `marketing_ops.memberships`, nunca por argumento ou `user_metadata` |
 | Persistência | PostgreSQL direto com transações e contexto RLS por requisição |
-| Delegação Hermes | JWT interno HS256 curto, versionado, com rotação por `kid` e claims mínimos |
+| Delegação Hermes | JWT interno HS256 curto, versionado, com rotação por `kid`, claims mínimos e transporte efêmero fora do histórico |
 | Anti-replay | `jti` associado à mutação e à idempotency key; reuso divergente é conflito |
 | Eventos | tabela outbox `domain_events`, preparada para polling com `FOR UPDATE SKIP LOCKED` |
 | Retenção de auditoria | sem expurgo automático na Fase 1; registros permanecem imutáveis até política de compliance posterior |
@@ -64,7 +64,7 @@ A Chat Bridge emite um token com:
 - `chat_session_id`, `run_id` e `correlation_id`;
 - `jti`, `iat`, `nbf`, `exp`, `kid` e `contract_version=1`.
 
-O token expira em no máximo 120 segundos. A Bridge nunca persiste o token em seu ledger e redige diagnósticos. O Hermes recebe a delegação apenas no contexto técnico da run para fornecê-la às tools do MCP; o token expirado não mantém autoridade em histórico. Se o JWT expirar durante o raciocínio do Hermes, o Marketing Ops faz um único pedido interno autenticado ao Bridge. A renovação só ocorre enquanto a run pai estiver `running`, dentro da janela máxima configurada, com usuário, tenant, papel, sessão e correlação idênticos; o `jti` é preservado para não enfraquecer o anti-replay. O Marketing Ops então verifica novamente assinatura, key id, issuer, audience, janela temporal, scopes, membership atual e replay antes de qualquer acesso de domínio.
+O token expira em no máximo 120 segundos. A Bridge nunca persiste o token em seu ledger e redige diagnósticos. Na Session API, o token atual é enviado em `system_message`, convertido pelo Hermes em prompt efêmero da run; ele não entra em `message` nem no SessionDB. Um scrub idempotente no startup do `hermes-api` remove exclusivamente blocos técnicos `[MARKETING_OPS_DELEGATION]` persistidos por versões anteriores e preserva o restante das mensagens. Se o JWT expirar durante o raciocínio do Hermes, o Marketing Ops faz um único pedido interno autenticado ao Bridge. A renovação só ocorre enquanto a run pai estiver `running`, dentro da janela máxima configurada, com usuário, tenant, papel, sessão e correlação idênticos; o `jti` é preservado para não enfraquecer o anti-replay. O Marketing Ops então verifica novamente assinatura, key id, issuer, audience, janela temporal, scopes, membership atual e replay antes de qualquer acesso de domínio.
 
 ### Domínio transacional
 
@@ -138,6 +138,7 @@ O envelope estável contém `code`, `message`, `correlation_id` e `details` segu
 - grants explícitos na mesma migration;
 - service role nunca enviada ao navegador;
 - keyring aceita chave ativa e anterior durante rotação;
+- delegações técnicas não são persistidas no histórico; blocos legados são removidos seletivamente no startup;
 - flags não substituem autorização.
 
 ## Observabilidade

@@ -364,7 +364,6 @@ const buildHermesSessionChatMessage = ({
   imageOptions,
 
   nexusContext = {},
-  marketingOpsDelegation = "",
 
 }) => {
 
@@ -383,10 +382,7 @@ const buildHermesSessionChatMessage = ({
     })
 
     : messageText;
-  const routedMessageText = withMarketingOpsDelegation(
-    withNexusMemoryRoutingContract(effectiveMessageText, nexusContext),
-    marketingOpsDelegation,
-  );
+  const routedMessageText = withNexusMemoryRoutingContract(effectiveMessageText, nexusContext);
 
   if (imageAttachments.length === 0) {
 
@@ -473,26 +469,28 @@ export const buildHermesSessionChatRequest = ({
   nexusContext = {},
   marketingOpsDelegation = "",
 
-}) => ({
+}) => {
+  const systemMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation);
+  return {
+    message: buildHermesSessionChatMessage({
 
-  message: buildHermesSessionChatMessage({
+      messageText,
 
-    messageText,
+      attachments,
 
-    attachments,
+      imageTransport,
 
-    imageTransport,
+      intent,
 
-    intent,
+      imageOptions,
 
-    imageOptions,
+      nexusContext,
 
-    nexusContext,
-    marketingOpsDelegation,
+    }),
+    ...(systemMessage ? { system_message: systemMessage } : {}),
+  };
+};
 
-  }),
-
-});
 
 
 
@@ -552,4 +550,7 @@ export const buildHermesRunRequest = ({
     replayContextMessages,
   }),
 });
-import { withMarketingOpsDelegation } from "./marketing-ops-delegation.js";
+import {
+  buildMarketingOpsDelegationSystemMessage,
+  withMarketingOpsDelegation,
+} from "./marketing-ops-delegation.js";

@@ -48,7 +48,7 @@ Nunca executar esses comandos com projeto/ref/URL do Supabase RAG.
 ## Deploy VPS Ubuntu
 
 ```bash
-cd /opt/projeto-ens-unificado
+cd /opt/nexus-ens
 git pull --ff-only
 git rev-parse --short HEAD
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
@@ -74,11 +74,25 @@ Depois do smoke interno, validar `https://ops.solucoes-nexus.tech/health`, auten
 
 Gerar segredo aleatório de no mínimo 32 bytes. Bridge emite somente `ACTIVE`; Marketing Ops aceita `ACTIVE` e `PREVIOUS`. Para rotação: promover chave nova para active, manter a antiga como previous por pelo menos 120 segundos, reiniciar Bridge/Marketing Ops e então remover previous.
 
+## Delegação efêmera no Hermes
+
+A Bridge envia a delegação da rodada por `system_message`, que a Session API trata como prompt efêmero. O token não deve aparecer na mensagem persistida. No startup do `hermes-api`, o scrubber remove apenas blocos `[MARKETING_OPS_DELEGATION]` gravados por versões antigas, sem apagar mensagens ou dados de domínio.
+
+Após o primeiro deploy da correção, conferir o resultado sanitizado:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m hermes-api \
+  | grep 'scrubbed persisted Marketing Ops delegations'
+```
+
+O primeiro startup pode informar uma quantidade maior que zero. Reinícios posteriores devem informar zero, salvo se uma versão antiga voltar a persistir blocos. O log contém somente a contagem, nunca o token. Falha do scrub interrompe o startup do `hermes-api` para evitar continuar com histórico técnico inseguro.
+
 ## Diagnóstico
 
 - `/health`: processo HTTP vivo, sem consultar banco.
 - `/ready`: conexão PostgreSQL disponível.
 - `401`: bearer Supabase ou delegação inválida/expirada.
+- `delegation_refresh_denied`: o token não pertence a uma run ativa ou o contexto não coincide; não relaxar essa proteção para aceitar tokens do histórico.
 - `403`: membership, papel, scope, origin ou tenant negado.
 - `409`: replay, idempotency key divergente ou version conflict.
 - `503`: dependency/feature desabilitada.

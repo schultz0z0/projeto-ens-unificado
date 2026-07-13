@@ -55,7 +55,7 @@ O MCP deve expor ferramentas versionadas para a evolução do domínio. Nesta fa
 
 ### F1-RF-04 — Delegação do Hermes
 
-Chamadas de mutação originadas pelo Hermes devem carregar contexto assinado, curto, não reutilizável fora do escopo e correlacionado à sessão/run.
+Chamadas de mutação originadas pelo Hermes devem carregar contexto assinado, curto, não reutilizável fora do escopo e correlacionado à sessão/run. A delegação é contexto técnico efêmero e não pode ser persistida no histórico conversacional.
 
 ### F1-RF-05 — Modelo transacional
 
@@ -137,6 +137,7 @@ Campos finais e SQL serão decididos no design técnico, mantendo estes invarian
 - JWT validado contra Supabase;
 - delegação assinada para MCP;
 - anti-replay e expiração;
+- transporte efêmero da delegação, sem token no histórico do Hermes;
 - allowlist de origins;
 - limites de payload;
 - rate limiting;
@@ -227,6 +228,7 @@ Token inválido, tenant forjado, papel forjado, delegação expirada, replay, ma
 
 - serviço em TypeScript/Node.js 22 com Express;
 - delegação JWT HS256 curta, versionada, com rotação por `kid` e anti-replay;
+- delegação entregue por prompt efêmero da run e scrub seletivo de blocos legados do SessionDB;
 - auditoria append-only sem expurgo automático nesta fase;
 - publicação inicial por outbox PostgreSQL, preparada para polling futuro.
 
@@ -234,4 +236,4 @@ A matriz completa de decisão e os trade-offs estão em `docs/phase-1/design.md`
 
 ## Gate de saída
 
-O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS começou e já confirmou probes, criação, leitura, atualização, auditoria/outbox e persistência após restart. A correção de renovação da delegação expirada ainda exige reteste; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.
+O gate local está aprovado e a fundação está `ready_for_production`, permitindo preparar a Fase 2 sem ativar superfícies de usuário. A homologação VPS começou e já confirmou probes, criação, leitura, atualização, auditoria/outbox e persistência após restart. O transporte efêmero e o scrub das delegações legadas estão validados localmente, mas os passos 13 e 14 ainda exigem reteste na VPS; a Fase 1 só fica `completed` após o fechamento registrado em `docs/phase-1/vps-validation.md`.

@@ -15,7 +15,7 @@
 ## Deploy
 
 ```bash
-cd /opt/projeto-ens-unificado
+cd /opt/nexus-ens
 git pull --ff-only
 git rev-parse --short HEAD
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
@@ -47,10 +47,15 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - Hermes criou a campanha `2da6ee84-5783-4556-a47d-8d7beff06d16`, listou o mesmo registro, atualizou o nome e confirmou a versão de 1 para 2;
 - consulta somente leitura no Supabase do app confirmou tenant `ens`, status `draft`, versão 2, auditorias `campaign.created`/`campaign.updated` e os dois eventos correspondentes no outbox;
 - após restart, a campanha permaneceu no banco. A primeira consulta de uma nova sessão falhou porque o JWT de 90 segundos expirou durante o raciocínio do Hermes;
-- causa raiz: o token era emitido no início da rodada, sem renovação no momento da tool. A correção mantém o TTL curto e permite um retry interno apenas enquanto a run pai estiver ativa, com contexto idêntico e o mesmo `jti`;
-- regressões locais da correção: Marketing Ops 38 testes, typecheck/build; Bridge 65 testes; Compose base/produção válido.
+- a primeira correção foi publicada no commit `424061b`: o Marketing Ops passou a solicitar uma única renovação interna ao Bridge, limitada à run pai ativa, ao contexto idêntico e ao mesmo `jti`;
+- após o deploy de `424061b`, o passo 13 passou em uma nova sessão, mas o passo 14 falhou na rodada seguinte com `delegation_invalid`;
+- os containers estavam saudáveis, a rota interna existia, as duas chaves estavam configuradas e uma sonda com token deliberadamente inválido retornou o 401 esperado `delegation_refresh_denied`;
+- uma consulta somente leitura ao `state.db` encontrou blocos `[MARKETING_OPS_DELEGATION]` em quatro sessões, com contagens 1, 2, 1 e 9. Nenhum token foi exibido;
+- causa raiz final: a Bridge enviava a delegação dentro da mensagem do usuário para a Session API, que a persistia. Em uma rodada posterior, o modelo podia reutilizar um token ligado a uma run já terminal, cuja renovação era corretamente negada;
+- correção local: a delegação atual segue em `system_message` efêmero e nunca entra em `message`; no startup, o `hermes-api` remove de modo idempotente somente os blocos técnicos legados e preserva o conteúdo conversacional;
+- regressões locais: Marketing Ops 38 testes + 2 E2E, Bridge 66, Hermes 5, RAG 26, Graph 18, Artifact 8, frontend 125, 97 pgTAP, typechecks/builds/audits, Compose base/produção e imagens Linux aprovados.
 
-O reteste da consulta após restart permanece obrigatório depois do deploy da correção. A falha não criou, alterou ou removeu registros.
+O reteste dos passos 13 e 14 permanece obrigatório depois do deploy da correção final. As falhas não criaram, alteraram ou removeram registros de domínio, e esta correção não exige `.env`, migration, bootstrap ou deploy Supabase.
 
 ## Fechamento
 

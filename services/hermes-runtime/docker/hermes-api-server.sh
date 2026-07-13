@@ -56,6 +56,12 @@ if [ -x /usr/local/bin/ensure-ens-rag-mcp.sh ]; then
   /usr/local/bin/ensure-ens-rag-mcp.sh || echo "[hermes-api] warning: could not ensure Nexus MCP config" >&2
 fi
 
+if [ -f /usr/local/bin/scrub-marketing-ops-delegations.py ]; then
+  /opt/hermes/.venv/bin/python \
+    /usr/local/bin/scrub-marketing-ops-delegations.py \
+    "$HERMES_DATA_PATH/state.db"
+fi
+
 chown -R hermes:hermes "$HERMES_DATA_PATH" "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "$HERMES_DATA_PATH" "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true
 chmod -R u+rwX,g+rwX,o+rX "$HERMES_ARTIFACTS_DIR" 2>/dev/null || true

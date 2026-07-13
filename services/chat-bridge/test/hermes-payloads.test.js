@@ -185,6 +185,21 @@ test("buildHermesSessionChatRequest leaves conversation continuity to Hermes Ses
 
 });
 
+test("buildHermesSessionChatRequest keeps delegation out of persisted user history", () => {
+  const delegation = "header.payload.signature";
+  const request = buildHermesSessionChatRequest({
+    messageText: "liste minhas campanhas",
+    attachments: [],
+    marketingOpsDelegation: delegation,
+  });
+
+  assert.doesNotMatch(request.message, /MARKETING_OPS_DELEGATION/);
+  assert.doesNotMatch(request.message, new RegExp(delegation.replaceAll(".", "\\.")));
+  assert.match(request.system_message, /MARKETING_OPS_DELEGATION/);
+  assert.match(request.system_message, /Use apenas a delegacao deste turno/);
+  assert.match(request.system_message, new RegExp(delegation.replaceAll(".", "\\.")));
+});
+
 test("buildHermesSessionChatRequest prepends native memory routing without disabling Hermes memory", () => {
 
   const request = buildHermesSessionChatRequest({

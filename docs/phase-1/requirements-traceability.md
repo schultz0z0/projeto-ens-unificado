@@ -12,7 +12,7 @@
 | F1-RF-01 Serviço independente | `services/marketing-ops`, Dockerfile e Compose | foundation tests, build Linux, health/readiness | `validated_locally` |
 | F1-RF-02 API autenticada | `auth/*`, middleware REST e transação com ator | auth/rest/E2E e pgTAP cross-tenant | `validated_locally` |
 | F1-RF-03 Interface MCP | MCP Streamable HTTP e tools `*_v1` | MCP contract tests e E2E com cliente oficial | `validated_locally` |
-| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, verificador Marketing Ops e registro Hermes | Bridge 65 testes e MCP replay/scope/TTL/refresh | `validated_locally` |
+| F1-RF-04 Delegação Hermes | emissor/renovador Bridge, transporte efêmero Hermes e verificador Marketing Ops | Bridge 66, Hermes 5 e MCP replay/scope/TTL/refresh | `validated_locally` |
 | F1-RF-05 Modelo transacional | schemas `marketing_ops` e `marketing_ops_private` | reset limpo e 97 testes pgTAP | `validated_locally` |
 | F1-RF-06 Tenant | memberships confiáveis, RLS e contexto transacional | testes de tenant forjado e segundo tenant | `validated_locally` |
 | F1-RF-07 Papéis | matriz member/manager/admin | testes positivos e negativos de RBAC/RLS | `validated_locally` |
@@ -34,7 +34,7 @@
 | F1-004 | Bridge ignora `user_metadata` e produção falha fechada | `validated_locally` |
 | F1-005 | serviço, config, probes, shutdown e Compose | `validated_locally` |
 | F1-006 | tenants/memberships e bootstrap de perfis ENS | `validated_locally` |
-| F1-007 | delegação assinada, curta, com scopes, replay e rotação | `validated_locally` |
+| F1-007 | delegação assinada, curta, com scopes, replay, rotação e sem persistência no SessionDB | `validated_locally` |
 | F1-008 | schema de campaigns/items/audit/idempotency/outbox | `validated_locally` |
 | F1-009 | RLS default-deny, grants e testes cross-tenant | `validated_locally` |
 | F1-010 | OpenAPI v1, CORS, rate limit, filtros e cursor | `validated_locally` |
@@ -67,4 +67,4 @@
 - [Riscos](risk-register.md)
 - [Validação VPS](vps-validation.md)
 
-O único gate aberto da Fase 1 é concluir a homologação na VPS Ubuntu, incluindo o reteste da renovação de delegação após restart. Até essa evidência, o estado não deve avançar para `production_validated` ou `completed`.
+O único gate aberto da Fase 1 é concluir a homologação na VPS Ubuntu, incluindo o reteste dos passos 13 e 14 após o transporte efêmero e o scrub do SessionDB. Até essa evidência, o estado não deve avançar para `production_validated` ou `completed`.
