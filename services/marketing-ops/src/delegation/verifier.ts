@@ -41,7 +41,7 @@ export async function verifyDelegation(
           (jti, tenant_id, actor_id, operation, idempotency_key, request_hash, expires_at)
         values ($1, $2, $3, $4, $5, $6, to_timestamp($7))
         on conflict do nothing returning jti
-      `, [claims.jti, claims.tenant_id, claims.sub, deps.operation.name, deps.operation.idempotencyKey, deps.operation.requestHash, claims.exp]);
+      `, [claims.jti, actor.tenantId, claims.sub, deps.operation.name, deps.operation.idempotencyKey, deps.operation.requestHash, claims.exp]);
       if (used.rowCount === 0) throw appError('delegation_replay', 409, 'Delegation was already consumed');
     }
     return {

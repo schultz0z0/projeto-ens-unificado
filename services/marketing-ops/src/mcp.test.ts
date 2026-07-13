@@ -42,6 +42,13 @@ describe('delegation and MCP', () => {
     await expect(verifyDelegation(signed, ['campaign:write'], { pool, keyring, operation })).rejects.toMatchObject({ code: 'delegation_replay' });
   });
 
+  it('canonicalizes a tenant slug before consuming a mutation delegation', async () => {
+    const signed = await token({ tenant_id: 'ens' });
+    const operation = { name: 'campaign.create', idempotencyKey: randomUUID(), requestHash: 'b'.repeat(64) };
+    const actor = await verifyDelegation(signed, ['campaign:write'], { pool, keyring, operation });
+    expect(actor.tenantId).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  });
+
   it('registers versioned tools and serves public capabilities', async () => {
     const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
     const client = new Client({ name: 'test-client', version: '1.0.0' });
