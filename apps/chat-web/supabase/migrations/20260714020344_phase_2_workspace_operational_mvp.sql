@@ -344,7 +344,32 @@ begin
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
-      and marketing_ops_private.current_actor_role(campaign.tenant_id) is not null
+      and campaign.status <> 'archived'
+      and (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and exists (
+            select 1
+            from marketing_ops.campaign_members as participant
+            where participant.campaign_id = campaign.id
+              and participant.tenant_id = campaign.tenant_id
+              and participant.user_id = (select auth.uid())
+              and participant.member_role in ('owner', 'editor')
+          )
+        )
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and campaign.status = 'draft'
+          and campaign.created_by = (select auth.uid())
+          and not exists (
+            select 1
+            from marketing_ops.campaign_members as participant
+            where participant.campaign_id = campaign.id
+              and participant.tenant_id = campaign.tenant_id
+          )
+        )
+      )
   ) then
     return false;
   end if;
@@ -556,9 +581,40 @@ begin
 end;
 $$;
 
+create function marketing_ops_private.enforce_campaign_item_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null then
+    return new;
+  end if;
+
+  if old.status <> 'draft' or new.status <> 'draft' then
+    raise exception using
+      errcode = '42501',
+      message = 'archived campaign item is read-only';
+  end if;
+
+  if new.version <> old.version + 1 then
+    raise exception using
+      errcode = '42501',
+      message = 'authenticated campaign item update must increment version by one';
+  end if;
+
+  return new;
+end;
+$$;
+
 create trigger campaigns_enforce_authenticated_update
 before update on marketing_ops.campaigns
 for each row execute function marketing_ops_private.enforce_campaign_update();
+
+create trigger campaign_items_enforce_authenticated_update
+before update on marketing_ops.campaign_items
+for each row execute function marketing_ops_private.enforce_campaign_item_update();
 
 drop policy campaigns_update on marketing_ops.campaigns;
 
@@ -630,6 +686,33 @@ using (
     and member_role in ('viewer', 'editor')
     and not is_primary
   )
+);
+
+drop policy campaign_items_insert on marketing_ops.campaign_items;
+drop policy campaign_items_update on marketing_ops.campaign_items;
+
+create policy campaign_items_insert on marketing_ops.campaign_items
+for insert to authenticated
+with check (
+  tenant_id = (select marketing_ops_private.current_tenant_id())
+  and status = 'draft'
+  and created_by = (select auth.uid())
+  and updated_by = (select auth.uid())
+  and (select marketing_ops_private.can_edit_campaign(campaign_id))
+);
+
+create policy campaign_items_update on marketing_ops.campaign_items
+for update to authenticated
+using (
+  tenant_id = (select marketing_ops_private.current_tenant_id())
+  and status = 'draft'
+  and (select marketing_ops_private.can_edit_campaign(campaign_id))
+)
+with check (
+  tenant_id = (select marketing_ops_private.current_tenant_id())
+  and status = 'draft'
+  and updated_by = (select auth.uid())
+  and (select marketing_ops_private.can_edit_campaign(campaign_id))
 );
 
 alter table marketing_ops.campaign_materials enable row level security;
@@ -727,6 +810,23 @@ grant update (
   is_primary
 ) on marketing_ops.campaign_members to authenticated;
 
+revoke insert, update on table marketing_ops.campaign_items from authenticated;
+grant insert (
+  tenant_id,
+  campaign_id,
+  kind,
+  title,
+  content,
+  created_by,
+  updated_by
+) on marketing_ops.campaign_items to authenticated;
+grant update (
+  title,
+  content,
+  version,
+  updated_by
+) on marketing_ops.campaign_items to authenticated;
+
 revoke all on function marketing_ops_private.can_edit_campaign(uuid)
   from public, anon, authenticated, service_role;
 grant execute on function marketing_ops_private.can_edit_campaign(uuid) to authenticated;
@@ -751,6 +851,8 @@ revoke all on function marketing_ops_private.promote_first_campaign_owner()
 revoke all on function marketing_ops_private.assert_campaign_primary_owner()
   from public, anon, authenticated, service_role;
 revoke all on function marketing_ops_private.enforce_campaign_update()
+  from public, anon, authenticated, service_role;
+revoke all on function marketing_ops_private.enforce_campaign_item_update()
   from public, anon, authenticated, service_role;
 
 insert into marketing_ops.schema_versions (version, description)

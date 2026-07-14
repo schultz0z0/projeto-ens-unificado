@@ -1,6 +1,6 @@
 begin;
 
-select plan(68);
+select plan(88);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -28,6 +28,29 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '13131313-1313-4131-8131-131313131313', 'member', false),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '14141414-1414-4141-8141-141414141414', 'member', true);
 
+insert into marketing_ops.campaigns (
+  id, tenant_id, name, status, created_by, updated_by, archived_at
+)
+values
+  (
+    'c4444444-4444-4444-8444-444444444444',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'Aggregate lock probe',
+    'draft',
+    '11111111-1111-4111-8111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
+    null
+  ),
+  (
+    'c5555555-5555-4555-8555-555555555555',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'Archived item policy probe',
+    'archived',
+    '11111111-1111-4111-8111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
+    now()
+  );
+
 insert into marketing_ops.campaign_members (
   tenant_id, campaign_id, user_id, member_role, is_primary, created_by
 )
@@ -35,7 +58,56 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '55555555-5555-4555-8555-555555555555', 'editor', false, '11111111-1111-4111-8111-111111111111'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '66666666-6666-4666-8666-666666666666', 'viewer', false, '11111111-1111-4111-8111-111111111111'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '88888888-8888-4888-8888-888888888888', 'owner', false, '11111111-1111-4111-8111-111111111111'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '13131313-1313-4131-8131-131313131313', 'editor', false, '11111111-1111-4111-8111-111111111111');
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '13131313-1313-4131-8131-131313131313', 'editor', false, '11111111-1111-4111-8111-111111111111'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c4444444-4444-4444-8444-444444444444', '11111111-1111-4111-8111-111111111111', 'owner', true, '11111111-1111-4111-8111-111111111111'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c4444444-4444-4444-8444-444444444444', '66666666-6666-4666-8666-666666666666', 'viewer', false, '11111111-1111-4111-8111-111111111111'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c5555555-5555-4555-8555-555555555555', '11111111-1111-4111-8111-111111111111', 'owner', true, '11111111-1111-4111-8111-111111111111'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c5555555-5555-4555-8555-555555555555', '55555555-5555-4555-8555-555555555555', 'editor', false, '11111111-1111-4111-8111-111111111111');
+
+insert into marketing_ops.campaign_items (
+  id, tenant_id, campaign_id, kind, title, content, status, version,
+  created_by, updated_by, archived_at
+)
+values
+  (
+    'e1111111-1111-4111-8111-111111111111',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'c1111111-1111-4111-8111-111111111111',
+    'task-2-probe',
+    'Mutable item',
+    '{}'::jsonb,
+    'draft',
+    1,
+    '11111111-1111-4111-8111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
+    null
+  ),
+  (
+    'e5555555-5555-4555-8555-555555555555',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'c5555555-5555-4555-8555-555555555555',
+    'task-2-probe',
+    'Item in archived campaign',
+    '{}'::jsonb,
+    'draft',
+    1,
+    '11111111-1111-4111-8111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
+    null
+  ),
+  (
+    'e9999999-9999-4999-8999-999999999999',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    'c1111111-1111-4111-8111-111111111111',
+    'task-2-probe',
+    'Archived item',
+    '{}'::jsonb,
+    'archived',
+    1,
+    '11111111-1111-4111-8111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
+    now()
+  );
 
 update marketing_ops.campaigns
 set reference_document_id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
@@ -74,6 +146,360 @@ begin
   end if;
 end
 $setup$;
+
+select set_config('request.jwt.claim.sub', '66666666-6666-4666-8666-666666666666', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select throws_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'viewer-insert', 'Viewer insert', '{}'::jsonb,
+      '66666666-6666-4666-8666-666666666666',
+      '66666666-6666-4666-8666-666666666666'
+    )
+  $$,
+  '42501',
+  null,
+  'viewer cannot insert campaign item'
+);
+
+select lives_ok(
+  $test$
+    do $denied$
+    begin
+      update marketing_ops.campaign_items
+      set title = 'Viewer bypass', version = version + 1,
+          updated_by = '66666666-6666-4666-8666-666666666666'
+      where id = 'e1111111-1111-4111-8111-111111111111';
+      if found then
+        raise exception using errcode = 'P0001', message = 'viewer updated campaign item';
+      end if;
+    exception when insufficient_privilege then
+      null;
+    end
+    $denied$
+  $test$,
+  'viewer cannot update campaign item'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '55555555-5555-4555-8555-555555555555', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'editor-insert', 'Editor insert', '{}'::jsonb,
+      '55555555-5555-4555-8555-555555555555',
+      '55555555-5555-4555-8555-555555555555'
+    )
+  $$,
+  'editor can insert campaign item'
+);
+
+select results_eq(
+  $$
+    with changed as (
+      update marketing_ops.campaign_items
+      set title = 'Edited by editor', version = version + 1,
+          updated_by = '55555555-5555-4555-8555-555555555555'
+      where id = 'e1111111-1111-4111-8111-111111111111'
+      returning id
+    ) select count(*)::bigint from changed
+  $$,
+  array[1::bigint],
+  'editor can update campaign item'
+);
+
+select throws_ok(
+  $$
+    update marketing_ops.campaign_items
+    set version = version + 2,
+        updated_by = '55555555-5555-4555-8555-555555555555'
+    where id = 'e1111111-1111-4111-8111-111111111111'
+  $$,
+  '42501',
+  'authenticated campaign item update must increment version by one',
+  'campaign item writer cannot skip optimistic-lock versions'
+);
+
+select lives_ok(
+  $test$
+    do $denied$
+    begin
+      update marketing_ops.campaign_items
+      set title = 'Archived item bypass', version = version + 1,
+          updated_by = '55555555-5555-4555-8555-555555555555'
+      where id = 'e9999999-9999-4999-8999-999999999999';
+      if found then
+        raise exception using errcode = 'P0001', message = 'editor updated archived item';
+      end if;
+    exception when insufficient_privilege then
+      null;
+    end
+    $denied$
+  $test$,
+  'archived campaign item is read-only'
+);
+
+select throws_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c5555555-5555-4555-8555-555555555555',
+      'archived-campaign-insert', 'Archived campaign insert', '{}'::jsonb,
+      '55555555-5555-4555-8555-555555555555',
+      '55555555-5555-4555-8555-555555555555'
+    )
+  $$,
+  '42501',
+  null,
+  'archived campaign rejects campaign item insert'
+);
+
+select lives_ok(
+  $test$
+    do $denied$
+    begin
+      update marketing_ops.campaign_items
+      set title = 'Archived campaign bypass', version = version + 1,
+          updated_by = '55555555-5555-4555-8555-555555555555'
+      where id = 'e5555555-5555-4555-8555-555555555555';
+      if found then
+        raise exception using errcode = 'P0001', message = 'editor updated item in archived campaign';
+      end if;
+    exception when insufficient_privilege then
+      null;
+    end
+    $denied$
+  $test$,
+  'archived campaign rejects campaign item update'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '88888888-8888-4888-8888-888888888888', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'owner-insert', 'Owner insert', '{}'::jsonb,
+      '88888888-8888-4888-8888-888888888888',
+      '88888888-8888-4888-8888-888888888888'
+    )
+  $$,
+  'owner can insert campaign item'
+);
+
+select results_eq(
+  $$
+    with changed as (
+      update marketing_ops.campaign_items
+      set title = 'Edited by owner', version = version + 1,
+          updated_by = '88888888-8888-4888-8888-888888888888'
+      where id = 'e1111111-1111-4111-8111-111111111111'
+      returning id
+    ) select count(*)::bigint from changed
+  $$,
+  array[1::bigint],
+  'owner can update campaign item'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'manager-insert', 'Manager insert', '{}'::jsonb,
+      '22222222-2222-4222-8222-222222222222',
+      '22222222-2222-4222-8222-222222222222'
+    )
+  $$,
+  'manager can insert campaign item'
+);
+
+select results_eq(
+  $$
+    with changed as (
+      update marketing_ops.campaign_items
+      set title = 'Edited by manager', version = version + 1,
+          updated_by = '22222222-2222-4222-8222-222222222222'
+      where id = 'e1111111-1111-4111-8111-111111111111'
+      returning id
+    ) select count(*)::bigint from changed
+  $$,
+  array[1::bigint],
+  'manager can update campaign item'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'admin-insert', 'Admin insert', '{}'::jsonb,
+      '33333333-3333-4333-8333-333333333333',
+      '33333333-3333-4333-8333-333333333333'
+    )
+  $$,
+  'admin can insert campaign item'
+);
+
+select results_eq(
+  $$
+    with changed as (
+      update marketing_ops.campaign_items
+      set title = 'Edited by admin', version = version + 1,
+          updated_by = '33333333-3333-4333-8333-333333333333'
+      where id = 'e1111111-1111-4111-8111-111111111111'
+      returning id
+    ) select count(*)::bigint from changed
+  $$,
+  array[1::bigint],
+  'admin can update campaign item'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '13131313-1313-4131-8131-131313131313', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select throws_ok(
+  $$
+    insert into marketing_ops.campaign_items (
+      tenant_id, campaign_id, kind, title, content, created_by, updated_by
+    ) values (
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      'c1111111-1111-4111-8111-111111111111',
+      'inactive-insert', 'Inactive insert', '{}'::jsonb,
+      '13131313-1313-4131-8131-131313131313',
+      '13131313-1313-4131-8131-131313131313'
+    )
+  $$,
+  '42501',
+  null,
+  'inactive editor cannot insert campaign item'
+);
+
+select lives_ok(
+  $test$
+    do $denied$
+    begin
+      update marketing_ops.campaign_items
+      set title = 'Inactive bypass', version = version + 1,
+          updated_by = '13131313-1313-4131-8131-131313131313'
+      where id = 'e1111111-1111-4111-8111-111111111111';
+      if found then
+        raise exception using errcode = 'P0001', message = 'inactive editor updated campaign item';
+      end if;
+    exception when insufficient_privilege then
+      null;
+    end
+    $denied$
+  $test$,
+  'inactive editor cannot update campaign item'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '66666666-6666-4666-8666-666666666666', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $test$
+    do $probe$
+    declare
+      locks_before integer;
+      locks_after integer;
+      allowed boolean;
+    begin
+      select count(*)::integer into locks_before
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      allowed := marketing_ops_private.can_edit_campaign(
+        'c4444444-4444-4444-8444-444444444444'
+      );
+
+      select count(*)::integer into locks_after
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      if allowed or locks_after <> locks_before then
+        raise exception using errcode = 'P0001', message = 'viewer consumed aggregate lock';
+      end if;
+    end
+    $probe$
+  $test$,
+  'viewer fails before acquiring campaign aggregate lock'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '12121212-1212-4121-8121-121212121212', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select lives_ok(
+  $test$
+    do $probe$
+    declare
+      locks_before integer;
+      locks_after integer;
+      allowed boolean;
+    begin
+      select count(*)::integer into locks_before
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      allowed := marketing_ops_private.can_edit_campaign(
+        'c4444444-4444-4444-8444-444444444444'
+      );
+
+      select count(*)::integer into locks_after
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      if allowed or locks_after <> locks_before then
+        raise exception using errcode = 'P0001', message = 'nonparticipant consumed aggregate lock';
+      end if;
+    end
+    $probe$
+  $test$,
+  'same-tenant nonparticipant fails before acquiring campaign aggregate lock'
+);
+
+reset role;
 
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
@@ -753,14 +1179,15 @@ reset role;
 
 select ok(
   (
-    select count(*) = 8
+    select count(*) = 9
     from pg_proc as function_meta
     join pg_namespace as function_schema on function_schema.oid = function_meta.pronamespace
     where function_schema.nspname = 'marketing_ops_private'
       and function_meta.proname = any (array[
         'can_edit_campaign', 'can_manage_campaign', 'can_bootstrap_campaign_owner',
         'can_administer_campaign_participants', 'lock_campaign_aggregate',
-        'promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update'
+        'promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update',
+        'enforce_campaign_item_update'
       ])
       and function_meta.prosecdef
       and function_meta.provolatile = 'v'
@@ -780,7 +1207,10 @@ select ok(
         (function_meta.proname in ('can_edit_campaign', 'can_manage_campaign', 'can_bootstrap_campaign_owner', 'can_administer_campaign_participants')
           and has_function_privilege('authenticated', function_meta.oid, 'EXECUTE'))
         or
-        (function_meta.proname in ('lock_campaign_aggregate', 'promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update')
+        (function_meta.proname in (
+          'lock_campaign_aggregate', 'promote_first_campaign_owner',
+          'assert_campaign_primary_owner', 'enforce_campaign_update', 'enforce_campaign_item_update'
+        )
           and not has_function_privilege('authenticated', function_meta.oid, 'EXECUTE'))
       )
   ),
@@ -1359,6 +1789,32 @@ select ok(
   and has_table_privilege('authenticated', 'marketing_ops.campaign_members', 'SELECT')
   and has_table_privilege('authenticated', 'marketing_ops.campaign_members', 'DELETE'),
   'campaign member UPDATE is column-scoped while SELECT and DELETE remain available'
+);
+
+select is(
+  (
+    select string_agg(distinct column_name, ',' order by column_name)
+    from information_schema.column_privileges
+    where table_schema = 'marketing_ops'
+      and table_name = 'campaign_items'
+      and grantee = 'authenticated'
+      and privilege_type = 'INSERT'
+  ),
+  'campaign_id,content,created_by,kind,tenant_id,title,updated_by',
+  'campaign item INSERT grants expose only writer columns'
+);
+
+select is(
+  (
+    select string_agg(distinct column_name, ',' order by column_name)
+    from information_schema.column_privileges
+    where table_schema = 'marketing_ops'
+      and table_name = 'campaign_items'
+      and grantee = 'authenticated'
+      and privilege_type = 'UPDATE'
+  ),
+  'content,title,updated_by,version',
+  'campaign item UPDATE grants expose only draft writer columns'
 );
 
 select * from finish();
