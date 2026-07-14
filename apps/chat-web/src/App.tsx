@@ -16,6 +16,7 @@ import { marketingOpsFlags } from "./lib/marketingOps/flags";
 
 const queryClient = new QueryClient();
 const CampaignListPage = lazy(() => import("./pages/marketing-ops/CampaignListPage"));
+const CampaignWorkspacePage = lazy(() => import("./pages/marketing-ops/CampaignWorkspacePage"));
 const marketingOps = marketingOpsFlags(import.meta.env);
 
 const CampaignRouteLoading = () => (
@@ -63,16 +64,28 @@ const App = () => (
             />
 
             {marketingOps.read ? (
-              <Route
-                path="/marketing-ops/campaigns"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<CampaignRouteLoading />}>
-                      <CampaignListPage />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
+              <>
+                <Route
+                  path="/marketing-ops/campaigns"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <CampaignListPage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/marketing-ops/campaigns/:campaignId"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <CampaignWorkspacePage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+              </>
             ) : null}
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
