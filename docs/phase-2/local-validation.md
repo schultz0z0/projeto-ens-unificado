@@ -73,6 +73,15 @@ Os 197 testes verdes permanecem apenas como baseline histórico. A correção at
 - **Fechamento interno:** após Tasks 1–15, usar `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
 - **Fechamento final:** somente após deploy do usuário, gate automatizado na VPS, inspeção de logs e testes manuais por papel.
 
+## Task 3 — contratos e máquina de estados
+
+- **Commit:** `9740530`;
+- **RED observado:** módulo `domain/contracts.js` ausente;
+- **GREEN:** 13/13 testes de schema, prontidão, referência, transições e permissões;
+- **Regressão nativa:** 34/34 testes sem banco e 1/1 teste isolado da matriz em `auth.test.ts`;
+- **Typecheck/build:** exit code 0;
+- **Diferido para VPS:** os quatro testes restantes de `auth.test.ts`, pois resolvem ator e contexto transacional em PostgreSQL real.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;

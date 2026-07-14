@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com a Task 2 em `implemented_pending_vps_validation` e a Task 3 como próxima frente
+- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com a Task 2 em `implemented_pending_vps_validation`, Task 3 concluída e Task 4 como próxima frente
 - **Atualização:** 14 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -225,7 +225,7 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 
 ### Fase 2: Workspace Operacional MVP
 
-**Estado:** `in_progress` — Task 1 concluída; Task 2 corrigida no commit `c921294` e promovida internamente para `implemented_pending_vps_validation`; Tasks 3–15 não iniciadas. O RED/GREEN PostgreSQL, os 217 asserts pgTAP esperados e os probes concorrentes continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
+**Estado:** `in_progress` — Task 1 concluída; Task 2 corrigida no commit `c921294` e promovida internamente para `implemented_pending_vps_validation`; Task 3 concluída no commit `9740530`; Tasks 4–15 não iniciadas. O RED/GREEN PostgreSQL, os 217 asserts pgTAP esperados e os probes concorrentes continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
 
 **Exceção operacional aprovada para esta fase:** o computador atual não usará Docker Desktop, WSL ou Podman. Testes que exigem Supabase/PostgreSQL conteinerizado, imagens Linux, Docker Compose, restart ou persistência serão preparados durante a implementação e executados na VPS de produção depois do fechamento interno das Tasks 1–15. Esse fechamento interno não promove a fase a `completed`: o estado intermediário será `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
 

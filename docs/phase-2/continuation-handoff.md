@@ -9,7 +9,7 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Task 3 não iniciada
+- **Estado de execução:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 4 não iniciada
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 
 Commits relevantes, em ordem:
@@ -24,6 +24,7 @@ Commits relevantes, em ordem:
 | `c17fe5f` | hardening de mutações, RLS e máquina de estados |
 | `1a49c4d` | grants de INSERT e serialização do agregado com advisory lock |
 | `c921294` | fecha `campaign_items`, abuso de lock, grants e progressão de versão |
+| `9740530` | contratos de entrada, prontidão e máquina de estados da campanha |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -131,7 +132,7 @@ O harness anterior cobria participante, não item. O commit `c921294` adiciona o
 7. [x] Executar todos os checks nativos disponíveis e registrar os gates de banco/Linux como `deferred_to_vps`.
 8. [x] Executar novo review estático da Task 2; resultado: zero `Critical`/`Important` após o hardening de versão.
 9. [x] Atualizar README/evidência para `task_2_implemented_pending_vps_validation`.
-10. [ ] Iniciar a Task 3. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
+10. [x] Concluir a Task 3 com TDD nativo. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
 
 ## 5. Setup no outro computador
 
