@@ -8,6 +8,18 @@
 
 **Tech Stack:** Node.js 22, TypeScript 5.9, Express 4.22, React 18, React Router 6, TanStack Query 5, Zod 3.25, PostgreSQL 17/Supabase CLI 2.109, pgTAP, Vitest 3/4, Testing Library, Playwright, axe-core, MCP SDK 1.29, Docker Compose.
 
+## Execution Snapshot — 2026-07-14
+
+- **Estado:** `paused_handoff_ready`.
+- **Branch canônica:** `main`, por decisão explícita do usuário.
+- **Task 1:** `completed_reviewed`.
+- **Task 2:** `changes_requested`; implementação e 197 testes locais estão verdes, mas o review reproduziu deadlock `40P01` no caminho concorrente de `campaign_items`.
+- **Tasks 3–15:** `not_started`.
+- **Deploy Supabase/VPS:** não executado.
+- **Retomada obrigatória:** ler [`docs/phase-2/continuation-handoff.md`](../phase-2/continuation-handoff.md) e fechar a Task 2 antes de iniciar a Task 3.
+
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. A Task 2 só pode ser marcada concluída depois da correção, gate completo e nova revisão independente sem achados `Critical` ou `Important`.
+
 ## Global Constraints
 
 - A Fase 2 implementa somente o escopo de `docs/phase-2/design.md` e `docs/prds/phase-2-workspace-operacional-mvp.md`.
