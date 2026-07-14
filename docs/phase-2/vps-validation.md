@@ -97,7 +97,7 @@ Jornada funcional mínima:
 11. negar usuário/papel/tenant indevido;
 12. repetir idempotency key sem duplicar entidade, auditoria ou evento.
 
-Na etapa 6, recarregar a URL em nova aba e confirmar que busca, status, referência, canal, responsável e período são preservados. Exercitar também vazio inicial, nenhum resultado, 403, erro com correlation ID, retry e paginação “Carregar mais”.
+Na etapa 6, recarregar a URL em nova aba e confirmar que busca, status, referência, canal, responsável e período são preservados. Exercitar também vazio inicial, nenhum resultado, 403, erro com correlation ID, retry e paginação “Carregar mais”. Nas etapas 4, 8 e 9, confirmar que viewer não vê mutações, owner/editor respeitam seus limites, só existe um responsável principal, erros aparecem dentro do diálogo ativo, URLs assinadas não são renderizadas e a timeline pagina sem expor ação/campo desconhecido ou conteúdo bruto.
 
 Executar em desktop e viewport mobile de 390 px, com teclado nos fluxos essenciais. Registrar somente IDs/correlation IDs de fixtures de teste e resultados sanitizados.
 

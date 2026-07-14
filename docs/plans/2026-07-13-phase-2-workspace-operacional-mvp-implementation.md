@@ -24,11 +24,12 @@
 - **Task 10:** `implemented_pending_vps_validation` no commit `32acff2`; client tipado completo, query keys, headers de mutação, upload binário, ETag/correlação e `currentVersion` implementados. Onze testes focados, regressão frontend 131/131, lint sem erro, typecheck e build passaram; integração real client/API está `deferred_to_vps`.
 - **Task 11:** `implemented_pending_vps_validation` no commit `df4903b`; lista responsiva, filtros em URL, cursor, criação name-only, estados operacionais e projeção resumida implementados. Cinco testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile e gates nativos passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
 - **Task 12:** `implemented_pending_vps_validation` no commit `7fcbd21`; workspace editável, salvamento explícito, referência oficial, transições, archive read-only e resolução visual de 409 implementados. Seis testes focados, regressão frontend 142/142, QA Chrome em três larguras, lint sem erro, typecheck, build e security gate passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
-- **Tasks 13–15:** `not_started`.
+- **Task 13:** `implemented_pending_vps_validation` no commit `73fa9ea`; participantes, materiais, timeline paginada, permissões fail-closed, versão agregada e alinhamento visual KV implementados. Vinte e dois testes focados, regressão frontend 156/156, QA Chrome desktop/mobile, lint sem erro, typecheck, build e security gate passaram; API/PostgreSQL/RLS, upload real, E2E/axe e Compose estão `deferred_to_vps`.
+- **Tasks 14–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 13, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 14, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–12 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–13 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -859,7 +860,7 @@ git commit -m "feat: adiciona workspace editavel de campanha"
 **Interfaces:**
 - Produces: gestão de papéis, upload/link/unlink/download seguro e histórico paginado.
 
-- [ ] **Step 1: RED das três seções**
+- [x] **Step 1: RED das três seções**
 
 ```tsx
 it('blocks an oversized file before network and renders a safe timeline', async () => {
@@ -872,23 +873,23 @@ it('blocks an oversized file before network and renders a safe timeline', async 
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd apps/chat-web && npm test -- src/components/marketing-ops/ParticipantsPanel.test.tsx src/components/marketing-ops/MaterialsPanel.test.tsx src/components/marketing-ops/TimelinePanel.test.tsx`
 
 Expected: FAIL por componentes ausentes.
 
-- [ ] **Step 3: Implementar painéis**
+- [x] **Step 3: Implementar painéis**
 
 Participantes mostram avatar/nome/papel/principal e escondem ações não autorizadas. Materiais mostram nome, MIME, tamanho, autor/data, upload progress, abrir via access link sob demanda e unlink com confirmação. Timeline usa lista semântica, paginação e descrições localizadas por ação.
 
-- [ ] **Step 4: Verificar GREEN**
+- [x] **Step 4: Verificar GREEN**
 
 Run: `cd apps/chat-web && npm test -- src/components/marketing-ops && npm run typecheck`
 
 Expected: painéis passam em 390 px, 768 px e desktop nos testes de layout/comportamento.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add apps/chat-web/src/components/marketing-ops apps/chat-web/src/pages/marketing-ops/CampaignWorkspacePage.tsx

@@ -200,6 +200,19 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Implementação:** deep link UUID, loading/404/403/retry, formulário em Essenciais/Planejamento/Briefing, patch mínimo sem autosave, course picker com debounce, conflito sem sobrescrita automática, transições/reabertura controlada e confirmação de archive;
 - **Diferido para VPS:** auth e capabilities reais por papel, API/PostgreSQL, ETag/`If-Match`/409 concorrente em duas sessões, RAG MCP real, persistência histórica, E2E/axe integrado, Compose e logs.
 
+## Task 13 — participantes, materiais e timeline na UI
+
+- **Commit:** `73fa9ea`;
+- **RED observado:** os três módulos de painel ainda não existiam; testes adicionais reproduziram invalidação de timeline com query key incompatível, dois owners principais no cache e erros de mutação ocultos atrás de diálogos;
+- **GREEN focado:** 5 arquivos e 22/22 testes para composição/versionamento, permissões fail-closed, gestão de participantes, limites de material, access link, paginação e timeline segura;
+- **Regressão frontend:** 40 arquivos e 156/156 testes aprovados;
+- **Lint e tipos:** ESLint focado sem achados; lint global com zero erro e os mesmos 10 warnings legados; typecheck aprovado;
+- **Build:** aprovado com chunks lazy próprios para lista e workspace; warnings legados de bundle principal, Browserslist e importação mista do Supabase permanecem fora desta task;
+- **Security gate:** validadores estáticos RLS app/RAG, lint, build e auditoria com zero vulnerabilidades aprovados, usando as variáveis do app somente no processo;
+- **QA browser real:** lista, workspace, painéis e sidebar oficial conferidos no KV visual em 1440×900 e 390×844; sem overflow horizontal, footer sobre conteúdo, sobreposição do botão do menu ou warning/erro de console. A validação funcional da Task 12 permanece como evidência intermediária em 768×900;
+- **Implementação:** permissões derivadas de tenant/membership e fail-closed, owner principal único no cache, mutações aninhadas avançando a versão agregada, upload validado antes da rede, URL temporária aberta somente após allowlist HTTP(S), unlink sem apagar bytes e timeline cursor-based com rótulos allowlisted;
+- **Diferido para VPS:** auth/capabilities e REST reais, PostgreSQL/RLS por papel/cross-tenant, versão concorrente entre sessões, upload/access/unlink contra Artifact Server, timeline persistida/paginada, E2E/axe, imagens Linux, Compose, restart, persistência e logs.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -208,7 +221,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 12
+## Auditoria documental após a Task 13
 
 | Verificação | Resultado |
 |---|---|
@@ -217,6 +230,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 13 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 14 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.

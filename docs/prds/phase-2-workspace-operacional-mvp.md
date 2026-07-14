@@ -218,14 +218,14 @@ Os checkboxes permanecem abertos até a evidência completa exigida pelo gate da
 | Campanha não ativa sem responsável e dados mínimos | `backend_implemented_pending_vps_validation` | regra de domínio implementada; PostgreSQL real pendente |
 | Lista pagina, busca e combina filtros | `backend_client_and_ui_implemented_pending_vps_validation` | projeção resumida, tabela/cards, filtros e cursor cobertos por testes nativos; performance, banco e API real pendentes |
 | URL preserva filtros relevantes | `frontend_implemented_pending_vps_validation` | busca/status preservados e combinados no browser; deep link real e E2E VPS pendentes |
-| Workspace mostra visão geral, briefing, participantes, materiais e atividade | `overview_and_briefing_ui_implemented_panels_pending` | visão/briefing responsivos existem; participantes, materiais e atividade são Task 13 |
-| Upload/vínculo respeita ownership e limites | `backend_and_client_implemented_pending_vps_validation` | client envia `File` bruto com MIME/nome/versão/idempotência; integração real e UI pendentes |
+| Workspace mostra visão geral, briefing, participantes, materiais e atividade | `backend_client_and_ui_implemented_pending_vps_validation` | cinco seções responsivas implementadas; integração API/PostgreSQL real e E2E VPS pendentes |
+| Upload/vínculo respeita ownership e limites | `backend_client_and_ui_implemented_pending_vps_validation` | UI bloqueia tamanho/extensão/MIME antes da rede, usa access link sob demanda e confirma unlink; ownership/bytes/Compose reais pendentes |
 | Conflito de versão não sobrescreve dados | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo preserva/compara valor local e reaplica só após decisão; 409 API/DB real pendente |
-| Member, manager e admin respeitam a matriz | `partially_implemented_pending_vps_validation` | autorização nativa parcial; RLS/E2E/VPS pendentes |
+| Member, manager e admin respeitam a matriz | `backend_client_and_ui_implemented_pending_vps_validation` | UI deriva capacidades fail-closed e esconde mutações indevidas; RLS, API real e E2E por papel na VPS pendentes |
 | Arquivamento preserva histórico | `backend_client_and_ui_implemented_pending_vps_validation` | confirmação e read-only implementados; preservação no PostgreSQL/timeline/VPS pendente |
-| Timeline não expõe campos proibidos | `implemented_pending_vps_validation` | backend seguro e client reduzido/paginado implementados; pgTAP, UI e logs VPS pendentes |
-| Estados de erro e vazio estão implementados | `list_and_workspace_states_implemented_panels_pending` | lista e workspace cobrem loading, vazio, 403, 404, erro, correlação e retry; painéis da Task 13 pendentes |
-| Jornadas críticas são responsivas e acessíveis | `list_and_workspace_journeys_implemented_pending_e2e` | semântica e larguras 390/768/1440 px validadas; painéis, axe e E2E integrado permanecem pendentes |
+| Timeline não expõe campos proibidos | `backend_client_and_ui_implemented_pending_vps_validation` | UI usa allowlists para ação/campo, paginação por cursor e nunca renderiza payload bruto; pgTAP, API real e inspeção de logs VPS pendentes |
+| Estados de erro e vazio estão implementados | `frontend_implemented_pending_integrated_e2e` | lista, workspace e três painéis cobrem loading, vazio, erro, correlação e retry; API real e E2E VPS pendentes |
+| Jornadas críticas são responsivas e acessíveis | `frontend_implemented_pending_axe_e2e` | semântica e larguras 390/768/1440 px validadas, incluindo painéis e sidebar KV; axe e E2E integrado permanecem pendentes |
 
 ## Testes
 

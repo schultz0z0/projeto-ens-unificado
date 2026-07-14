@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `7fcbd21 feat: adiciona workspace editavel de campanha`
+- **Último commit de código da fase:** `73fa9ea feat: completa colaboracao e historico no workspace`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–12 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 13 é a próxima frente
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–13 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 14 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 - **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
@@ -196,6 +196,16 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 228 asse
 - Chrome em 1440×900, 768×900 e 390×844 confirmou conflito/reaplicação, transição, archive, ausência de overflow e console final limpo;
 - auth/capabilities reais, API/PostgreSQL, concorrência em duas sessões, RAG MCP real, E2E/axe e histórico persistido permanecem `deferred_to_vps`.
 
+### Task 13 — implementada, integração VPS pendente
+
+- painel de pessoas lista avatar/nome/papel/principal, busca candidatos e permite gestão conforme tenant/membership; viewer falha fechado e somente manager/admin transfere owner principal;
+- painel de materiais valida 25 MiB, extensão e MIME antes da rede, cobre upload/vínculo, cria access link sob demanda com allowlist HTTP(S) e confirma unlink sem excluir bytes;
+- timeline usa lista semântica, cursor, rótulos allowlisted, ator/origem/data e estados loading/vazio/erro/retry sem renderizar payload bruto;
+- mutações aninhadas avançam a versão compartilhada da campanha; a revisão corrigiu query key da timeline, cache de owner principal e erros ocultos por diálogos;
+- RED dos painéis ausentes foi observado; 22/22 testes focados, 156/156 na regressão frontend, lint sem erro, typecheck, build e security gate passaram;
+- Chrome confirmou KV visual, sidebar oficial, painéis e ausência de overflow em 1440×900 e 390×844; a validação funcional anterior cobre 768×900; console final limpo;
+- auth/capabilities, API/PostgreSQL/RLS, upload/Artifact real, paginação persistida, E2E/axe, Compose, restart, persistência e logs permanecem `deferred_to_vps`.
+
 ### Pacote documental — completo para o estado atual
 
 - README funciona como índice de entregáveis e estados;
@@ -256,6 +266,7 @@ O harness anterior cobria participante, não item. O commit `c921294` adiciona o
 17. [x] Implementar e testar a Task 10; fechar o client tipado e diferir a integração real.
 18. [x] Implementar e testar a Task 11; validar lista/criação no browser e coletar a projeção SQL para a VPS.
 19. [x] Implementar e testar a Task 12; validar workspace/conflito/transições/archive no browser e diferir a integração real para a VPS.
+20. [x] Implementar e testar a Task 13; validar participantes/materiais/timeline e KV visual no browser e diferir integração, E2E/axe e infraestrutura para a VPS.
 
 ## 5. Setup no outro computador
 
@@ -329,11 +340,11 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 12
+## 8. Trabalho restante após a Task 13
 
-As Tasks 13–15 permanecem pendentes: participantes/materiais/timeline, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 14–15 permanecem pendentes: observabilidade/E2E/documentação, gate seguro de VPS, deploy Supabase do app, integração final e handoff VPS.
 
-O backend das Tasks 3–9, a fundação tipada frontend da Task 10, a lista/criação da Task 11 e o workspace base da Task 12 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A experiência visual continua pelos painéis de participantes, materiais e atividade na Task 13.
+O backend das Tasks 3–9, a fundação tipada frontend da Task 10, a lista/criação da Task 11 e o workspace completo das Tasks 12–13 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A continuidade imediata é a Task 14, com observabilidade, E2E/axe preparado, Compose e script seguro de validação para a VPS.
 
 Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 
