@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com Tasks 2 e 4–10 em `implemented_pending_vps_validation`, Task 3 concluída e Task 11 como próxima frente
+- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com Tasks 2 e 4–11 em `implemented_pending_vps_validation`, Task 3 concluída e Task 12 como próxima frente
 - **Atualização:** 14 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -225,7 +225,7 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 
 ### Fase 2: Workspace Operacional MVP
 
-**Estado:** `in_progress` — Task 1 concluída; Task 2 em `implemented_pending_vps_validation` (`c921294`); Task 3 concluída (`9740530`); Task 4 em `implemented_pending_vps_validation` (`9b19ec7`); Task 5 em `implemented_pending_vps_validation` (`2c119f8`); Task 6 em `implemented_pending_vps_validation` (`aed3e1c`); Task 7 em `implemented_pending_vps_validation` (`5d5cf8f`); Task 8 em `implemented_pending_vps_validation` (`42d43f3`); Task 9 em `implemented_pending_vps_validation` (`6c713e7`); Task 10 em `implemented_pending_vps_validation` (`32acff2`); Tasks 11–15 não iniciadas. O client tipado passou por 11 testes focados e pela regressão frontend de 131 testes, mas sua integração real com a API permanece para o gate VPS. Os gates PostgreSQL, incluindo 228 asserts pgTAP, 17 cenários REST/MCP/production-gate e os testes de domínio/concorrência/timeline, além das integrações reais, imagens Linux, Compose, restart e persistência, continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
+**Estado:** `in_progress` — Task 1 concluída; Task 2 em `implemented_pending_vps_validation` (`c921294`); Task 3 concluída (`9740530`); Task 4 em `implemented_pending_vps_validation` (`9b19ec7`); Task 5 em `implemented_pending_vps_validation` (`2c119f8`); Task 6 em `implemented_pending_vps_validation` (`aed3e1c`); Task 7 em `implemented_pending_vps_validation` (`5d5cf8f`); Task 8 em `implemented_pending_vps_validation` (`42d43f3`); Task 9 em `implemented_pending_vps_validation` (`6c713e7`); Task 10 em `implemented_pending_vps_validation` (`32acff2`); Task 11 em `implemented_pending_vps_validation` (`df4903b`); Tasks 12–15 não iniciadas. A lista/criação passou por 5 testes de jornada, regressão frontend de 136 testes e QA real em Chrome desktop/mobile sem erro de console ou overflow horizontal. API autenticada, PostgreSQL, E2E final e produção permanecem para os gates posteriores. Os gates PostgreSQL, incluindo 228 asserts pgTAP, 17 cenários REST/MCP/production-gate e os testes de domínio/concorrência/timeline, além das integrações reais, imagens Linux, Compose, restart e persistência, continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
 
 **Exceção operacional aprovada para esta fase:** o computador atual não usará Docker Desktop, WSL ou Podman. Testes que exigem Supabase/PostgreSQL conteinerizado, imagens Linux, Docker Compose, restart ou persistência serão preparados durante a implementação e executados na VPS de produção depois do fechamento interno das Tasks 1–15. Esse fechamento interno não promove a fase a `completed`: o estado intermediário será `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
 

@@ -1,8 +1,8 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
 - **Status:** approved
-- **Implementação:** `in_progress_through_task_10`
-- **Última evidência de código:** `32acff2` — client frontend tipado e query keys implementados
+- **Implementação:** `in_progress_through_task_11`
+- **Última evidência de código:** `df4903b` — lista responsiva, filtros em URL e criação implementados
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 
@@ -213,19 +213,19 @@ Os checkboxes permanecem abertos até a evidência completa exigida pelo gate da
 
 | Critério | Estado em 14/07/2026 | Evidência/pendência |
 |---|---|---|
-| Usuário autorizado cria rascunho | `backend_and_client_implemented_pending_vps_validation` | domínio, REST/OpenAPI e client idempotente implementados; UI, E2E e banco real pendentes |
+| Usuário autorizado cria rascunho | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo name-only, idempotência e navegação ao deep link cobertos; auth/API/banco real e E2E VPS pendentes |
 | Campos obrigatórios e datas são validados | `backend_implemented_pending_vps_validation` | schemas e contratos verdes; banco/UI pendentes |
 | Campanha não ativa sem responsável e dados mínimos | `backend_implemented_pending_vps_validation` | regra de domínio implementada; PostgreSQL real pendente |
-| Lista pagina, busca e combina filtros | `backend_and_client_implemented_pending_vps_validation` | filtros, cursor, página e serialização do client verdes; performance, banco e UI pendentes |
-| URL preserva filtros relevantes | `not_started` | Task 11 |
+| Lista pagina, busca e combina filtros | `backend_client_and_ui_implemented_pending_vps_validation` | projeção resumida, tabela/cards, filtros e cursor cobertos por testes nativos; performance, banco e API real pendentes |
+| URL preserva filtros relevantes | `frontend_implemented_pending_vps_validation` | busca/status preservados e combinados no browser; deep link real e E2E VPS pendentes |
 | Workspace mostra visão geral, briefing, participantes, materiais e atividade | `backend_and_client_implemented_ui_pending` | backend, client e query keys das seções existem; UI é Tasks 12–13 |
 | Upload/vínculo respeita ownership e limites | `backend_and_client_implemented_pending_vps_validation` | client envia `File` bruto com MIME/nome/versão/idempotência; integração real e UI pendentes |
 | Conflito de versão não sobrescreve dados | `backend_and_client_implemented_pending_vps_validation` | `If-Match`, ETag e `currentVersion` no erro 409 consolidados; concorrência real e UX pendentes |
 | Member, manager e admin respeitam a matriz | `partially_implemented_pending_vps_validation` | autorização nativa parcial; RLS/E2E/VPS pendentes |
 | Arquivamento preserva histórico | `backend_implemented_pending_vps_validation` | archive e projeção histórica implementados; banco/UI/VPS pendentes |
 | Timeline não expõe campos proibidos | `implemented_pending_vps_validation` | backend seguro e client reduzido/paginado implementados; pgTAP, UI e logs VPS pendentes |
-| Estados de erro e vazio estão implementados | `backend_and_client_contract_implemented_ui_not_started` | envelope/códigos e `MarketingOpsApiError` tipado existem; estados visuais são Tasks 11–13 |
-| Jornadas críticas são responsivas e acessíveis | `not_started` | Tasks 11–14 |
+| Estados de erro e vazio estão implementados | `list_states_implemented_remaining_workspace_pending` | loading, vazio inicial/filtrado, acesso negado, erro, correlação e retry existem na lista; estados das Tasks 12–13 pendentes |
+| Jornadas críticas são responsivas e acessíveis | `list_journey_implemented_remaining_journeys_pending` | tabela desktop, cards mobile, labels/foco e largura de 390 px validados; workspace/E2E/axe permanecem pendentes |
 
 ## Testes
 

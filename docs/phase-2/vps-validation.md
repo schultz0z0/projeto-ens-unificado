@@ -44,6 +44,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 - [ ] 12 cenários DB da Task 4, 5 da Task 5, 3 da Task 6 e referência canônica da Task 7 aprovados;
 - [ ] 6 testes REST, 6 MCP e 5 production-gate diferidos na Task 9 aprovados;
 - [ ] client da Task 10 integrado à API real preserva auth, correlação, ETag, `If-Match`, idempotência, upload binário e `currentVersion` no 409;
+- [ ] lista da Task 11 usa owners/alertas reais, combina filtros, pagina por cursor e cria rascunho sem N+1 ou vazamento cross-tenant;
 - [ ] lint/advisors sem erro/achado novo nos objetos alterados;
 - [ ] imagens Linux constroem e Compose fica saudável;
 - [ ] nenhuma fixture residual após cleanup.
@@ -94,6 +95,8 @@ Jornada funcional mínima:
 10. concluir/arquivar e confirmar read-only;
 11. negar usuário/papel/tenant indevido;
 12. repetir idempotency key sem duplicar entidade, auditoria ou evento.
+
+Na etapa 6, recarregar a URL em nova aba e confirmar que busca, status, referência, canal, responsável e período são preservados. Exercitar também vazio inicial, nenhum resultado, 403, erro com correlation ID, retry e paginação “Carregar mais”.
 
 Executar em desktop e viewport mobile de 390 px, com teclado nos fluxos essenciais. Registrar somente IDs/correlation IDs de fixtures de teste e resultados sanitizados.
 

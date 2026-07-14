@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_10_implemented_pending_vps_validation`
+- **Estado:** `task_11_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `32acff2`
+- **Último código da fase:** `df4903b`
 
 ## Evidência concluída
 
@@ -171,6 +171,22 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Implementação:** tipos completos do OpenAPI, campanhas/transições/participantes/materiais/timeline/referências, query keys por recurso, ETag e correlação preservados, 409 com `currentVersion` e upload de `File` sem JSON;
 - **Diferido para VPS:** chamada do client contra a API autenticada real, CORS/TLS, ETag/409 reais e upload binário até o Artifact Server no Compose.
 
+## Task 11 — lista, filtros em URL e criação
+
+- **Commit:** `df4903b`;
+- **RED observado:** helper de atenção e componentes da lista ausentes; o primeiro teste de interação também revelou uma corrida entre debounce e atualização da URL, corrigida antes do GREEN;
+- **GREEN focado:** 5/5 testes da página para URL/criação, paginação, vazio/erro, preservação no erro e limpeza no cancelamento;
+- **Regressão frontend:** 36 arquivos e 136/136 testes aprovados; ESLint focado sem achados, lint global com zero erro e 10 warnings preexistentes;
+- **Marketing Ops sem banco:** 63/63 em 12 arquivos, mais 6 REST, 2 MCP, 1 contrato de participantes e 4 de materiais; total segmentado de 76 testes aprovados;
+- **Intercorrência investigada:** a primeira execução paralela tentou abrir outro worker Vitest após os 63 testes e recebeu `spawn EPERM`; os quatro filtros restantes foram reexecutados isoladamente e aprovaram 13/13, classificando a ocorrência como limite transitório do Windows, não falha de código;
+- **OpenAPI e builds:** Redocly `2.18.1 --extends=minimal`, typecheck e build do Marketing Ops aprovados; typecheck/build do frontend aprovados;
+- **Regressões adjacentes:** Artifact Server 8/8; RAG MCP 26/26 e typecheck; `security:gate` terminou com zero vulnerabilidade alta e zero erro de lint;
+- **QA browser real:** Chrome em 1440×900 e viewport móvel 390×844; busca/status persistiram em `?status=active&q=Corporate`, criação navegou ao UUID, diálogo fechou, rótulos foram localizados, `scrollWidth === clientWidth` e console teve zero warning/erro;
+- **Implementação:** lista resumida com owners/alertas após paginação, tabela/cards, filtros combináveis/resetáveis, cursor, estados loading/vazio/erro/403, correlação, retry, criação name-only, rota lazy e sidebar por flag;
+- **Coleta PostgreSQL:** `domain.test.ts` agora exige `responsibles` e `attention` da projeção real; execução `deferred_to_vps`;
+- **Limite do security gate legado:** o check de RAG executado pelo script com o anon do app comprova apenas negação, não acesso ao Supabase do RAG; a prova oficial do RAG continua sendo MCP read-only na VPS;
+- **Diferido para VPS:** auth/CORS/TLS/API real, PostgreSQL/RLS, performance, E2E integrado/axe, Compose e logs.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -179,7 +195,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 10
+## Auditoria documental após a Task 11
 
 | Verificação | Resultado |
 |---|---|
@@ -188,6 +204,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 11 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 12 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.

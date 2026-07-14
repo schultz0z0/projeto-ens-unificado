@@ -1,6 +1,6 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_10_not_executed_in_vps`
+- **Estado:** `prepared_through_task_11_not_executed_in_vps`
 - **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy
@@ -48,14 +48,15 @@ npm test
 npm run typecheck
 
 Set-Location ../../apps/chat-web
-npm test -- src/lib/marketingOps
+npm test
 npm run typecheck
 npm run lint
 npm run build
-npm run security:gate
+$env:DOTENV_CONFIG_PATH='../../.env'
+node --input-type=module -e "import 'dotenv/config'; process.env.SUPABASE_URL=process.env.NEXUS_APP_SUPABASE_URL; process.env.SUPABASE_ANON_KEY=process.env.NEXUS_APP_SUPABASE_ANON_KEY; await import('./scripts/security_gate.mjs')"
 ```
 
-A lista cresce conforme Tasks 11–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado.
+A lista cresce conforme Tasks 12–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado. O `validate:rag-rls` legado dentro do security gate não é aceito como prova do Supabase do RAG; o gate oficial do RAG permanece exclusivamente MCP read-only na VPS.
 
 ## Gate diferido de banco e Linux
 

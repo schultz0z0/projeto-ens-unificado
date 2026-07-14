@@ -22,11 +22,12 @@
 - **Task 8:** `implemented_pending_vps_validation` no commit `42d43f3`; minimização de auditoria/outbox, projeção privada, cursor, rota e allowlists implementados. Sete testes da task e 65 checks nativos segmentados passaram; 7 novos asserts pgTAP e a prova do histórico/RLS real estão `deferred_to_vps`.
 - **Task 9:** `implemented_pending_vps_validation` no commit `6c713e7`; adapters REST estritos, transição, ETags, erros, capabilities e OpenAPI 3.1 completos. Setenta e cinco testes nativos e o lint Redocly passaram; 17 cenários REST/MCP/production-gate estão `deferred_to_vps`.
 - **Task 10:** `implemented_pending_vps_validation` no commit `32acff2`; client tipado completo, query keys, headers de mutação, upload binário, ETag/correlação e `currentVersion` implementados. Onze testes focados, regressão frontend 131/131, lint sem erro, typecheck e build passaram; integração real client/API está `deferred_to_vps`.
-- **Tasks 11–15:** `not_started`.
+- **Task 11:** `implemented_pending_vps_validation` no commit `df4903b`; lista responsiva, filtros em URL, cursor, criação name-only, estados operacionais e projeção resumida implementados. Cinco testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile e gates nativos passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
+- **Tasks 12–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 11, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 12, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–10 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–11 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -748,7 +749,7 @@ git commit -m "feat: expande cliente web de marketing ops"
 **Interfaces:**
 - Produces: rota `/marketing-ops/campaigns`, filtros em URL, paginação cursor e criação name-only.
 
-- [ ] **Step 1: RED da jornada de lista**
+- [x] **Step 1: RED da jornada de lista**
 
 ```tsx
 it('syncs filters to the URL and opens the created campaign', async () => {
@@ -764,23 +765,25 @@ it('syncs filters to the URL and opens the created campaign', async () => {
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd apps/chat-web && npm test -- src/pages/marketing-ops/CampaignListPage.test.tsx`
 
 Expected: FAIL porque rota/componentes não existem.
 
-- [ ] **Step 3: Implementar UI responsiva**
+- [x] **Step 3: Implementar UI responsiva**
 
 Usar `React.lazy` no `App.tsx`, TanStack Query, tabela no desktop e cards no mobile. Estados obrigatórios: loading skeleton, empty, error com correlation ID, lista, “carregar mais”. Sidebar exibe o item apenas quando `marketingOpsFlags(import.meta.env).read` for verdadeiro.
 
-- [ ] **Step 4: Verificar GREEN e navegação por teclado**
+- [x] **Step 4: Verificar GREEN e navegação por teclado**
 
 Run: `cd apps/chat-web && npm test -- src/pages/marketing-ops/CampaignListPage.test.tsx && npm run typecheck`
 
 Expected: jornada passa; controles possuem label, foco e ordem de tabulação.
 
-- [ ] **Step 5: Commit**
+Resultado executado: 5/5 testes da página e regressão frontend 136/136 passaram. QA Chrome em desktop/mobile confirmou filtros na URL, criação/deep link, labels, cartões/tabela, ausência de overflow e console limpo. API real, axe e E2E no Compose permanecem `deferred_to_vps`.
+
+- [x] **Step 5: Commit** — `df4903b feat: adiciona lista e criacao de campanhas`.
 
 ```powershell
 git add apps/chat-web/src/pages/marketing-ops/CampaignListPage.tsx apps/chat-web/src/pages/marketing-ops/CampaignListPage.test.tsx apps/chat-web/src/components/marketing-ops/CampaignFilters.tsx apps/chat-web/src/components/marketing-ops/CampaignTable.tsx apps/chat-web/src/components/marketing-ops/CreateCampaignDialog.tsx apps/chat-web/src/App.tsx apps/chat-web/src/components/Sidebar.tsx

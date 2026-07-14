@@ -3,10 +3,10 @@
 - **Estado da fase:** `in_progress`
 - **Snapshot:** 2026-07-14
 - **Branch canônica:** `main`
-- **Último código da fase:** `32acff2`
+- **Último código da fase:** `df4903b`
 - **Deploy Supabase da Fase 2:** não executado
 - **Deploy VPS da Fase 2:** não executado
-- **Próxima task:** Task 11 — lista, filtros em URL e criação
+- **Próxima task:** Task 12 — workspace, salvamento explícito e conflito
 
 ## Legenda de estados
 
@@ -33,13 +33,13 @@
 | 8 | Timeline segura e auditoria minimizada | `42d43f3` | 7 testes da task e 65 checks nativos segmentados; 7 asserts pgTAP adicionados e diferidos | `implemented_pending_vps_validation` |
 | 9 | Consolidação REST v1 e OpenAPI | `6c713e7` | 75 testes nativos segmentados, typecheck/build e Redocly válidos; 17 cenários integrados diferidos | `implemented_pending_vps_validation` |
 | 10 | Cliente frontend tipado | `32acff2` | RED das APIs ausentes; 11 testes focados, regressão frontend 131/131, lint sem erro, typecheck e build verdes; integração real diferida | `implemented_pending_vps_validation` |
-| 11 | Lista, filtros em URL e criação | — | não iniciada | `not_started` |
+| 11 | Lista, filtros em URL e criação | `df4903b` | RED dos componentes ausentes; 5 testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 12 | Workspace, salvamento e conflito | — | não iniciada | `not_started` |
 | 13 | Participantes, materiais e timeline na UI | — | não iniciada | `not_started` |
 | 14 | Observabilidade, Compose, E2E e fechamento documental | — | não iniciada; pacote documental-base antecipado após auditoria de processo | `not_started` |
 | 15 | Revisão final no `main` e handoff VPS | — | não iniciada | `not_started` |
 
-## Evidências consolidadas até a Task 10
+## Evidências consolidadas até a Task 11
 
 - baseline histórico: 197 pgTAP, lint sem erro, schema diff vazio e primeiro harness campanha/participante aprovado no computador anterior;
 - banco atual: 228 asserts esperados (`2 + 95 + 33 + 98`), harness ampliado e provas reais marcadas `deferred_to_vps`;
@@ -47,7 +47,9 @@
 - timeline: snapshots de texto livre são reduzidos a presença/tamanho/SHA-256, secrets são redigidos e a projeção limita ações/campos por allowlist;
 - REST/OpenAPI: 18 paths e 22 operações em lockstep com o Express, schemas estritos, ETags/headers de mutação e erros públicos documentados;
 - frontend: client cobre campanhas, transições, participantes, materiais, timeline e referências; upload preserva `File` bruto, ETag/correlação são expostos e conflitos carregam `currentVersion`;
-- gate frontend da Task 10: 11/11 testes focados, 131/131 na regressão completa, ESLint com zero erro e 10 warnings preexistentes, typecheck e build aprovados;
+- lista frontend: filtros combináveis em URL, paginação por cursor, criação name-only, tabela desktop, cards mobile, estados loading/vazio/erro/acesso negado e correlação;
+- gate frontend da Task 11: 5/5 testes de jornada, 136/136 na regressão completa, ESLint focado sem achados, lint global com zero erro e 10 warnings preexistentes, typecheck, build e security gate aprovados;
+- QA real da Task 11: Chrome em 1440×900 e 390×844, filtros e criação exercitados, largura sem overflow e console sem warning/erro;
 - Artifact Server: 8/8 testes nativos aprovados;
 - RAG MCP: 26/26 testes e typecheck aprovados;
 - Compose: parsing e vínculos estáticos de Artifact/RAG aprovados, sem alegação de build ou execução Linux;
@@ -57,7 +59,7 @@ As contagens e comandos completos estão em [local-validation.md](local-validati
 
 ## Sequência de continuidade
 
-1. Tasks 11–13: experiência operacional completa sobre o client tipado.
+1. Tasks 12–13: completar workspace, conflito, participantes, materiais e timeline sobre o client tipado.
 2. Task 14: observabilidade final, E2E, gate reproduzível e fechamento interno.
 3. Task 15: revisão fresca do `main`, deploy Supabase do app quando autorizado pelos gates e handoff VPS.
 4. Usuário publica `main` e executa o deploy VPS.
