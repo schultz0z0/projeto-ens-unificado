@@ -106,10 +106,10 @@ function ResponsibleNames({ campaign }: { campaign: MarketingOpsCampaignSummary 
 export function CampaignTable({ campaigns, onOpen }: CampaignTableProps) {
   return (
     <>
-      <div className="hidden overflow-hidden rounded-[8px] border border-slate-200 bg-white md:block">
+      <div className="glass-surface shadow-glass hidden overflow-hidden rounded-[8px] border-white/60 md:block">
         <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow className="hover:bg-slate-50">
+          <TableHeader className="bg-white/45">
+            <TableRow className="hover:bg-white/45">
               <TableHead className="w-[28%]">Campanha</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Período</TableHead>
@@ -121,7 +121,7 @@ export function CampaignTable({ campaigns, onOpen }: CampaignTableProps) {
           </TableHeader>
           <TableBody>
             {campaigns.map((campaign) => (
-              <TableRow key={campaign.id} className="group bg-white">
+              <TableRow key={campaign.id} className="group bg-white/35 hover:bg-white/55">
                 <TableCell>
                   <button
                     type="button"
@@ -169,7 +169,7 @@ export function CampaignTable({ campaigns, onOpen }: CampaignTableProps) {
 
       <div className="grid grid-cols-1 gap-3 md:hidden">
         {campaigns.map((campaign) => (
-          <article key={campaign.id} className="rounded-[8px] border border-slate-200 bg-white p-4 shadow-sm">
+          <article key={campaign.id} className="glass-surface shadow-glass rounded-[8px] border-white/60 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <button

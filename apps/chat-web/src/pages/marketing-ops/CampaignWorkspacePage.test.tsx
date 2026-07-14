@@ -74,6 +74,20 @@ function makeClient(overrides: Partial<MarketingOpsClient> = {}): MarketingOpsCl
       version: 4,
       archivedAt: '2026-07-14T14:00:00.000Z'
     }))),
+    listParticipants: vi.fn().mockResolvedValue(result([])),
+    listParticipantCandidates: vi.fn().mockResolvedValue(result([])),
+    addParticipant: vi.fn(),
+    updateParticipant: vi.fn(),
+    removeParticipant: vi.fn(),
+    listMaterials: vi.fn().mockResolvedValue(result([])),
+    uploadMaterial: vi.fn(),
+    linkMaterial: vi.fn(),
+    unlinkMaterial: vi.fn(),
+    createMaterialAccessLink: vi.fn(),
+    listTimeline: vi.fn().mockResolvedValue({
+      ...result([]),
+      page: { limit: 25, count: 0, nextCursor: null }
+    }),
     searchCourseReferences: vi.fn().mockResolvedValue(result([])),
     ...overrides
   } as unknown as MarketingOpsClient;
@@ -81,7 +95,14 @@ function makeClient(overrides: Partial<MarketingOpsClient> = {}): MarketingOpsCl
 
 function renderWorkspace(
   client: MarketingOpsClient,
-  options: { entry?: string; canWrite?: boolean; canArchive?: boolean; referenceDebounceMs?: number } = {}
+  options: {
+    entry?: string;
+    canWrite?: boolean;
+    canArchive?: boolean;
+    referenceDebounceMs?: number;
+    tenantRole?: 'member' | 'manager' | 'admin';
+    currentUserId?: string | null;
+  } = {}
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
@@ -100,6 +121,8 @@ function renderWorkspace(
                 client={client}
                 canWrite={options.canWrite ?? true}
                 canArchive={options.canArchive ?? true}
+                tenantRole={options.tenantRole ?? 'manager'}
+                currentUserId={options.currentUserId}
                 referenceDebounceMs={options.referenceDebounceMs ?? 0}
                 idempotencyKey={() => 'idem-workspace'}
               />
@@ -295,6 +318,75 @@ describe('CampaignWorkspacePage', () => {
       'idem-workspace'
     ));
     expect(await screen.findByText(/somente leitura/i)).toBeTruthy();
+  });
+
+  it('composes collaboration panels and carries their aggregate version into the next transition', async () => {
+    const user = userEvent.setup();
+    const owner = {
+      userId: '11111111-1111-4111-8111-111111111111',
+      displayName: 'Marina Souza',
+      avatarUrl: null,
+      memberRole: 'owner' as const,
+      isPrimary: true
+    };
+    const viewer = {
+      userId: '22222222-2222-4222-8222-222222222222',
+      displayName: 'Beatriz Lima',
+      avatarUrl: null,
+      memberRole: 'viewer' as const,
+      isPrimary: false
+    };
+    const updateParticipant = vi.fn().mockResolvedValue(result({
+      participant: { ...viewer, memberRole: 'editor' as const },
+      campaignVersion: 4
+    }));
+    const transitionCampaign = vi.fn().mockResolvedValue(result(campaign({ status: 'planned', version: 5 })));
+    const client = makeClient({
+      listParticipants: vi.fn().mockResolvedValue(result([owner, viewer])),
+      updateParticipant,
+      transitionCampaign
+    });
+    renderWorkspace(client, {
+      tenantRole: 'manager',
+      currentUserId: owner.userId
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Pessoas' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Materiais' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Atividade' })).toBeTruthy();
+
+    await user.selectOptions(screen.getByLabelText(/papel de beatriz lima/i), 'editor');
+    expect(await screen.findByText('Versão 4')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: /^planejar$/i }));
+    await waitFor(() => expect(transitionCampaign).toHaveBeenCalledWith(
+      campaignId,
+      4,
+      'planned',
+      'idem-workspace'
+    ));
+  });
+
+  it('fails closed for a member viewer even when the global write flag is enabled', async () => {
+    const viewerId = '22222222-2222-4222-8222-222222222222';
+    const client = makeClient({
+      listParticipants: vi.fn().mockResolvedValue(result([{
+        userId: viewerId,
+        displayName: 'Beatriz Lima',
+        avatarUrl: null,
+        memberRole: 'viewer',
+        isPrimary: false
+      }]))
+    });
+    renderWorkspace(client, {
+      canWrite: true,
+      tenantRole: 'member',
+      currentUserId: viewerId
+    });
+
+    const name = await screen.findByLabelText(/^nome$/i) as HTMLInputElement;
+    await waitFor(() => expect(name.matches(':disabled')).toBe(true));
+    expect(screen.queryByRole('button', { name: /salvar alterações/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^planejar$/i })).toBeNull();
   });
 
   it('renders safe states for invalid ids, not found and read-only access', async () => {

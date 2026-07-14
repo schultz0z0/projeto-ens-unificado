@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Loader2, Menu, RefreshCw, Save, Undo2 } from 'lucide-react';
+import { AlertCircle, Loader2, Megaphone, RefreshCw, Save, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from '@/components/Sidebar';
@@ -12,6 +12,10 @@ import {
   type CampaignFormValues
 } from '@/components/marketing-ops/campaignForm';
 import { CampaignHeader } from '@/components/marketing-ops/CampaignHeader';
+import { MaterialsPanel } from '@/components/marketing-ops/MaterialsPanel';
+import { MarketingOpsMobileBar } from '@/components/marketing-ops/MarketingOpsMobileBar';
+import { ParticipantsPanel } from '@/components/marketing-ops/ParticipantsPanel';
+import { TimelinePanel } from '@/components/marketing-ops/TimelinePanel';
 import { VersionConflictDialog } from '@/components/marketing-ops/VersionConflictDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -25,7 +29,6 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { MarketingOpsApiError, type MarketingOpsClient } from '@/lib/marketingOps/client';
 import { marketingOpsFlags } from '@/lib/marketingOps/flags';
@@ -34,6 +37,7 @@ import { marketingOpsClient } from '@/lib/marketingOps/runtime';
 import type {
   MarketingOpsCampaign,
   MarketingOpsCampaignPatch,
+  MarketingOpsTenantRole,
   MarketingOpsTransitionTarget
 } from '@/lib/marketingOps/types';
 
@@ -41,6 +45,8 @@ interface CampaignWorkspacePageProps {
   client?: MarketingOpsClient;
   canWrite?: boolean;
   canArchive?: boolean;
+  tenantRole?: MarketingOpsTenantRole;
+  currentUserId?: string | null;
   referenceDebounceMs?: number;
   idempotencyKey?: () => string;
 }
@@ -77,22 +83,26 @@ function WorkspaceFailure({
   onRetry?: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 md:ml-20">
-      <div className="mx-auto flex min-h-screen max-w-3xl items-center px-4 py-10 sm:px-6">
-        <Alert variant="destructive" className="rounded-[8px] bg-white">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{title}</AlertTitle>
-          <AlertDescription>
-            <p>{description}</p>
-            {correlationId ? <p className="mt-1 text-xs">Correlação: {correlationId}</p> : null}
-            {onRetry ? (
-              <Button type="button" variant="outline" onClick={onRetry} className="mt-4 h-10 rounded-[8px]">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Tentar novamente
-              </Button>
-            ) : null}
-          </AlertDescription>
-        </Alert>
+    <div className="relative min-h-screen overflow-x-hidden text-text-primary">
+      <Sidebar />
+      <MarketingOpsMobileBar label="Campanhas" icon={<Megaphone className="h-4 w-4 text-brand-primary" />} />
+      <div className="min-h-screen md:ml-20">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center px-4 py-10 sm:px-6">
+          <Alert variant="destructive" className="rounded-[8px] border-white/60 bg-white/80 shadow-glass backdrop-blur-xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{title}</AlertTitle>
+            <AlertDescription>
+              <p>{description}</p>
+              {correlationId ? <p className="mt-1 text-xs">Correlação: {correlationId}</p> : null}
+              {onRetry ? (
+                <Button type="button" variant="outline" onClick={onRetry} className="mt-4 h-10 rounded-[8px]">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tentar novamente
+                </Button>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     </div>
   );
@@ -103,6 +113,8 @@ function CampaignWorkspace({
   client,
   canWrite,
   canArchive,
+  tenantRole,
+  currentUserId,
   referenceDebounceMs,
   idempotencyKey
 }: {
@@ -110,6 +122,8 @@ function CampaignWorkspace({
   client: MarketingOpsClient;
   canWrite: boolean;
   canArchive: boolean;
+  tenantRole: MarketingOpsTenantRole;
+  currentUserId: string | null;
   referenceDebounceMs: number;
   idempotencyKey: () => string;
 }) {
@@ -123,10 +137,23 @@ function CampaignWorkspace({
   const [statusBusy, setStatusBusy] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [conflict, setConflict] = useState<ConflictState | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const participantsQuery = useQuery({
+    queryKey: marketingOpsKeys.participants(initialCampaign.id),
+    queryFn: () => client.listParticipants(initialCampaign.id)
+  });
+  const currentParticipant = participantsQuery.data?.data.find((participant) => participant.userId === currentUserId);
+  const managesTenant = tenantRole === 'manager' || tenantRole === 'admin';
+  const canEditCampaign = canWrite && (
+    managesTenant || currentParticipant?.memberRole === 'owner' || currentParticipant?.memberRole === 'editor'
+  );
+  const canTransitionCampaign = canWrite && (
+    managesTenant || (currentParticipant?.memberRole === 'owner' && currentParticipant.isPrimary)
+  );
+  const canArchiveCampaign = canArchive && managesTenant;
   const patch = campaignPatch(campaign, values);
   const dirty = Object.keys(patch).length > 0;
-  const readOnly = !canWrite || campaign.status === 'archived';
+  const readOnly = !canEditCampaign || campaign.status === 'archived';
+  const nestedReadOnly = !canWrite || campaign.status === 'archived';
   const details = errorDetails(operationError);
 
   const applyCampaign = (next: MarketingOpsCampaign) => {
@@ -137,6 +164,18 @@ function CampaignWorkspace({
     queryClient.setQueryData(marketingOpsKeys.campaign(next.id), (previous: unknown) => {
       if (!previous || typeof previous !== 'object') return previous;
       return { ...previous, data: next };
+    });
+    void queryClient.invalidateQueries({ queryKey: marketingOpsKeys.campaigns() });
+  };
+
+  const applyCampaignVersion = (version: number) => {
+    setCampaign((current) => {
+      const next = { ...current, version };
+      queryClient.setQueryData(marketingOpsKeys.campaign(next.id), (previous: unknown) => {
+        if (!previous || typeof previous !== 'object') return previous;
+        return { ...previous, data: next };
+      });
+      return next;
     });
     void queryClient.invalidateQueries({ queryKey: marketingOpsKeys.campaigns() });
   };
@@ -222,7 +261,7 @@ function CampaignWorkspace({
   };
 
   const archive = async () => {
-    if (!canArchive || dirty || statusBusy) return;
+    if (!canArchiveCampaign || dirty || statusBusy) return;
     setStatusBusy(true);
     setOperationError(null);
     try {
@@ -237,29 +276,20 @@ function CampaignWorkspace({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-text-primary">
+    <div className="relative min-h-screen overflow-x-hidden text-text-primary">
       <Sidebar />
 
-      <div className="sticky top-0 z-40 flex h-16 items-center border-b border-slate-200 bg-white px-4 md:hidden">
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-11 w-11 rounded-[8px]">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="z-[70] w-20 border-none bg-white p-0">
-            <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
-            <Sidebar isMobile onMobileClose={() => setMobileMenuOpen(false)} />
-          </SheetContent>
-        </Sheet>
-        <span className="ml-3 truncate text-sm font-semibold">Workspace da campanha</span>
-      </div>
+      <MarketingOpsMobileBar
+        label="Workspace da campanha"
+        icon={<Megaphone className="h-4 w-4 text-brand-primary" />}
+      />
 
       <main className="min-h-screen md:ml-20">
         <CampaignHeader
           campaign={campaign}
-          canWrite={canWrite}
-          canArchive={canArchive}
+          canWrite={canEditCampaign}
+          canTransition={canTransitionCampaign}
+          canArchive={canArchiveCampaign}
           dirty={dirty}
           busy={saving || statusBusy}
           onBack={() => navigate('/marketing-ops/campaigns')}
@@ -269,7 +299,7 @@ function CampaignWorkspace({
 
         {operationError ? (
           <div className="mx-auto max-w-5xl px-4 pt-5 sm:px-6 md:px-8">
-            <Alert variant="destructive" className="rounded-[8px] bg-white">
+            <Alert variant="destructive" className="rounded-[8px] border-white/60 bg-white/80 shadow-glass backdrop-blur-xl">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Não foi possível concluir a operação</AlertTitle>
               <AlertDescription>
@@ -294,8 +324,36 @@ function CampaignWorkspace({
           onSubmit={save}
         />
 
+        <ParticipantsPanel
+          campaignId={campaign.id}
+          campaignVersion={campaign.version}
+          client={client}
+          tenantRole={tenantRole}
+          currentUserId={currentUserId}
+          readOnly={nestedReadOnly}
+          idempotencyKey={idempotencyKey}
+          onCampaignVersionChange={applyCampaignVersion}
+        />
+
+        <MaterialsPanel
+          campaignId={campaign.id}
+          campaignVersion={campaign.version}
+          client={client}
+          tenantRole={tenantRole}
+          currentUserId={currentUserId}
+          readOnly={nestedReadOnly}
+          idempotencyKey={idempotencyKey}
+          onCampaignVersionChange={applyCampaignVersion}
+        />
+
+        <TimelinePanel
+          campaignId={campaign.id}
+          client={client}
+          reserveFooterSpace={!readOnly}
+        />
+
         {!readOnly ? (
-          <div className="sticky bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 md:px-8">
+          <div className="sticky bottom-0 z-30 border-t border-white/50 bg-white/75 px-4 py-3 shadow-[0_-10px_30px_-24px_rgba(11,18,32,0.45)] backdrop-blur-xl sm:px-6 md:px-8">
             <div className="mx-auto flex max-w-5xl items-center justify-end gap-2">
               <Button
                 type="button"
@@ -306,7 +364,7 @@ function CampaignWorkspace({
                   setErrors({});
                   setOperationError(null);
                 }}
-                className="h-11 rounded-[8px] bg-white"
+                className="h-11 rounded-[8px] bg-white/80"
               >
                 <Undo2 className="mr-2 h-4 w-4" />
                 Descartar
@@ -340,7 +398,7 @@ function CampaignWorkspace({
       />
 
       <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
-        <AlertDialogContent className="rounded-[8px] border-slate-200 bg-white text-text-primary">
+        <AlertDialogContent className="rounded-[8px] border-white/60 bg-white/90 text-text-primary shadow-glass backdrop-blur-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Arquivar campanha</AlertDialogTitle>
             <AlertDialogDescription>
@@ -367,15 +425,19 @@ export default function CampaignWorkspacePage({
   client = marketingOpsClient,
   canWrite,
   canArchive,
+  tenantRole,
+  currentUserId,
   referenceDebounceMs = 300,
   idempotencyKey = defaultIdempotencyKey
 }: CampaignWorkspacePageProps) {
   const { campaignId = '' } = useParams();
-  const { normalizedRole } = useAuth();
+  const { normalizedRole, profile, user } = useAuth();
   const flags = marketingOpsFlags(import.meta.env);
   const writeAllowed = canWrite ?? flags.write;
+  const effectiveTenantRole = tenantRole ?? normalizedRole;
+  const effectiveUserId = currentUserId === undefined ? (profile?.id ?? user?.id ?? null) : currentUserId;
   const archiveAllowed = canArchive ?? (
-    writeAllowed && (normalizedRole === 'manager' || normalizedRole === 'admin')
+    writeAllowed && (effectiveTenantRole === 'manager' || effectiveTenantRole === 'admin')
   );
   const validId = uuidPattern.test(campaignId);
   const campaignQuery = useQuery({
@@ -390,11 +452,15 @@ export default function CampaignWorkspacePage({
 
   if (campaignQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 md:ml-20">
-        <div aria-label="Carregando workspace" className="mx-auto max-w-5xl space-y-5 px-4 py-8 sm:px-6 md:px-8">
-          <div className="h-8 w-2/3 animate-pulse rounded bg-slate-200" />
-          <div className="h-36 animate-pulse rounded-[8px] bg-white" />
-          <div className="h-72 animate-pulse rounded-[8px] bg-white" />
+      <div className="relative min-h-screen overflow-x-hidden text-text-primary">
+        <Sidebar />
+        <MarketingOpsMobileBar label="Workspace da campanha" icon={<Megaphone className="h-4 w-4 text-brand-primary" />} />
+        <div className="md:ml-20">
+          <div aria-label="Carregando workspace" className="mx-auto max-w-5xl space-y-5 px-4 py-8 sm:px-6 md:px-8">
+            <div className="h-8 w-2/3 animate-pulse rounded bg-slate-200" />
+            <div className="glass-surface shadow-glass h-36 animate-pulse rounded-[8px] border-white/60" />
+            <div className="glass-surface shadow-glass h-72 animate-pulse rounded-[8px] border-white/60" />
+          </div>
         </div>
       </div>
     );
@@ -436,6 +502,8 @@ export default function CampaignWorkspacePage({
       client={client}
       canWrite={writeAllowed}
       canArchive={archiveAllowed}
+      tenantRole={effectiveTenantRole}
+      currentUserId={effectiveUserId}
       referenceDebounceMs={referenceDebounceMs}
       idempotencyKey={idempotencyKey}
     />

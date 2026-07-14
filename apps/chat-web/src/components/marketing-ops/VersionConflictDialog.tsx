@@ -53,7 +53,7 @@ export function VersionConflictDialog({
   return (
     <Dialog open={open} onOpenChange={() => undefined}>
       <DialogContent
-        className="max-h-[85vh] overflow-y-auto rounded-[8px] border-slate-200 bg-white text-text-primary [&>button]:hidden"
+        className="max-h-[85vh] overflow-y-auto rounded-[8px] border-white/60 bg-white/90 text-text-primary shadow-glass backdrop-blur-xl [&>button]:hidden"
         onEscapeKeyDown={(event) => event.preventDefault()}
         onPointerDownOutside={(event) => event.preventDefault()}
       >

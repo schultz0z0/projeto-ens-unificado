@@ -21,6 +21,9 @@ describe('Marketing Ops query keys', () => {
     expect(marketingOpsKeys.materials('campaign-1')).toEqual([
       'marketing-ops', 'campaign', 'campaign-1', 'materials'
     ]);
+    expect(marketingOpsKeys.timeline('campaign-1')).toEqual([
+      'marketing-ops', 'campaign', 'campaign-1', 'timeline'
+    ]);
     expect(marketingOpsKeys.timeline('campaign-1', { limit: 25, cursor: 'next' })).toEqual([
       'marketing-ops', 'campaign', 'campaign-1', 'timeline', { limit: 25, cursor: 'next' }
     ]);

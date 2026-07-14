@@ -28,6 +28,7 @@ const statusClasses: Record<MarketingOpsCampaignStatus, string> = {
 interface CampaignHeaderProps {
   campaign: MarketingOpsCampaign;
   canWrite: boolean;
+  canTransition: boolean;
   canArchive: boolean;
   dirty: boolean;
   busy: boolean;
@@ -39,6 +40,7 @@ interface CampaignHeaderProps {
 export function CampaignHeader({
   campaign,
   canWrite,
+  canTransition,
   canArchive,
   dirty,
   busy,
@@ -48,7 +50,7 @@ export function CampaignHeader({
 }: CampaignHeaderProps) {
   const readOnly = campaign.status === 'archived' || !canWrite;
   return (
-    <header className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 md:px-8">
+    <header className="glass-surface border-b border-white/50 px-4 py-5 shadow-sm sm:px-6 md:px-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <Button
@@ -79,7 +81,7 @@ export function CampaignHeader({
         <div className="flex flex-wrap items-center gap-2">
           <StatusTransitionMenu
             status={campaign.status}
-            canWrite={canWrite}
+            canWrite={canTransition}
             canReopen={canArchive}
             disabled={busy || dirty}
             onTransition={onTransition}
@@ -90,7 +92,7 @@ export function CampaignHeader({
               variant="outline"
               disabled={busy || dirty}
               onClick={onArchive}
-              className="h-11 rounded-[8px] bg-white"
+              className="h-11 rounded-[8px] bg-white/80"
             >
               <Archive className="mr-2 h-4 w-4" />
               Arquivar campanha

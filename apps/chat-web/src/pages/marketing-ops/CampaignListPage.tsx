@@ -1,14 +1,14 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Inbox, Loader2, Megaphone, Menu, Plus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Inbox, Loader2, Megaphone, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sidebar } from '@/components/Sidebar';
 import { CampaignFilters } from '@/components/marketing-ops/CampaignFilters';
 import { CampaignTable } from '@/components/marketing-ops/CampaignTable';
 import { CreateCampaignDialog } from '@/components/marketing-ops/CreateCampaignDialog';
+import { MarketingOpsMobileBar } from '@/components/marketing-ops/MarketingOpsMobileBar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import type { MarketingOpsClient } from '@/lib/marketingOps/client';
 import { campaignDeepLink } from '@/lib/marketingOps/deepLinks';
 import { marketingOpsFlags } from '@/lib/marketingOps/flags';
@@ -86,7 +86,6 @@ export default function CampaignListPage({
   const [searchValue, setSearchValue] = useState(searchParams.get('q') ?? '');
   const committedSearch = useRef(searchParams.get('q') ?? '');
   const [createOpen, setCreateOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const filters = useMemo(() => filtersFrom(searchParams), [searchParams]);
   const hasFilters = URL_FILTER_KEYS.some((key) => searchParams.has(key));
 
@@ -147,31 +146,23 @@ export default function CampaignListPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-text-primary">
+    <div className="relative min-h-screen overflow-x-hidden text-text-primary">
       <Sidebar />
 
-      <div className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-11 w-11 rounded-[8px]">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="z-[70] w-20 border-none bg-white p-0">
-            <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
-            <Sidebar isMobile onMobileClose={() => setMobileMenuOpen(false)} />
-          </SheetContent>
-        </Sheet>
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Megaphone className="h-4 w-4 text-brand-primary" />
-          Campanhas
-        </div>
-        {canWrite ? (
-          <Button size="icon" onClick={() => setCreateOpen(true)} aria-label="Nova campanha" className="h-11 w-11 rounded-[8px]">
+      <MarketingOpsMobileBar
+        label="Campanhas"
+        icon={<Megaphone className="h-4 w-4 text-brand-primary" />}
+        action={canWrite ? (
+          <Button
+            size="icon"
+            onClick={() => setCreateOpen(true)}
+            aria-label="Nova campanha"
+            className="shadow-glass h-10 w-10 rounded-full"
+          >
             <Plus className="h-5 w-5" />
           </Button>
-        ) : <span className="h-11 w-11" aria-hidden="true" />}
-      </div>
+        ) : undefined}
+      />
 
       <main className="min-h-screen md:ml-20">
         <div className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 md:px-8 md:py-8">
@@ -201,7 +192,7 @@ export default function CampaignListPage({
 
           <section aria-live="polite" aria-busy={campaignsQuery.isLoading} className="py-5">
             {campaignsQuery.isLoading ? (
-              <div aria-label="Carregando campanhas" className="overflow-hidden rounded-[8px] border border-slate-200 bg-white">
+              <div aria-label="Carregando campanhas" className="glass-surface shadow-glass overflow-hidden rounded-[8px] border-white/60">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div key={index} className="grid h-20 grid-cols-6 items-center gap-4 border-b border-slate-100 px-4 last:border-b-0">
                     <div className="col-span-2 h-4 animate-pulse rounded bg-slate-200" />
@@ -213,7 +204,7 @@ export default function CampaignListPage({
                 ))}
               </div>
             ) : campaignsQuery.isError ? (
-              <Alert variant="destructive" className="rounded-[8px] bg-white">
+              <Alert variant="destructive" className="rounded-[8px] border-white/60 bg-white/80 shadow-glass backdrop-blur-xl">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>{accessDenied ? 'Acesso não autorizado' : 'Não foi possível carregar as campanhas'}</AlertTitle>
                 <AlertDescription>
@@ -226,7 +217,7 @@ export default function CampaignListPage({
                 </AlertDescription>
               </Alert>
             ) : campaigns.length === 0 ? (
-              <div className="flex min-h-64 flex-col items-center justify-center border-y border-slate-200 bg-white px-4 py-10 text-center">
+              <div className="glass-surface shadow-glass flex min-h-64 flex-col items-center justify-center rounded-[8px] border-white/60 px-4 py-10 text-center">
                 <Inbox className="h-9 w-9 text-text-muted" />
                 <h2 className="mt-4 text-lg font-semibold text-text-primary">
                   {hasFilters ? 'Nenhuma campanha encontrada' : 'Nenhuma campanha ainda'}
@@ -255,7 +246,7 @@ export default function CampaignListPage({
                       variant="outline"
                       onClick={() => campaignsQuery.fetchNextPage()}
                       disabled={campaignsQuery.isFetchingNextPage}
-                      className="h-11 rounded-[8px] bg-white"
+                      className="h-11 rounded-[8px] bg-white/80"
                     >
                       {campaignsQuery.isFetchingNextPage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Carregar mais
