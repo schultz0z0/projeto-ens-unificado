@@ -1,6 +1,6 @@
 # Rastreabilidade da Fase 2
 
-- **Estado:** `partial_through_task_13`
+- **Estado:** `partial_through_task_14`
 - **Data da revisão:** 2026-07-14
 - **Fonte:** [PRD da Fase 2](../prds/phase-2-workspace-operacional-mvp.md)
 - **Plano:** [plano de implementação](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
@@ -49,7 +49,7 @@
 | Concorrência | harness campanha/participante/item e conflito de versão sem perda | `prepared_deferred_to_vps` |
 | Artifact Server | build Linux, health, ownership, upload/access/unlink, restart e persistência | `prepared_deferred_to_vps` |
 | RAG | chamada MCP real read-only, indisponibilidade e logs sem payload | `prepared_deferred_to_vps` |
-| Frontend | unitários, integração, Playwright desktop/mobile e axe | `unit_and_browser_qa_through_task_13_pending_integrated_e2e` |
+| Frontend | unitários, integração, Playwright desktop/mobile e axe | `unit_and_browser_qa_through_task_14_pending_integrated_e2e` |
 | Performance | 5.000 campanhas e primeira página p95 <= 500 ms | `not_started` |
 | Supabase do app | backup, dry-run, migrations, lint/advisors e invariantes | `not_executed` |
 | VPS | Compose, TLS/CORS/auth, smokes, logs, restart, persistência e rollback | `pending_user_execution` |
@@ -63,4 +63,4 @@
 - [Riscos](risk-register.md)
 - [LGPD e retenção](lgpd-retention.md)
 
-Nenhum requisito está `production_validated`. O fechamento de backend até a Task 9, do client tipado na Task 10, da lista/criação na Task 11 e do workspace completo nas Tasks 12–13 reduz o trabalho restante, mas não substitui banco real, integrações, E2E/axe, deploy ou aceite do piloto.
+Nenhum requisito está `production_validated`. O fechamento de backend até a Task 9, do client tipado na Task 10, da lista/criação na Task 11, do workspace completo nas Tasks 12–13 e da observabilidade na Task 14 reduz o trabalho restante, mas não substitui banco real, integrações, E2E/axe, deploy ou aceite do piloto.

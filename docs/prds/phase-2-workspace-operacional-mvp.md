@@ -1,8 +1,8 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
 - **Status:** approved
-- **Implementação:** `in_progress_through_task_12`
-- **Última evidência de código:** `7fcbd21` — workspace editável, conflito, transições e arquivamento implementados
+- **Implementação:** `in_progress_through_task_14`
+- **Última evidência de código:** `bcd8ca3` — observabilidade, E2E, metrics, logging e script VPS implementados
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 

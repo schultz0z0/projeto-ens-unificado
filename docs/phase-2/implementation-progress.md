@@ -36,7 +36,7 @@
 | 11 | Lista, filtros em URL e criação | `df4903b` | RED dos componentes ausentes; 5 testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 12 | Workspace, salvamento e conflito | `7fcbd21` | RED dos módulos ausentes; 6 testes focados, regressão frontend 142/142, QA Chrome desktop/tablet/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 13 | Participantes, materiais e timeline na UI | `73fa9ea` | RED dos painéis ausentes; 22 testes focados, regressão frontend 156/156, revisão solo, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/RLS/upload/E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 14 | Observabilidade, Compose, E2E e fechamento documental | — | não iniciada; pacote documental-base antecipado após auditoria de processo | `not_started` |
+| 14 | Observabilidade, Compose, E2E e fechamento documental | `bcd8ca3` | Readiness/Logger/Prometheus/Playwright/E2E prontos; validação de infra e E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 15 | Revisão final no `main` e handoff VPS | — | não iniciada | `not_started` |
 
 ## Evidências consolidadas até a Task 13

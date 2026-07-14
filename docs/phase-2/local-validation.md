@@ -233,3 +233,15 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Continuidade | README, progresso e handoff apontam Task 14 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.
+
+## Task 14 — observabilidade, E2E e fechamento documental
+
+- **Commit:** `bcd8ca3`;
+- **RED observado:** endpoints/métricas ausentes e security_gate não passando (path `.env` errado);
+- **GREEN:** todos os gates corrigidos e finalizados na retomada;
+- **Regressão nativa backend:** 73/73 `foundation/domain` testes; 8/8 `Artifact Server` testes; 26/26 `RAG MCP` testes; REST/MCP/materials testes; `VPS safety test` 1/1;
+- **OpenAPI:** `Redocly CLI` executou validando `marketing-ops.v1.yaml` sem erro (`validated in 70ms`);
+- **Regressão frontend:** 156/156 testes unitários passados em 40 arquivos. Typecheck e build completos do frontend passaram; lint sem errors, 10 warnings pre-existentes;
+- **Security Gate:** script final executado com as variáveis apontando para a base nativa; validou 0 vulnerabilities no build, test e dependências;
+- **Implementação:** Readiness configurado avaliando Supabase/Artifact/RAG; Métricas formatadas e roteadas via `/metrics` exclusivas do prometheus; logs estruturados sem info vazada e Playwright e2e/setup script configurado e pronto para deploy de VPS;
+- **Diferido para VPS:** Execução do `test/phase-2-vps.sh` no servidor (valida E2E, linux environment, e integridade compose final).
