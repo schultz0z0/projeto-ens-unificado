@@ -40,12 +40,26 @@ values
   ('c3333333-3333-4333-8333-333333333333', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Other campaign', '44444444-4444-4444-8444-444444444444', '44444444-4444-4444-8444-444444444444')
 on conflict (id) do nothing;
 
-insert into marketing_ops.campaign_members (tenant_id, campaign_id, user_id, member_role, created_by)
+update marketing_ops.campaigns
+set
+  objective = 'Generate demand',
+  reference_type = 'course',
+  reference_key = 'course-alpha',
+  reference_title_snapshot = 'Official Course',
+  briefing = 'briefingsecret',
+  notes = 'notessecret'
+where id = 'c1111111-1111-4111-8111-111111111111';
+
+insert into marketing_ops.campaign_members (tenant_id, campaign_id, user_id, member_role, is_primary, created_by)
 values
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111', 'owner', '11111111-1111-4111-8111-111111111111'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c2222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222222', 'owner', '22222222-2222-4222-8222-222222222222'),
-  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'c3333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444', 'owner', '44444444-4444-4444-8444-444444444444')
-on conflict (campaign_id, user_id) do nothing;
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111', 'owner', true, '11111111-1111-4111-8111-111111111111'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c2222222-2222-4222-8222-222222222222', '22222222-2222-4222-8222-222222222222', 'owner', true, '22222222-2222-4222-8222-222222222222'),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'c3333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444', 'owner', true, '44444444-4444-4444-8444-444444444444')
+on conflict (campaign_id, user_id) do update
+set
+  member_role = excluded.member_role,
+  is_primary = excluded.is_primary,
+  created_by = excluded.created_by;
 
 insert into marketing_ops.audit_events (
   id, tenant_id, actor_user_id, actor_role, actor_type, origin,
