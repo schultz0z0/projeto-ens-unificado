@@ -1,4 +1,4 @@
-import { MessageSquare, Image, Settings, LogOut, Camera, Key, Loader2, ClipboardCheck } from "lucide-react";
+import { MessageSquare, Image, Settings, LogOut, Camera, Key, Loader2, ClipboardCheck, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { marketingOpsFlags } from "@/lib/marketingOps/flags";
 
 interface SidebarProps {
   activeTab?: "chat" | "image";
@@ -29,6 +30,7 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const marketingOps = marketingOpsFlags(import.meta.env);
 
   const getErrorMessage = (err: unknown) => {
     if (err instanceof Error) return err.message;
@@ -200,6 +202,22 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
         >
           <Image className="w-5 h-5" />
         </Button>
+
+        {marketingOps.read ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
+              location.pathname.startsWith("/marketing-ops/campaigns") && "bg-brand-primary/20 text-brand-primary"
+            )}
+            onClick={() => { navigate("/marketing-ops/campaigns"); onMobileClose?.(); }}
+            aria-label="Abrir campanhas"
+            title="Campanhas"
+          >
+            <Megaphone className="w-5 h-5" />
+          </Button>
+        ) : null}
 
         {canManageValidatedWorks && (
           <Button

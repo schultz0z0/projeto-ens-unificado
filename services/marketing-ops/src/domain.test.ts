@@ -160,7 +160,12 @@ describe('idempotent draft domain', () => {
       limit: 1
     });
     expect(result.data).toHaveLength(1);
-    expect(result.data[0]).toMatchObject({ id: campaign.id, name: 'Searchable Alpha Campaign' });
+    expect(result.data[0]).toMatchObject({
+      id: campaign.id,
+      name: 'Searchable Alpha Campaign',
+      responsibles: [{ userId: actor.userId, isPrimary: true }],
+      attention: []
+    });
     expect(result.nextCursor).toBeNull();
     expect(await getCampaign(context(), campaign.id)).toMatchObject({
       id: campaign.id,

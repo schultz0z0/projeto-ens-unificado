@@ -3,6 +3,7 @@ import type {
   MarketingOpsCampaignCreate,
   MarketingOpsCampaignFilters,
   MarketingOpsCampaignPatch,
+  MarketingOpsCampaignSummary,
   MarketingOpsCourseReference,
   MarketingOpsErrorEnvelope,
   MarketingOpsMaterial,
@@ -108,7 +109,7 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
 
   return {
     listCampaigns: (filters: MarketingOpsCampaignFilters = {}) =>
-      request<MarketingOpsCampaign[]>(withQuery('/v1/campaigns', filters)),
+      request<MarketingOpsCampaignSummary[]>(withQuery('/v1/campaigns', filters)),
 
     getCampaign: (campaignId: string) =>
       request<MarketingOpsCampaign>(campaignPath(campaignId)),
@@ -256,3 +257,5 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
       )
   };
 }
+
+export type MarketingOpsClient = ReturnType<typeof createMarketingOpsClient>;

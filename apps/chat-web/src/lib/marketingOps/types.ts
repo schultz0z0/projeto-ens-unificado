@@ -43,6 +43,22 @@ export interface MarketingOpsCampaign extends MarketingOpsCampaignEditableFields
   archivedAt: string | null;
 }
 
+export type MarketingOpsCampaignAttention =
+  | 'missing_primary_owner'
+  | 'planned_start_due'
+  | 'active_past_end';
+
+export interface MarketingOpsCampaignResponsibleSummary {
+  userId: string;
+  displayName: string;
+  isPrimary: boolean;
+}
+
+export interface MarketingOpsCampaignSummary extends MarketingOpsCampaign {
+  responsibles: MarketingOpsCampaignResponsibleSummary[];
+  attention: MarketingOpsCampaignAttention[];
+}
+
 export type MarketingOpsCampaignCreate = Pick<MarketingOpsCampaignEditableFields, 'name'> &
   Partial<Omit<MarketingOpsCampaignEditableFields, 'name'>> & {
     courseSlug?: string;

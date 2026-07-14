@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { authorize } from '../auth/permissions.js';
 import { withActorTransaction } from '../db/actorTransaction.js';
 import { appError } from '../errors.js';
-import { mapCampaign, type Campaign } from './campaigns.js';
+import { mapCampaign, type Campaign, type CampaignRow } from './campaigns.js';
 import type { CommandContext } from './context.js';
 import {
   CampaignChannelSchema,
@@ -51,6 +51,60 @@ export interface NormalizedCampaignFilters {
   updatedTo: string | null;
   cursor: CampaignCursor | null;
   limit: number;
+}
+
+export type CampaignAttention =
+  | 'missing_primary_owner'
+  | 'planned_start_due'
+  | 'active_past_end';
+
+export interface CampaignResponsibleSummary {
+  userId: string;
+  displayName: string;
+  isPrimary: boolean;
+}
+
+export interface CampaignSummary extends Campaign {
+  responsibles: CampaignResponsibleSummary[];
+  attention: CampaignAttention[];
+}
+
+const responsibleSummarySchema = z.object({
+  userId: z.string().uuid(),
+  displayName: z.string().trim().min(1).max(300),
+  isPrimary: z.boolean()
+}).strict();
+
+interface CampaignSummaryRow extends CampaignRow {
+  responsibles: unknown;
+}
+
+export function getCampaignAttention(
+  campaign: Pick<Campaign, 'status' | 'startsOn' | 'endsOn'>,
+  responsibles: Array<Pick<CampaignResponsibleSummary, 'isPrimary'>>,
+  today = new Date().toISOString().slice(0, 10)
+): CampaignAttention[] {
+  const attention: CampaignAttention[] = [];
+  if (!responsibles.some((responsible) => responsible.isPrimary)) {
+    attention.push('missing_primary_owner');
+  }
+  if (campaign.status === 'planned' && campaign.startsOn && campaign.startsOn <= today) {
+    attention.push('planned_start_due');
+  }
+  if (campaign.status === 'active' && campaign.endsOn && campaign.endsOn < today) {
+    attention.push('active_past_end');
+  }
+  return attention;
+}
+
+function mapCampaignSummary(row: CampaignSummaryRow): CampaignSummary {
+  const campaign = mapCampaign(row);
+  const responsibles = z.array(responsibleSummarySchema).max(100).parse(row.responsibles);
+  return {
+    ...campaign,
+    responsibles,
+    attention: getCampaignAttention(campaign, responsibles)
+  };
 }
 
 const filtersSchema = z.object({
@@ -138,14 +192,15 @@ export function normalizeCampaignFilters(filters: CampaignFilters): NormalizedCa
 export async function listCampaigns(
   context: CommandContext,
   input: CampaignFilters
-): Promise<{ data: Campaign[]; nextCursor: string | null }> {
+): Promise<{ data: CampaignSummary[]; nextCursor: string | null }> {
   authorize(context.actor, 'campaign.read');
   const filters = normalizeCampaignFilters(input);
   return withActorTransaction(context.pool, context.actor, context.correlationId, async (client) => {
-    const result = await client.query(`
-      select campaign.*
-      from marketing_ops.campaigns as campaign
-      where (
+    const result = await client.query<CampaignSummaryRow>(`
+      with filtered_campaigns as materialized (
+        select campaign.*
+        from marketing_ops.campaigns as campaign
+        where (
           $1::text is null
           or campaign.search_vector @@ websearch_to_tsquery('simple', $1)
           or campaign.name ilike $2 escape '\\'
@@ -180,8 +235,26 @@ export async function listCampaigns(
           $14::timestamptz is null
           or (campaign.updated_at, campaign.id) < ($14, $15::uuid)
         )
+        order by campaign.updated_at desc, campaign.id desc
+        limit $16
+      )
+      select
+        campaign.*,
+        coalesce(owner_summary.responsibles, '[]'::jsonb) as responsibles
+      from filtered_campaigns as campaign
+      left join lateral (
+        select jsonb_agg(
+          jsonb_build_object(
+            'userId', participant.user_id,
+            'displayName', participant.display_name,
+            'isPrimary', participant.is_primary
+          )
+          order by participant.is_primary desc, participant.display_name, participant.user_id
+        ) as responsibles
+        from marketing_ops_private.list_campaign_participants(campaign.id) as participant
+        where participant.member_role = 'owner'
+      ) as owner_summary on true
       order by campaign.updated_at desc, campaign.id desc
-      limit $16
     `, [
       filters.q,
       filters.searchPrefix,
@@ -200,7 +273,7 @@ export async function listCampaigns(
       filters.cursor?.id ?? null,
       filters.limit + 1
     ]);
-    const rows = result.rows.map(mapCampaign);
+    const rows = result.rows.map(mapCampaignSummary);
     const hasNextPage = rows.length > filters.limit;
     const data = rows.slice(0, filters.limit);
     const last = data.at(-1);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decodeCampaignCursor,
   encodeCampaignCursor,
+  getCampaignAttention,
   normalizeCampaignFilters
 } from './queries.js';
 
@@ -30,5 +31,19 @@ describe('campaign query contracts', () => {
     expect(() => normalizeCampaignFilters({ periodFrom: '14/07/2026', limit: 25 })).toThrow();
     expect(() => normalizeCampaignFilters({ responsibleId: 'not-a-uuid', limit: 25 })).toThrow();
     expect(() => normalizeCampaignFilters({ limit: 101 })).toThrow();
+  });
+
+  it('derives stable attention indicators for campaign list summaries', () => {
+    expect(getCampaignAttention({
+      status: 'planned',
+      startsOn: '2026-07-14',
+      endsOn: '2026-07-20'
+    }, [], '2026-07-14')).toEqual(['missing_primary_owner', 'planned_start_due']);
+
+    expect(getCampaignAttention({
+      status: 'active',
+      startsOn: '2026-07-01',
+      endsOn: '2026-07-13'
+    }, [{ isPrimary: true }], '2026-07-14')).toEqual(['active_past_end']);
   });
 });

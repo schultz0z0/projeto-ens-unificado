@@ -561,6 +561,32 @@ components:
       required: [data]
       properties:
         data: { $ref: '#/components/schemas/Campaign' }
+    CampaignResponsibleSummary:
+      type: object
+      additionalProperties: false
+      required: [userId, displayName, isPrimary]
+      properties:
+        userId: { type: string, format: uuid }
+        displayName: { type: string, minLength: 1, maxLength: 300 }
+        isPrimary: { type: boolean }
+    CampaignAttention:
+      type: string
+      enum: [missing_primary_owner, planned_start_due, active_past_end]
+    CampaignSummary:
+      allOf:
+        - { $ref: '#/components/schemas/Campaign' }
+        - type: object
+          required: [responsibles, attention]
+          properties:
+            responsibles:
+              type: array
+              maxItems: 100
+              items: { $ref: '#/components/schemas/CampaignResponsibleSummary' }
+            attention:
+              type: array
+              maxItems: 3
+              uniqueItems: true
+              items: { $ref: '#/components/schemas/CampaignAttention' }
     Page:
       type: object
       additionalProperties: false
@@ -574,7 +600,7 @@ components:
       additionalProperties: false
       required: [data, page]
       properties:
-        data: { type: array, items: { $ref: '#/components/schemas/Campaign' } }
+        data: { type: array, items: { $ref: '#/components/schemas/CampaignSummary' } }
         page: { $ref: '#/components/schemas/Page' }
     ParticipantCreate:
       type: object
