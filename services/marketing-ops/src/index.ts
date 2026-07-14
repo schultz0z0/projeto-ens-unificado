@@ -8,6 +8,7 @@ import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
 import { createDelegationRefresher } from './delegation/refresher.js';
 import { ArtifactClient } from './integrations/artifactClient.js';
+import { RagCourseClient } from './integrations/ragCourseClient.js';
 
 const config = loadConfig(process.env);
 const logger = createLogger();
@@ -21,6 +22,10 @@ const router = createApiRouter({
     baseUrl: config.artifact.url,
     internalKey: config.artifact.internalKey,
     timeoutMs: config.artifact.timeoutMs
+  }),
+  ragCourseClient: new RagCourseClient({
+    endpoint: config.rag.url,
+    timeoutMs: config.rag.timeoutMs
   }),
   keyring: config.delegation,
   refreshDelegation: createDelegationRefresher(config.delegationRefresh),

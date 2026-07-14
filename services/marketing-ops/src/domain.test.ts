@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { Actor } from './auth/actor.js';
 import {
   createCampaignDraft,
@@ -98,6 +98,41 @@ describe('idempotent draft domain', () => {
       code: 'version_conflict',
       details: { currentVersion: 2 }
     });
+  });
+
+  it('persists only the canonical course reference verified by the RAG adapter', async () => {
+    const campaign = await createCampaignDraft(context(), {
+      name: 'Course reference campaign',
+      idempotencyKey: randomUUID()
+    });
+    const documentId = '22222222-2222-4222-8222-222222222222';
+    const verifyCourseReference = vi.fn().mockResolvedValue({
+      referenceKey: 'ENS-123',
+      title: 'Curso oficial ENS',
+      documentId,
+      verifiedAt: '2026-07-14T12:45:00.000Z'
+    });
+    const updated = await updateCampaign(
+      { ...context(), courseReferences: { verifyCourseReference } },
+      campaign.id,
+      campaign.version,
+      {
+        referenceType: 'course',
+        referenceKey: 'ENS-123',
+        referenceTitleSnapshot: 'Titulo enviado pelo cliente',
+        referenceDocumentId: documentId,
+        idempotencyKey: randomUUID()
+      }
+    );
+    expect(updated).toMatchObject({
+      referenceType: 'course',
+      referenceKey: 'ENS-123',
+      referenceTitleSnapshot: 'Curso oficial ENS',
+      referenceDocumentId: documentId,
+      referenceVerifiedAt: '2026-07-14T12:45:00.000Z',
+      version: 2
+    });
+    expect(verifyCourseReference).toHaveBeenCalledWith(documentId, 'ENS-123');
   });
 
   it('searches and combines operational campaign filters with stable pagination', async () => {

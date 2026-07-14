@@ -6,6 +6,7 @@ export type Permission =
   | 'campaign.transition' | 'campaign.reopen' | 'campaign.archive'
   | 'participant.manage' | 'participant.owner.manage'
   | 'material.read' | 'material.manage'
+  | 'reference.read'
   | 'item.create' | 'item.read' | 'item.update' | 'audit.read' | 'membership.manage';
 
 const matrix: Record<Permission, readonly ActorRole[]> = {
@@ -19,6 +20,7 @@ const matrix: Record<Permission, readonly ActorRole[]> = {
   'participant.owner.manage': ['manager', 'admin'],
   'material.read': ['member', 'manager', 'admin'],
   'material.manage': ['member', 'manager', 'admin'],
+  'reference.read': ['member', 'manager', 'admin'],
   'item.create': ['member', 'manager', 'admin'],
   'item.read': ['member', 'manager', 'admin'],
   'item.update': ['member', 'manager', 'admin'],

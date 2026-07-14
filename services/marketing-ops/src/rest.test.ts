@@ -9,6 +9,7 @@ import { createMetrics } from './observability/metrics.js';
 import { createApp } from './http/createApp.js';
 import { parse } from 'yaml';
 import { ArtifactClient } from './integrations/artifactClient.js';
+import { RagCourseClient } from './integrations/ragCourseClient.js';
 
 const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 afterAll(() => pool.end());
@@ -21,6 +22,10 @@ function app(features = { read: true, write: true }) {
     artifactClient: new ArtifactClient({
       baseUrl: 'http://127.0.0.1:8095',
       internalKey: 'artifact-test-key',
+      timeoutMs: 1_000
+    }),
+    ragCourseClient: new RagCourseClient({
+      endpoint: 'http://127.0.0.1:8000/mcp',
       timeoutMs: 1_000
     }),
     verifyToken: async (token) => {

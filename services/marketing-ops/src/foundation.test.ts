@@ -73,6 +73,18 @@ describe('runtime foundation', () => {
     });
   });
 
+  it('configures the read-only RAG MCP dependency', () => {
+    const config = loadConfig({
+      NODE_ENV: 'test',
+      MARKETING_OPS_RAG_URL: 'http://rag-mcp:8000/mcp',
+      MARKETING_OPS_RAG_TIMEOUT_MS: '4200'
+    });
+    expect(config.rag).toEqual({
+      url: 'http://rag-mcp:8000/mcp',
+      timeoutMs: 4200
+    });
+  });
+
   it('creates stable error envelopes', () => {
     const error = appError('forbidden', 403, 'Access denied', { permission: 'campaign.read' });
     expect(errorEnvelope(error, 'correlation-1')).toEqual({

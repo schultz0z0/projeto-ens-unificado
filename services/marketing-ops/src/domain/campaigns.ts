@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
+import { z } from 'zod';
 import { authorize } from '../auth/permissions.js';
 import { withActorTransaction } from '../db/actorTransaction.js';
 import { appError } from '../errors.js';
@@ -47,6 +48,31 @@ export interface Campaign {
   updatedAt: string;
   archivedAt: string | null;
 }
+
+export interface CampaignReferenceVerifier {
+  verifyCourseReference(documentId: string, referenceKey: string): Promise<{
+    referenceKey: string;
+    title: string;
+    documentId: string;
+    verifiedAt: string;
+  }>;
+}
+
+export interface CampaignCommandContext extends CommandContext {
+  courseReferences?: CampaignReferenceVerifier;
+}
+
+export interface ResolvedCampaignReference {
+  input: CampaignInput;
+  verifiedAt: string | null;
+}
+
+const VerifiedReferenceSchema = z.object({
+  referenceKey: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1).max(300),
+  documentId: z.string().uuid(),
+  verifiedAt: z.string().datetime()
+}).passthrough();
 
 export interface CampaignRow {
   id: string;
@@ -141,6 +167,48 @@ const editableFields = (campaign: Campaign): CampaignInput => ({
   briefing: campaign.briefing,
   notes: campaign.notes
 });
+
+export async function resolveCampaignReference(
+  input: CampaignInput,
+  options: {
+    referenceTouched: boolean;
+    previousVerifiedAt: string | null;
+    verifier?: CampaignReferenceVerifier;
+  }
+): Promise<ResolvedCampaignReference> {
+  if (!options.referenceTouched) {
+    return { input, verifiedAt: options.previousVerifiedAt };
+  }
+  if (input.referenceType !== 'course' || !input.referenceKey || !input.referenceDocumentId) {
+    return { input, verifiedAt: null };
+  }
+  if (!options.verifier) {
+    throw appError('dependency_unavailable', 503, 'RAG course verification is unavailable');
+  }
+  const verifiedResult = await options.verifier.verifyCourseReference(
+    input.referenceDocumentId,
+    input.referenceKey
+  );
+  const verified = VerifiedReferenceSchema.safeParse(verifiedResult);
+  if (!verified.success) {
+    throw appError('dependency_invalid_response', 502, 'RAG verifier returned invalid course metadata');
+  }
+  if (
+    verified.data.documentId !== input.referenceDocumentId ||
+    verified.data.referenceKey !== input.referenceKey
+  ) {
+    throw appError('reference_not_verified', 422, 'Course reference identity does not match');
+  }
+  return {
+    input: {
+      ...input,
+      referenceKey: verified.data.referenceKey,
+      referenceTitleSnapshot: verified.data.title,
+      referenceDocumentId: verified.data.documentId
+    },
+    verifiedAt: verified.data.verifiedAt
+  };
+}
 
 const participantAuthority = (
   row: CampaignAuthorityRow
@@ -255,7 +323,7 @@ function assertCurrentStatusAuthority(
 }
 
 export async function createCampaignDraft(
-  context: CommandContext,
+  context: CampaignCommandContext,
   input: CreateCampaignDraftInput
 ): Promise<Campaign> {
   authorize(context.actor, 'campaign.create');
@@ -284,24 +352,31 @@ export async function createCampaignDraft(
       input.idempotencyKey,
       { ...campaignInput, courseSlug },
       async () => {
+        const resolvedReference = await resolveCampaignReference(campaignInput, {
+          referenceTouched: true,
+          previousVerifiedAt: null,
+          ...(context.courseReferences ? { verifier: context.courseReferences } : {})
+        });
+        const persistedInput = resolvedReference.input;
         const campaignId = randomUUID();
         const result = await client.query<CampaignRow>(`
           insert into marketing_ops.campaigns (
             id, tenant_id, name, course_slug, objective, reference_type, reference_key,
-            reference_title_snapshot, reference_document_id, audience, starts_on, ends_on,
-            primary_channel, secondary_channels, briefing, notes, created_by, updated_by
+            reference_title_snapshot, reference_document_id, reference_verified_at,
+            audience, starts_on, ends_on, primary_channel, secondary_channels, briefing,
+            notes, created_by, updated_by
           ) values (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-            $13, $14::marketing_ops.campaign_channel[], $15, $16, $17, $17
+            $13, $14, $15::marketing_ops.campaign_channel[], $16, $17, $18, $18
           )
           returning *
         `, [
-          campaignId, context.actor.tenantId, campaignInput.name, courseSlug,
-          campaignInput.objective, campaignInput.referenceType, campaignInput.referenceKey,
-          campaignInput.referenceTitleSnapshot, campaignInput.referenceDocumentId,
-          campaignInput.audience, campaignInput.startsOn, campaignInput.endsOn,
-          campaignInput.primaryChannel, campaignInput.secondaryChannels,
-          campaignInput.briefing, campaignInput.notes, context.actor.userId
+          campaignId, context.actor.tenantId, persistedInput.name, courseSlug,
+          persistedInput.objective, persistedInput.referenceType, persistedInput.referenceKey,
+          persistedInput.referenceTitleSnapshot, persistedInput.referenceDocumentId,
+          resolvedReference.verifiedAt, persistedInput.audience, persistedInput.startsOn,
+          persistedInput.endsOn, persistedInput.primaryChannel, persistedInput.secondaryChannels,
+          persistedInput.briefing, persistedInput.notes, context.actor.userId
         ]);
         await context.faultInjector?.('after_entity');
         await client.query(`
@@ -326,7 +401,7 @@ export async function createCampaignDraft(
 }
 
 export async function updateCampaign(
-  context: CommandContext,
+  context: CampaignCommandContext,
   id: string,
   expectedVersion: number,
   input: UpdateCampaignInput
@@ -334,6 +409,12 @@ export async function updateCampaign(
   authorize(context.actor, 'campaign.update');
   const { idempotencyKey, ...candidatePatch } = input;
   const patch = CampaignPatchSchema.parse(candidatePatch);
+  const referenceTouched = [
+    'referenceType',
+    'referenceKey',
+    'referenceTitleSnapshot',
+    'referenceDocumentId'
+  ].some((field) => Object.prototype.hasOwnProperty.call(patch, field));
 
   return withActorTransaction(context.pool, context.actor, context.correlationId, async (client) => {
     const preflight = await visibleCampaign(client, id);
@@ -345,13 +426,21 @@ export async function updateCampaign(
       idempotencyKey,
       { id, expectedVersion, patch },
       async () => {
+        const preflightCampaign = mapCampaign(preflight);
+        const preflightMerged = CampaignInputSchema.parse({
+          ...editableFields(preflightCampaign),
+          ...patch
+        });
+        const resolvedReference = await resolveCampaignReference(preflightMerged, {
+          referenceTouched,
+          previousVerifiedAt: preflightCampaign.referenceVerifiedAt,
+          ...(context.courseReferences ? { verifier: context.courseReferences } : {})
+        });
         const beforeRow = await lockCampaign(client, id);
         assertExpectedVersion(beforeRow, expectedVersion);
         const before = mapCampaign(beforeRow);
-        const merged = CampaignInputSchema.parse({ ...editableFields(before), ...patch });
-        const referenceChanged = ['referenceType', 'referenceKey', 'referenceDocumentId']
-          .some((field) => Object.prototype.hasOwnProperty.call(patch, field));
-        const nextVerifiedAt = referenceChanged ? null : before.referenceVerifiedAt;
+        const merged = resolvedReference.input;
+        const nextVerifiedAt = resolvedReference.verifiedAt;
         const candidate = { ...before, ...merged };
 
         if (candidate.status === 'planned' || candidate.status === 'active' || candidate.status === 'completed') {
@@ -362,6 +451,15 @@ export async function updateCampaign(
           ));
         }
 
+        const persistedPatch = referenceTouched
+          ? {
+              ...patch,
+              referenceType: merged.referenceType,
+              referenceKey: merged.referenceKey,
+              referenceTitleSnapshot: merged.referenceTitleSnapshot,
+              referenceDocumentId: merged.referenceDocumentId
+            }
+          : patch;
         const result = await client.query<CampaignRow>(`
           with patch as (select $2::jsonb as payload)
           update marketing_ops.campaigns as campaign
@@ -376,9 +474,7 @@ export async function updateCampaign(
               then patch.payload ->> 'referenceTitleSnapshot' else campaign.reference_title_snapshot end,
             reference_document_id = case when patch.payload ? 'referenceDocumentId'
               then (patch.payload ->> 'referenceDocumentId')::uuid else campaign.reference_document_id end,
-            reference_verified_at = case when patch.payload ?| array[
-              'referenceType', 'referenceKey', 'referenceDocumentId'
-            ] then null else campaign.reference_verified_at end,
+            reference_verified_at = $5::timestamptz,
             audience = case when patch.payload ? 'audience' then patch.payload ->> 'audience' else campaign.audience end,
             starts_on = case when patch.payload ? 'startsOn'
               then (patch.payload ->> 'startsOn')::date else campaign.starts_on end,
@@ -398,7 +494,7 @@ export async function updateCampaign(
           from patch
           where campaign.id = $1 and campaign.version = $4
           returning campaign.*
-        `, [id, JSON.stringify(patch), context.actor.userId, expectedVersion]);
+        `, [id, JSON.stringify(persistedPatch), context.actor.userId, expectedVersion, nextVerifiedAt]);
         if (!result.rows[0]) {
           throw appError('version_conflict', 409, 'Campaign version is stale', {
             currentVersion: before.version
@@ -511,7 +607,7 @@ export async function archiveCampaign(
 }
 
 export async function updateCampaignDraft(
-  context: CommandContext,
+  context: CampaignCommandContext,
   id: string,
   expectedVersion: number,
   input: { name: string; idempotencyKey: string }

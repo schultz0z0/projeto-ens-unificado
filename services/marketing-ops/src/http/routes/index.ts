@@ -8,7 +8,9 @@ import { registerCapabilities } from './capabilities.js';
 import { registerItems } from './items.js';
 import { registerMaterials } from './materials.js';
 import { registerParticipants } from './participants.js';
+import { registerReferences } from './references.js';
 import type { ArtifactClient } from '../../integrations/artifactClient.js';
+import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
 import { createMcpRouter } from '../../mcp/http.js';
 
@@ -18,6 +20,7 @@ export interface ApiRouterDependencies {
   features: { read: boolean; write: boolean };
   verifyToken: (token: string) => Promise<SupabaseUser>;
   artifactClient: ArtifactClient;
+  ragCourseClient: RagCourseClient;
   keyring?: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
 }
@@ -27,9 +30,10 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   router.use(corsMiddleware(deps.corsOrigins));
   registerCapabilities(router, deps.features);
   router.use('/v1', authMiddleware(deps.pool, deps.verifyToken));
-  registerCampaigns(router, deps.pool, deps.features);
+  registerCampaigns(router, deps.pool, deps.ragCourseClient, deps.features);
   registerParticipants(router, deps.pool, deps.features);
   registerMaterials(router, deps.pool, deps.artifactClient, deps.features);
+  registerReferences(router, deps.ragCourseClient, deps.features);
   registerItems(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
   if (deps.keyring) router.use(createMcpRouter({

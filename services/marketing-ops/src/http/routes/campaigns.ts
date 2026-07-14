@@ -4,13 +4,19 @@ import { z } from 'zod';
 import { archiveCampaign, createCampaignDraft, updateCampaignDraft } from '../../domain/campaigns.js';
 import { getCampaign, listCampaigns } from '../../domain/queries.js';
 import { actorFrom, asyncRoute, parseIfMatch, requireFeature, requireIdempotencyKey } from '../middleware.js';
+import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 
 const courseSlug = z.string().regex(/^[a-z0-9][a-z0-9-]{1,127}$/);
 const createBodySchema = z.object({ name: z.string().trim().min(1).max(200), courseSlug: courseSlug.optional() }).strict();
 const updateBodySchema = z.object({ name: z.string().trim().min(1).max(200) }).strict();
 const uuid = z.string().uuid();
 
-export function registerCampaigns(router: Router, pool: Pool, features: { read: boolean; write: boolean }) {
+export function registerCampaigns(
+  router: Router,
+  pool: Pool,
+  courseReferences: RagCourseClient,
+  features: { read: boolean; write: boolean }
+) {
   router.get('/v1/campaigns', asyncRoute(async (request, response) => {
     requireFeature(features.read, 'read');
     const limit = z.coerce.number().int().min(1).max(100).catch(25).parse(request.query.limit);
@@ -38,7 +44,7 @@ export function registerCampaigns(router: Router, pool: Pool, features: { read: 
     requireFeature(features.write, 'write');
     const input = createBodySchema.parse(request.body);
     const data = await createCampaignDraft(
-      { pool, actor: actorFrom(request), correlationId: request.correlationId, origin: 'rest' },
+      { pool, courseReferences, actor: actorFrom(request), correlationId: request.correlationId, origin: 'rest' },
       { name: input.name, idempotencyKey: requireIdempotencyKey(request), ...(input.courseSlug ? { courseSlug: input.courseSlug } : {}) }
     );
     response.status(201).setHeader('ETag', `"${data.version}"`).json({ data });
@@ -46,7 +52,7 @@ export function registerCampaigns(router: Router, pool: Pool, features: { read: 
   router.patch('/v1/campaigns/:id', asyncRoute(async (request, response) => {
     requireFeature(features.write, 'write');
     const data = await updateCampaignDraft(
-      { pool, actor: actorFrom(request), correlationId: request.correlationId, origin: 'rest' },
+      { pool, courseReferences, actor: actorFrom(request), correlationId: request.correlationId, origin: 'rest' },
       uuid.parse(request.params.id), parseIfMatch(request),
       { ...updateBodySchema.parse(request.body), idempotencyKey: requireIdempotencyKey(request) }
     );

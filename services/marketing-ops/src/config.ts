@@ -27,6 +27,10 @@ export interface AppConfig {
     internalKey: string;
     timeoutMs: number;
   };
+  rag: {
+    url: string;
+    timeoutMs: number;
+  };
   features: { read: boolean; write: boolean };
 }
 
@@ -72,6 +76,12 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     'local-test-artifact-key',
     production
   );
+  const ragUrl = requiredProductionValue(
+    env,
+    'MARKETING_OPS_RAG_URL',
+    'http://127.0.0.1:8000/mcp',
+    production
+  );
   const supabaseAnonKey = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_ANON_KEY', 'local-test-anon-key', production);
   const previousKid = env.MARKETING_OPS_DELEGATION_PREVIOUS_KID?.trim();
   const previousKey = env.MARKETING_OPS_DELEGATION_PREVIOUS_KEY?.trim();
@@ -110,6 +120,10 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
       url: z.string().url().parse(artifactUrl),
       internalKey: artifactInternalKey,
       timeoutMs: z.coerce.number().int().min(100).max(30_000).parse(env.MARKETING_OPS_ARTIFACT_TIMEOUT_MS ?? 5_000)
+    },
+    rag: {
+      url: z.string().url().parse(ragUrl),
+      timeoutMs: z.coerce.number().int().min(100).max(30_000).parse(env.MARKETING_OPS_RAG_TIMEOUT_MS ?? 5_000)
     },
     features: {
       read: booleanValue(env.MARKETING_OPS_FEATURE_READ),
