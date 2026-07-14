@@ -1,4 +1,4 @@
-const secretKeys = /authorization|cookie|token|secret|password|api[-_]?key|delegation/i;
+const sensitiveKeys = /authorization|cookie|token|secret|password|api[-_]?key|delegation|briefing|notes?|objective|audience|filename|file[-_]?name|signed[-_]?url|access[-_]?url|bytes|payload|query|content|error/i;
 
 function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   if (Array.isArray(value)) return value.map((item) => redact(item, seen));
@@ -7,7 +7,7 @@ function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   seen.add(value);
   return Object.fromEntries(Object.entries(value).map(([key, nested]) => [
     key,
-    secretKeys.test(key) ? '[REDACTED]' : redact(nested, seen)
+    sensitiveKeys.test(key) ? '[REDACTED]' : redact(nested, seen)
   ]));
 }
 
