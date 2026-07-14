@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_5_implemented_pending_vps_validation`
+- **Estado:** `task_6_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `2c119f8`
+- **Último código da fase:** `aed3e1c`
 
 ## Evidência concluída
 
@@ -104,6 +104,20 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Hardening de lock:** editor falha no helper reservado a manager/admin antes de adquirir advisory lock;
 - **Coleta dos testes PostgreSQL:** 5 cenários carregados pelo Vitest sem erro de compilação;
 - **Diferido para VPS:** execução dos 5 cenários de domínio, dos 92 asserts do arquivo RLS e validação real de constraints, RLS, lock, replay e projeções de perfil.
+
+## Task 6 — materiais e Artifact Server
+
+- **Commit:** `aed3e1c`;
+- **RED observado:** módulos `integrations/artifactClient.js` e `domain/materials.js` ausentes; configuração privada do Artifact Server também ausente;
+- **Gate do Marketing Ops:** 4/4 contratos do cliente HTTP e 4/4 contratos de material sem banco aprovados;
+- **Regressão nativa:** 38/38 testes base, 1/1 matriz de permissões e 1/1 contrato de participantes aprovados;
+- **Artifact Server:** `npm ci --ignore-scripts` aprovado, zero vulnerabilidade, sintaxe válida e 8/8 testes aprovados;
+- **Typecheck/build:** exit code 0;
+- **Compose estático:** YAML parseado; URL/chave privadas, dependência `service_healthy` e volume `./data/artifacts:/app/data` confirmados; placeholders de chave foram reconciliados com `.env.example`;
+- **Implementação:** upload binário com allowlist MIME/extensão e limite de 25 MiB antes da rede, vínculo de artifact próprio, access link de 300 segundos, unlink lógico, versão do agregado, idempotência, auditoria, eventos e compensação de upload quando a persistência falha;
+- **Coleta dos testes PostgreSQL:** 3 cenários carregados pelo Vitest: replay sem duplicação, vínculo/acesso/unlink sem apagar bytes e rejeição de artifact de outro owner;
+- **Tentativa da suíte global:** 57 testes passaram, 36 falharam e 2 ficaram skipped; a execução alcançou suítes dependentes do PostgreSQL indisponível em `127.0.0.1:55322` e não foi aceita como gate de regressão;
+- **Diferido para VPS:** os 3 cenários PostgreSQL, RLS real, imagem Linux, `docker compose config/build/up`, health, restart e persistência dos bytes/metadados.
 
 ## Avisos conhecidos
 

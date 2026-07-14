@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com Tasks 2, 4 e 5 em `implemented_pending_vps_validation`, Task 3 concluída e Task 6 como próxima frente
+- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, com Tasks 2, 4, 5 e 6 em `implemented_pending_vps_validation`, Task 3 concluída e Task 7 como próxima frente
 - **Atualização:** 14 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -225,7 +225,7 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 
 ### Fase 2: Workspace Operacional MVP
 
-**Estado:** `in_progress` — Task 1 concluída; Task 2 em `implemented_pending_vps_validation` (`c921294`); Task 3 concluída (`9740530`); Task 4 em `implemented_pending_vps_validation` (`9b19ec7`); Task 5 em `implemented_pending_vps_validation` (`2c119f8`); Tasks 6–15 não iniciadas. Os gates PostgreSQL, incluindo 221 asserts pgTAP e os testes de domínio/concorrência, continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
+**Estado:** `in_progress` — Task 1 concluída; Task 2 em `implemented_pending_vps_validation` (`c921294`); Task 3 concluída (`9740530`); Task 4 em `implemented_pending_vps_validation` (`9b19ec7`); Task 5 em `implemented_pending_vps_validation` (`2c119f8`); Task 6 em `implemented_pending_vps_validation` (`aed3e1c`); Tasks 7–15 não iniciadas. Os gates PostgreSQL, incluindo 221 asserts pgTAP e os testes de domínio/concorrência, além das imagens Linux, Compose, restart e persistência, continuam obrigatórios na VPS. Nenhum deploy remoto da Fase 2 foi executado.
 
 **Exceção operacional aprovada para esta fase:** o computador atual não usará Docker Desktop, WSL ou Podman. Testes que exigem Supabase/PostgreSQL conteinerizado, imagens Linux, Docker Compose, restart ou persistência serão preparados durante a implementação e executados na VPS de produção depois do fechamento interno das Tasks 1–15. Esse fechamento interno não promove a fase a `completed`: o estado intermediário será `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
 

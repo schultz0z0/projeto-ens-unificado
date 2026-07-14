@@ -17,11 +17,12 @@
 - **Task 3:** `completed_reviewed` no commit `9740530`; RED observado, 13 testes de contrato, regressão isolada de permissões, typecheck e build verdes.
 - **Task 4:** `implemented_pending_vps_validation` no commit `9b19ec7`; filtros/cursores em RED/GREEN nativo, 12 testes PostgreSQL coletados, 37 testes nativos, typecheck e build verdes.
 - **Task 5:** `implemented_pending_vps_validation` no commit `2c119f8`; RED de módulo ausente observado, domínio/rotas implementados, 39 testes nativos relevantes, typecheck e build verdes. Os cinco cenários PostgreSQL e os novos asserts pgTAP estão `deferred_to_vps`.
-- **Tasks 6–15:** `not_started`.
+- **Task 6:** `implemented_pending_vps_validation` no commit `aed3e1c`; cliente e domínio de materiais, compensação, rotas, configuração privada, lockfile e integração Compose implementados. Oito contratos do Marketing Ops e oito testes do Artifact Server passaram; três cenários PostgreSQL e a prova Linux/Compose/persistência estão `deferred_to_vps`.
+- **Tasks 7–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 6, preservando a lista nominal de provas de banco que deverão rodar na VPS.
+- **Próxima frente:** Task 7, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2, 4 e 5 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2, 4, 5 e 6 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -436,7 +437,7 @@ git commit -m "feat: adiciona participantes de campanha"
 **Interfaces:**
 - Produces: `ArtifactClient.upload/getMetadata/createAccessLink/delete`, `attachUploadedMaterial`, `linkExistingMaterial`, `unlinkMaterial`, `listMaterials`.
 
-- [ ] **Step 1: RED do cliente HTTP e compensação**
+- [x] **Step 1: RED do cliente HTTP e compensação**
 
 ```ts
 it('deletes a newly uploaded artifact when the database transaction fails', async () => {
@@ -449,13 +450,13 @@ it('deletes a newly uploaded artifact when the database transaction fails', asyn
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd services/marketing-ops && npm test -- src/integrations/artifactClient.test.ts src/domain/materials.test.ts`
 
 Expected: FAIL por módulos ausentes.
 
-- [ ] **Step 3: Implementar adaptador e domínio**
+- [x] **Step 3: Implementar adaptador e domínio**
 
 ```ts
 export interface ArtifactMetadata {
@@ -473,7 +474,7 @@ export interface CampaignMaterial {
 
 O upload envia bytes como corpo, `Authorization: Bearer <internal key>`, `X-Nexus-Owner-Id`, `X-Nexus-Filename`, `X-Nexus-Content-Type`, `X-Nexus-Source: marketing_ops`. Validar MIME/extensão e 25 MiB antes da rede. `unlink` marca `unlinked_at/unlinked_by` e não apaga o binário compartilhado.
 
-- [ ] **Step 4: Verificar GREEN**
+- [x] **Step 4: Verificar GREEN nativo e coletar cenários PostgreSQL**
 
 Run: `cd services/artifact-server && npm install --package-lock-only && npm test`
 
@@ -481,7 +482,9 @@ Run: `cd services/marketing-ops && npm test -- src/integrations/artifactClient.t
 
 Expected: Artifact Server 8 testes passando; materiais e compensação passando.
 
-- [ ] **Step 5: Commit**
+Resultado em 2026-07-14: 8/8 testes do Artifact Server, 4/4 contratos do `ArtifactClient` e 4/4 contratos de material sem banco aprovados. Os três cenários de material que usam PostgreSQL foram coletados e permanecem `deferred_to_vps`; imagem Linux, Compose, restart e persistência também aguardam a VPS.
+
+- [x] **Step 5: Commit** — `aed3e1c feat: vincula materiais de campanha`.
 
 ```powershell
 git add services/artifact-server/package-lock.json services/marketing-ops/src/integrations/artifactClient.ts services/marketing-ops/src/integrations/artifactClient.test.ts services/marketing-ops/src/domain/materials.ts services/marketing-ops/src/domain/materials.test.ts services/marketing-ops/src/http/routes/materials.ts services/marketing-ops/src/http/routes/index.ts

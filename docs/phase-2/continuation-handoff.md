@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `2c119f8 feat: adiciona participantes de campanha`
+- **Último commit de código da fase:** `aed3e1c feat: vincula materiais de campanha`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2, 4 e 5 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 6 é a próxima frente
+- **Estado de execução:** Task 1 concluída; Tasks 2, 4, 5 e 6 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 7 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 
 Commits relevantes, em ordem:
@@ -27,6 +27,7 @@ Commits relevantes, em ordem:
 | `9740530` | contratos de entrada, prontidão e máquina de estados da campanha |
 | `9b19ec7` | CRUD operacional, busca, filtros, versões e transições de campanha |
 | `2c119f8` | participantes, owner principal, perfis seguros, locks e rotas REST |
+| `aed3e1c` | materiais, Artifact Client, compensação, rotas REST e integração Compose |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -114,6 +115,16 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 221 asse
 - helper de administração nega editor antes do lock;
 - 39 testes nativos relevantes aprovados, 5 cenários PostgreSQL coletados e 92 asserts estruturais no arquivo RLS no commit `2c119f8`.
 
+### Task 6 — implementada, prova VPS pendente
+
+- cliente privado do Artifact Server para upload, metadata, access link e delete idempotente;
+- domínio e rotas REST para upload binário, vínculo de artifact próprio, listagem, access link e unlink lógico;
+- allowlist PDF/DOCX/XLSX/PPTX/TXT/CSV/PNG/JPEG/WEBP e limite de 25 MiB aplicados antes da rede;
+- versão do agregado, preflight de autoridade, idempotência, auditoria e eventos preservados;
+- upload novo é apagado por compensação quando a persistência falha antes do commit; unlink nunca apaga bytes compartilhados;
+- 8 contratos nativos do Marketing Ops, 8 testes do Artifact Server, typecheck, build e parse estático do Compose aprovados;
+- 3 cenários PostgreSQL coletados; imagem Linux, Compose, restart e persistência permanecem `deferred_to_vps`.
+
 ## 3. Bloqueio encontrado no handoff — corrigido, prova real pendente
 
 ### Deadlock residual em `campaign_items`
@@ -156,6 +167,9 @@ O harness anterior cobria participante, não item. O commit `c921294` adiciona o
 8. [x] Executar novo review estático da Task 2; resultado: zero `Critical`/`Important` após o hardening de versão.
 9. [x] Atualizar README/evidência para `task_2_implemented_pending_vps_validation`.
 10. [x] Concluir a Task 3 com TDD nativo. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
+11. [x] Implementar e testar a Task 4; coletar nominalmente os 12 cenários PostgreSQL para a VPS.
+12. [x] Implementar e testar a Task 5; coletar os 5 cenários PostgreSQL e preservar a projeção segura de perfis.
+13. [x] Implementar e testar a Task 6; coletar os 3 cenários PostgreSQL e diferir imagem Linux, Compose, restart e persistência para a VPS.
 
 ## 5. Setup no outro computador
 
@@ -211,7 +225,7 @@ npm run typecheck
 npm run build
 ```
 
-Neste computador, executar `npm test`, `npm run typecheck`, `npm run build`, lint e verificações estáticas que não abram conexão com PostgreSQL. Suítes de integração que usam `MARKETING_OPS_TEST_DATABASE_URL` ficam `deferred_to_vps`.
+Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, além de `npm run typecheck`, `npm run build`, lint e verificações estáticas. Não usar `npm test` sem filtro como gate local: ele inclui suítes que abrem conexão com `MARKETING_OPS_TEST_DATABASE_URL`. Essas suítes ficam `deferred_to_vps`.
 
 ## 7. Restrições que não podem ser reinterpretadas
 
@@ -229,11 +243,11 @@ Neste computador, executar `npm test`, `npm run typecheck`, `npm run build`, lin
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 5
+## 8. Trabalho restante após a Task 6
 
-As Tasks 6–15 permanecem pendentes: Artifact Server e materiais, RAG, timeline, consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 7–15 permanecem pendentes: RAG, timeline, consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
-O backend das Tasks 3–5 existe, mas ainda não possui aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
+O backend das Tasks 3–6 existe, mas ainda não possui aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
 
 ## 9. Git e publicação
 
