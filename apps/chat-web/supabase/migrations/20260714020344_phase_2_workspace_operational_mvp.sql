@@ -726,7 +726,7 @@ as $$
       ) > 0
     )
   order by display_name, membership.user_id
-  limit pg_catalog.greatest(1, pg_catalog.least(coalesce(p_limit, 25), 100))
+  limit greatest(1, least(coalesce(p_limit, 25), 100))
 $$;
 
 create function marketing_ops_private.is_campaign_participant_candidate(
@@ -1144,7 +1144,7 @@ as $$
       )
     )
   order by audit.created_at desc, audit.id desc
-  limit pg_catalog.greatest(1, pg_catalog.least(coalesce(p_limit, 25), 101))
+  limit greatest(1, least(coalesce(p_limit, 25), 101))
 $$;
 
 revoke all on function marketing_ops_private.can_edit_campaign(uuid)
