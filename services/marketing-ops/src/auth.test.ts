@@ -5,7 +5,7 @@ import { authorize } from './auth/permissions.js';
 import { verifySupabaseBearer } from './auth/supabaseAuth.js';
 import { withActorTransaction } from './db/actorTransaction.js';
 
-const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' });
+const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 afterAll(() => pool.end());
 
 describe('trusted actor boundary', () => {

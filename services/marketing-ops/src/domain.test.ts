@@ -6,7 +6,7 @@ import { createCampaignDraft, updateCampaignDraft } from './domain/campaigns.js'
 import { hashCanonicalPayload } from './domain/hash.js';
 import { createCampaignItemDraft, updateCampaignItemDraft } from './domain/items.js';
 
-const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' });
+const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 const actor: Actor = { userId: '11111111-1111-4111-8111-111111111111', tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', tenantSlug: 'ens', role: 'member' };
 afterAll(() => pool.end());
 

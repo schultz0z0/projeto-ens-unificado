@@ -17,8 +17,8 @@ npx supabase db lint --local --level error --fail-on error
 npx supabase db advisors --local --type security --fail-on error >/dev/null
 popd >/dev/null
 
-export NEXUS_SUPABASE_DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:54322/postgres"
-export NEXUS_APP_SUPABASE_URL="http://host.docker.internal:54321"
+export NEXUS_SUPABASE_DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:55322/postgres"
+export NEXUS_APP_SUPABASE_URL="http://host.docker.internal:55321"
 export NEXUS_APP_SUPABASE_ANON_KEY="$ANON_KEY"
 export NEXUS_MARKETING_OPS_INTERNAL_KEY="local-internal-key-at-least-32-bytes"
 export NEXUS_MARKETING_OPS_DELEGATION_ACTIVE_KID="local-v1"
@@ -30,7 +30,7 @@ docker compose --env-file .env.example build marketing-ops
 docker compose --env-file .env.example up -d --no-deps marketing-ops
 
 pushd services/marketing-ops >/dev/null
-export MARKETING_OPS_TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+export MARKETING_OPS_TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/postgres"
 npm test
 if command -v powershell.exe >/dev/null 2>&1; then
   powershell.exe -NoProfile -Command "\$env:MARKETING_OPS_E2E='true'; npm test -- --run test/integration/e2e.test.ts"

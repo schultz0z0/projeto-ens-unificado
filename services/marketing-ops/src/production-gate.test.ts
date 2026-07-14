@@ -8,7 +8,7 @@ import { createMarketingOpsMcpServer } from './mcp/createServer.js';
 
 const pool = new pg.Pool({
   connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL
-    ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+    ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres'
 });
 const activeKey = 'active-local-delegation-key-at-least-32-bytes';
 const keyring = {

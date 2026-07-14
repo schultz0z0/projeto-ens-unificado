@@ -53,6 +53,12 @@ describe('runtime foundation', () => {
     expect(config.features).toEqual({ read: false, write: false });
   });
 
+  it('uses the repository local Supabase port block outside Windows exclusions', () => {
+    const config = loadConfig({ NODE_ENV: 'test' });
+    expect(config.databaseUrl).toBe('postgresql://postgres:postgres@127.0.0.1:55322/postgres');
+    expect(config.supabaseUrl).toBe('http://127.0.0.1:55321');
+  });
+
   it('creates stable error envelopes', () => {
     const error = appError('forbidden', 403, 'Access denied', { permission: 'campaign.read' });
     expect(errorEnvelope(error, 'correlation-1')).toEqual({

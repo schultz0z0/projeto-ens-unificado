@@ -46,8 +46,8 @@ function booleanValue(value: string | undefined): boolean {
 export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
   const nodeEnv = z.enum(['development', 'test', 'production']).parse(env.NODE_ENV ?? 'development');
   const production = nodeEnv === 'production';
-  const databaseUrl = requiredProductionValue(env, 'DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:54322/postgres', production);
-  const supabaseUrl = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_URL', 'http://127.0.0.1:54321', production);
+  const databaseUrl = requiredProductionValue(env, 'DATABASE_URL', 'postgresql://postgres:postgres@127.0.0.1:55322/postgres', production);
+  const supabaseUrl = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_URL', 'http://127.0.0.1:55321', production);
   const internalKey = requiredProductionValue(env, 'MARKETING_OPS_INTERNAL_KEY', 'local-test-internal-key-at-least-32-bytes', production);
   const delegationRefreshUrl = requiredProductionValue(
     env,

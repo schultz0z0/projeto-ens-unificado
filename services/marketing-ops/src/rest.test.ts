@@ -9,7 +9,7 @@ import { createMetrics } from './observability/metrics.js';
 import { createApp } from './http/createApp.js';
 import { parse } from 'yaml';
 
-const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' });
+const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 afterAll(() => pool.end());
 
 function app(features = { read: true, write: true }) {

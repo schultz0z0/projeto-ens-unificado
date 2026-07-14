@@ -8,7 +8,7 @@ import { verifyDelegation } from './delegation/verifier.js';
 import { createMarketingOpsMcpServer } from './mcp/createServer.js';
 import { marketingOpsPlanActionsSchema } from './plans/contracts.js';
 
-const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' });
+const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 const activeKey = 'active-local-delegation-key-at-least-32-bytes';
 const keyring = { activeKid: 'v2', activeKey, previousKid: 'v1', previousKey: 'previous-local-delegation-key-32-bytes', issuer: 'nexus-chat-bridge', audience: 'nexus-marketing-ops', maxTtlSeconds: 120 };
 afterAll(() => pool.end());
