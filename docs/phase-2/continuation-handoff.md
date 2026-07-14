@@ -1,15 +1,15 @@
 # Handoff de continuação — Fase 2
 
-Este documento é a fonte de retomada da Fase 2 em outro computador. Ele registra o estado versionado que deve ser clonado, o que já foi comprovado, o bloqueio atual e a ordem obrigatória dos próximos passos.
+Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versionado, o baseline histórico, a correção atual, as provas pendentes na VPS e a ordem dos próximos passos.
 
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da Task 2:** `1a49c4d fix: serializa mutacoes do agregado de campanha`
+- **Último commit de código da Task 2:** `c921294 fix: fecha concorrencia de itens da fase 2`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Task 2 com `changes_requested`; Task 3 não iniciada
+- **Estado de execução:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Task 3 não iniciada
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 
 Commits relevantes, em ordem:
@@ -23,6 +23,7 @@ Commits relevantes, em ordem:
 | `c648121` | alinhamento do schema ao design aprovado |
 | `c17fe5f` | hardening de mutações, RLS e máquina de estados |
 | `1a49c4d` | grants de INSERT e serialização do agregado com advisory lock |
+| `c921294` | fecha `campaign_items`, abuso de lock, grants e progressão de versão |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -35,7 +36,7 @@ Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evi
 - fail-closed de produção preservado;
 - regressões de serviço, frontend e pgTAP passaram.
 
-### Task 2 — implementada, mas ainda não aceita
+### Task 2 — implementada, revisão estática aceita e prova VPS pendente
 
 Implementação versionada:
 
@@ -52,6 +53,17 @@ Implementação versionada:
 - advisory lock do agregado para campanhas, participantes e materiais;
 - harness versionado em `apps/chat-web/scripts/test_campaign_aggregate_concurrency.mjs`.
 
+Correção versionada em `c921294`:
+
+- `campaign_items` usa o mesmo advisory lock antes do row lock em INSERT/UPDATE;
+- viewer, membership inativa e member sem participação falham antes de consumir o lock;
+- owner/editor/manager/admin preservam escrita de item em campanha ativa;
+- campanha e item arquivados permanecem read-only;
+- INSERT/UPDATE de item têm grants por coluna;
+- updates autenticados de item exigem incremento de versão exatamente em uma unidade;
+- o harness cobre campanha/participante, campanha/item e abuso de lock em duas sessões;
+- o harness recusa banco remoto por padrão e limpa as fixtures de teste.
+
 Gates já verdes no código `1a49c4d`:
 
 ```text
@@ -64,7 +76,21 @@ Upgrade legado: PASS
 Writer F1 autenticado: PASS
 ```
 
-## 3. Bloqueio atual — não pular
+Checks nativos da correção `c921294`:
+
+```text
+Harness node --check: PASS
+Harness ESLint: PASS
+Serviço sem banco: 21/21
+Typecheck do serviço: PASS
+Build do serviço: PASS
+Contagem estrutural do pgTAP RLS: 88/88 declarações
+Revisão estática: 0 Critical / 0 Important
+```
+
+Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 217 asserts pgTAP, RLS real, harness concorrente, DB lint/advisors/diff, upgrade legado e writer autenticado contra PostgreSQL.
+
+## 3. Bloqueio encontrado no handoff — corrigido, prova real pendente
 
 ### Deadlock residual em `campaign_items`
 
@@ -76,36 +102,36 @@ O review de aceite foi interrompido após reproduzir `40P01` neste ciclo:
 4. sessão A tenta atualizar o item já bloqueado pela sessão B;
 5. PostgreSQL detecta o ciclo e aborta uma sessão com `40P01`.
 
-As policies legadas estão na migration de fundação e ainda usam `can_access_campaign`:
+As policies legadas na migration de fundação usavam `can_access_campaign`:
 
 - `campaign_items_insert`;
 - `campaign_items_update`.
 
-O harness atual cobre participante, não item. Por isso ele passa apesar do deadlock residual.
+O harness anterior cobria participante, não item. O commit `c921294` adiciona o ciclo determinístico de item; a observação RED no schema anterior e GREEN no schema corrigido será feita na VPS.
 
-### Auditoria de abuso de advisory lock pendente
+### Abuso de advisory lock corrigido no código
 
-`marketing_ops_private.lock_campaign_aggregate(uuid)` pré-valida UUID, tenant e membership ativa. Ainda deve ser comprovado se viewer ou member não participante consegue chamar um helper autorizado a `authenticated`, adquirir o advisory lock de uma campanha do mesmo tenant e mantê-lo sem possuir capacidade de mutação. O aceite exige probe de duas sessões e fail-closed antes do lock.
+`marketing_ops_private.lock_campaign_aggregate(uuid)` agora exige autoridade real de mutação ou bootstrap antes do lock. O pgTAP verifica ausência de lock no backend e o harness mantém uma transação não autorizada aberta enquanto um manager tenta adquirir o mesmo lock. A execução real desses probes continua obrigatória na VPS.
 
-## 4. Ordem obrigatória para retomar
+## 4. Ordem de retomada executada
 
-1. Clonar e confirmar `main`/HEAD.
-2. Ler PRD, design, plano, este handoff e [local-validation.md](local-validation.md).
-3. Confirmar a política deste computador: não usar Docker Desktop, WSL ou Podman; o baseline histórico do outro computador permanece como referência, não como evidência das novas alterações.
-4. Escrever/ampliar testes antes do SQL, com execução marcada `deferred_to_vps` quando exigir PostgreSQL real:
+1. [x] Atualizar e confirmar `main`/HEAD.
+2. [x] Ler PRD, design, plano, este handoff e [local-validation.md](local-validation.md).
+3. [x] Confirmar a política deste computador: não usar Docker Desktop, WSL ou Podman; o baseline histórico do outro computador permanece como referência, não como evidência das novas alterações.
+4. [x] Escrever/ampliar testes antes do SQL, com execução marcada `deferred_to_vps` quando exigir PostgreSQL real:
    - harness concorrente para `campaign_items` que falha com `40P01` no código atual;
    - pgTAP de viewer/editor/owner/manager para INSERT/UPDATE de item;
    - probe de advisory lock por usuário sem autoridade de mutação.
-5. Preservar no harness a reprodução determinística de RED e o código/espera esperados; observar o RED na VPS antes de aceitar a correção.
-6. Corrigir a Task 2, sem iniciar a Task 3:
+5. [ ] Observar na VPS o RED determinístico contra o schema anterior e o GREEN contra `c921294`.
+6. [x] Corrigir a Task 2, sem iniciar a Task 3:
    - substituir policies de escrita de `campaign_items` por autorização que adquira o lock do agregado antes do row lock, alinhada a owner/editor/manager/admin e archived read-only;
    - ampliar o harness oficial para campanha/participante **e** campanha/item;
    - endurecer a pré-validação do helper se o probe de abuso confirmar aquisição indevida;
    - auditar grants de coluna de `campaign_items` para mass assignment, preservando o writer da Fase 1.
-7. Executar todos os checks nativos disponíveis e registrar os gates de banco/Linux como `deferred_to_vps`.
-8. Executar novo review estático independente da Task 2. Zero `Critical`/`Important` é requisito para promover a implementação.
-9. Atualizar README/evidência para `task_2_implemented_pending_vps_validation`.
-10. Somente então iniciar a Task 3 do plano. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
+7. [x] Executar todos os checks nativos disponíveis e registrar os gates de banco/Linux como `deferred_to_vps`.
+8. [x] Executar novo review estático da Task 2; resultado: zero `Critical`/`Important` após o hardening de versão.
+9. [x] Atualizar README/evidência para `task_2_implemented_pending_vps_validation`.
+10. [ ] Iniciar a Task 3. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
 
 ## 5. Setup no outro computador
 

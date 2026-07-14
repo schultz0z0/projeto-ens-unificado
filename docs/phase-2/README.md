@@ -4,11 +4,11 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 
 ## Status
 
-- **Fase:** `paused_handoff_ready`
+- **Fase:** `in_progress`
 - **Data do snapshot:** 2026-07-14
 - **Branch canônica:** `main`
 - **Base de produção:** Fase 1 `production_validated`
-- **Implementação:** Task 1 concluída; Task 2 implementada e testada, porém com `changes_requested`; Tasks 3–15 não iniciadas
+- **Implementação:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Tasks 3–15 não iniciadas
 - **Deploy Supabase remoto:** não executado
 - **Deploy VPS:** não executado
 - **PRD:** [phase-2-workspace-operacional-mvp.md](../prds/phase-2-workspace-operacional-mvp.md)
@@ -17,7 +17,7 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **Continuação obrigatória:** [continuation-handoff.md](continuation-handoff.md)
 - **Evidência local atual:** [local-validation.md](local-validation.md)
 
-O desenvolvimento foi pausado durante a revisão independente de aceite da Task 2. O código em `main` contém a implementação e seus testes, mas a Task 2 **não deve ser considerada concluída**: um probe independente reproduziu deadlock `40P01` no caminho concorrente de `campaign_items`. A correção deve ser feita e revisada antes da Task 3.
+O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_items` agora compartilha o advisory lock do agregado, os helpers falham antes do lock para viewer/member sem autoridade, os grants foram limitados por coluna e a progressão de versão do item foi protegida no banco. Os checks nativos e a revisão estática estão verdes, mas a Task 2 **não está concluída**: pgTAP, RLS real, RED/GREEN concorrente, lint/diff de banco e regressão do writer serão comprovados na VPS.
 
 ## Governança da execução
 
@@ -53,7 +53,7 @@ O desenvolvimento foi pausado durante a revisão independente de aceite da Task 
 | Task | Entregável | Estado |
 |---:|---|---|
 | 1 | Gate de entrada e contrato aprovado | `completed_reviewed` |
-| 2 | Schema do agregado, RLS, materiais e concorrência | `changes_requested` |
+| 2 | Schema do agregado, RLS, materiais e concorrência | `implemented_pending_vps_validation` |
 | 3 | Contratos e máquina de estados no serviço | `not_started` |
 | 4 | CRUD, busca e concorrência do agregado | `not_started` |
 | 5 | Participantes e perfis | `not_started` |

@@ -10,15 +10,15 @@
 
 ## Execution Snapshot — 2026-07-14
 
-- **Estado:** `paused_handoff_ready`.
+- **Estado:** `in_progress`.
 - **Branch canônica:** `main`, por decisão explícita do usuário.
 - **Task 1:** `completed_reviewed`.
-- **Task 2:** `changes_requested`; implementação e 197 testes locais estão verdes, mas o review reproduziu deadlock `40P01` no caminho concorrente de `campaign_items`.
+- **Task 2:** `implemented_pending_vps_validation`; o commit `c921294` corrige o caminho concorrente de `campaign_items`, o abuso de advisory lock, os grants e a progressão de versão. Checks nativos e revisão estática estão verdes; RED/GREEN PostgreSQL e gate de banco estão `deferred_to_vps`.
 - **Tasks 3–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Retomada obrigatória:** ler [`docs/phase-2/continuation-handoff.md`](../phase-2/continuation-handoff.md) e fechar a Task 2 antes de iniciar a Task 3.
+- **Próxima frente:** Task 3, preservando a lista nominal de provas da Task 2 que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. A Task 2 só pode ser marcada concluída depois da correção, gate completo e nova revisão independente sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. A Task 2 só pode ser marcada concluída depois do gate PostgreSQL/VPS; a revisão estática atual terminou sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
