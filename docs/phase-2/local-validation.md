@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_6_implemented_pending_vps_validation`
+- **Estado:** `task_7_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `aed3e1c`
+- **Último código da fase:** `5d5cf8f`
 
 ## Evidência concluída
 
@@ -118,6 +118,21 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Coleta dos testes PostgreSQL:** 3 cenários carregados pelo Vitest: replay sem duplicação, vínculo/acesso/unlink sem apagar bytes e rejeição de artifact de outro owner;
 - **Tentativa da suíte global:** 57 testes passaram, 36 falharam e 2 ficaram skipped; a execução alcançou suítes dependentes do PostgreSQL indisponível em `127.0.0.1:55322` e não foi aceita como gate de regressão;
 - **Diferido para VPS:** os 3 cenários PostgreSQL, RLS real, imagem Linux, `docker compose config/build/up`, health, restart e persistência dos bytes/metadados.
+
+## Task 7 — referências oficiais de cursos no RAG
+
+- **Commit:** `5d5cf8f`;
+- **RED observado:** módulo `integrations/ragCourseClient.js` ausente, resolução canônica de campanha ausente e configuração RAG indefinida;
+- **Gate da Task 7:** 4/4 contratos do cliente MCP, 4/4 contratos puros de resolução canônica e 2/2 contratos da rota aprovados;
+- **Regressão nativa segmentada:** 59 checks sem banco aprovados, incluindo contratos anteriores de materiais/participantes e matriz de permissões;
+- **RAG MCP:** 8 arquivos, 26/26 testes e typecheck aprovados; o novo cliente referencia somente `ens_rag_search` e `ens_rag_get_document`;
+- **Typecheck/build do Marketing Ops:** exit code 0;
+- **Compose estático:** endpoint `http://rag-mcp:8000/mcp`, timeout e dependência `rag-mcp: service_healthy` confirmados por parser YAML;
+- **Implementação:** busca limitada a `collections=['courses']`, `intent='course_fact'`, evidência obrigatória e actor profile `marketing_ops`; resultados sem `metadata.course_id`, fora do tenant `ens` ou fora de `courses` são descartados;
+- **Fail-closed:** documento, tenant, coleção e `course_id` são revalidados antes da persistência; o título do cliente é substituído pelo snapshot canônico; indisponibilidade não bloqueia edições que não tocam a referência;
+- **Coleta PostgreSQL:** novo cenário em `domain.test.ts` confirma snapshot/timestamp canônicos e versão do agregado; execução `deferred_to_vps`;
+- **Diferido para VPS:** persistência PostgreSQL real, RLS, chamada MCP Marketing Ops → RAG no Compose, indisponibilidade real e inspeção de logs;
+- **Supabase do RAG:** nenhuma migration, escrita, deploy ou conexão direta realizada.
 
 ## Avisos conhecidos
 

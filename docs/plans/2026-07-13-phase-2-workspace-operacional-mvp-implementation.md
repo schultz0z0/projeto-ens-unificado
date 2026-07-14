@@ -18,11 +18,12 @@
 - **Task 4:** `implemented_pending_vps_validation` no commit `9b19ec7`; filtros/cursores em RED/GREEN nativo, 12 testes PostgreSQL coletados, 37 testes nativos, typecheck e build verdes.
 - **Task 5:** `implemented_pending_vps_validation` no commit `2c119f8`; RED de módulo ausente observado, domínio/rotas implementados, 39 testes nativos relevantes, typecheck e build verdes. Os cinco cenários PostgreSQL e os novos asserts pgTAP estão `deferred_to_vps`.
 - **Task 6:** `implemented_pending_vps_validation` no commit `aed3e1c`; cliente e domínio de materiais, compensação, rotas, configuração privada, lockfile e integração Compose implementados. Oito contratos do Marketing Ops e oito testes do Artifact Server passaram; três cenários PostgreSQL e a prova Linux/Compose/persistência estão `deferred_to_vps`.
-- **Tasks 7–15:** `not_started`.
+- **Task 7:** `implemented_pending_vps_validation` no commit `5d5cf8f`; busca e verificação read-only no RAG MCP, snapshot canônico, rota/configuração e fail-closed implementados. Dez contratos da Task 7 e 26 testes do RAG passaram; persistência PostgreSQL e chamada MCP real no Compose estão `deferred_to_vps`.
+- **Tasks 8–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 7, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 8, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2, 4, 5 e 6 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–7 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -503,7 +504,7 @@ git commit -m "feat: vincula materiais de campanha"
 **Interfaces:**
 - Produces: `searchCourses(query, limit)`, `verifyCourseReference(documentId, referenceKey)` e `GET /v1/references/courses`.
 
-- [ ] **Step 1: RED de normalização e fail-closed**
+- [x] **Step 1: RED de normalização e fail-closed**
 
 ```ts
 it('returns only course results with metadata.course_id and verifies document identity', async () => {
@@ -517,19 +518,19 @@ it('returns only course results with metadata.course_id and verifies document id
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd services/marketing-ops && npm test -- src/integrations/ragCourseClient.test.ts`
 
 Expected: FAIL porque o adapter não existe.
 
-- [ ] **Step 3: Implementar cliente MCP**
+- [x] **Step 3: Implementar cliente MCP**
 
 Usar `Client` e `StreamableHTTPClientTransport` com timeout, chamar `ens_rag_search` com `collections:['courses']`, `actor_profile:'marketing_ops'`, `require_evidence:true`; verificar seleção com `ens_rag_get_document`. Resultados sem `metadata.course_id` não são selecionáveis.
 
 Se o RAG estiver indisponível, retornar `dependency_unavailable`; o draft continua editável, mas `draft→planned` falha quando uma referência `course` não possui `reference_verified_at`.
 
-- [ ] **Step 4: Verificar GREEN e regressão RAG**
+- [x] **Step 4: Verificar GREEN e regressão RAG disponível**
 
 Run: `cd services/marketing-ops && npm test -- src/integrations/ragCourseClient.test.ts src/domain/campaignTransitions.test.ts`
 
@@ -537,7 +538,9 @@ Run: `cd services/rag-mcp && npm test && npm run typecheck`
 
 Expected: testes passam sem gravação no Supabase do RAG.
 
-- [ ] **Step 5: Commit**
+Resultado em 2026-07-14: 10/10 contratos nativos da Task 7 e 26/26 testes do `rag-mcp` aprovados, com typecheck dos dois serviços e build do Marketing Ops. O novo cenário de persistência canônica foi coletado e a chamada MCP real contra o RAG no Compose permanece `deferred_to_vps`; nenhuma escrita ou conexão direta ao Supabase do RAG foi feita.
+
+- [x] **Step 5: Commit** — `5d5cf8f feat: adiciona referencias oficiais de cursos`.
 
 ```powershell
 git add services/marketing-ops/src/integrations/ragCourseClient.ts services/marketing-ops/src/integrations/ragCourseClient.test.ts services/marketing-ops/src/http/routes/references.ts services/marketing-ops/src/http/routes/index.ts services/marketing-ops/src/domain/campaigns.ts
