@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_8_implemented_pending_vps_validation`
+- **Estado:** `task_9_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `42d43f3`
+- **Último código da fase:** `6c713e7`
 
 ## Evidência concluída
 
@@ -147,6 +147,19 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Coleta PostgreSQL:** 1 assert estrutural e 6 asserts RLS/timeline adicionados; planos conferidos em 33 e 98, elevando o total esperado para 228;
 - **Diferido para VPS:** execução da migration/função, 228 pgTAP, RLS member/manager/admin e cross-tenant, histórico bruto legado, paginação real e inspeção manual de conteúdo proibido.
 
+## Task 9 — REST v1 e OpenAPI
+
+- **Commit:** `6c713e7`;
+- **RED observado:** inventário OpenAPI tinha 7 paths em vez de 18, os parsers completos não existiam e schemas/headers públicos estavam ausentes;
+- **REDs de hardening:** query desconhecida de referência retornava 200; `archived` era aceito na rota genérica; aspas incompletas de `If-Match` passavam; erro inesperado do verifier vazava a mensagem original;
+- **GREEN da task:** 6/6 contratos REST/OpenAPI executáveis sem banco, 2/2 middleware, 2/2 referências e 2/2 contratos MCP sem banco;
+- **Regressão nativa segmentada:** 62/62 checks em 12 arquivos, mais 6 REST puros, 2 MCP puros, 1 contrato de participantes e 4 de materiais; total 75 testes executados;
+- **Typecheck/build:** exit code 0;
+- **OpenAPI:** Redocly CLI `2.18.1` validou 18 paths/22 operações sem erro ou warning; o teste compara método+path do Express com o documento;
+- **Implementação:** create/patch/filtros completos, aliases F1 deprecated, transition/archive separados, queries/params strict, ETags e headers de mutação uniformes, erros públicos tipados e capabilities ampliadas;
+- **Compatibilidade:** endpoints REST de `campaign_items` da Fase 1 permanecem documentados como deprecated; tools MCP v1 continuam registradas;
+- **Diferido para VPS:** 6 testes REST com PostgreSQL, 6 testes MCP com PostgreSQL e 5 cenários de `production-gate.test.ts`, incluindo draft completo, transition, replay, auditoria e tenant forjado.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -155,7 +168,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 8
+## Auditoria documental após a Task 9
 
 | Verificação | Resultado |
 |---|---|
@@ -164,6 +177,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 9 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 10 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.

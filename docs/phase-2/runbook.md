@@ -1,6 +1,6 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_8_not_executed_in_vps`
+- **Estado:** `prepared_through_task_9_not_executed_in_vps`
 - **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy
@@ -31,7 +31,12 @@ Não executar `npm test` sem filtro no Marketing Ops como prova local: há suít
 
 ```powershell
 Set-Location services/marketing-ops
-npx vitest run src/domain/contracts.test.ts src/domain/queries.test.ts src/domain/participants.test.ts src/domain/materials.test.ts src/domain/campaignReferences.test.ts src/domain/timeline.test.ts src/integrations/artifactClient.test.ts src/integrations/ragCourseClient.test.ts src/http/routes/references.test.ts
+npx vitest run src/foundation.test.ts src/delegation/refresher.test.ts src/plans/token.test.ts src/plans/executor.test.ts src/domain/contracts.test.ts src/domain/queries.test.ts src/domain/campaignReferences.test.ts src/domain/timeline.test.ts src/integrations/artifactClient.test.ts src/integrations/ragCourseClient.test.ts src/http/routes/references.test.ts src/http/middleware.test.ts
+npx vitest run src/rest.test.ts -t "keeps every public REST operation|parses the complete strict campaign REST contract|documents required mutation headers|keeps the Express router and OpenAPI operations|publishes capabilities and default-off flags|answers trusted CORS preflight without authentication"
+npx vitest run src/mcp.test.ts -t "registers versioned tools and serves public capabilities|normalizes a numeric string version before signing an update plan"
+npx vitest run src/domain/participants.test.ts -t "participant input contracts"
+npx vitest run src/domain/materials.test.ts -t "campaign material contracts"
+npx --yes @redocly/cli@2.18.1 lint openapi/marketing-ops.v1.yaml --extends=minimal
 npm run typecheck
 npm run build
 
@@ -50,17 +55,17 @@ npm run build
 npm run security:gate
 ```
 
-A lista cresce conforme Tasks 8–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado.
+A lista cresce conforme Tasks 10–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado.
 
 ## Gate diferido de banco e Linux
 
 Executar somente depois do fechamento interno, com fixtures identificadas e cleanup:
 
 - reset/upgrade e migration da Fase 2;
-- 228 asserts pgTAP atuais, acrescidos de qualquer teste criado nas Tasks 9–14;
+- 228 asserts pgTAP atuais, acrescidos de qualquer teste criado nas Tasks 10–14;
 - RLS nos três papéis, membership inativa e cross-tenant;
 - harness concorrente campanha/participante/item e abuso de lock;
-- cenários PostgreSQL das Tasks 4–7;
+- cenários PostgreSQL das Tasks 4–9, incluindo 6 REST, 6 MCP e 5 production-gate da Task 9;
 - build das imagens Linux e `docker compose config`;
 - integrações Marketing Ops → Artifact/RAG;
 - restart e persistência de banco, metadata e bytes.

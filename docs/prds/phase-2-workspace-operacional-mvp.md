@@ -1,8 +1,8 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
 - **Status:** approved
-- **Implementação:** `in_progress_through_task_8`
-- **Última evidência de código:** `42d43f3` — timeline segura e auditoria minimizada
+- **Implementação:** `in_progress_through_task_9`
+- **Última evidência de código:** `6c713e7` — API REST v1 e OpenAPI consolidados
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 
@@ -213,18 +213,18 @@ Os checkboxes permanecem abertos até a evidência completa exigida pelo gate da
 
 | Critério | Estado em 14/07/2026 | Evidência/pendência |
 |---|---|---|
-| Usuário autorizado cria rascunho | `backend_implemented_pending_vps_validation` | domínio/rota nativos; UI, E2E e banco real pendentes |
+| Usuário autorizado cria rascunho | `backend_implemented_pending_vps_validation` | domínio, rota estrita e OpenAPI implementados; UI, E2E e banco real pendentes |
 | Campos obrigatórios e datas são validados | `backend_implemented_pending_vps_validation` | schemas e contratos verdes; banco/UI pendentes |
 | Campanha não ativa sem responsável e dados mínimos | `backend_implemented_pending_vps_validation` | regra de domínio implementada; PostgreSQL real pendente |
-| Lista pagina, busca e combina filtros | `backend_implemented_pending_vps_validation` | backend implementado; performance, banco e UI pendentes |
+| Lista pagina, busca e combina filtros | `backend_implemented_pending_vps_validation` | filtros REST/legados e cursor documentados; performance, banco e UI pendentes |
 | URL preserva filtros relevantes | `not_started` | Task 11 |
 | Workspace mostra visão geral, briefing, participantes, materiais e atividade | `backend_implemented_ui_pending` | backend das seções e timeline existe; UI é Tasks 12–13 |
 | Upload/vínculo respeita ownership e limites | `backend_implemented_pending_vps_validation` | contratos nativos verdes; integração real e UI pendentes |
-| Conflito de versão não sobrescreve dados | `backend_implemented_pending_vps_validation` | versão/lock implementados; concorrência real e UX pendentes |
+| Conflito de versão não sobrescreve dados | `backend_implemented_pending_vps_validation` | `If-Match`, ETag e `version_conflict` consolidados; concorrência real e UX pendentes |
 | Member, manager e admin respeitam a matriz | `partially_implemented_pending_vps_validation` | autorização nativa parcial; RLS/E2E/VPS pendentes |
 | Arquivamento preserva histórico | `backend_implemented_pending_vps_validation` | archive e projeção histórica implementados; banco/UI/VPS pendentes |
 | Timeline não expõe campos proibidos | `implemented_pending_vps_validation` | 7 testes nativos verdes; 7 asserts pgTAP, UI e logs VPS pendentes |
-| Estados de erro e vazio estão implementados | `not_started` | Tasks 11–13 |
+| Estados de erro e vazio estão implementados | `backend_contract_implemented_ui_not_started` | envelope/códigos públicos no OpenAPI; estados visuais são Tasks 11–13 |
 | Jornadas críticas são responsivas e acessíveis | `not_started` | Tasks 11–14 |
 
 ## Testes

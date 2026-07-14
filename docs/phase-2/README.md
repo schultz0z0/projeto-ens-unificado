@@ -8,7 +8,7 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **Data do snapshot:** 2026-07-14
 - **Branch canônica:** `main`
 - **Base de produção:** Fase 1 `production_validated`
-- **Implementação:** Task 1 concluída; Tasks 2 e 4–8 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 9–15 não iniciadas
+- **Implementação:** Task 1 concluída; Tasks 2 e 4–9 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 10–15 não iniciadas
 - **Deploy Supabase remoto:** não executado
 - **Deploy VPS:** não executado
 - **PRD:** [phase-2-workspace-operacional-mvp.md](../prds/phase-2-workspace-operacional-mvp.md)
@@ -18,7 +18,7 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **Continuação obrigatória:** [continuation-handoff.md](continuation-handoff.md)
 - **Evidência local atual:** [local-validation.md](local-validation.md)
 
-O backend das Tasks 2–8 está implementado. Os checks nativos disponíveis neste computador estão registrados, mas as Tasks 2 e 4–8 **não estão concluídas**: PostgreSQL/RLS, concorrência, integrações reais, imagens Linux, Compose, restart e persistência serão comprovados na VPS. A Task 9 é a próxima frente de implementação.
+O backend das Tasks 2–9 está implementado. Os checks nativos disponíveis neste computador estão registrados, mas as Tasks 2 e 4–9 **não estão concluídas**: PostgreSQL/RLS, REST/MCP integrados, concorrência, integrações reais, imagens Linux, Compose, restart e persistência serão comprovados na VPS. A Task 10 é a próxima frente de implementação.
 
 ## Pacote documental
 
@@ -26,17 +26,17 @@ O backend das Tasks 2–8 está implementado. Os checks nativos disponíveis nes
 |---|---|---|
 | Índice e governança da fase | `current` | este README |
 | Design técnico aprovado | `approved` | [design.md](design.md) |
-| Progresso por task | `current_through_task_8` | [implementation-progress.md](implementation-progress.md) |
-| Rastreabilidade PRD → implementação → evidência | `partial_through_task_8` | [requirements-traceability.md](requirements-traceability.md) |
+| Progresso por task | `current_through_task_9` | [implementation-progress.md](implementation-progress.md) |
+| Rastreabilidade PRD → implementação → evidência | `partial_through_task_9` | [requirements-traceability.md](requirements-traceability.md) |
 | Registro de riscos | `active` | [risk-register.md](risk-register.md) |
 | LGPD, minimização e retenção | `implemented_pending_vps_validation` | [lgpd-retention.md](lgpd-retention.md) |
 | SLO e observabilidade | `proposed_pending_measurement` | [slo.md](slo.md) |
 | Operação e deploy | `prepared_not_executed` | [runbook.md](runbook.md) |
 | Rollback | `prepared_not_executed` | [rollback.md](rollback.md) |
-| Evidência local/nativa | `partial_through_task_8` | [local-validation.md](local-validation.md) |
+| Evidência local/nativa | `partial_through_task_9` | [local-validation.md](local-validation.md) |
 | Deploy Supabase do app | `not_executed` | [supabase-deployment.md](supabase-deployment.md) |
 | Validação VPS | `pending_user_execution` | [vps-validation.md](vps-validation.md) |
-| Continuidade entre sessões/computadores | `current_through_task_8` | [continuation-handoff.md](continuation-handoff.md) |
+| Continuidade entre sessões/computadores | `current_through_task_9` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Governança da execução
 
@@ -79,7 +79,7 @@ O backend das Tasks 2–8 está implementado. Os checks nativos disponíveis nes
 | 6 | Materiais e Artifact Server | `implemented_pending_vps_validation` |
 | 7 | Referências oficiais do RAG | `implemented_pending_vps_validation` |
 | 8 | Timeline segura | `implemented_pending_vps_validation` |
-| 9 | REST v1 e OpenAPI | `not_started` |
+| 9 | REST v1 e OpenAPI | `implemented_pending_vps_validation` |
 | 10 | Cliente frontend tipado | `not_started` |
 | 11 | Lista, filtros e criação | `not_started` |
 | 12 | Workspace e conflitos | `not_started` |
@@ -94,7 +94,7 @@ Detalhes de commits, evidências e pendências por task ficam em [implementation
 - trabalhar somente em `main`, conforme decisão explícita do usuário;
 - ler integralmente [continuation-handoff.md](continuation-handoff.md) antes de editar;
 - manter testes antes da implementação; quando o teste exigir Docker/PostgreSQL real, registrar `execution_deferred_to_vps` e não alegar RED/GREEN até a execução na VPS;
-- não promover as Tasks 2 e 4–8 a concluídas antes dos respectivos gates PostgreSQL/RLS/concorrência/integrações/Compose na VPS;
+- não promover as Tasks 2 e 4–9 a concluídas antes dos respectivos gates PostgreSQL/RLS/concorrência/integrações/Compose na VPS;
 - não copiar secrets, `.env` ou chaves para documentação ou logs;
 - não fazer deploy Supabase remoto antes do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run;
 - não fazer deploy VPS pelo agente; o usuário executará o runbook após o fechamento interno;

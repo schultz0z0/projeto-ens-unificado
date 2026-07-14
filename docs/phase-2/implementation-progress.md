@@ -3,10 +3,10 @@
 - **Estado da fase:** `in_progress`
 - **Snapshot:** 2026-07-14
 - **Branch canônica:** `main`
-- **Último código da fase:** `42d43f3`
+- **Último código da fase:** `6c713e7`
 - **Deploy Supabase da Fase 2:** não executado
 - **Deploy VPS da Fase 2:** não executado
-- **Próxima task:** Task 9 — consolidação REST v1 e OpenAPI
+- **Próxima task:** Task 10 — cliente frontend tipado
 
 ## Legenda de estados
 
@@ -31,7 +31,7 @@
 | 6 | Materiais e integração Artifact Server | `aed3e1c` | 8 contratos Marketing Ops, 8 testes Artifact e Compose estático; 3 cenários DB coletados | `implemented_pending_vps_validation` |
 | 7 | Referências oficiais read-only via RAG MCP | `5d5cf8f` | 10 contratos da task, 26 testes RAG e Compose estático; persistência real coletada | `implemented_pending_vps_validation` |
 | 8 | Timeline segura e auditoria minimizada | `42d43f3` | 7 testes da task e 65 checks nativos segmentados; 7 asserts pgTAP adicionados e diferidos | `implemented_pending_vps_validation` |
-| 9 | Consolidação REST v1 e OpenAPI | — | não iniciada | `not_started` |
+| 9 | Consolidação REST v1 e OpenAPI | `6c713e7` | 75 testes nativos segmentados, typecheck/build e Redocly válidos; 17 cenários integrados diferidos | `implemented_pending_vps_validation` |
 | 10 | Cliente frontend tipado | — | não iniciada | `not_started` |
 | 11 | Lista, filtros em URL e criação | — | não iniciada | `not_started` |
 | 12 | Workspace, salvamento e conflito | — | não iniciada | `not_started` |
@@ -39,12 +39,13 @@
 | 14 | Observabilidade, Compose, E2E e fechamento documental | — | não iniciada; pacote documental-base antecipado após auditoria de processo | `not_started` |
 | 15 | Revisão final no `main` e handoff VPS | — | não iniciada | `not_started` |
 
-## Evidências consolidadas até a Task 8
+## Evidências consolidadas até a Task 9
 
 - baseline histórico: 197 pgTAP, lint sem erro, schema diff vazio e primeiro harness campanha/participante aprovado no computador anterior;
 - banco atual: 228 asserts esperados (`2 + 95 + 33 + 98`), harness ampliado e provas reais marcadas `deferred_to_vps`;
 - Marketing Ops: suítes nativas segmentadas, typecheck e build aprovados em cada task executada;
 - timeline: snapshots de texto livre são reduzidos a presença/tamanho/SHA-256, secrets são redigidos e a projeção limita ações/campos por allowlist;
+- REST/OpenAPI: 18 paths e 22 operações em lockstep com o Express, schemas estritos, ETags/headers de mutação e erros públicos documentados;
 - Artifact Server: 8/8 testes nativos aprovados;
 - RAG MCP: 26/26 testes e typecheck aprovados;
 - Compose: parsing e vínculos estáticos de Artifact/RAG aprovados, sem alegação de build ou execução Linux;
@@ -54,12 +55,11 @@ As contagens e comandos completos estão em [local-validation.md](local-validati
 
 ## Sequência de continuidade
 
-1. Task 9: fechar inventário REST, erros, ETags e OpenAPI.
-2. Tasks 10–13: cliente tipado e experiência operacional completa.
-3. Task 14: observabilidade final, E2E, gate reproduzível e fechamento interno.
-4. Task 15: revisão fresca do `main`, deploy Supabase do app quando autorizado pelos gates e handoff VPS.
-5. Usuário publica `main` e executa o deploy VPS.
-6. Agente conduz logs, smokes por papel e registro do aceite final.
+1. Tasks 10–13: cliente tipado e experiência operacional completa.
+2. Task 14: observabilidade final, E2E, gate reproduzível e fechamento interno.
+3. Task 15: revisão fresca do `main`, deploy Supabase do app quando autorizado pelos gates e handoff VPS.
+4. Usuário publica `main` e executa o deploy VPS.
+5. Agente conduz logs, smokes por papel e registro do aceite final.
 
 ## Protocolo de atualização
 

@@ -20,11 +20,12 @@
 - **Task 6:** `implemented_pending_vps_validation` no commit `aed3e1c`; cliente e domínio de materiais, compensação, rotas, configuração privada, lockfile e integração Compose implementados. Oito contratos do Marketing Ops e oito testes do Artifact Server passaram; três cenários PostgreSQL e a prova Linux/Compose/persistência estão `deferred_to_vps`.
 - **Task 7:** `implemented_pending_vps_validation` no commit `5d5cf8f`; busca e verificação read-only no RAG MCP, snapshot canônico, rota/configuração e fail-closed implementados. Dez contratos da Task 7 e 26 testes do RAG passaram; persistência PostgreSQL e chamada MCP real no Compose estão `deferred_to_vps`.
 - **Task 8:** `implemented_pending_vps_validation` no commit `42d43f3`; minimização de auditoria/outbox, projeção privada, cursor, rota e allowlists implementados. Sete testes da task e 65 checks nativos segmentados passaram; 7 novos asserts pgTAP e a prova do histórico/RLS real estão `deferred_to_vps`.
-- **Tasks 9–15:** `not_started`.
+- **Task 9:** `implemented_pending_vps_validation` no commit `6c713e7`; adapters REST estritos, transição, ETags, erros, capabilities e OpenAPI 3.1 completos. Setenta e cinco testes nativos e o lint Redocly passaram; 17 cenários REST/MCP/production-gate estão `deferred_to_vps`.
+- **Tasks 10–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 9, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 10, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–8 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–9 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -611,41 +612,47 @@ git commit -m "feat: adiciona timeline segura de campanhas"
 ### Task 9: Fechar REST v1 e OpenAPI
 
 **Files:**
+- Modify: `services/marketing-ops/src/domain/contracts.ts`
 - Modify: `services/marketing-ops/src/http/routes/campaigns.ts`
 - Modify: `services/marketing-ops/src/http/routes/participants.ts`
 - Modify: `services/marketing-ops/src/http/routes/materials.ts`
 - Modify: `services/marketing-ops/src/http/routes/references.ts`
-- Modify: `services/marketing-ops/src/http/routes/timeline.ts`
+- Review (sem mudança necessária): `services/marketing-ops/src/http/routes/timeline.ts`
 - Modify: `services/marketing-ops/src/http/middleware.ts`
+- Create: `services/marketing-ops/src/http/middleware.test.ts`
+- Modify: `services/marketing-ops/src/http/routes/audit.ts`
+- Modify: `services/marketing-ops/src/http/routes/capabilities.ts`
 - Modify: `services/marketing-ops/openapi/marketing-ops.v1.yaml`
 - Modify: `services/marketing-ops/src/rest.test.ts`
 
 **Interfaces:**
-- Produces: endpoints descritos na seção 12 de `docs/phase-2/design.md` com envelopes e ETags uniformes.
+- Produces: endpoints descritos na seção 10 de `docs/phase-2/design.md` com envelopes e ETags uniformes; itens REST da Fase 1 permanecem como compatibilidade deprecated.
 
-- [ ] **Step 1: RED do inventário público**
+- [x] **Step 1: RED do inventário público**
 
 ```ts
 expect(Object.keys(document.paths).sort()).toEqual([
-  '/audit-events', '/campaigns', '/campaigns/{campaignId}/materials',
+  '/audit-events', '/campaigns', '/campaigns/{campaignId}/items',
+  '/campaigns/{campaignId}/items/{itemId}', '/campaigns/{campaignId}/materials',
+  '/campaigns/{campaignId}/materials/link', '/campaigns/{campaignId}/materials/upload',
   '/campaigns/{campaignId}/materials/{materialId}',
   '/campaigns/{campaignId}/materials/{materialId}/access-link',
+  '/campaigns/{campaignId}/participant-candidates',
   '/campaigns/{campaignId}/participants',
   '/campaigns/{campaignId}/participants/{userId}',
-  '/campaigns/{campaignId}/participant-candidates',
   '/campaigns/{campaignId}/timeline', '/campaigns/{id}',
   '/campaigns/{id}/archive', '/campaigns/{id}/transitions',
   '/capabilities', '/references/courses'
 ]);
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
-Run: `cd services/marketing-ops && npm test -- src/rest.test.ts`
+Run: `cd services/marketing-ops && npm test -- src/rest.test.ts -t "keeps every public REST operation|parses the complete strict campaign REST contract|documents required mutation headers"`
 
-Expected: FAIL por paths e comportamentos ausentes.
+Observed: três falhas por paths, parsers e schemas/headers ausentes.
 
-- [ ] **Step 3: Implementar adapters e contrato**
+- [x] **Step 3: Implementar adapters e contrato**
 
 Usar Zod `.strict()`; UUID, datas, enum, cursor e limite são validados. Multipart/bytes de material usa limite de 25 MiB e não passa pelo parser JSON de 256 KiB. Respostas de mutação retornam ETag da campanha. Erros públicos estáveis: `validation_error`, `forbidden`, `not_found`, `invalid_transition`, `campaign_requirements_missing`, `primary_owner_required`, `participant_role_invalid`, `reference_not_verified`, `artifact_not_owned`, `material_type_not_allowed`, `material_too_large`, `version_conflict` e `dependency_unavailable` para indisponibilidade de integração.
 
@@ -655,10 +662,12 @@ Run: `cd services/marketing-ops && npm test -- src/rest.test.ts src/mcp.test.ts 
 
 Expected: REST novo passa; ferramentas MCP v1 existentes continuam verdes.
 
-- [ ] **Step 5: Commit**
+Resultado parcial executado: 75 testes nativos segmentados, typecheck, build e Redocly sem erro/warning passaram. Os 6 testes REST, 6 MCP e 5 production-gate dependentes de PostgreSQL permanecem `deferred_to_vps`; por isso este passo e a task não recebem aceite final.
+
+- [x] **Step 5: Commit**
 
 ```powershell
-git add services/marketing-ops/src/http services/marketing-ops/openapi/marketing-ops.v1.yaml services/marketing-ops/src/rest.test.ts
+git add services/marketing-ops/src/domain/contracts.ts services/marketing-ops/src/http services/marketing-ops/openapi/marketing-ops.v1.yaml services/marketing-ops/src/rest.test.ts
 git commit -m "feat: publica api rest do workspace operacional"
 ```
 
