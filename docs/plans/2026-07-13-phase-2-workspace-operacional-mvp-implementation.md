@@ -97,10 +97,11 @@ git commit -m "chore: estabiliza gate local da fase 2"
 **Files:**
 - Modify: `apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql`
 - Create: `apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql`
+- Create: `apps/chat-web/supabase/tests/marketing_ops_workspace_rls.test.sql`
 - Modify: `apps/chat-web/supabase/seed.sql`
 
 **Interfaces:**
-- Produces: `campaign_status = draft|planned|active|completed|archived`, `reference_type`, `campaign_channel`, `campaign_materials`, `campaign_members.is_primary` e busca indexada.
+- Produces: `campaign_status = draft|planned|active|completed|archived`, `reference_type`, `campaign_channel`, `campaign_material_source = upload|existing_artifact`, `campaign_materials`, `campaign_members.is_primary` e busca indexada.
 
 - [ ] **Step 1: Criar o teste pgTAP RED**
 
@@ -114,16 +115,19 @@ select has_column('marketing_ops', 'campaigns', 'reference_title_snapshot');
 select has_column('marketing_ops', 'campaigns', 'reference_document_id');
 select has_column('marketing_ops', 'campaigns', 'reference_verified_at');
 select has_column('marketing_ops', 'campaigns', 'audience');
-select has_column('marketing_ops', 'campaigns', 'start_date');
-select has_column('marketing_ops', 'campaigns', 'end_date');
-select has_column('marketing_ops', 'campaigns', 'channels');
+select has_column('marketing_ops', 'campaigns', 'starts_on');
+select has_column('marketing_ops', 'campaigns', 'ends_on');
+select has_column('marketing_ops', 'campaigns', 'primary_channel');
+select has_column('marketing_ops', 'campaigns', 'secondary_channels');
 select has_column('marketing_ops', 'campaigns', 'briefing');
 select has_column('marketing_ops', 'campaigns', 'notes');
 select has_column('marketing_ops', 'campaign_members', 'is_primary');
 select has_table('marketing_ops', 'campaign_materials');
+select has_column('marketing_ops', 'campaign_materials', 'artifact_owner_id');
+select has_column('marketing_ops', 'campaign_materials', 'source');
 select has_index('marketing_ops', 'campaigns', 'campaigns_tenant_search_idx');
 select has_index('marketing_ops', 'campaign_materials', 'campaign_materials_campaign_active_idx');
-select col_is_unique('marketing_ops', 'campaign_members', array['campaign_id', 'is_primary']);
+select has_index('marketing_ops', 'campaign_members', 'campaign_members_one_primary_idx');
 select * from finish();
 rollback;
 ```
@@ -143,7 +147,8 @@ alter type marketing_ops.campaign_status add value if not exists 'planned' befor
 alter type marketing_ops.campaign_status add value if not exists 'active' before 'archived';
 alter type marketing_ops.campaign_status add value if not exists 'completed' before 'archived';
 create type marketing_ops.reference_type as enum ('course', 'product', 'initiative');
-create type marketing_ops.campaign_channel as enum ('email', 'instagram', 'facebook', 'linkedin', 'youtube', 'whatsapp', 'site', 'paid_media', 'event', 'other');
+create type marketing_ops.campaign_channel as enum ('email', 'instagram', 'linkedin', 'facebook', 'whatsapp', 'website', 'paid_media', 'events', 'press', 'other');
+create type marketing_ops.campaign_material_source as enum ('upload', 'existing_artifact');
 alter table marketing_ops.campaigns
   add column objective text,
   add column reference_type marketing_ops.reference_type,
@@ -152,9 +157,10 @@ alter table marketing_ops.campaigns
   add column reference_document_id uuid,
   add column reference_verified_at timestamptz,
   add column audience text,
-  add column start_date date,
-  add column end_date date,
-  add column channels marketing_ops.campaign_channel[] not null default '{}',
+  add column starts_on date,
+  add column ends_on date,
+  add column primary_channel marketing_ops.campaign_channel,
+  add column secondary_channels marketing_ops.campaign_channel[] not null default '{}',
   add column briefing text,
   add column notes text;
 alter table marketing_ops.campaign_members add column is_primary boolean not null default false;
@@ -165,11 +171,12 @@ create table marketing_ops.campaign_materials (
   tenant_id uuid not null,
   campaign_id uuid not null,
   artifact_id uuid not null,
+  artifact_owner_id text not null,
   filename text not null,
   content_type text not null,
   size_bytes bigint not null,
   sha256 text not null,
-  source text not null default 'marketing_ops',
+  source marketing_ops.campaign_material_source not null,
   created_by uuid not null,
   created_at timestamptz not null default now(),
   unlinked_by uuid,
@@ -178,13 +185,16 @@ create table marketing_ops.campaign_materials (
     references marketing_ops.campaigns(tenant_id, id) on delete cascade,
   constraint campaign_materials_created_by_fk foreign key (created_by) references auth.users(id),
   constraint campaign_materials_unlinked_by_fk foreign key (unlinked_by) references auth.users(id),
+  constraint campaign_materials_artifact_owner check (
+    btrim(artifact_owner_id) <> '' and char_length(artifact_owner_id) <= 200
+  ),
   constraint campaign_materials_size check (size_bytes between 1 and 26214400),
   constraint campaign_materials_sha256 check (sha256 ~ '^[0-9a-f]{64}$'),
   constraint campaign_materials_unlink_consistent check ((unlinked_at is null) = (unlinked_by is null))
 );
 ```
 
-Adicionar checks de tamanho/período/referência, `search_vector` gerado, GIN, índices parciais, RLS/grants explícitos e revogação de `PUBLIC` em helpers `SECURITY DEFINER`.
+Adicionar checks de tamanho/período/referência e canais (máximo 9 secundários, sem duplicidade nem repetição do principal), `search_vector` gerado apenas de `name` e `reference_title_snapshot`, GIN, índices parciais, RLS/grants explícitos e revogação de `PUBLIC` em helpers. O primeiro owner é promovido com segurança, o índice parcial limita a um principal e constraint triggers `DEFERRABLE INITIALLY DEFERRED` exigem exatamente um owner principal no commit.
 
 - [ ] **Step 4: Resetar e verificar schema/RLS**
 
@@ -195,7 +205,7 @@ Expected: todos os arquivos pgTAP passam; lint sem erros.
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql apps/chat-web/supabase/seed.sql
+git add apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql apps/chat-web/supabase/tests/marketing_ops_workspace_rls.test.sql apps/chat-web/supabase/seed.sql docs/plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md
 git commit -m "feat: evolui schema operacional de campanhas"
 ```
 
@@ -216,7 +226,7 @@ git commit -m "feat: evolui schema operacional de campanhas"
 it('requires the planning minimum and enforces reopen authority', () => {
   expect(() => validatePlanningReadiness({
     name: 'Lançamento', objective: null, referenceTitleSnapshot: null,
-    startDate: null, endDate: null, hasPrimaryOwner: true
+    startsOn: null, endsOn: null, hasPrimaryOwner: true
   })).toThrowErrorMatchingObject({ code: 'campaign_not_ready' });
   expect(() => assertTransitionAllowed(
     { role: 'member' }, { memberRole: 'owner', isPrimary: true }, 'planned', 'draft'
@@ -236,7 +246,7 @@ Expected: FAIL porque o módulo não existe.
 ```ts
 export const CampaignStatusSchema = z.enum(['draft', 'planned', 'active', 'completed', 'archived']);
 export const ReferenceTypeSchema = z.enum(['course', 'product', 'initiative']);
-export const CampaignChannelSchema = z.enum(['email', 'instagram', 'facebook', 'linkedin', 'youtube', 'whatsapp', 'site', 'paid_media', 'event', 'other']);
+export const CampaignChannelSchema = z.enum(['email', 'instagram', 'linkedin', 'facebook', 'whatsapp', 'website', 'paid_media', 'events', 'press', 'other']);
 export const CampaignPatchSchema = z.object({
   name: z.string().trim().min(1).max(200),
   objective: z.string().trim().max(2000).nullable(),
@@ -245,9 +255,10 @@ export const CampaignPatchSchema = z.object({
   referenceTitleSnapshot: z.string().trim().max(300).nullable(),
   referenceDocumentId: z.string().uuid().nullable(),
   audience: z.string().trim().max(2000).nullable(),
-  startDate: z.string().date().nullable(),
-  endDate: z.string().date().nullable(),
-  channels: z.array(CampaignChannelSchema).max(10),
+  startsOn: z.string().date().nullable(),
+  endsOn: z.string().date().nullable(),
+  primaryChannel: CampaignChannelSchema.nullable(),
+  secondaryChannels: z.array(CampaignChannelSchema).max(9),
   briefing: z.string().trim().max(20000).nullable(),
   notes: z.string().trim().max(10000).nullable()
 }).strict();
@@ -290,7 +301,7 @@ it('creates a name-only draft with the creator as primary owner', async () => {
 });
 ```
 
-Adicionar testes para busca `q`, filtros `referenceType/referenceKey/status/owner/from/to`, cursor inválido, `draft→planned`, reabertura, arquivamento de qualquer não arquivada e 409 contendo `currentVersion`.
+Adicionar testes para busca `q`, filtros `referenceType/referenceKey/status/channel/responsible/periodFrom/periodTo`, cursor inválido, `draft→planned`, reabertura, arquivamento de qualquer não arquivada e 409 contendo `currentVersion`.
 
 - [ ] **Step 2: Observar RED**
 
@@ -372,7 +383,7 @@ export interface ParticipantCandidate {
 }
 ```
 
-Nunca retornar email, metadados do Auth ou registros de outro tenant. Owner/editor pode gerenciar viewer/editor; somente manager/admin altera owner ou remove o proprietário principal.
+Nunca retornar email, metadados do Auth ou registros de outro tenant. O owner principal pode gerenciar viewer/editor; somente manager/admin altera owner ou remove o proprietário principal.
 
 - [ ] **Step 4: Verificar GREEN e RLS**
 
@@ -428,6 +439,12 @@ export interface ArtifactMetadata {
   size: number; sha256: string; createdAt: string; source: string;
 }
 export interface ArtifactAccessLink { url: string; expiresAt: string }
+export const CampaignMaterialSourceSchema = z.enum(['upload', 'existing_artifact']);
+export interface CampaignMaterial {
+  artifactId: string;
+  artifactOwnerId: string;
+  source: z.infer<typeof CampaignMaterialSourceSchema>;
+}
 ```
 
 O upload envia bytes como corpo, `Authorization: Bearer <internal key>`, `X-Nexus-Owner-Id`, `X-Nexus-Filename`, `X-Nexus-Content-Type`, `X-Nexus-Source: marketing_ops`. Validar MIME/extensão e 25 MiB antes da rede. `unlink` marca `unlinked_at/unlinked_by` e não apaga o binário compartilhado.

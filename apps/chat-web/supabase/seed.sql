@@ -1,4 +1,6 @@
 -- Deterministic local-only fixtures. These IDs are not production identities.
+begin;
+
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
   confirmation_token, recovery_token, email_change_token_new, email_change,
@@ -46,6 +48,10 @@ set
   reference_type = 'course',
   reference_key = 'course-alpha',
   reference_title_snapshot = 'Official Course',
+  starts_on = '2026-08-01',
+  ends_on = '2026-08-31',
+  primary_channel = 'email',
+  secondary_channels = array['instagram', 'linkedin']::marketing_ops.campaign_channel[],
   briefing = 'briefingsecret',
   notes = 'notessecret'
 where id = 'c1111111-1111-4111-8111-111111111111';
@@ -61,6 +67,32 @@ set
   is_primary = excluded.is_primary,
   created_by = excluded.created_by;
 
+insert into marketing_ops.campaign_materials (
+  id, tenant_id, campaign_id, artifact_id, artifact_owner_id, filename,
+  content_type, size_bytes, sha256, source, created_by
+)
+values (
+  'f0000000-0000-4000-8000-000000000001',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'c2222222-2222-4222-8222-222222222222',
+  'a0000000-0000-4000-8000-000000000001',
+  'seed-artifact-owner',
+  'manager-campaign-brief.pdf',
+  'application/pdf',
+  1024,
+  repeat('0', 64),
+  'existing_artifact',
+  '22222222-2222-4222-8222-222222222222'
+)
+on conflict (id) do update
+set
+  artifact_owner_id = excluded.artifact_owner_id,
+  filename = excluded.filename,
+  content_type = excluded.content_type,
+  size_bytes = excluded.size_bytes,
+  sha256 = excluded.sha256,
+  source = excluded.source;
+
 insert into marketing_ops.audit_events (
   id, tenant_id, actor_user_id, actor_role, actor_type, origin,
   entity_type, entity_id, action, after_state, correlation_id
@@ -74,3 +106,5 @@ values (
   '{"status":"draft"}', 'e1111111-1111-4111-8111-111111111111'
 )
 on conflict (id) do nothing;
+
+commit;
