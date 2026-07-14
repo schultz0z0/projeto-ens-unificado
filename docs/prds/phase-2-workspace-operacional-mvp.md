@@ -1,8 +1,8 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
 - **Status:** approved
-- **Implementação:** `in_progress_through_task_11`
-- **Última evidência de código:** `df4903b` — lista responsiva, filtros em URL e criação implementados
+- **Implementação:** `in_progress_through_task_12`
+- **Última evidência de código:** `7fcbd21` — workspace editável, conflito, transições e arquivamento implementados
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 
@@ -214,18 +214,18 @@ Os checkboxes permanecem abertos até a evidência completa exigida pelo gate da
 | Critério | Estado em 14/07/2026 | Evidência/pendência |
 |---|---|---|
 | Usuário autorizado cria rascunho | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo name-only, idempotência e navegação ao deep link cobertos; auth/API/banco real e E2E VPS pendentes |
-| Campos obrigatórios e datas são validados | `backend_implemented_pending_vps_validation` | schemas e contratos verdes; banco/UI pendentes |
+| Campos obrigatórios e datas são validados | `backend_client_and_ui_implemented_pending_vps_validation` | schemas, formulário, datas e canais verdes; banco/API real pendentes |
 | Campanha não ativa sem responsável e dados mínimos | `backend_implemented_pending_vps_validation` | regra de domínio implementada; PostgreSQL real pendente |
 | Lista pagina, busca e combina filtros | `backend_client_and_ui_implemented_pending_vps_validation` | projeção resumida, tabela/cards, filtros e cursor cobertos por testes nativos; performance, banco e API real pendentes |
 | URL preserva filtros relevantes | `frontend_implemented_pending_vps_validation` | busca/status preservados e combinados no browser; deep link real e E2E VPS pendentes |
-| Workspace mostra visão geral, briefing, participantes, materiais e atividade | `backend_and_client_implemented_ui_pending` | backend, client e query keys das seções existem; UI é Tasks 12–13 |
+| Workspace mostra visão geral, briefing, participantes, materiais e atividade | `overview_and_briefing_ui_implemented_panels_pending` | visão/briefing responsivos existem; participantes, materiais e atividade são Task 13 |
 | Upload/vínculo respeita ownership e limites | `backend_and_client_implemented_pending_vps_validation` | client envia `File` bruto com MIME/nome/versão/idempotência; integração real e UI pendentes |
-| Conflito de versão não sobrescreve dados | `backend_and_client_implemented_pending_vps_validation` | `If-Match`, ETag e `currentVersion` no erro 409 consolidados; concorrência real e UX pendentes |
+| Conflito de versão não sobrescreve dados | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo preserva/compara valor local e reaplica só após decisão; 409 API/DB real pendente |
 | Member, manager e admin respeitam a matriz | `partially_implemented_pending_vps_validation` | autorização nativa parcial; RLS/E2E/VPS pendentes |
-| Arquivamento preserva histórico | `backend_implemented_pending_vps_validation` | archive e projeção histórica implementados; banco/UI/VPS pendentes |
+| Arquivamento preserva histórico | `backend_client_and_ui_implemented_pending_vps_validation` | confirmação e read-only implementados; preservação no PostgreSQL/timeline/VPS pendente |
 | Timeline não expõe campos proibidos | `implemented_pending_vps_validation` | backend seguro e client reduzido/paginado implementados; pgTAP, UI e logs VPS pendentes |
-| Estados de erro e vazio estão implementados | `list_states_implemented_remaining_workspace_pending` | loading, vazio inicial/filtrado, acesso negado, erro, correlação e retry existem na lista; estados das Tasks 12–13 pendentes |
-| Jornadas críticas são responsivas e acessíveis | `list_journey_implemented_remaining_journeys_pending` | tabela desktop, cards mobile, labels/foco e largura de 390 px validados; workspace/E2E/axe permanecem pendentes |
+| Estados de erro e vazio estão implementados | `list_and_workspace_states_implemented_panels_pending` | lista e workspace cobrem loading, vazio, 403, 404, erro, correlação e retry; painéis da Task 13 pendentes |
+| Jornadas críticas são responsivas e acessíveis | `list_and_workspace_journeys_implemented_pending_e2e` | semântica e larguras 390/768/1440 px validadas; painéis, axe e E2E integrado permanecem pendentes |
 
 ## Testes
 

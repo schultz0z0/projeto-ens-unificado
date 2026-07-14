@@ -1,6 +1,6 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_11_not_executed_in_vps`
+- **Estado:** `prepared_through_task_12_not_executed_in_vps`
 - **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy

@@ -45,6 +45,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 - [ ] 6 testes REST, 6 MCP e 5 production-gate diferidos na Task 9 aprovados;
 - [ ] client da Task 10 integrado à API real preserva auth, correlação, ETag, `If-Match`, idempotência, upload binário e `currentVersion` no 409;
 - [ ] lista da Task 11 usa owners/alertas reais, combina filtros, pagina por cursor e cria rascunho sem N+1 ou vazamento cross-tenant;
+- [ ] workspace da Task 12 salva somente o patch explícito, valida datas/canais, resolve 409 sem perder valores locais, transiciona e arquiva com a versão real;
 - [ ] lint/advisors sem erro/achado novo nos objetos alterados;
 - [ ] imagens Linux constroem e Compose fica saudável;
 - [ ] nenhuma fixture residual após cleanup.

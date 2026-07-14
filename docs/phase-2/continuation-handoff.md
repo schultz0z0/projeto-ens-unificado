@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `df4903b feat: adiciona lista e criacao de campanhas`
+- **Último commit de código da fase:** `7fcbd21 feat: adiciona workspace editavel de campanha`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–11 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 12 é a próxima frente
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–12 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 13 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 - **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
@@ -35,6 +35,7 @@ Commits relevantes, em ordem:
 | `6c713e7` | REST v1 completo, transições, adapters estritos, ETags, erros e OpenAPI válido |
 | `32acff2` | client frontend tipado, query keys, upload binário e conflito 409 com versão atual |
 | `df4903b` | lista responsiva, filtros em URL, criação name-only e resumo de owners/alertas |
+| `7fcbd21` | workspace editável, referência oficial, transições, archive read-only e resolução de conflito 409 |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -184,6 +185,17 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 228 asse
 - Chrome desktop/mobile confirmou filtros, criação, semântica, ausência de overflow e console limpo; typecheck, builds, Redocly, Artifact 8/8 e RAG 26/26 também passaram;
 - auth/API/PostgreSQL reais, performance com volume, axe e E2E integrado permanecem `deferred_to_vps`.
 
+### Task 12 — implementada, integração VPS pendente
+
+- rota lazy de detalhe valida UUID e trata loading, 404, 403, erro com correlação e retry;
+- formulário em Essenciais, Planejamento e Briefing gera patch mínimo e salva somente por ação explícita, sem autosave;
+- datas, canal principal/secundários e referência são validados; o course picker preserva snapshot/documento oficial e degrada isoladamente quando o RAG falha;
+- transições, reabertura controlada e archive usam versão/idempotência; campanha arquivada fica read-only;
+- 409 preserva o patch local, recarrega a campanha e exige descartar ou reaplicar sobre a versão fresca;
+- RED do módulo ausente foi observado; 6/6 testes focados, 142/142 na regressão frontend, lint sem erro, typecheck, build e security gate passaram;
+- Chrome em 1440×900, 768×900 e 390×844 confirmou conflito/reaplicação, transição, archive, ausência de overflow e console final limpo;
+- auth/capabilities reais, API/PostgreSQL, concorrência em duas sessões, RAG MCP real, E2E/axe e histórico persistido permanecem `deferred_to_vps`.
+
 ### Pacote documental — completo para o estado atual
 
 - README funciona como índice de entregáveis e estados;
@@ -243,6 +255,7 @@ O harness anterior cobria participante, não item. O commit `c921294` adiciona o
 16. [x] Implementar e testar a Task 9; fechar REST/OpenAPI e coletar 17 cenários integrados para a VPS.
 17. [x] Implementar e testar a Task 10; fechar o client tipado e diferir a integração real.
 18. [x] Implementar e testar a Task 11; validar lista/criação no browser e coletar a projeção SQL para a VPS.
+19. [x] Implementar e testar a Task 12; validar workspace/conflito/transições/archive no browser e diferir a integração real para a VPS.
 
 ## 5. Setup no outro computador
 
@@ -316,11 +329,11 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 11
+## 8. Trabalho restante após a Task 12
 
-As Tasks 12–15 permanecem pendentes: workspace/conflito, participantes/materiais/timeline, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 13–15 permanecem pendentes: participantes/materiais/timeline, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
-O backend das Tasks 3–9, a fundação tipada frontend da Task 10 e a lista/criação da Task 11 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A experiência visual continua pelo workspace na Task 12.
+O backend das Tasks 3–9, a fundação tipada frontend da Task 10, a lista/criação da Task 11 e o workspace base da Task 12 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A experiência visual continua pelos painéis de participantes, materiais e atividade na Task 13.
 
 Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 

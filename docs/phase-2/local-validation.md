@@ -187,6 +187,19 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Limite do security gate legado:** o check de RAG executado pelo script com o anon do app comprova apenas negação, não acesso ao Supabase do RAG; a prova oficial do RAG continua sendo MCP read-only na VPS;
 - **Diferido para VPS:** auth/CORS/TLS/API real, PostgreSQL/RLS, performance, E2E integrado/axe, Compose e logs.
 
+## Task 12 — workspace, salvamento explícito e conflito
+
+- **Commit:** `7fcbd21`;
+- **RED observado:** `CampaignWorkspacePage` e os componentes do workspace ainda não existiam; o teste focado falhou na resolução do módulo antes da implementação;
+- **GREEN focado:** 6/6 testes para preservação/reaplicação no 409, save explícito e validação de datas, referência oficial, indisponibilidade do RAG sem bloqueio de campos alheios, transição/archive e estados inválido/404/read-only;
+- **Regressão frontend:** 37 arquivos e 142/142 testes aprovados;
+- **Lint e tipos:** ESLint focado sem achados; lint global com zero erro e os mesmos 10 warnings legados; typecheck aprovado;
+- **Build:** aprovado com chunk lazy próprio `CampaignWorkspacePage` de 28,89 kB, 8,64 kB gzip; warnings legados de bundle principal, Browserslist e importação mista do Supabase permanecem fora desta task;
+- **Security gate:** RLS app, negação legada do RAG, lint, build e auditoria com zero vulnerabilidades aprovados após mapear `NEXUS_APP_SUPABASE_*` da raiz somente no processo;
+- **QA browser real:** Chrome em 1440×900, 768×900 e 390×844; layout sem overflow, diálogo comparou valor atual/local, reaplicação avançou da versão 4 para 5, transição avançou para 6 e archive para 7/read-only; uma aba limpa terminou sem warning/erro de console;
+- **Implementação:** deep link UUID, loading/404/403/retry, formulário em Essenciais/Planejamento/Briefing, patch mínimo sem autosave, course picker com debounce, conflito sem sobrescrita automática, transições/reabertura controlada e confirmação de archive;
+- **Diferido para VPS:** auth e capabilities reais por papel, API/PostgreSQL, ETag/`If-Match`/409 concorrente em duas sessões, RAG MCP real, persistência histórica, E2E/axe integrado, Compose e logs.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -195,7 +208,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 11
+## Auditoria documental após a Task 12
 
 | Verificação | Resultado |
 |---|---|
@@ -204,6 +217,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 12 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 13 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.

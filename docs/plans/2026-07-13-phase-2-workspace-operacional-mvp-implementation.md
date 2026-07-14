@@ -23,11 +23,12 @@
 - **Task 9:** `implemented_pending_vps_validation` no commit `6c713e7`; adapters REST estritos, transição, ETags, erros, capabilities e OpenAPI 3.1 completos. Setenta e cinco testes nativos e o lint Redocly passaram; 17 cenários REST/MCP/production-gate estão `deferred_to_vps`.
 - **Task 10:** `implemented_pending_vps_validation` no commit `32acff2`; client tipado completo, query keys, headers de mutação, upload binário, ETag/correlação e `currentVersion` implementados. Onze testes focados, regressão frontend 131/131, lint sem erro, typecheck e build passaram; integração real client/API está `deferred_to_vps`.
 - **Task 11:** `implemented_pending_vps_validation` no commit `df4903b`; lista responsiva, filtros em URL, cursor, criação name-only, estados operacionais e projeção resumida implementados. Cinco testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile e gates nativos passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
-- **Tasks 12–15:** `not_started`.
+- **Task 12:** `implemented_pending_vps_validation` no commit `7fcbd21`; workspace editável, salvamento explícito, referência oficial, transições, archive read-only e resolução visual de 409 implementados. Seis testes focados, regressão frontend 142/142, QA Chrome em três larguras, lint sem erro, typecheck, build e security gate passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
+- **Tasks 13–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 12, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 13, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–11 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–12 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -796,6 +797,7 @@ git commit -m "feat: adiciona lista e criacao de campanhas"
 - Create: `apps/chat-web/src/pages/marketing-ops/CampaignWorkspacePage.tsx`
 - Create: `apps/chat-web/src/components/marketing-ops/CampaignHeader.tsx`
 - Create: `apps/chat-web/src/components/marketing-ops/CampaignFieldsForm.tsx`
+- Create: `apps/chat-web/src/components/marketing-ops/campaignForm.ts`
 - Create: `apps/chat-web/src/components/marketing-ops/CourseReferencePicker.tsx`
 - Create: `apps/chat-web/src/components/marketing-ops/StatusTransitionMenu.tsx`
 - Create: `apps/chat-web/src/components/marketing-ops/VersionConflictDialog.tsx`
@@ -805,7 +807,7 @@ git commit -m "feat: adiciona lista e criacao de campanhas"
 **Interfaces:**
 - Produces: rota `/marketing-ops/campaigns/:campaignId`, edição de campos, transições e resolução de 409 sem autosave.
 
-- [ ] **Step 1: RED de salvamento e conflito**
+- [x] **Step 1: RED de salvamento e conflito**
 
 ```tsx
 it('preserves local values on 409 and allows reapply over the fresh version', async () => {
@@ -820,23 +822,23 @@ it('preserves local values on 409 and allows reapply over the fresh version', as
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd apps/chat-web && npm test -- src/pages/marketing-ops/CampaignWorkspacePage.test.tsx`
 
 Expected: FAIL por rota/componentes ausentes.
 
-- [ ] **Step 3: Implementar workspace**
+- [x] **Step 3: Implementar workspace**
 
 Layout: header com status/versão/ações; formulário em seções “Essenciais”, “Planejamento” e “Briefing”; rodapé sticky com “Descartar” e “Salvar alterações”. Course picker busca com debounce, mostra indisponibilidade do RAG e grava snapshot/document id. O diálogo de conflito oferece somente “Descartar minhas alterações” e “Reaplicar minhas alterações”.
 
-- [ ] **Step 4: Verificar GREEN**
+- [x] **Step 4: Verificar GREEN**
 
 Run: `cd apps/chat-web && npm test -- src/pages/marketing-ops/CampaignWorkspacePage.test.tsx && npm run typecheck`
 
 Expected: save explícito, transições, deep link inválido/404 e conflito passam.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add apps/chat-web/src/pages/marketing-ops/CampaignWorkspacePage.tsx apps/chat-web/src/pages/marketing-ops/CampaignWorkspacePage.test.tsx apps/chat-web/src/components/marketing-ops/CampaignHeader.tsx apps/chat-web/src/components/marketing-ops/CampaignFieldsForm.tsx apps/chat-web/src/components/marketing-ops/CourseReferencePicker.tsx apps/chat-web/src/components/marketing-ops/StatusTransitionMenu.tsx apps/chat-web/src/components/marketing-ops/VersionConflictDialog.tsx apps/chat-web/src/App.tsx
