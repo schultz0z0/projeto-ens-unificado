@@ -31,8 +31,12 @@ describe('trusted actor boundary', () => {
 
   it('enforces the permission matrix', () => {
     const member = { userId: 'u', tenantId: 't', tenantSlug: 'ens', role: 'member' as const };
+    const manager = { ...member, role: 'manager' as const };
     expect(() => authorize(member, 'campaign.create')).not.toThrow();
+    expect(() => authorize(member, 'campaign.transition')).not.toThrow();
+    expect(() => authorize(member, 'campaign.reopen')).toThrow(/permission/i);
     expect(() => authorize(member, 'campaign.archive')).toThrow(/permission/i);
+    expect(() => authorize(manager, 'campaign.reopen')).not.toThrow();
   });
 
   it('sets PostgreSQL actor context and rolls back on failure', async () => {
