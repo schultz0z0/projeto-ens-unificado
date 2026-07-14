@@ -44,8 +44,10 @@ describe('course reference route', () => {
     const searchCourses = vi.fn();
     const shortQuery = await request(testApp(searchCourses)).get('/v1/references/courses?q=x');
     const invalidLimit = await request(testApp(searchCourses)).get('/v1/references/courses?q=gestao&limit=26');
+    const unknownQuery = await request(testApp(searchCourses)).get('/v1/references/courses?q=gestao&extra=true');
     expect(shortQuery.status).toBe(400);
     expect(invalidLimit.status).toBe(400);
+    expect(unknownQuery.status).toBe(400);
     expect(searchCourses).not.toHaveBeenCalled();
   });
 });

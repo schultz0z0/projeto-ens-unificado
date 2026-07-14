@@ -21,6 +21,8 @@ import {
 } from '../middleware.js';
 
 const uuid = z.string().uuid();
+const campaignParamsSchema = z.object({ campaignId: uuid }).strict();
+const materialParamsSchema = z.object({ campaignId: uuid, materialId: uuid }).strict();
 
 async function readBinaryBody(request: Request): Promise<Buffer> {
   const declaredLength = Number(request.header('content-length') ?? 0);
@@ -46,8 +48,9 @@ export function registerMaterials(
   artifacts: ArtifactClient,
   features: { read: boolean; write: boolean }
 ): void {
-  router.get('/v1/campaigns/:id/materials', asyncRoute(async (request, response) => {
+  router.get('/v1/campaigns/:campaignId/materials', asyncRoute(async (request, response) => {
     requireFeature(features.read, 'read');
+    const { campaignId } = campaignParamsSchema.parse(request.params);
     const data = await listMaterials(
       {
         pool,
@@ -56,13 +59,14 @@ export function registerMaterials(
         correlationId: request.correlationId,
         origin: 'rest'
       },
-      uuid.parse(request.params.id)
+      campaignId
     );
     response.json({ data });
   }));
 
-  router.post('/v1/campaigns/:id/materials/upload', asyncRoute(async (request, response) => {
+  router.post('/v1/campaigns/:campaignId/materials/upload', asyncRoute(async (request, response) => {
     requireFeature(features.write, 'write');
+    const { campaignId } = campaignParamsSchema.parse(request.params);
     const data = await attachUploadedMaterial(
       {
         pool,
@@ -71,7 +75,7 @@ export function registerMaterials(
         correlationId: request.correlationId,
         origin: 'rest'
       },
-      uuid.parse(request.params.id),
+      campaignId,
       parseIfMatch(request),
       {
         filename: request.header('x-nexus-filename') ?? '',
@@ -83,8 +87,9 @@ export function registerMaterials(
     response.status(201).setHeader('ETag', `"${data.campaignVersion}"`).json({ data });
   }));
 
-  router.post('/v1/campaigns/:id/materials/link', asyncRoute(async (request, response) => {
+  router.post('/v1/campaigns/:campaignId/materials/link', asyncRoute(async (request, response) => {
     requireFeature(features.write, 'write');
+    const { campaignId } = campaignParamsSchema.parse(request.params);
     const body = LinkExistingMaterialSchema.parse(request.body);
     const data = await linkExistingMaterial(
       {
@@ -94,7 +99,7 @@ export function registerMaterials(
         correlationId: request.correlationId,
         origin: 'rest'
       },
-      uuid.parse(request.params.id),
+      campaignId,
       parseIfMatch(request),
       body.artifactId,
       requireIdempotencyKey(request)
@@ -102,8 +107,9 @@ export function registerMaterials(
     response.status(201).setHeader('ETag', `"${data.campaignVersion}"`).json({ data });
   }));
 
-  router.post('/v1/campaigns/:id/materials/:materialId/access-link', asyncRoute(async (request, response) => {
+  router.post('/v1/campaigns/:campaignId/materials/:materialId/access-link', asyncRoute(async (request, response) => {
     requireFeature(features.read, 'read');
+    const { campaignId, materialId } = materialParamsSchema.parse(request.params);
     const data = await createMaterialAccessLink(
       {
         pool,
@@ -112,14 +118,15 @@ export function registerMaterials(
         correlationId: request.correlationId,
         origin: 'rest'
       },
-      uuid.parse(request.params.id),
-      uuid.parse(request.params.materialId)
+      campaignId,
+      materialId
     );
     response.json({ data });
   }));
 
-  router.delete('/v1/campaigns/:id/materials/:materialId', asyncRoute(async (request, response) => {
+  router.delete('/v1/campaigns/:campaignId/materials/:materialId', asyncRoute(async (request, response) => {
     requireFeature(features.write, 'write');
+    const { campaignId, materialId } = materialParamsSchema.parse(request.params);
     const data = await unlinkMaterial(
       {
         pool,
@@ -128,8 +135,8 @@ export function registerMaterials(
         correlationId: request.correlationId,
         origin: 'rest'
       },
-      uuid.parse(request.params.id),
-      uuid.parse(request.params.materialId),
+      campaignId,
+      materialId,
       parseIfMatch(request),
       requireIdempotencyKey(request)
     );

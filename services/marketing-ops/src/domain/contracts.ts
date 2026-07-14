@@ -35,6 +35,8 @@ const campaignEditableShape = {
   notes: nullableTrimmedText(10_000)
 };
 
+export const CampaignEditableFieldsSchema = z.object(campaignEditableShape).strict();
+
 type EditableFields = {
   name?: string | undefined;
   objective?: string | null | undefined;
@@ -91,14 +93,12 @@ function validateEditableConsistency(fields: EditableFields, context: z.Refineme
   }
 }
 
-export const CampaignInputSchema = z.object(campaignEditableShape)
-  .strict()
+export const CampaignInputSchema = CampaignEditableFieldsSchema
   .superRefine(validateEditableConsistency);
 export type CampaignInput = z.infer<typeof CampaignInputSchema>;
 
-export const CampaignPatchSchema = z.object(campaignEditableShape)
+export const CampaignPatchSchema = CampaignEditableFieldsSchema
   .partial()
-  .strict()
   .superRefine((fields, context) => {
     if (Object.keys(fields).length === 0) {
       context.addIssue({
