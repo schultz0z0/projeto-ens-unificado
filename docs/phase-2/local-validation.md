@@ -1,10 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_2_implemented_pending_vps_validation`
+- **Estado:** `task_5_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
-- **Correção atual:** `c921294`
+- **Correção da Task 2:** `c921294`
+- **Último código da fase:** `2c119f8`
 
 ## Evidência concluída
 
@@ -47,10 +48,10 @@ O commit `c921294` implementa:
 - trigger autenticado que exige `version = old.version + 1` e mantém item arquivado read-only;
 - recusa do harness a bancos remotos por padrão e limpeza de fixtures inclusive após falha.
 
-| Gate nativo atual | Resultado |
+| Gate nativo da correção da Task 2 | Resultado |
 |---|---|
-| Contagem estrutural pgTAP | `plan(88)` e 88 asserts no arquivo RLS; execução `deferred_to_vps` |
-| Total pgTAP esperado | 217 asserts (`2 + 95 + 32 + 88`); execução `deferred_to_vps` |
+| Contagem estrutural pgTAP | `plan(92)` e 92 asserts no arquivo RLS; execução `deferred_to_vps` |
+| Total pgTAP esperado | 221 asserts (`2 + 95 + 32 + 92`); execução `deferred_to_vps` |
 | Sintaxe do harness | `node --check`: exit code 0 |
 | Lint do harness | ESLint: exit code 0 |
 | Serviço sem banco | 4 arquivos e 21 testes Vitest aprovados |
@@ -62,7 +63,7 @@ O commit `c921294` implementa:
 
 ## Interpretação correta
 
-Os 197 testes verdes permanecem apenas como baseline histórico. A correção atual pode avançar internamente para `implemented_pending_vps_validation`, mas não para `completed`, porque ainda faltam a observação RED no schema anterior, o GREEN no schema corrigido, os 217 asserts pgTAP e os gates reais de PostgreSQL/RLS/concorrência na VPS.
+Os 197 testes verdes permanecem apenas como baseline histórico. As implementações atuais podem avançar internamente para `implemented_pending_vps_validation`, mas não para `completed`, porque ainda faltam a observação RED no schema anterior, o GREEN no schema corrigido, os 221 asserts pgTAP e os gates reais de PostgreSQL/RLS/concorrência na VPS.
 
 ## Política de validação no computador de retomada
 
@@ -91,6 +92,18 @@ Os 197 testes verdes permanecem apenas como baseline histórico. A correção at
 - **Implementação:** create progressivo, patch estrito, busca/filtros combináveis, cursor `updated_at/id`, `currentVersion`, transições, reabertura, arquivamento e preflight de autorização para replay idempotente;
 - **Ordem de concorrência:** helper de autorização/advisory lock antes de `SELECT ... FOR UPDATE`;
 - **Diferido para VPS:** os 8 cenários de `domain.test.ts` e 4 de `campaignTransitions.test.ts`, incluindo RLS, owner principal, auditoria, eventos, idempotência e SQL real.
+
+## Task 5 — participantes e resolução segura de perfis
+
+- **Commit:** `2c119f8`;
+- **RED observado:** módulo `domain/participants.js` ausente;
+- **Gate nativo:** 37/37 testes de regressão sem banco, 1/1 contrato de participantes e 1/1 matriz de permissões aprovados;
+- **Typecheck/build:** exit code 0;
+- **Implementação:** listagem, candidatos ativos do tenant, adição, alteração, remoção, transferência atômica do owner principal, versão do agregado, idempotência, auditoria, eventos e rotas REST;
+- **Privacidade:** projeção limitada a `id`, nome seguro e avatar; nomes legados iguais a e-mail ou contendo `@` são substituídos por identificador neutro;
+- **Hardening de lock:** editor falha no helper reservado a manager/admin antes de adquirir advisory lock;
+- **Coleta dos testes PostgreSQL:** 5 cenários carregados pelo Vitest sem erro de compilação;
+- **Diferido para VPS:** execução dos 5 cenários de domínio, dos 92 asserts do arquivo RLS e validação real de constraints, RLS, lock, replay e projeções de perfil.
 
 ## Avisos conhecidos
 

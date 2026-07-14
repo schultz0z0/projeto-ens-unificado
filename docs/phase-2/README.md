@@ -8,7 +8,7 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **Data do snapshot:** 2026-07-14
 - **Branch canônica:** `main`
 - **Base de produção:** Fase 1 `production_validated`
-- **Implementação:** Task 1 concluída; Tasks 2 e 4 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 5–15 não iniciadas
+- **Implementação:** Task 1 concluída; Tasks 2, 4 e 5 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 6–15 não iniciadas
 - **Deploy Supabase remoto:** não executado
 - **Deploy VPS:** não executado
 - **PRD:** [phase-2-workspace-operacional-mvp.md](../prds/phase-2-workspace-operacional-mvp.md)
@@ -56,7 +56,7 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 | 2 | Schema do agregado, RLS, materiais e concorrência | `implemented_pending_vps_validation` |
 | 3 | Contratos e máquina de estados no serviço | `completed_reviewed` |
 | 4 | CRUD, busca e concorrência do agregado | `implemented_pending_vps_validation` |
-| 5 | Participantes e perfis | `not_started` |
+| 5 | Participantes e perfis | `implemented_pending_vps_validation` |
 | 6 | Materiais e Artifact Server | `not_started` |
 | 7 | Referências oficiais do RAG | `not_started` |
 | 8 | Timeline segura | `not_started` |
@@ -73,7 +73,7 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 - trabalhar somente em `main`, conforme decisão explícita do usuário;
 - ler integralmente [continuation-handoff.md](continuation-handoff.md) antes de editar;
 - manter testes antes da implementação; quando o teste exigir Docker/PostgreSQL real, registrar `execution_deferred_to_vps` e não alegar RED/GREEN até a execução na VPS;
-- não iniciar a Task 3 enquanto a Task 2 não tiver ao menos `implemented_pending_vps_validation`, revisão estática independente e todos os checks nativos disponíveis aprovados;
+- não promover as Tasks 2, 4 ou 5 a concluídas antes dos respectivos gates PostgreSQL/RLS/concorrência na VPS;
 - não copiar secrets, `.env` ou chaves para documentação ou logs;
 - não fazer deploy Supabase remoto antes do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run;
 - não fazer deploy VPS pelo agente; o usuário executará o runbook após o fechamento interno.

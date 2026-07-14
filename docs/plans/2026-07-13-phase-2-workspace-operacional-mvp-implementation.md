@@ -16,11 +16,12 @@
 - **Task 2:** `implemented_pending_vps_validation`; o commit `c921294` corrige o caminho concorrente de `campaign_items`, o abuso de advisory lock, os grants e a progressão de versão. Checks nativos e revisão estática estão verdes; RED/GREEN PostgreSQL e gate de banco estão `deferred_to_vps`.
 - **Task 3:** `completed_reviewed` no commit `9740530`; RED observado, 13 testes de contrato, regressão isolada de permissões, typecheck e build verdes.
 - **Task 4:** `implemented_pending_vps_validation` no commit `9b19ec7`; filtros/cursores em RED/GREEN nativo, 12 testes PostgreSQL coletados, 37 testes nativos, typecheck e build verdes.
-- **Tasks 5–15:** `not_started`.
+- **Task 5:** `implemented_pending_vps_validation` no commit `2c119f8`; RED de módulo ausente observado, domínio/rotas implementados, 39 testes nativos relevantes, typecheck e build verdes. Os cinco cenários PostgreSQL e os novos asserts pgTAP estão `deferred_to_vps`.
+- **Tasks 6–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 5, preservando a lista nominal de provas de banco que deverão rodar na VPS.
+- **Próxima frente:** Task 6, preservando a lista nominal de provas de banco que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. A Task 2 só pode ser marcada concluída depois do gate PostgreSQL/VPS; a revisão estática atual terminou sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2, 4 e 5 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -373,7 +374,7 @@ git commit -m "feat: completa ciclo de vida de campanhas"
 **Interfaces:**
 - Produces: `listParticipants`, `listParticipantCandidates`, `addParticipant`, `updateParticipant`, `removeParticipant`.
 
-- [ ] **Step 1: RED da regra de proprietário principal**
+- [x] **Step 1: RED da regra de proprietário principal**
 
 ```ts
 it('moves primary ownership atomically and protects the last primary owner', async () => {
@@ -387,13 +388,13 @@ it('moves primary ownership atomically and protects the last primary owner', asy
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd services/marketing-ops && npm test -- src/domain/participants.test.ts`
 
 Expected: FAIL porque o domínio não existe.
 
-- [ ] **Step 3: Implementar domínio e candidatos**
+- [x] **Step 3: Implementar domínio e candidatos**
 
 `listParticipantCandidates` lê apenas memberships ativas e `public.profiles(id, full_name, avatar_url)`, retornando:
 
@@ -408,13 +409,13 @@ export interface ParticipantCandidate {
 
 Nunca retornar email, metadados do Auth ou registros de outro tenant. O owner principal pode gerenciar viewer/editor; somente manager/admin altera owner ou remove o proprietário principal.
 
-- [ ] **Step 4: Verificar GREEN e RLS**
+- [ ] **Step 4: Verificar GREEN e RLS** — contrato, matriz, typecheck e build aprovados; cinco cenários PostgreSQL/RLS e 221 asserts pgTAP `deferred_to_vps`.
 
 Run: `cd services/marketing-ops && npm test -- src/domain/participants.test.ts src/auth.test.ts && npm run typecheck`
 
 Expected: testes passam incluindo membro não participante, owner, manager e admin.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** — `2c119f8 feat: adiciona participantes de campanha`.
 
 ```powershell
 git add services/marketing-ops/src/domain/participants.ts services/marketing-ops/src/domain/participants.test.ts services/marketing-ops/src/http/routes/participants.ts services/marketing-ops/src/http/routes/index.ts

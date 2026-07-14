@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da Task 2:** `c921294 fix: fecha concorrencia de itens da fase 2`
+- **Último commit de código da fase:** `2c119f8 feat: adiciona participantes de campanha`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 5 não iniciada
+- **Estado de execução:** Task 1 concluída; Tasks 2, 4 e 5 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 6 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 
 Commits relevantes, em ordem:
@@ -26,6 +26,7 @@ Commits relevantes, em ordem:
 | `c921294` | fecha `campaign_items`, abuso de lock, grants e progressão de versão |
 | `9740530` | contratos de entrada, prontidão e máquina de estados da campanha |
 | `9b19ec7` | CRUD operacional, busca, filtros, versões e transições de campanha |
+| `2c119f8` | participantes, owner principal, perfis seguros, locks e rotas REST |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -90,7 +91,28 @@ Contagem estrutural do pgTAP RLS: 88/88 declarações
 Revisão estática: 0 Critical / 0 Important
 ```
 
-Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 217 asserts pgTAP, RLS real, harness concorrente, DB lint/advisors/diff, upgrade legado e writer autenticado contra PostgreSQL.
+Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 221 asserts pgTAP, RLS real, harness concorrente, testes de participantes, DB lint/advisors/diff, upgrade legado e writer autenticado contra PostgreSQL.
+
+### Task 3 — concluída e revisada
+
+- contratos estritos de campanha, referência, datas, canais e prontidão;
+- matriz de transições, reabertura e arquivamento;
+- 13 testes de contrato, regressão nativa, typecheck e build aprovados no commit `9740530`.
+
+### Task 4 — implementada, prova VPS pendente
+
+- CRUD progressivo, patch estrito, filtros combináveis e cursor estável;
+- concorrência otimista, preflight de autorização, transições, auditoria e eventos;
+- 37 testes nativos aprovados e 12 cenários PostgreSQL coletados no commit `9b19ec7`.
+
+### Task 5 — implementada, prova VPS pendente
+
+- domínio e rotas REST para listar candidatos/participantes, adicionar, atualizar, remover e transferir o owner principal;
+- primary owner gerencia viewer/editor; somente manager/admin altera owners;
+- mutações idempotentes incrementam a versão do agregado sob o mesmo advisory lock;
+- diretórios usam memberships ativas e projeção segura de `public.profiles`, inclusive redigindo nomes legados com valor de e-mail;
+- helper de administração nega editor antes do lock;
+- 39 testes nativos relevantes aprovados, 5 cenários PostgreSQL coletados e 92 asserts estruturais no arquivo RLS no commit `2c119f8`.
 
 ## 3. Bloqueio encontrado no handoff — corrigido, prova real pendente
 
@@ -207,11 +229,11 @@ Neste computador, executar `npm test`, `npm run typecheck`, `npm run build`, lin
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 2
+## 8. Trabalho restante após a Task 5
 
-As Tasks 3–15 permanecem integralmente pendentes: contratos e estados no serviço, CRUD/busca, participantes, Artifact Server, RAG, timeline, REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 6–15 permanecem pendentes: Artifact Server e materiais, RAG, timeline, consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
-Não inferir que frontend ou backend da Fase 2 já existem apenas porque o schema está avançado.
+O backend das Tasks 3–5 existe, mas ainda não possui aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
 
 ## 9. Git e publicação
 
