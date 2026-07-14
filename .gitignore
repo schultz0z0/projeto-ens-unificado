@@ -19,6 +19,7 @@ temp/
 
 # Local toolchains / virtualenvs
 .tools/
+.worktrees/
 .venv/
 venv/
 services/hermes-runtime/.venv/
