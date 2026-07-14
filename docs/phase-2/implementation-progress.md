@@ -37,7 +37,7 @@
 | 12 | Workspace, salvamento e conflito | `7fcbd21` | RED dos módulos ausentes; 6 testes focados, regressão frontend 142/142, QA Chrome desktop/tablet/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 13 | Participantes, materiais e timeline na UI | `73fa9ea` | RED dos painéis ausentes; 22 testes focados, regressão frontend 156/156, revisão solo, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/RLS/upload/E2E VPS diferidos | `implemented_pending_vps_validation` |
 | 14 | Observabilidade, Compose, E2E e fechamento documental | `bcd8ca3` | Readiness/Logger/Prometheus/Playwright/E2E prontos; validação de infra e E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 15 | Revisão final no `main` e handoff VPS | — | não iniciada | `not_started` |
+| 15 | Revisão final no `main` e handoff VPS | `b99de6a` | DB Push concluído, revisão executada e handoff preparado; aceite VPS pendente | `implementation_complete_pending_vps_validation` |
 
 ## Evidências consolidadas até a Task 13
 
@@ -60,16 +60,16 @@
 - Artifact Server: 8/8 testes nativos aprovados;
 - RAG MCP: 26/26 testes e typecheck aprovados;
 - Compose: parsing e vínculos estáticos de Artifact/RAG aprovados, sem alegação de build ou execução Linux;
-- remoto: nenhum deploy Supabase ou VPS da Fase 2 executado.
+- remoto: DB Push da Fase 2 executado com sucesso no Supabase (`20260714020344`); validação VPS pendente.
 
 As contagens e comandos completos estão em [local-validation.md](local-validation.md). Os requisitos parcialmente atendidos estão em [requirements-traceability.md](requirements-traceability.md).
 
 ## Sequência de continuidade
 
 1. Task 14: observabilidade final, E2E, gate reproduzível e fechamento interno.
-2. Task 15: revisão fresca do `main`, deploy Supabase do app quando autorizado pelos gates e handoff VPS.
-3. Usuário publica `main` e executa o deploy VPS.
-4. Agente conduz logs, smokes por papel e registro do aceite final.
+2. Task 15: revisão fresca do `main`, deploy Supabase do app e handoff VPS concluídos internamente.
+3. Usuário publica `main` e executa o gate VPS remoto (Docker/E2E).
+4. Agente e usuário validam aceite final da Fase 2.
 
 ## Protocolo de atualização
 

@@ -5,12 +5,12 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `bcd8ca3 feat: adiciona endpoints de readiness, observabilidade, metrics, configs de e2e e tools no app`
+- **Último commit de código da fase:** `b99de6a docs(phase-2): deploy and validate remote supabase`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–14 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 15 é a próxima frente
-- **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–15 em `implementation_complete_pending_vps_validation`; Task 3 `completed_reviewed`; Handoff VPS é a próxima ação do usuário
+- **Ambientes remotos:** Deploy Supabase da Fase 2 concluído (migration 20260714020344 aplicada); Deploy VPS da Fase 2 pendente
 - **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
 
@@ -342,11 +342,12 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 14
+## 8. Trabalho restante após a Task 15
 
-A Task 15 permanece pendente: revisão fresca do `main`, deploy Supabase do app quando autorizado, gate seguro de VPS e handoff VPS.
+A execução interna da Task 15 foi concluída (Revisão da main e Deploy Supabase remoto).
+O que permanece pendente para homologação oficial da Fase 2 (`production_validated`) é o deploy VPS pelo usuário e a verificação E2E via `scripts/test/phase-2-vps.sh`.
 
-O backend das Tasks 3–9, a fundação tipada frontend da Task 10, a lista/criação da Task 11, o workspace completo das Tasks 12–13 e a observabilidade/E2E da Task 14 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A continuidade imediata é a Task 15.
+O backend das Tasks 3–9, a fundação tipada frontend da Task 10, a lista/criação da Task 11, o workspace completo das Tasks 12–13 e a observabilidade/E2E da Task 14 existem. As migrations foram sincronizadas via Task 15. A continuidade imediata é aplicar a branch atual na VPS.
 
 Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 
