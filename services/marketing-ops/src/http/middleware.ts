@@ -19,7 +19,7 @@ export function corsMiddleware(origins: string[]) {
     const origin = request.header('origin');
     if (origin && !origins.includes(origin)) return next(appError('origin_forbidden', 403, 'Origin is not allowed'));
     if (origin) response.setHeader('Access-Control-Allow-Origin', origin);
-    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     response.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type,Idempotency-Key,If-Match,X-Correlation-Id,X-Tenant-Id');
     response.setHeader('Access-Control-Max-Age', '600');
     response.setHeader('Vary', 'Origin');

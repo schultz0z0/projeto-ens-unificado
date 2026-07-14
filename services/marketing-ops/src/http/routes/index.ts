@@ -6,6 +6,7 @@ import { registerAudit } from './audit.js';
 import { registerCampaigns } from './campaigns.js';
 import { registerCapabilities } from './capabilities.js';
 import { registerItems } from './items.js';
+import { registerParticipants } from './participants.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
 import { createMcpRouter } from '../../mcp/http.js';
 
@@ -24,6 +25,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerCapabilities(router, deps.features);
   router.use('/v1', authMiddleware(deps.pool, deps.verifyToken));
   registerCampaigns(router, deps.pool, deps.features);
+  registerParticipants(router, deps.pool, deps.features);
   registerItems(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
   if (deps.keyring) router.use(createMcpRouter({

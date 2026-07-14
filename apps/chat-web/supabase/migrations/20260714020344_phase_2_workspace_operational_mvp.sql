@@ -392,6 +392,31 @@ security definer
 set search_path = ''
 as $$
 begin
+  if not coalesce((
+    select
+      campaign.status <> 'archived'
+      and (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and exists (
+            select 1
+            from marketing_ops.campaign_members as participant
+            where participant.campaign_id = campaign.id
+              and participant.tenant_id = campaign.tenant_id
+              and participant.user_id = (select auth.uid())
+              and participant.member_role = 'owner'
+              and participant.is_primary
+          )
+        )
+      )
+    from marketing_ops.campaigns as campaign
+    where campaign.id = p_campaign_id
+      and campaign.tenant_id = marketing_ops_private.current_tenant_id()
+  ), false) then
+    return false;
+  end if;
+
   if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
     return false;
   end if;
@@ -429,6 +454,17 @@ security definer
 set search_path = ''
 as $$
 begin
+  if not coalesce((
+    select
+      campaign.status <> 'archived'
+      and marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+    from marketing_ops.campaigns as campaign
+    where campaign.id = p_campaign_id
+      and campaign.tenant_id = marketing_ops_private.current_tenant_id()
+  ), false) then
+    return false;
+  end if;
+
   if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
     return false;
   end if;
@@ -579,6 +615,163 @@ begin
     errcode = '42501',
     message = format('campaign status transition %s -> %s is not allowed', old.status, new.status);
 end;
+$$;
+
+create function marketing_ops_private.list_campaign_participants(p_campaign_id uuid)
+returns table (
+  user_id uuid,
+  display_name text,
+  avatar_url text,
+  member_role marketing_ops.campaign_member_role,
+  is_primary boolean
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    participant.user_id,
+    case
+      when nullif(pg_catalog.btrim(profile.full_name), '') is not null
+        and pg_catalog.lower(pg_catalog.btrim(profile.full_name)) is distinct from
+          pg_catalog.lower(nullif(pg_catalog.btrim(profile.email), ''))
+        and pg_catalog.strpos(pg_catalog.btrim(profile.full_name), '@') = 0
+      then pg_catalog.btrim(profile.full_name)
+      else 'Usuario ' || pg_catalog.left(participant.user_id::text, 8)
+    end as display_name,
+    profile.avatar_url,
+    participant.member_role,
+    participant.is_primary
+  from marketing_ops.campaign_members as participant
+  left join public.profiles as profile on profile.id = participant.user_id
+  where participant.campaign_id = p_campaign_id
+    and participant.tenant_id = marketing_ops_private.current_tenant_id()
+    and marketing_ops_private.can_access_campaign(p_campaign_id)
+  order by participant.is_primary desc, participant.member_role, display_name, participant.user_id
+$$;
+
+create function marketing_ops_private.list_campaign_participant_candidates(
+  p_campaign_id uuid,
+  p_query text default null,
+  p_limit integer default 25
+)
+returns table (
+  user_id uuid,
+  display_name text,
+  avatar_url text,
+  tenant_role marketing_ops.membership_role
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    membership.user_id,
+    case
+      when nullif(pg_catalog.btrim(profile.full_name), '') is not null
+        and pg_catalog.lower(pg_catalog.btrim(profile.full_name)) is distinct from
+          pg_catalog.lower(nullif(pg_catalog.btrim(profile.email), ''))
+        and pg_catalog.strpos(pg_catalog.btrim(profile.full_name), '@') = 0
+      then pg_catalog.btrim(profile.full_name)
+      else 'Usuario ' || pg_catalog.left(membership.user_id::text, 8)
+    end as display_name,
+    profile.avatar_url,
+    membership.role as tenant_role
+  from marketing_ops.memberships as membership
+  join marketing_ops.campaigns as campaign
+    on campaign.id = p_campaign_id
+    and campaign.tenant_id = membership.tenant_id
+  left join public.profiles as profile on profile.id = membership.user_id
+  where membership.tenant_id = marketing_ops_private.current_tenant_id()
+    and membership.active
+    and campaign.status <> 'archived'
+    and (
+      marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+      or (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+        and exists (
+          select 1
+          from marketing_ops.campaign_members as actor_participant
+          where actor_participant.campaign_id = campaign.id
+            and actor_participant.tenant_id = campaign.tenant_id
+            and actor_participant.user_id = (select auth.uid())
+            and actor_participant.member_role = 'owner'
+            and actor_participant.is_primary
+        )
+      )
+    )
+    and not exists (
+      select 1
+      from marketing_ops.campaign_members as participant
+      where participant.campaign_id = campaign.id
+        and participant.tenant_id = campaign.tenant_id
+        and participant.user_id = membership.user_id
+    )
+    and (
+      nullif(pg_catalog.btrim(p_query), '') is null
+      or pg_catalog.strpos(
+        pg_catalog.lower(
+          case
+            when nullif(pg_catalog.btrim(profile.full_name), '') is not null
+              and pg_catalog.lower(pg_catalog.btrim(profile.full_name)) is distinct from
+                pg_catalog.lower(nullif(pg_catalog.btrim(profile.email), ''))
+              and pg_catalog.strpos(pg_catalog.btrim(profile.full_name), '@') = 0
+            then pg_catalog.btrim(profile.full_name)
+            else membership.user_id::text
+          end
+        ),
+        pg_catalog.lower(pg_catalog.btrim(p_query))
+      ) > 0
+    )
+  order by display_name, membership.user_id
+  limit pg_catalog.greatest(1, pg_catalog.least(coalesce(p_limit, 25), 100))
+$$;
+
+create function marketing_ops_private.is_campaign_participant_candidate(
+  p_campaign_id uuid,
+  p_user_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce((
+    select
+      campaign.status <> 'archived'
+      and membership.active
+      and (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and exists (
+            select 1
+            from marketing_ops.campaign_members as actor_participant
+            where actor_participant.campaign_id = campaign.id
+              and actor_participant.tenant_id = campaign.tenant_id
+              and actor_participant.user_id = (select auth.uid())
+              and actor_participant.member_role = 'owner'
+              and actor_participant.is_primary
+          )
+        )
+      )
+      and not exists (
+        select 1
+        from marketing_ops.campaign_members as participant
+        where participant.campaign_id = campaign.id
+          and participant.tenant_id = campaign.tenant_id
+          and participant.user_id = membership.user_id
+      )
+    from marketing_ops.campaigns as campaign
+    join marketing_ops.memberships as membership
+      on membership.tenant_id = campaign.tenant_id
+      and membership.user_id = p_user_id
+    where campaign.id = p_campaign_id
+      and campaign.tenant_id = marketing_ops_private.current_tenant_id()
+  ), false)
 $$;
 
 create function marketing_ops_private.enforce_campaign_item_update()
@@ -854,6 +1047,20 @@ revoke all on function marketing_ops_private.enforce_campaign_update()
   from public, anon, authenticated, service_role;
 revoke all on function marketing_ops_private.enforce_campaign_item_update()
   from public, anon, authenticated, service_role;
+
+revoke all on function marketing_ops_private.list_campaign_participants(uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function marketing_ops_private.list_campaign_participants(uuid) to authenticated;
+
+revoke all on function marketing_ops_private.list_campaign_participant_candidates(uuid, text, integer)
+  from public, anon, authenticated, service_role;
+grant execute on function marketing_ops_private.list_campaign_participant_candidates(uuid, text, integer)
+  to authenticated;
+
+revoke all on function marketing_ops_private.is_campaign_participant_candidate(uuid, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function marketing_ops_private.is_campaign_participant_candidate(uuid, uuid)
+  to authenticated;
 
 insert into marketing_ops.schema_versions (version, description)
 values ('2026-07-phase-2-workspace', 'Marketing Ops operational workspace aggregate')

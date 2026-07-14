@@ -37,6 +37,9 @@ describe('trusted actor boundary', () => {
     expect(() => authorize(member, 'campaign.reopen')).toThrow(/permission/i);
     expect(() => authorize(member, 'campaign.archive')).toThrow(/permission/i);
     expect(() => authorize(manager, 'campaign.reopen')).not.toThrow();
+    expect(() => authorize(member, 'participant.manage')).not.toThrow();
+    expect(() => authorize(member, 'participant.owner.manage')).toThrow(/permission/i);
+    expect(() => authorize(manager, 'participant.owner.manage')).not.toThrow();
   });
 
   it('sets PostgreSQL actor context and rolls back on failure', async () => {

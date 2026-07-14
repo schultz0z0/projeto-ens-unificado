@@ -4,6 +4,7 @@ import type { Actor, ActorRole } from './actor.js';
 export type Permission =
   | 'campaign.create' | 'campaign.read' | 'campaign.update'
   | 'campaign.transition' | 'campaign.reopen' | 'campaign.archive'
+  | 'participant.manage' | 'participant.owner.manage'
   | 'item.create' | 'item.read' | 'item.update' | 'audit.read' | 'membership.manage';
 
 const matrix: Record<Permission, readonly ActorRole[]> = {
@@ -13,6 +14,8 @@ const matrix: Record<Permission, readonly ActorRole[]> = {
   'campaign.transition': ['member', 'manager', 'admin'],
   'campaign.reopen': ['manager', 'admin'],
   'campaign.archive': ['manager', 'admin'],
+  'participant.manage': ['member', 'manager', 'admin'],
+  'participant.owner.manage': ['manager', 'admin'],
   'item.create': ['member', 'manager', 'admin'],
   'item.read': ['member', 'manager', 'admin'],
   'item.update': ['member', 'manager', 'admin'],

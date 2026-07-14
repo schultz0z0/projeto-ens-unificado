@@ -1,6 +1,6 @@
 begin;
 
-select plan(88);
+select plan(92);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -191,6 +191,54 @@ reset role;
 select set_config('request.jwt.claim.sub', '55555555-5555-4555-8555-555555555555', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
 set local role authenticated;
+
+select lives_ok(
+  $test$
+    do $probe$
+    declare
+      locks_before integer;
+      locks_after integer;
+      allowed boolean;
+    begin
+      select count(*)::integer into locks_before
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      allowed := marketing_ops_private.can_administer_campaign_participants(
+        'c1111111-1111-4111-8111-111111111111'
+      );
+
+      select count(*)::integer into locks_after
+      from pg_locks
+      where pid = pg_backend_pid() and locktype = 'advisory';
+
+      if allowed or locks_after <> locks_before then
+        raise exception using errcode = 'P0001', message = 'editor consumed participant administration lock';
+      end if;
+    end
+    $probe$
+  $test$,
+  'editor fails owner administration before acquiring campaign aggregate lock'
+);
+
+select ok(
+  not exists (
+    select 1
+    from (
+      select display_name
+      from marketing_ops_private.list_campaign_participants(
+        'c1111111-1111-4111-8111-111111111111'
+      )
+      union all
+      select display_name
+      from marketing_ops_private.list_campaign_participant_candidates(
+        'c1111111-1111-4111-8111-111111111111', null, 100
+      )
+    ) as safe_profiles
+    where pg_catalog.strpos(safe_profiles.display_name, '@') > 0
+  ),
+  'participant directories redact legacy profile names that contain email values'
+);
 
 select lives_ok(
   $$
@@ -1815,6 +1863,51 @@ select is(
   ),
   'content,title,updated_by,version',
   'campaign item UPDATE grants expose only draft writer columns'
+);
+
+select ok(
+  (
+    select count(*) = 3
+    from pg_proc as function_meta
+    join pg_namespace as function_schema on function_schema.oid = function_meta.pronamespace
+    where function_schema.nspname = 'marketing_ops_private'
+      and function_meta.proname = any (array[
+        'list_campaign_participants',
+        'list_campaign_participant_candidates',
+        'is_campaign_participant_candidate'
+      ])
+      and function_meta.prosecdef
+      and function_meta.provolatile = 's'
+      and function_meta.proconfig @> array['search_path=""']::text[]
+      and not exists (
+        select 1
+        from aclexplode(coalesce(
+          function_meta.proacl,
+          acldefault('f', function_meta.proowner)
+        )) as function_acl
+        where function_acl.grantee = 0
+          and function_acl.privilege_type = 'EXECUTE'
+      )
+      and has_function_privilege('authenticated', function_meta.oid, 'EXECUTE')
+      and not has_function_privilege('anon', function_meta.oid, 'EXECUTE')
+      and not has_function_privilege('service_role', function_meta.oid, 'EXECUTE')
+  ),
+  'participant profile directory functions have fixed paths and minimal ACLs'
+);
+
+select ok(
+  not exists (
+    select 1
+    from information_schema.parameters
+    where specific_schema = 'marketing_ops_private'
+      and specific_name like any (array[
+        'list_campaign_participants_%',
+        'list_campaign_participant_candidates_%'
+      ])
+      and parameter_mode in ('OUT', 'INOUT')
+      and parameter_name in ('email', 'metadata', 'raw_user_meta_data', 'raw_app_meta_data')
+  ),
+  'participant profile directory exposes no email or auth metadata columns'
 );
 
 select * from finish();
