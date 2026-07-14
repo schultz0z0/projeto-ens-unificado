@@ -15,9 +15,10 @@
 - **Task 1:** `completed_reviewed`.
 - **Task 2:** `implemented_pending_vps_validation`; o commit `c921294` corrige o caminho concorrente de `campaign_items`, o abuso de advisory lock, os grants e a progressão de versão. Checks nativos e revisão estática estão verdes; RED/GREEN PostgreSQL e gate de banco estão `deferred_to_vps`.
 - **Task 3:** `completed_reviewed` no commit `9740530`; RED observado, 13 testes de contrato, regressão isolada de permissões, typecheck e build verdes.
-- **Tasks 4–15:** `not_started`.
+- **Task 4:** `implemented_pending_vps_validation` no commit `9b19ec7`; filtros/cursores em RED/GREEN nativo, 12 testes PostgreSQL coletados, 37 testes nativos, typecheck e build verdes.
+- **Tasks 5–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 4, preservando a lista nominal de provas de banco que deverão rodar na VPS.
+- **Próxima frente:** Task 5, preservando a lista nominal de provas de banco que deverão rodar na VPS.
 
 Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. A Task 2 só pode ser marcada concluída depois do gate PostgreSQL/VPS; a revisão estática atual terminou sem achados `Critical` ou `Important`.
 

@@ -9,7 +9,7 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 4 não iniciada
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 5 não iniciada
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 
 Commits relevantes, em ordem:
@@ -25,6 +25,7 @@ Commits relevantes, em ordem:
 | `1a49c4d` | grants de INSERT e serialização do agregado com advisory lock |
 | `c921294` | fecha `campaign_items`, abuso de lock, grants e progressão de versão |
 | `9740530` | contratos de entrada, prontidão e máquina de estados da campanha |
+| `9b19ec7` | CRUD operacional, busca, filtros, versões e transições de campanha |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 

@@ -82,6 +82,16 @@ Os 197 testes verdes permanecem apenas como baseline histórico. A correção at
 - **Typecheck/build:** exit code 0;
 - **Diferido para VPS:** os quatro testes restantes de `auth.test.ts`, pois resolvem ator e contexto transacional em PostgreSQL real.
 
+## Task 4 — CRUD, busca e concorrência otimista
+
+- **Commit:** `9b19ec7`;
+- **RED/GREEN nativo:** 3/3 testes de normalização de filtros, escape de prefixo e cursor estável;
+- **Gate nativo:** 37/37 testes sem banco, typecheck e build aprovados;
+- **Coleta dos testes PostgreSQL:** 12 cenários carregados pelo Vitest sem erro de compilação;
+- **Implementação:** create progressivo, patch estrito, busca/filtros combináveis, cursor `updated_at/id`, `currentVersion`, transições, reabertura, arquivamento e preflight de autorização para replay idempotente;
+- **Ordem de concorrência:** helper de autorização/advisory lock antes de `SELECT ... FOR UPDATE`;
+- **Diferido para VPS:** os 8 cenários de `domain.test.ts` e 4 de `campaignTransitions.test.ts`, incluindo RLS, owner principal, auditoria, eventos, idempotência e SQL real.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;

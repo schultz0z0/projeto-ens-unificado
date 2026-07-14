@@ -8,7 +8,7 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **Data do snapshot:** 2026-07-14
 - **Branch canônica:** `main`
 - **Base de produção:** Fase 1 `production_validated`
-- **Implementação:** Task 1 concluída; Task 2 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 4–15 não iniciadas
+- **Implementação:** Task 1 concluída; Tasks 2 e 4 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Tasks 5–15 não iniciadas
 - **Deploy Supabase remoto:** não executado
 - **Deploy VPS:** não executado
 - **PRD:** [phase-2-workspace-operacional-mvp.md](../prds/phase-2-workspace-operacional-mvp.md)
@@ -55,7 +55,7 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 | 1 | Gate de entrada e contrato aprovado | `completed_reviewed` |
 | 2 | Schema do agregado, RLS, materiais e concorrência | `implemented_pending_vps_validation` |
 | 3 | Contratos e máquina de estados no serviço | `completed_reviewed` |
-| 4 | CRUD, busca e concorrência do agregado | `not_started` |
+| 4 | CRUD, busca e concorrência do agregado | `implemented_pending_vps_validation` |
 | 5 | Participantes e perfis | `not_started` |
 | 6 | Materiais e Artifact Server | `not_started` |
 | 7 | Referências oficiais do RAG | `not_started` |
