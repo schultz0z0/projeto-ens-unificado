@@ -1,6 +1,6 @@
 # Rastreabilidade da Fase 2
 
-- **Estado:** `partial_through_task_7`
+- **Estado:** `partial_through_task_8`
 - **Data da revisão:** 2026-07-14
 - **Fonte:** [PRD da Fase 2](../prds/phase-2-workspace-operacional-mvp.md)
 - **Plano:** [plano de implementação](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
@@ -18,7 +18,7 @@
 | F2-RF-06 Transições | matriz `draft → planned → active → completed → archived`, reabertura controlada e archive terminal | rotas de transição/archive existem; controles são Task 12 | 13 contratos da Task 3 e testes nativos da Task 4 | `backend_implemented_ui_pending_vps_validation` |
 | F2-RF-07 Participantes | exatamente um owner principal, papéis e locks no agregado | rotas de candidatos/lista/mutação existem; painel é Task 13 | 39 checks nativos e 5 cenários DB coletados | `backend_implemented_ui_pending_vps_validation` |
 | F2-RF-08 Materiais | metadata no Marketing Ops, bytes no Artifact Server, ownership, 25 MiB e unlink lógico | rotas de upload/link/access/unlink existem; painel é Task 13 | 16 checks nativos e 3 cenários DB; Compose real diferido | `backend_implemented_ui_pending_vps_validation` |
-| F2-RF-09 Timeline | contrato aprovado exige projeção minimizada sobre auditoria | domínio/rota/UI são Tasks 8 e 13 | ainda sem teste ou implementação | `not_started` |
+| F2-RF-09 Timeline | função privada e domínio expõem somente ação allowlisted, ator exibível, timestamp, origem, campos allowlisted e correlação | `GET /v1/campaigns/:campaignId/timeline` implementado; UI é Task 13 | 7 testes nativos verdes; 7 asserts pgTAP adicionados, execução real diferida | `backend_implemented_ui_pending_vps_validation` |
 | F2-RF-10 Edição concorrente | versão do agregado, `If-Match`, lock e `version_conflict` | backend retorna conflito; UX de preservar/reaplicar é Tasks 10 e 12 | harness ampliado e testes nativos; concorrência real diferida | `backend_implemented_ui_pending_vps_validation` |
 | F2-RF-11 Exclusão | hard delete não exposto; `archived` terminal e read-only | rota de archive existe; confirmação visual é Task 12 | contratos de estado e cenários DB coletados | `backend_implemented_ui_pending_vps_validation` |
 | F2-RF-12 Deep links | campanha possui UUID estável e detalhe por ID | rota frontend `/marketing-ops/campaigns/:campaignId` é Task 12 | não há E2E/frontend ainda | `backend_ready_frontend_not_started` |
@@ -32,12 +32,12 @@
 | Campanha não ativa sem responsável e dados mínimos | 2, 3, 4 | domínio implementado; PostgreSQL real pendente |
 | Lista pagina, busca e combina filtros | 4, 11 | backend implementado; DB/performance/UI pendentes |
 | URL preserva filtros relevantes | 11 | `not_started` |
-| Workspace mostra visão, briefing, participantes, materiais e atividade | 12, 13 | backend parcial; UI/timeline pendentes |
+| Workspace mostra visão, briefing, participantes, materiais e atividade | 12, 13 | backend das seções e timeline implementado; UI pendente |
 | Upload/vínculo respeita ownership e limites | 6, 13 | contratos nativos verdes; integração real/UI pendentes |
 | Conflito não sobrescreve dados | 2, 4, 10, 12 | backend implementado; harness real e UX pendentes |
 | Member, manager e admin respeitam a matriz | 2, 4, 5, 14 | checks nativos parciais; RLS/E2E/VPS pendentes |
-| Arquivamento preserva histórico | 2, 4, 8 | archive implementado; auditoria/timeline real pendentes |
-| Timeline não expõe campos proibidos | 8, 13 | `not_started`; bloqueador antes do rollout |
+| Arquivamento preserva histórico | 2, 4, 8 | archive e projeção histórica implementados; PostgreSQL/UI/VPS pendentes |
+| Timeline não expõe campos proibidos | 8, 13 | `implemented_pending_vps_validation`; 7 testes nativos verdes, pgTAP/UI/logs VPS pendentes |
 | Estados de erro e vazio estão implementados | 11–13 | `not_started` |
 | Jornadas críticas são responsivas e acessíveis | 11–14 | `not_started` |
 
@@ -63,4 +63,4 @@
 - [Riscos](risk-register.md)
 - [LGPD e retenção](lgpd-retention.md)
 
-Nenhum requisito está `production_validated`. O fechamento de backend até a Task 7 reduz o trabalho restante, mas não substitui UI, banco real, integrações, deploy ou aceite do piloto.
+Nenhum requisito está `production_validated`. O fechamento de backend até a Task 8 reduz o trabalho restante, mas não substitui UI, banco real, integrações, deploy ou aceite do piloto.

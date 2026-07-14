@@ -1,6 +1,6 @@
 # LGPD, minimização e retenção da Fase 2
 
-- **Estado:** `documented_pending_task_8_and_vps_validation`
+- **Estado:** `implemented_pending_vps_validation`
 - **Escopo:** campanhas, participantes, materiais, timeline, auditoria, logs e métricas do Marketing Ops
 - **Fora do escopo:** definir base legal ou prazo contratual definitivo sem validação jurídica
 
@@ -23,20 +23,20 @@
 | Material | vínculo operacional | artifact ID, owner, MIME, tamanho, hash, fonte e timestamps | metadata mínima e access link efêmero | implementado; persistência/restart pendentes |
 | Bytes do material | acesso ao arquivo | Artifact Server/volume próprio | URL assinada sob demanda | integração real pendente |
 | Referência de curso | vínculo oficial | document ID, `course_id`, título snapshot e data de validação | campos reduzidos do seletor | implementado via MCP read-only; VPS pendente |
-| Auditoria | segurança e prova | ação, ator, entidade, correlação e snapshots minimizados | manager/admin conforme escopo | minimização ainda pendente na Task 8 |
-| Timeline | histórico operacional | projeção derivada, sem tabela duplicada obrigatória | participante/tenant conforme papel | `not_started` |
+| Auditoria | segurança e prova | ação, ator, entidade, correlação e snapshots minimizados | manager/admin conforme escopo | minimização implementada; PostgreSQL/VPS pendentes |
+| Timeline | histórico operacional | projeção derivada, sem tabela duplicada obrigatória | participante/tenant conforme papel | backend seguro implementado; UI/PostgreSQL/VPS pendentes |
 | Idempotência | retry seguro | hash e resposta conforme schema | não exposta como dado de produto | herdada da Fase 1 |
 | Logs/métricas | diagnóstico e SLO | operação, status, duração e correlação | equipe operacional autorizada | hardening final é Task 14 |
 
 ## Regra da timeline e auditoria
 
-A Task 8 é bloqueadora para rollout. O writer atual aceita `before_state`/`after_state` fornecidos pelo domínio; antes de ativar a Fase 2, esses snapshots devem ser minimizados. Para texto livre, a forma permitida é:
+A Task 8 implementou a barreira de minimização exigida para rollout. O writer reduz `before_state`/`after_state` e o outbox antes da persistência; para texto livre, a forma permitida e implementada é:
 
 ```text
 { present, length, sha256 }
 ```
 
-A timeline pode retornar ação, timestamp, ator exibível, origem, correlation ID e nomes de campos alterados. Ela não pode retornar briefing, notas, objetivo, público, conteúdo de arquivo, filename bruto, bearer, delegação, chave interna, URL assinada, payload RAG ou estado completo da auditoria.
+A timeline retorna somente ação e nomes de campo allowlisted, timestamp, ator exibível, origem e correlation ID. Ela não retorna briefing, notas, objetivo, público, conteúdo de arquivo, filename bruto, bearer, delegação, chave interna, URL assinada, payload RAG ou estado completo da auditoria. A prova PostgreSQL e a inspeção de logs/histórico real continuam obrigatórias na VPS.
 
 ## Retenção
 

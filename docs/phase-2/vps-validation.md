@@ -36,7 +36,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 ## Gate automatizado esperado
 
 - [ ] migration e invariantes do schema confirmadas;
-- [ ] total pgTAP final aprovado, incluindo baseline atual de 221 asserts;
+- [ ] total pgTAP final aprovado, incluindo baseline atual de 228 asserts;
 - [ ] RLS member/manager/admin, membership inativa e cross-tenant aprovadas;
 - [ ] RED histórico/GREEN atual do deadlock de `campaign_items` documentado;
 - [ ] harness campanha/participante/item sem `40P01`;

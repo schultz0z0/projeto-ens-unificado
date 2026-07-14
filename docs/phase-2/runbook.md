@@ -1,6 +1,6 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_7_not_executed_in_vps`
+- **Estado:** `prepared_through_task_8_not_executed_in_vps`
 - **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy
@@ -31,7 +31,7 @@ Não executar `npm test` sem filtro no Marketing Ops como prova local: há suít
 
 ```powershell
 Set-Location services/marketing-ops
-npx vitest run src/domain/contracts.test.ts src/domain/queries.test.ts src/domain/participants.test.ts src/domain/materials.test.ts src/domain/campaignReferences.test.ts src/integrations/artifactClient.test.ts src/integrations/ragCourseClient.test.ts src/http/routes/references.test.ts
+npx vitest run src/domain/contracts.test.ts src/domain/queries.test.ts src/domain/participants.test.ts src/domain/materials.test.ts src/domain/campaignReferences.test.ts src/domain/timeline.test.ts src/integrations/artifactClient.test.ts src/integrations/ragCourseClient.test.ts src/http/routes/references.test.ts
 npm run typecheck
 npm run build
 
@@ -57,7 +57,7 @@ A lista cresce conforme Tasks 8–14. Toda falha deve ser investigada; testes qu
 Executar somente depois do fechamento interno, com fixtures identificadas e cleanup:
 
 - reset/upgrade e migration da Fase 2;
-- 221 asserts pgTAP atuais, acrescidos de qualquer teste criado nas Tasks 8–14;
+- 228 asserts pgTAP atuais, acrescidos de qualquer teste criado nas Tasks 9–14;
 - RLS nos três papéis, membership inativa e cross-tenant;
 - harness concorrente campanha/participante/item e abuso de lock;
 - cenários PostgreSQL das Tasks 4–7;

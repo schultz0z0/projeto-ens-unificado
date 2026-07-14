@@ -19,11 +19,12 @@
 - **Task 5:** `implemented_pending_vps_validation` no commit `2c119f8`; RED de módulo ausente observado, domínio/rotas implementados, 39 testes nativos relevantes, typecheck e build verdes. Os cinco cenários PostgreSQL e os novos asserts pgTAP estão `deferred_to_vps`.
 - **Task 6:** `implemented_pending_vps_validation` no commit `aed3e1c`; cliente e domínio de materiais, compensação, rotas, configuração privada, lockfile e integração Compose implementados. Oito contratos do Marketing Ops e oito testes do Artifact Server passaram; três cenários PostgreSQL e a prova Linux/Compose/persistência estão `deferred_to_vps`.
 - **Task 7:** `implemented_pending_vps_validation` no commit `5d5cf8f`; busca e verificação read-only no RAG MCP, snapshot canônico, rota/configuração e fail-closed implementados. Dez contratos da Task 7 e 26 testes do RAG passaram; persistência PostgreSQL e chamada MCP real no Compose estão `deferred_to_vps`.
-- **Tasks 8–15:** `not_started`.
+- **Task 8:** `implemented_pending_vps_validation` no commit `42d43f3`; minimização de auditoria/outbox, projeção privada, cursor, rota e allowlists implementados. Sete testes da task e 65 checks nativos segmentados passaram; 7 novos asserts pgTAP e a prova do histórico/RLS real estão `deferred_to_vps`.
+- **Tasks 9–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 8, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 9, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–7 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–8 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -411,7 +412,7 @@ export interface ParticipantCandidate {
 
 Nunca retornar email, metadados do Auth ou registros de outro tenant. O owner principal pode gerenciar viewer/editor; somente manager/admin altera owner ou remove o proprietário principal.
 
-- [ ] **Step 4: Verificar GREEN e RLS** — contrato, matriz, typecheck e build aprovados; cinco cenários PostgreSQL/RLS e 221 asserts pgTAP `deferred_to_vps`.
+- [ ] **Step 4: Verificar GREEN e RLS** — contrato, matriz, typecheck e build aprovados; cinco cenários PostgreSQL/RLS e o total atual de 228 asserts pgTAP `deferred_to_vps`.
 
 Run: `cd services/marketing-ops && npm test -- src/domain/participants.test.ts src/auth.test.ts && npm run typecheck`
 
@@ -551,15 +552,17 @@ git commit -m "feat: adiciona referencias oficiais de cursos"
 
 **Files:**
 - Modify: `services/marketing-ops/src/domain/audit.ts`
+- Modify: `services/marketing-ops/src/domain/events.ts`
 - Create: `services/marketing-ops/src/domain/timeline.ts`
 - Create: `services/marketing-ops/src/domain/timeline.test.ts`
 - Create: `services/marketing-ops/src/http/routes/timeline.ts`
 - Modify: `services/marketing-ops/src/http/routes/index.ts`
+- Modify: migration e pgTAP da Fase 2 para projeção privada/RLS
 
 **Interfaces:**
 - Produces: `auditSnapshot`, `listCampaignTimeline` e itens `CampaignTimelineEvent` sem payload bruto.
 
-- [ ] **Step 1: RED de minimização**
+- [x] **Step 1: RED de minimização**
 
 ```ts
 it('never exposes briefing, notes, signed URLs or tokens in timeline events', async () => {
@@ -574,13 +577,13 @@ it('never exposes briefing, notes, signed URLs or tokens in timeline events', as
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd services/marketing-ops && npm test -- src/domain/timeline.test.ts`
 
 Expected: FAIL por módulo ausente.
 
-- [ ] **Step 3: Implementar snapshots e projeção**
+- [x] **Step 3: Implementar snapshots e projeção**
 
 Campos textuais sensíveis entram na auditoria somente como:
 
@@ -596,7 +599,9 @@ Run: `cd services/marketing-ops && npm test -- src/domain/timeline.test.ts src/d
 
 Expected: timeline segura e regressão de atomicidade passando.
 
-- [ ] **Step 5: Commit**
+Resultado parcial executado: 7/7 testes da task, 65 checks nativos segmentados, typecheck e build passaram. `domain.test.ts`, os 228 pgTAP e a validação PostgreSQL/RLS permanecem `deferred_to_vps`; por isso este passo e a task não recebem aceite final.
+
+- [x] **Step 5: Commit**
 
 ```powershell
 git add services/marketing-ops/src/domain/audit.ts services/marketing-ops/src/domain/timeline.ts services/marketing-ops/src/domain/timeline.test.ts services/marketing-ops/src/http/routes/timeline.ts services/marketing-ops/src/http/routes/index.ts

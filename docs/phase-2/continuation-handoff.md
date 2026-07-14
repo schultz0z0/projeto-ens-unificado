@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `5d5cf8f feat: adiciona referencias oficiais de cursos`
+- **Último commit de código da fase:** `42d43f3 feat: adiciona timeline segura de campanhas`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–7 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 8 é a próxima frente
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–8 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 9 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 - **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
@@ -31,6 +31,7 @@ Commits relevantes, em ordem:
 | `2c119f8` | participantes, owner principal, perfis seguros, locks e rotas REST |
 | `aed3e1c` | materiais, Artifact Client, compensação, rotas REST e integração Compose |
 | `5d5cf8f` | referências oficiais read-only, snapshot canônico, rota REST e integração RAG MCP |
+| `42d43f3` | snapshots minimizados, timeline privada segura, rota REST, cursor e testes de não vazamento |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -95,7 +96,7 @@ Contagem estrutural do pgTAP RLS: 88/88 declarações
 Revisão estática: 0 Critical / 0 Important
 ```
 
-Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 221 asserts pgTAP, RLS real, harness concorrente, testes de participantes, DB lint/advisors/diff, upgrade legado e writer autenticado contra PostgreSQL.
+Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 228 asserts pgTAP, RLS real, harness concorrente, testes de participantes, DB lint/advisors/diff, upgrade legado e writer autenticado contra PostgreSQL.
 
 ### Task 3 — concluída e revisada
 
@@ -138,6 +139,15 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 221 asse
 - 10 contratos da Task 7, 26 testes do RAG, typechecks, build e parse estático do Compose aprovados;
 - cenário de persistência PostgreSQL coletado; chamada MCP real e logs permanecem `deferred_to_vps`;
 - nenhuma migration, mutação, conexão direta ou deploy foi feito no Supabase do RAG.
+
+### Task 8 — implementada, prova VPS pendente
+
+- auditoria e outbox passam a persistir snapshots minimizados; texto livre vira presença/tamanho/SHA-256 e secrets/URLs assinadas são redigidos;
+- função privada projeta timeline por campanha sem conceder leitura bruta de `audit_events` a members;
+- rota `GET /v1/campaigns/:campaignId/timeline` usa paginação por cursor, feature gate de leitura e contrato público limitado;
+- ações e nomes de campo desconhecidos são normalizados/descartados em SQL e TypeScript;
+- 7/7 testes da task, 65 checks nativos segmentados, typecheck e build aprovados;
+- 7 asserts pgTAP foram adicionados; PostgreSQL/RLS/cross-tenant e inspeção do histórico real permanecem `deferred_to_vps`.
 
 ### Pacote documental — completo para o estado atual
 
@@ -267,11 +277,11 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 7
+## 8. Trabalho restante após a Task 8
 
-As Tasks 8–15 permanecem pendentes: timeline, consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 9–15 permanecem pendentes: consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
-O backend das Tasks 3–7 existe, mas ainda não possui aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
+O backend das Tasks 3–8 existe, mas as Tasks dependentes de banco ainda não possuem aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
 
 Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 

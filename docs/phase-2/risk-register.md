@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | F2-R-01 | acesso cross-tenant ou papel excessivo | crítico | membership servidor-side, RLS forçada, preflight, grants por coluna e matriz negativa nos três papéis | alto até pgTAP/VPS | Backend/Security |
 | F2-R-02 | deadlock ou abuso de advisory lock no agregado | alto | ordem única de lock em campanha/participante/item/material, autorização antes do lock e harness de duas sessões | médio; correção implementada, prova real pendente | Backend/Data |
-| F2-R-03 | briefing, notas, tokens ou URLs vazarem na auditoria/timeline | alto | Task 8 minimiza snapshots, timeline usa projeção segura e testes procuram conteúdo proibido | alto; bloqueador da próxima task | Backend/Security |
+| F2-R-03 | briefing, notas, tokens ou URLs vazarem na auditoria/timeline | alto | Task 8 minimiza snapshots/outbox, usa projeção privada com allowlists e testes procuram conteúdo proibido | médio; mitigação implementada, pgTAP/logs/histórico VPS pendentes | Backend/Security |
 | F2-R-04 | escrita ou migration acidental no Supabase do RAG | crítico | somente MCP `ens_rag_search`/`ens_rag_get_document`, endpoint interno e proibição documental de conexão direta | baixo no código; validar env/Compose na VPS | Plataforma/Data |
 | F2-R-05 | material órfão, de outro owner ou perdido após restart | alto | ownership verificado, compensação de upload, unlink lógico, volume persistente e cleanup explícito | médio; integração/persistência VPS pendentes | Backend/DevOps |
 | F2-R-06 | sobrescrita silenciosa por edição concorrente | alto | versão do agregado, `If-Match`, `version_conflict` e UX de recarregar/reaplicar sem descartar valores locais | médio; frontend e E2E pendentes | Backend/Frontend |

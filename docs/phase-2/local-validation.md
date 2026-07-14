@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_7_implemented_pending_vps_validation`
+- **Estado:** `task_8_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `5d5cf8f`
+- **Último código da fase:** `42d43f3`
 
 ## Evidência concluída
 
@@ -50,8 +50,8 @@ O commit `c921294` implementa:
 
 | Gate nativo da correção da Task 2 | Resultado |
 |---|---|
-| Contagem estrutural pgTAP | `plan(92)` e 92 asserts no arquivo RLS; execução `deferred_to_vps` |
-| Total pgTAP esperado | 221 asserts (`2 + 95 + 32 + 92`); execução `deferred_to_vps` |
+| Contagem estrutural pgTAP | `plan(98)` e 98 asserts no arquivo RLS; execução `deferred_to_vps` |
+| Total pgTAP esperado | 228 asserts (`2 + 95 + 33 + 98`); execução `deferred_to_vps` |
 | Sintaxe do harness | `node --check`: exit code 0 |
 | Lint do harness | ESLint: exit code 0 |
 | Serviço sem banco | 4 arquivos e 21 testes Vitest aprovados |
@@ -63,7 +63,7 @@ O commit `c921294` implementa:
 
 ## Interpretação correta
 
-Os 197 testes verdes permanecem apenas como baseline histórico. As implementações atuais podem avançar internamente para `implemented_pending_vps_validation`, mas não para `completed`, porque ainda faltam a observação RED no schema anterior, o GREEN no schema corrigido, os 221 asserts pgTAP e os gates reais de PostgreSQL/RLS/concorrência na VPS.
+Os 197 testes verdes permanecem apenas como baseline histórico. As implementações atuais podem avançar internamente para `implemented_pending_vps_validation`, mas não para `completed`, porque ainda faltam a observação RED no schema anterior, o GREEN no schema corrigido, os 228 asserts pgTAP e os gates reais de PostgreSQL/RLS/concorrência na VPS.
 
 ## Política de validação no computador de retomada
 
@@ -134,6 +134,19 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Diferido para VPS:** persistência PostgreSQL real, RLS, chamada MCP Marketing Ops → RAG no Compose, indisponibilidade real e inspeção de logs;
 - **Supabase do RAG:** nenhuma migration, escrita, deploy ou conexão direta realizada.
 
+## Task 8 — timeline segura e auditoria minimizada
+
+- **Commit:** `42d43f3`;
+- **RED observado:** a suíte falhou primeiro pela ausência da rota/módulo; o hardening adicional também falhou ao receber ação e nome de campo não reconhecidos;
+- **GREEN da task:** 7/7 testes de minimização, outbox, projeção, cursor, rota, feature gate e contrato público;
+- **Regressão nativa segmentada:** 60/60 testes em 11 arquivos, mais 1/1 contrato puro de participantes e 4/4 contratos puros de materiais;
+- **Typecheck/build:** exit code 0 após a implementação e após o hardening;
+- **Implementação:** `auditSnapshot` reduz texto livre a `{ present, length, sha256 }`, redige campos secret-like e também minimiza payloads do outbox;
+- **Projeção:** função privada `SECURITY DEFINER` com `search_path` fixo, ACL somente `authenticated`, autorização por campanha, cursor `(created_at,id)` e retorno sem `before_state`/`after_state`;
+- **Defesa em profundidade:** ações desconhecidas viram `campaign.changed` e campos fora da allowlist são descartados tanto no SQL quanto no domínio;
+- **Coleta PostgreSQL:** 1 assert estrutural e 6 asserts RLS/timeline adicionados; planos conferidos em 33 e 98, elevando o total esperado para 228;
+- **Diferido para VPS:** execução da migration/função, 228 pgTAP, RLS member/manager/admin e cross-tenant, histórico bruto legado, paginação real e inspeção manual de conteúdo proibido.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -142,7 +155,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 7
+## Auditoria documental após a Task 8
 
 | Verificação | Resultado |
 |---|---|
@@ -151,6 +164,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 8 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 9 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.

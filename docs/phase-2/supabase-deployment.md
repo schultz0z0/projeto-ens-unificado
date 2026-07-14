@@ -67,7 +67,7 @@ npx supabase test db --linked supabase/tests/marketing_ops_workspace.test.sql su
 ## Invariantes pós-deploy
 
 - [ ] histórico local/remoto sincronizado;
-- [ ] 221 asserts atuais, mais os adicionados posteriormente, aprovados;
+- [ ] 228 asserts atuais, mais os adicionados posteriormente, aprovados;
 - [ ] zero erro de lint;
 - [ ] warnings comparados ao baseline, sem achado novo nos objetos alterados;
 - [ ] RLS habilitada/forçada e grants mínimos;
