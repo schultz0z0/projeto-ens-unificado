@@ -59,6 +59,20 @@ describe('runtime foundation', () => {
     expect(config.supabaseUrl).toBe('http://127.0.0.1:55321');
   });
 
+  it('configures the private Artifact Server dependency', () => {
+    const config = loadConfig({
+      NODE_ENV: 'test',
+      MARKETING_OPS_ARTIFACT_URL: 'http://artifact-server:8095/',
+      MARKETING_OPS_ARTIFACT_INTERNAL_KEY: 'artifact-internal-test-key',
+      MARKETING_OPS_ARTIFACT_TIMEOUT_MS: '3500'
+    });
+    expect(config.artifact).toEqual({
+      url: 'http://artifact-server:8095/',
+      internalKey: 'artifact-internal-test-key',
+      timeoutMs: 3500
+    });
+  });
+
   it('creates stable error envelopes', () => {
     const error = appError('forbidden', 403, 'Access denied', { permission: 'campaign.read' });
     expect(errorEnvelope(error, 'correlation-1')).toEqual({

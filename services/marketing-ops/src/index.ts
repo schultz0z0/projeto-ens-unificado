@@ -7,6 +7,7 @@ import { verifySupabaseBearer } from './auth/supabaseAuth.js';
 import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
 import { createDelegationRefresher } from './delegation/refresher.js';
+import { ArtifactClient } from './integrations/artifactClient.js';
 
 const config = loadConfig(process.env);
 const logger = createLogger();
@@ -16,6 +17,11 @@ const router = createApiRouter({
   pool,
   corsOrigins: config.corsOrigins,
   features: config.features,
+  artifactClient: new ArtifactClient({
+    baseUrl: config.artifact.url,
+    internalKey: config.artifact.internalKey,
+    timeoutMs: config.artifact.timeoutMs
+  }),
   keyring: config.delegation,
   refreshDelegation: createDelegationRefresher(config.delegationRefresh),
   verifyToken: (token) => verifySupabaseBearer(token, {

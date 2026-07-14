@@ -22,6 +22,11 @@ export interface AppConfig {
     internalKey: string;
     timeoutMs: number;
   };
+  artifact: {
+    url: string;
+    internalKey: string;
+    timeoutMs: number;
+  };
   features: { read: boolean; write: boolean };
 }
 
@@ -53,6 +58,18 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     env,
     'MARKETING_OPS_DELEGATION_REFRESH_URL',
     'http://127.0.0.1:8081/internal/marketing-ops/delegations/refresh',
+    production
+  );
+  const artifactUrl = requiredProductionValue(
+    env,
+    'MARKETING_OPS_ARTIFACT_URL',
+    'http://127.0.0.1:8095',
+    production
+  );
+  const artifactInternalKey = requiredProductionValue(
+    env,
+    'MARKETING_OPS_ARTIFACT_INTERNAL_KEY',
+    'local-test-artifact-key',
     production
   );
   const supabaseAnonKey = requiredProductionValue(env, 'NEXUS_APP_SUPABASE_ANON_KEY', 'local-test-anon-key', production);
@@ -88,6 +105,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
       url: z.string().url().parse(delegationRefreshUrl),
       internalKey,
       timeoutMs: z.coerce.number().int().min(100).max(10_000).parse(env.MARKETING_OPS_DELEGATION_REFRESH_TIMEOUT_MS ?? 2_000)
+    },
+    artifact: {
+      url: z.string().url().parse(artifactUrl),
+      internalKey: artifactInternalKey,
+      timeoutMs: z.coerce.number().int().min(100).max(30_000).parse(env.MARKETING_OPS_ARTIFACT_TIMEOUT_MS ?? 5_000)
     },
     features: {
       read: booleanValue(env.MARKETING_OPS_FEATURE_READ),

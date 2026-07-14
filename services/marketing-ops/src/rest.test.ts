@@ -8,6 +8,7 @@ import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
 import { createApp } from './http/createApp.js';
 import { parse } from 'yaml';
+import { ArtifactClient } from './integrations/artifactClient.js';
 
 const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 afterAll(() => pool.end());
@@ -17,6 +18,11 @@ function app(features = { read: true, write: true }) {
     pool,
     corsOrigins: ['http://frontend.local'],
     features,
+    artifactClient: new ArtifactClient({
+      baseUrl: 'http://127.0.0.1:8095',
+      internalKey: 'artifact-test-key',
+      timeoutMs: 1_000
+    }),
     verifyToken: async (token) => {
       if (token !== 'valid-member') throw Object.assign(new Error('bad token'), { code: 'unauthorized', status: 401 });
       return { id: '11111111-1111-4111-8111-111111111111', email: 'member@local.test' };
