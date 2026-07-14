@@ -11,6 +11,8 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
 - **Estado de execução:** Task 1 concluída; Tasks 2 e 4–7 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 8 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
+- **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
+- **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
 
 Commits relevantes, em ordem:
 
@@ -137,6 +139,15 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 221 asse
 - cenário de persistência PostgreSQL coletado; chamada MCP real e logs permanecem `deferred_to_vps`;
 - nenhuma migration, mutação, conexão direta ou deploy foi feito no Supabase do RAG.
 
+### Pacote documental — completo para o estado atual
+
+- README funciona como índice de entregáveis e estados;
+- progresso por task separa código, evidência executada e prova diferida;
+- requisitos F2-RF-01..12 e critérios de aceite estão rastreados;
+- riscos, LGPD/retenção, SLO, runbook e rollback estão documentados;
+- deploy Supabase e validação VPS possuem checklists próprios, ainda não executados;
+- Task 14 continuará responsável por atualizar o pacote com E2E, métricas e fechamento interno, não por criá-lo do zero.
+
 ## 3. Bloqueio encontrado no handoff — corrigido, prova real pendente
 
 ### Deadlock residual em `campaign_items`
@@ -261,6 +272,8 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 As Tasks 8–15 permanecem pendentes: timeline, consolidação REST/OpenAPI, cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
 O backend das Tasks 3–7 existe, mas ainda não possui aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
+
+Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 
 ## 9. Git e publicação
 

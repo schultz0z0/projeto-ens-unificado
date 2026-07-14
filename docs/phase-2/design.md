@@ -502,6 +502,8 @@ O pacote seguirá o padrão das Fases 0 e 1:
 
 - `docs/phase-2/README.md`;
 - `docs/phase-2/design.md`;
+- `docs/phase-2/implementation-progress.md`;
+- `docs/phase-2/continuation-handoff.md`;
 - `docs/phase-2/requirements-traceability.md`;
 - `docs/phase-2/risk-register.md`;
 - `docs/phase-2/lgpd-retention.md`;
@@ -512,6 +514,8 @@ O pacote seguirá o padrão das Fases 0 e 1:
 - `docs/phase-2/supabase-deployment.md`;
 - `docs/phase-2/vps-validation.md`;
 - plano datado em `docs/plans/`.
+
+O progresso por task deve ser atualizado junto com a evidência correspondente, sem antecipar estados dependentes da VPS. O handoff consolida a retomada entre sessões e computadores, mas não substitui rastreabilidade, riscos, runbooks ou evidências de gate.
 
 O README da fase conterá um gate de entrada que reconcilia:
 

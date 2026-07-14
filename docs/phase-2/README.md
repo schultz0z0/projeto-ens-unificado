@@ -14,10 +14,29 @@ Este diretório reúne o design aprovado, o estado de execução, as evidências
 - **PRD:** [phase-2-workspace-operacional-mvp.md](../prds/phase-2-workspace-operacional-mvp.md)
 - **Design técnico:** [design.md](design.md)
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
+- **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Continuação obrigatória:** [continuation-handoff.md](continuation-handoff.md)
 - **Evidência local atual:** [local-validation.md](local-validation.md)
 
-O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_items` agora compartilha o advisory lock do agregado, os helpers falham antes do lock para viewer/member sem autoridade, os grants foram limitados por coluna e a progressão de versão do item foi protegida no banco. Os checks nativos e a revisão estática estão verdes, mas a Task 2 **não está concluída**: pgTAP, RLS real, RED/GREEN concorrente, lint/diff de banco e regressão do writer serão comprovados na VPS.
+O backend das Tasks 2–7 está implementado. Os checks nativos disponíveis neste computador estão registrados, mas as Tasks 2 e 4–7 **não estão concluídas**: PostgreSQL/RLS, concorrência, integrações reais, imagens Linux, Compose, restart e persistência serão comprovados na VPS. A Task 8 permanece como a próxima frente de implementação.
+
+## Pacote documental
+
+| Entregável | Estado | Documento |
+|---|---|---|
+| Índice e governança da fase | `current` | este README |
+| Design técnico aprovado | `approved` | [design.md](design.md) |
+| Progresso por task | `current_through_task_7` | [implementation-progress.md](implementation-progress.md) |
+| Rastreabilidade PRD → implementação → evidência | `partial_through_task_7` | [requirements-traceability.md](requirements-traceability.md) |
+| Registro de riscos | `active` | [risk-register.md](risk-register.md) |
+| LGPD, minimização e retenção | `documented_pending_task_8_and_vps_validation` | [lgpd-retention.md](lgpd-retention.md) |
+| SLO e observabilidade | `proposed_pending_measurement` | [slo.md](slo.md) |
+| Operação e deploy | `prepared_not_executed` | [runbook.md](runbook.md) |
+| Rollback | `prepared_not_executed` | [rollback.md](rollback.md) |
+| Evidência local/nativa | `partial_through_task_7` | [local-validation.md](local-validation.md) |
+| Deploy Supabase do app | `not_executed` | [supabase-deployment.md](supabase-deployment.md) |
+| Validação VPS | `pending_user_execution` | [vps-validation.md](vps-validation.md) |
+| Continuidade entre sessões/computadores | `current_through_task_7` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Governança da execução
 
@@ -27,7 +46,7 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 - depois do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run, o agente está autorizado a aplicar as migrations no Supabase do app e executar a validação remota correspondente;
 - nenhuma migration, escrita ou deploy será realizado no Supabase do RAG;
 - o deploy na VPS Linux continuará sendo executado exclusivamente pelo usuário depois do fechamento das Tasks 1–15;
-- após o deploy VPS, o agente conduzirá a inspeção de Compose/logs e fornecerá os testes manuais por papel necessários para o aceite final.
+- após o deploy VPS, o agente conduzirá a inspeção de Compose/logs e fornecerá os testes manuais por papel necessários para o aceite final;
 - este computador não usará Docker Desktop, WSL ou Podman; nenhuma instalação desses runtimes será tentada;
 - testes dependentes de PostgreSQL/Supabase local, imagens Linux, Compose, restart e persistência serão preparados agora e executados na VPS depois do fechamento interno das Tasks 1–15;
 - uma task com teste dependente de Docker pode avançar somente como `implemented_pending_vps_validation`; ela não recebe aceite final até a evidência VPS correspondente;
@@ -68,6 +87,8 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 | 14 | Observabilidade, Compose, E2E e documentação | `not_started` |
 | 15 | Revisão, integração e handoff VPS | `not_started` |
 
+Detalhes de commits, evidências e pendências por task ficam em [implementation-progress.md](implementation-progress.md). A tabela acima é o resumo executivo e deve ser atualizada no mesmo commit documental de cada task.
+
 ## Regras de retomada
 
 - trabalhar somente em `main`, conforme decisão explícita do usuário;
@@ -76,4 +97,5 @@ O bloqueio encontrado no handoff foi corrigido no commit `c921294`: `campaign_it
 - não promover as Tasks 2 e 4–7 a concluídas antes dos respectivos gates PostgreSQL/RLS/concorrência/integrações/Compose na VPS;
 - não copiar secrets, `.env` ou chaves para documentação ou logs;
 - não fazer deploy Supabase remoto antes do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run;
-- não fazer deploy VPS pelo agente; o usuário executará o runbook após o fechamento interno.
+- não fazer deploy VPS pelo agente; o usuário executará o runbook após o fechamento interno;
+- ao terminar cada task, atualizar no mesmo ciclo `implementation-progress.md`, `local-validation.md`, `requirements-traceability.md` quando aplicável e `continuation-handoff.md`.

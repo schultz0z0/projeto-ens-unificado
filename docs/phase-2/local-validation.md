@@ -141,3 +141,16 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - nenhum desses avisos autoriza dispensar a prova RED/GREEN do deadlock de `campaign_items` na VPS;
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
+
+## Auditoria documental após a Task 7
+
+| Verificação | Resultado |
+|---|---|
+| Pacote exigido pelo design | README, design, progresso, rastreabilidade, riscos, LGPD, SLO, runbook, rollback, validação local, deploy Supabase, validação VPS e handoff presentes |
+| Links relativos em `docs/phase-2` | todos os alvos locais resolvidos |
+| Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
+| Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
+| Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
+| Continuidade | README, progresso e handoff apontam Task 8 como próxima frente |
+
+Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.
