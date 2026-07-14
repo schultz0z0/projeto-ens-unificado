@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0 e 1 `production_validated`; Fase 1 concluída em 13 de julho de 2026 após gate local, deploy Ubuntu e aceite funcional com os três papéis
-- **Atualização:** 13 de julho de 2026
+- **Status:** Fases 0 e 1 `production_validated`; Fase 2 `in_progress`, retomada na Task 2 com correção de concorrência e autorização pendente antes da camada de serviço
+- **Atualização:** 14 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -224,6 +224,10 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 **PRD:** [Fase 1 — Fundação do Marketing Ops](docs/prds/phase-1-fundacao-marketing-ops.md)
 
 ### Fase 2: Workspace Operacional MVP
+
+**Estado:** `in_progress` — Task 1 concluída; Task 2 em `changes_requested` após reprodução de deadlock `40P01` em `campaign_items`; Tasks 3–15 não iniciadas. Nenhum deploy remoto da Fase 2 foi executado.
+
+**Exceção operacional aprovada para esta fase:** o computador atual não usará Docker Desktop, WSL ou Podman. Testes que exigem Supabase/PostgreSQL conteinerizado, imagens Linux, Docker Compose, restart ou persistência serão preparados durante a implementação e executados na VPS de produção depois do fechamento interno das Tasks 1–15. Esse fechamento interno não promove a fase a `completed`: o estado intermediário será `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
 
 **Objetivo:** entregar o primeiro release de valor para campanhas reais.
 

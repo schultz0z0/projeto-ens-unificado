@@ -33,7 +33,13 @@ Os checkboxes abaixo descrevem o plano original e não substituem este snapshot 
 - O upload de material aceita até 25 MiB e somente PDF, DOCX, XLSX, PPTX, TXT, CSV, PNG, JPEG e WEBP.
 - O endpoint público permanece em `/v1`; mudanças são aditivas e o contrato OpenAPI é obrigatório.
 - A busca usa cursor estável, limite padrão 25, máximo 100 e índice apropriado para 5.000 campanhas por tenant.
-- O gate interno promove a fase somente a `ready_for_vps_validation`; `production_validated` depende da validação manual posterior na VPS.
+- Toda a execução ocorre diretamente em `main`, por autorização explícita do usuário; nenhuma branch adicional será criada.
+- O agente pode criar commits locais pequenos e testados, mas não executa `git push`; a publicação é manual pelo usuário.
+- Depois do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run, o agente pode aplicar e validar as migrations no Supabase do app. O deploy VPS permanece reservado ao usuário.
+- Este computador não usa Docker Desktop, WSL ou Podman. Testes de banco, imagens Linux, Compose, restart e persistência são preparados durante as tasks e executados na VPS após o fechamento interno.
+- Testes devem continuar sendo escritos antes da implementação. Quando dependerem de PostgreSQL/Docker real, registrar `execution_deferred_to_vps`; não alegar RED/GREEN local.
+- Uma task pode avançar para `implemented_pending_vps_validation` após revisão estática e checks nativos verdes. O aceite final continua pendente até a VPS.
+- Depois das Tasks 1–15, o subestado é `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`; não usar `ready_for_production` ou `completed` antes do gate VPS diferido.
 
 ## File Map
 
@@ -242,7 +248,7 @@ it('requires the planning minimum and enforces reopen authority', () => {
   expect(() => validatePlanningReadiness({
     name: 'Lançamento', objective: null, referenceTitleSnapshot: null,
     startsOn: null, endsOn: null, hasPrimaryOwner: true
-  })).toThrowErrorMatchingObject({ code: 'campaign_not_ready' });
+  })).toThrowErrorMatchingObject({ code: 'campaign_requirements_missing' });
   expect(() => assertTransitionAllowed(
     { role: 'member' }, { memberRole: 'owner', isPrimary: true }, 'planned', 'draft'
   )).toThrowErrorMatchingObject({ code: 'forbidden' });
@@ -501,7 +507,7 @@ it('returns only course results with metadata.course_id and verifies document id
     collection: 'courses', verifiedAt: expect.any(String)
   }]);
   await expect(client.verifyCourseReference(otherDocumentId, 'curso-123'))
-    .rejects.toMatchObject({ code: 'reference_mismatch' });
+    .rejects.toMatchObject({ code: 'reference_not_verified' });
 });
 ```
 
@@ -627,7 +633,7 @@ Expected: FAIL por paths e comportamentos ausentes.
 
 - [ ] **Step 3: Implementar adapters e contrato**
 
-Usar Zod `.strict()`; UUID, datas, enum, cursor e limite são validados. Multipart/bytes de material usa limite de 25 MiB e não passa pelo parser JSON de 256 KiB. Respostas de mutação retornam ETag da campanha. Erros estáveis: `validation_error`, `forbidden`, `not_found`, `version_conflict`, `campaign_not_ready`, `reference_mismatch`, `dependency_unavailable`, `artifact_too_large`, `unsupported_media_type`.
+Usar Zod `.strict()`; UUID, datas, enum, cursor e limite são validados. Multipart/bytes de material usa limite de 25 MiB e não passa pelo parser JSON de 256 KiB. Respostas de mutação retornam ETag da campanha. Erros públicos estáveis: `validation_error`, `forbidden`, `not_found`, `invalid_transition`, `campaign_requirements_missing`, `primary_owner_required`, `participant_role_invalid`, `reference_not_verified`, `artifact_not_owned`, `material_type_not_allowed`, `material_too_large`, `version_conflict` e `dependency_unavailable` para indisponibilidade de integração.
 
 - [ ] **Step 4: Verificar REST e MCP Fase 1**
 
@@ -883,7 +889,7 @@ git commit -m "feat: completa colaboracao e historico no workspace"
 - Modify: `Roadmap.md`
 
 **Interfaces:**
-- Produces: readiness real, métricas de operação, dependências configuradas, E2E automatizado e pacote documental `ready_for_vps_validation`.
+- Produces: implementação fechada, métricas e dependências configuradas, testes/E2E preparados e pacote documental `implementation_complete_pending_vps_validation`.
 
 - [ ] **Step 1: RED de config/readiness/métricas e E2E**
 
@@ -925,37 +931,22 @@ marketing_ops_request_duration_seconds_{count,sum}
 
 Instalar versões fixadas de `@playwright/test` e `@axe-core/playwright`, commitar lockfile e cobrir member/manager/admin, criação, busca, edição, transição, participantes, material, timeline, 409, 390 px e desktop.
 
-- [ ] **Step 4: Executar gate local completo**
+- [ ] **Step 4: Executar o gate nativo deste computador**
 
-Run:
+Executar testes sem banco, lint, typecheck, builds e validações estáticas. Arquivos que exigem `MARKETING_OPS_TEST_DATABASE_URL`, Supabase local, browser em Compose ou containers Linux devem ser listados nominalmente como `deferred_to_vps`, sem sucesso presumido.
 
-```powershell
-cd apps/chat-web
-npx supabase db reset
-npx supabase test db --local supabase/tests
-npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error
-npm test
-npm run typecheck
-npm run build
-npm run e2e
-cd ../../services/marketing-ops
-$env:MARKETING_OPS_TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55322/postgres'
-npm test
-npm run typecheck
-npm run build
-cd ../rag-mcp
-npm test
-npm run typecheck
-npm run build
-cd ../artifact-server
-npm test
-cd ../..
-docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+- [ ] **Step 5: Preparar o gate automatizado e seguro da VPS**
+
+Criar um script dedicado de gate VPS. Ele deve usar dados marcados como teste, correlation IDs próprios, rollback transacional nos probes de banco e cleanup explícito para qualquer fixture que precise ser visível entre sessões. Não apontar suítes genéricas que assumem o seed local para produção.
+
+```bash
+cd /opt/projeto-ens-unificado
+bash scripts/test/phase-2-vps.sh
 ```
 
-Expected: zero falhas; warnings existentes documentados sem erro novo.
+O script deverá validar migration aplicada, invariantes/RLS, concorrência campanha-participante-item, probes de lock indevido, health/readiness, Compose, logs, restart/persistência e smokes por papel. Expected na VPS: zero falhas; warnings existentes documentados sem erro novo; nenhuma fixture de teste residual.
 
-- [ ] **Step 5: Implantar e validar o Supabase do app**
+- [ ] **Step 6: Implantar e validar o Supabase do app**
 
 No projeto já vinculado:
 
@@ -972,20 +963,20 @@ npx supabase db lint --linked --schema marketing_ops,marketing_ops_private --lev
 
 Expected: somente `20260714020344_phase_2_workspace_operational_mvp.sql` pendente no dry-run; push aplicado uma vez; pgTAP e lint remotos passam. O dump fica em `tmp/`, que é ignorado.
 
-- [ ] **Step 6: Completar documentação e rastreabilidade**
+- [ ] **Step 7: Completar documentação e rastreabilidade**
 
 `requirements-traceability.md` deve mapear cada `F2-RF-01..12` para schema, API, UI, teste e evidência. `risk-register.md` deve reconciliar os riscos antigos, registrar dependências RAG/Artifact, concorrência e rollout. `local-validation.md` e `supabase-deployment.md` registram comandos, data, contagens e hashes sem secrets. `vps-validation.md` permanece com estado `pending_user_execution`.
 
-Atualizar `Roadmap.md` e `docs/phase-2/README.md` para `ready_for_vps_validation`, nunca `completed`.
+Atualizar `Roadmap.md` e `docs/phase-2/README.md` para `implementation_complete_pending_vps_validation` dentro de `in_progress`, nunca `ready_for_production` ou `completed` antes do gate VPS diferido.
 
-- [ ] **Step 7: Commit do gate interno**
+- [ ] **Step 8: Commit do fechamento interno**
 
 ```powershell
 git add services/marketing-ops docker-compose.yml docker-compose.prod.yml .env.example apps/chat-web docs/phase-2 Roadmap.md
 git commit -m "docs: fecha gate interno da fase 2"
 ```
 
-### Task 15: Revisão, integração no main e handoff VPS
+### Task 15: Revisão final no main e handoff VPS
 
 **Files:**
 - Review: todos os arquivos alterados desde `26a5041`
@@ -993,7 +984,7 @@ git commit -m "docs: fecha gate interno da fase 2"
 - Update: `docs/phase-2/vps-validation.md`
 
 **Interfaces:**
-- Produces: branch revisada, `main` validado e comandos exatos para o usuário executar na VPS.
+- Produces: `main` revisado e validado localmente, commit pronto para o push manual do usuário e comandos exatos para o usuário executar na VPS.
 
 - [ ] **Step 1: Revisar requisitos e diff**
 
@@ -1001,24 +992,31 @@ Run: `git diff --check 26a5041..HEAD && git diff --stat 26a5041..HEAD && git log
 
 Expected: sem whitespace errors; commits correspondem às Tasks 1–14.
 
-- [ ] **Step 2: Executar novamente o gate completo fresco**
+- [ ] **Step 2: Executar novamente o gate nativo fresco**
 
-Repetir integralmente os comandos da Task 14 Step 4 após qualquer correção de review.
+Repetir integralmente os checks nativos da Task 14 Step 4 após qualquer correção de review. Conferir também que todos os checks diferidos estão enumerados no runbook VPS e possuem script reproduzível.
 
-Expected: todas as suítes, builds, pgTAP, lint, E2E e Compose com código 0.
+Expected: todos os checks executáveis neste computador com código 0; checks de banco/Linux explicitamente `deferred_to_vps`, sem sucesso presumido.
 
-- [ ] **Step 3: Integrar localmente no main e verificar**
-
-```powershell
-git -C "D:\Projetos SaaS\Projeto-ens-unificado" checkout main
-git -C "D:\Projetos SaaS\Projeto-ens-unificado" merge --ff-only codex/phase-2-workspace-mvp
-```
-
-Reexecutar no `main` o gate de serviço, frontend, Supabase local e Compose. Somente após o resultado verde:
+- [ ] **Step 3: Verificar o estado final diretamente no main**
 
 ```powershell
-git -C "D:\Projetos SaaS\Projeto-ens-unificado" push origin main
+git branch --show-current
+git status --short
+git log -1 --oneline
 ```
+
+Expected: branch `main`, apenas mudanças deliberadas da Task 15 antes do commit final e histórico coerente com as Tasks 1–14.
+
+Reexecutar no `main` o gate nativo de serviço/frontend e as validações estáticas. Confirmar que os scripts de banco/Compose/VPS estão versionados, mas manter seu resultado como `deferred_to_vps`. Somente após o resultado nativo verde, criar o commit local final. O agente não executa push. Entregar ao usuário:
+
+```powershell
+git status --short --branch
+git log -1 --oneline
+git push origin main
+```
+
+O último comando é uma instrução para execução manual do usuário, não uma ação do agente.
 
 - [ ] **Step 4: Entregar comandos VPS sem executá-los**
 

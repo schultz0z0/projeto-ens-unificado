@@ -1,7 +1,7 @@
 # Validação local parcial da Fase 2
 
 - **Estado:** `task_2_changes_requested`
-- **Ambiente:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local
+- **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código validado:** `1a49c4d` e ancestrais da Fase 2
 
@@ -37,6 +37,15 @@ A revisão também estava auditando se um `member` sem autoridade de mutação, 
 ## Interpretação correta
 
 Os 197 testes verdes não promovem a Task 2 para `completed`, porque o probe independente encontrou um caminho concorrente ausente da suíte. O estado correto é `changes_requested`. A evidência acima permanece útil como baseline de regressão para a correção.
+
+## Política de validação no computador de retomada
+
+- **Decisão do usuário:** não usar ou instalar Docker Desktop, WSL ou Podman neste computador.
+- **Gate local disponível:** testes unitários sem banco, lint, typecheck, build, validação documental e inspeções estáticas.
+- **Gate diferido para VPS:** reset/migrations, pgTAP, RLS real, harnesses concorrentes, lint/advisors/diff de banco, imagens Linux, Compose, restart e persistência.
+- **Regra de status:** mudanças dependentes desses gates ficam `implemented_pending_vps_validation`; nenhuma será descrita como RED/GREEN, aceita ou concluída antes da execução real.
+- **Fechamento interno:** após Tasks 1–15, usar `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
+- **Fechamento final:** somente após deploy do usuário, gate automatizado na VPS, inspeção de logs e testes manuais por papel.
 
 ## Avisos conhecidos
 

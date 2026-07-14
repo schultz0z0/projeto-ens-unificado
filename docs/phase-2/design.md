@@ -525,6 +525,12 @@ A limpeza de legado será registrada como dívida separada e não será misturad
 
 ## 17. Fluxo de validação e deploy
 
+### Exceção operacional aprovada em 14 de julho de 2026
+
+O computador de retomada não usará Docker Desktop, WSL ou Podman. Nele serão executados testes nativos sem banco, lint, typecheck, build e validações estáticas. pgTAP, RLS real, concorrência PostgreSQL, migrations/reset, imagens Linux, Compose, restart e persistência serão preparados durante a implementação e executados na VPS depois do fechamento interno das Tasks 1–15.
+
+O fechamento interno usa `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`. Não equivale a `ready_for_production`, `production_validated` ou `completed`. Suítes genéricas que assumem seed local não podem ser apontadas para produção: o gate VPS deve usar fixtures identificadas, transações/rollback quando possível, cleanup explícito e scripts dedicados documentados.
+
 ### Gate local
 
 1. iniciar Supabase local descartável;
@@ -557,7 +563,7 @@ Com testes locais, Supabase e documentação verdes:
 
 1. criar commits pequenos e revisáveis durante a implementação local;
 2. executar a regressão final sobre o conjunto completo;
-3. atualizar Roadmap/PRD somente para `ready_for_production`;
+3. atualizar Roadmap/PRD para `implementation_complete_pending_vps_validation` dentro de `in_progress`;
 4. fazer push da `main` para o GitHub;
 5. fornecer ao responsável comandos sanitizados para `git pull --ff-only`, build e `docker compose up` na VPS;
 6. o responsável executa deploy, logs e testes manuais;

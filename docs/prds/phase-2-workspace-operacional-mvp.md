@@ -240,6 +240,10 @@ Lista paginada com volume representativo e detalhe com materiais/timeline.
 - persistência após reinício;
 - evidências do aceite funcional.
 
+### Exceção operacional do computador de retomada
+
+Por decisão do usuário em 14 de julho de 2026, o computador atual não usará Docker Desktop, WSL ou Podman. O desenvolvimento executa localmente os testes nativos, lint, typecheck, build e validações estáticas. Testes que exigem PostgreSQL/Supabase conteinerizado, imagens Linux, Compose, restart ou persistência são preparados durante as tasks e obrigatoriamente executados na VPS de produção com fixtures identificadas e cleanup. O fechamento interno recebe `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`; esta exceção não altera o gate de saída nem permite marcar a fase `completed` antes da homologação VPS.
+
 ## Gate VPS
 
 - deploy do backend e frontend;

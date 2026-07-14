@@ -91,23 +91,25 @@ O harness atual cobre participante, não item. Por isso ele passa apesar do dead
 
 1. Clonar e confirmar `main`/HEAD.
 2. Ler PRD, design, plano, este handoff e [local-validation.md](local-validation.md).
-3. Subir o Supabase local e reproduzir o baseline verde.
-4. Escrever/ampliar testes antes do SQL:
+3. Confirmar a política deste computador: não usar Docker Desktop, WSL ou Podman; o baseline histórico do outro computador permanece como referência, não como evidência das novas alterações.
+4. Escrever/ampliar testes antes do SQL, com execução marcada `deferred_to_vps` quando exigir PostgreSQL real:
    - harness concorrente para `campaign_items` que falha com `40P01` no código atual;
    - pgTAP de viewer/editor/owner/manager para INSERT/UPDATE de item;
    - probe de advisory lock por usuário sem autoridade de mutação.
-5. Observar RED válido e registrar o código/espera do deadlock.
+5. Preservar no harness a reprodução determinística de RED e o código/espera esperados; observar o RED na VPS antes de aceitar a correção.
 6. Corrigir a Task 2, sem iniciar a Task 3:
    - substituir policies de escrita de `campaign_items` por autorização que adquira o lock do agregado antes do row lock, alinhada a owner/editor/manager/admin e archived read-only;
    - ampliar o harness oficial para campanha/participante **e** campanha/item;
    - endurecer a pré-validação do helper se o probe de abuso confirmar aquisição indevida;
    - auditar grants de coluna de `campaign_items` para mass assignment, preservando o writer da Fase 1.
-7. Obter GREEN focado e completo.
-8. Executar novo review independente da Task 2. Zero `Critical`/`Important` é requisito para concluir.
-9. Atualizar README/evidência para `task_2_completed_reviewed`.
-10. Somente então iniciar a Task 3 do plano.
+7. Executar todos os checks nativos disponíveis e registrar os gates de banco/Linux como `deferred_to_vps`.
+8. Executar novo review estático independente da Task 2. Zero `Critical`/`Important` é requisito para promover a implementação.
+9. Atualizar README/evidência para `task_2_implemented_pending_vps_validation`.
+10. Somente então iniciar a Task 3 do plano. O aceite final da Task 2 permanece condicionado ao RED/GREEN e gate completo na VPS.
 
 ## 5. Setup no outro computador
+
+Este computador não usará Docker Desktop, WSL ou Podman, por decisão explícita do usuário. Na retomada em 14 de julho de 2026, esses runtimes não estavam instalados. A implementação deve preparar testes reproduzíveis e executar localmente apenas os checks nativos; banco, Linux e Compose serão validados na VPS depois do fechamento interno.
 
 ```powershell
 git clone https://github.com/schultz0z0/projeto-ens-unificado.git
@@ -122,15 +124,13 @@ Instalar dependências necessárias aos gates atuais:
 ```powershell
 cd apps/chat-web
 npm ci
-npx supabase start
-npx supabase db reset --local
 ```
 
-Se o Docker Desktop/Hyper-V reservar as portas padrão, não reverta a configuração versionada: a Fase 2 usa o bloco local `55320–55329`.
+Não remover nem reverter o bloco `55320–55329`: ele continua sendo o contrato reproduzível para qualquer ambiente descartável futuro e para os scripts versionados.
 
 ## 6. Comandos de baseline
 
-A partir de `apps/chat-web`:
+Os comandos abaixo registram o baseline histórico obtido no computador anterior e o gate que deverá ser reexecutado na VPS. Eles não são executáveis neste Windows sem runtime de containers:
 
 ```powershell
 npx supabase test db --local supabase/tests/marketing_ops_workspace.test.sql supabase/tests/marketing_ops_workspace_rls.test.sql
@@ -161,6 +161,8 @@ npm run typecheck
 npm run build
 ```
 
+Neste computador, executar `npm test`, `npm run typecheck`, `npm run build`, lint e verificações estáticas que não abram conexão com PostgreSQL. Suítes de integração que usam `MARKETING_OPS_TEST_DATABASE_URL` ficam `deferred_to_vps`.
+
 ## 7. Restrições que não podem ser reinterpretadas
 
 - `docs/phase-2/design.md` e o PRD aprovado são a fonte de verdade; o plano deve ser corrigido se divergir deles;
@@ -173,8 +175,9 @@ npm run build
 - viewer não edita; owner/editor dependem de membership ativa; reabertura/arquivo são manager/admin;
 - nenhuma escrita ou migration no Supabase do RAG;
 - nenhuma limpeza de legado misturada à Fase 2;
-- nenhum deploy remoto antes do gate local integral;
+- nenhum deploy remoto antes do fechamento interno dos checks nativos, revisão das migrations, backup e dry-run;
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
+- o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
 ## 8. Trabalho restante após a Task 2
 
@@ -184,7 +187,7 @@ Não inferir que frontend ou backend da Fase 2 já existem apenas porque o schem
 
 ## 9. Git e publicação
 
-O usuário determinou branch única `main`. Não criar branch de feature. Antes de continuar:
+O usuário determinou branch única `main`. Não criar branch de feature. O agente pode criar commits locais testados, mas não executa `git push`; o usuário publicará manualmente. Antes de continuar:
 
 ```powershell
 git status --short
@@ -192,4 +195,4 @@ git branch --show-current
 git log --oneline -12
 ```
 
-O esperado é worktree limpo e branch `main`. Commits futuros devem ser pequenos, testados e enviados para `origin/main` somente após cada gate documentado.
+O esperado é worktree limpo e branch `main`. Commits futuros devem ser pequenos e testados. Depois de cada gate documentado, o agente entrega o commit local e o usuário decide quando enviá-lo para `origin/main`.
