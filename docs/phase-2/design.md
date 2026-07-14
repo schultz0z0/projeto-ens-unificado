@@ -1,6 +1,6 @@
 # Fase 2 — Design Técnico do Workspace Operacional MVP
 
-- **Estado:** `ready_for_user_review`
+- **Estado:** `approved`
 - **Data:** 2026-07-13
 - **Dependência:** Fase 1 `production_validated`
 - **PRD:** `docs/prds/phase-2-workspace-operacional-mvp.md`

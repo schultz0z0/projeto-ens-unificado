@@ -1,6 +1,6 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
-- **Status:** draft
+- **Status:** approved
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 
