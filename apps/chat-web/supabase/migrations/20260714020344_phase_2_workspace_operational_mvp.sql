@@ -179,31 +179,7 @@ set search_path = ''
 as $$
 begin
   if tg_op = 'DELETE' then
-    perform campaign.id
-    from marketing_ops.campaigns as campaign
-    where campaign.id = old.campaign_id
-      and campaign.tenant_id = old.tenant_id
-    for update;
     return old;
-  end if;
-
-  if tg_op = 'UPDATE'
-    and (old.campaign_id, old.tenant_id) is distinct from (new.campaign_id, new.tenant_id)
-  then
-    perform campaign.id
-    from marketing_ops.campaigns as campaign
-    where (campaign.id, campaign.tenant_id) in (
-      (old.campaign_id, old.tenant_id),
-      (new.campaign_id, new.tenant_id)
-    )
-    order by campaign.id
-    for update;
-  else
-    perform campaign.id
-    from marketing_ops.campaigns as campaign
-    where campaign.id = new.campaign_id
-      and campaign.tenant_id = new.tenant_id
-    for update;
   end if;
 
   if new.member_role = 'owner'
@@ -351,14 +327,51 @@ create index campaign_materials_campaign_active_idx
   on marketing_ops.campaign_materials (tenant_id, campaign_id, created_at desc, id)
   where unlinked_at is null;
 
-create or replace function marketing_ops_private.can_manage_campaign(p_campaign_id uuid)
+create function marketing_ops_private.lock_campaign_aggregate(p_campaign_id uuid)
 returns boolean
-language sql
-stable
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select coalesce((
+begin
+  if p_campaign_id is null or (select auth.uid()) is null then
+    return false;
+  end if;
+
+  if not exists (
+    select 1
+    from marketing_ops.campaigns as campaign
+    where campaign.id = p_campaign_id
+      and campaign.tenant_id = marketing_ops_private.current_tenant_id()
+      and marketing_ops_private.current_actor_role(campaign.tenant_id) is not null
+  ) then
+    return false;
+  end if;
+
+  -- Advisory locks expose 64-bit keys while campaign ids are 128-bit UUIDs.
+  -- A hash collision can only serialize unrelated campaigns: authorization and
+  -- every data lookup still use the original UUID and tenant predicates.
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('marketing_ops.campaign:' || p_campaign_id::text, 0)
+  );
+  return true;
+end;
+$$;
+
+create or replace function marketing_ops_private.can_manage_campaign(p_campaign_id uuid)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
+    return false;
+  end if;
+
+  return coalesce((
     select
       campaign.status <> 'archived'
       and (
@@ -379,24 +392,31 @@ as $$
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
-  ), false)
+  ), false);
+end;
 $$;
 
 create function marketing_ops_private.can_administer_campaign_participants(p_campaign_id uuid)
 returns boolean
-language sql
-stable
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select coalesce((
+begin
+  if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
+    return false;
+  end if;
+
+  return coalesce((
     select
       campaign.status <> 'archived'
       and marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
-  ), false)
+  ), false);
+end;
 $$;
 
 create function marketing_ops_private.can_bootstrap_campaign_owner(
@@ -404,12 +424,17 @@ create function marketing_ops_private.can_bootstrap_campaign_owner(
   p_user_id uuid
 )
 returns boolean
-language sql
-stable
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select coalesce((
+begin
+  if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
+    return false;
+  end if;
+
+  return coalesce((
     select
       campaign.created_by = (select auth.uid())
       and p_user_id = (select auth.uid())
@@ -424,17 +449,23 @@ as $$
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
-  ), false)
+  ), false);
+end;
 $$;
 
 create function marketing_ops_private.can_edit_campaign(p_campaign_id uuid)
 returns boolean
-language sql
-stable
+language plpgsql
+volatile
 security definer
 set search_path = ''
 as $$
-  select coalesce((
+begin
+  if not marketing_ops_private.lock_campaign_aggregate(p_campaign_id) then
+    return false;
+  end if;
+
+  return coalesce((
     select
       campaign.status <> 'archived'
       and (
@@ -454,7 +485,8 @@ as $$
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
-  ), false)
+  ), false);
+end;
 $$;
 
 create function marketing_ops_private.enforce_campaign_update()
@@ -658,6 +690,29 @@ grant update (
   notes
 ) on marketing_ops.campaigns to authenticated;
 
+revoke insert on table marketing_ops.campaigns from authenticated;
+grant insert (
+  id,
+  tenant_id,
+  name,
+  course_slug,
+  objective,
+  reference_type,
+  reference_key,
+  reference_title_snapshot,
+  reference_document_id,
+  reference_verified_at,
+  audience,
+  starts_on,
+  ends_on,
+  primary_channel,
+  secondary_channels,
+  briefing,
+  notes,
+  created_by,
+  updated_by
+) on marketing_ops.campaigns to authenticated;
+
 revoke insert, update on table marketing_ops.campaign_members from authenticated;
 grant insert (
   tenant_id,
@@ -675,6 +730,9 @@ grant update (
 revoke all on function marketing_ops_private.can_edit_campaign(uuid)
   from public, anon, authenticated, service_role;
 grant execute on function marketing_ops_private.can_edit_campaign(uuid) to authenticated;
+
+revoke all on function marketing_ops_private.lock_campaign_aggregate(uuid)
+  from public, anon, authenticated, service_role;
 
 revoke all on function marketing_ops_private.can_manage_campaign(uuid)
   from public, anon, authenticated, service_role;

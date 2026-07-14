@@ -96,8 +96,11 @@ git commit -m "chore: estabiliza gate local da fase 2"
 
 **Files:**
 - Modify: `apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql`
+- Modify: `apps/chat-web/supabase/tests/marketing_ops_foundation.test.sql`
 - Create: `apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql`
 - Create: `apps/chat-web/supabase/tests/marketing_ops_workspace_rls.test.sql`
+- Create: `apps/chat-web/scripts/test_campaign_aggregate_concurrency.mjs`
+- Modify: `apps/chat-web/package.json`
 - Modify: `apps/chat-web/supabase/seed.sql`
 
 **Interfaces:**
@@ -134,9 +137,9 @@ rollback;
 
 - [ ] **Step 2: Executar e observar a falha de objetos ausentes**
 
-Run: `cd apps/chat-web && npx supabase test db --local supabase/tests/marketing_ops_workspace.test.sql`
+Run: `cd apps/chat-web && npx supabase test db --local supabase/tests/marketing_ops_workspace.test.sql && npm run test:campaign-concurrency`
 
-Expected: FAIL para colunas, tabela e índices ainda inexistentes.
+Expected: FAIL para colunas, tabela e índices ainda inexistentes; o harness concorrente reproduz `40P01` na ordem inversa campanha/participante.
 
 - [ ] **Step 3: Implementar a migração**
 
@@ -194,18 +197,18 @@ create table marketing_ops.campaign_materials (
 );
 ```
 
-Adicionar checks de tamanho/período/referência e canais (máximo 9 secundários, sem duplicidade nem repetição do principal), `search_vector` gerado apenas de `name` e `reference_title_snapshot`, GIN, índices parciais, RLS/grants explícitos e revogação de `PUBLIC` em helpers. O primeiro owner é promovido com segurança, o índice parcial limita a um principal e constraint triggers `DEFERRABLE INITIALLY DEFERRED` exigem exatamente um owner principal no commit.
+Adicionar checks de tamanho/período/referência e canais (máximo 9 secundários, sem duplicidade nem repetição do principal), `search_vector` gerado apenas de `name` e `reference_title_snapshot`, GIN, índices parciais, RLS/grants por coluna e revogação de `PUBLIC` em helpers. Mutações do agregado adquirem um advisory transaction lock derivado do UUID da campanha antes dos row locks; colisões do hash de 64 bits apenas serializam agregados distintos, pois autorização e acesso continuam usando UUID e tenant originais. O primeiro owner é promovido com segurança, o índice parcial limita a um principal e constraint triggers `DEFERRABLE INITIALLY DEFERRED` exigem exatamente um owner principal no commit.
 
 - [ ] **Step 4: Resetar e verificar schema/RLS**
 
-Run: `cd apps/chat-web && npx supabase db reset && npx supabase test db --local supabase/tests && npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error`
+Run: `cd apps/chat-web && npx supabase db reset && npx supabase test db --local supabase/tests && npm run test:campaign-concurrency && npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error`
 
-Expected: todos os arquivos pgTAP passam; lint sem erros.
+Expected: todos os arquivos pgTAP passam; o harness termina sem `40P01`, deixa os dados intactos por `ROLLBACK` e confirma as invariantes unique/exactly-one/deferred; lint sem erros.
 
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql apps/chat-web/supabase/tests/marketing_ops_workspace_rls.test.sql apps/chat-web/supabase/seed.sql docs/plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md
+git add apps/chat-web/package.json apps/chat-web/scripts/test_campaign_aggregate_concurrency.mjs apps/chat-web/supabase/migrations/20260714020344_phase_2_workspace_operational_mvp.sql apps/chat-web/supabase/tests/marketing_ops_foundation.test.sql apps/chat-web/supabase/tests/marketing_ops_workspace.test.sql apps/chat-web/supabase/tests/marketing_ops_workspace_rls.test.sql apps/chat-web/supabase/seed.sql docs/plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md
 git commit -m "feat: evolui schema operacional de campanhas"
 ```
 

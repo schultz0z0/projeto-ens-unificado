@@ -1,6 +1,6 @@
 begin;
 
-select plan(64);
+select plan(68);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -79,6 +79,27 @@ select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
 set local role authenticated;
 
+select throws_ok(
+  $$
+    do $probe$
+    begin
+      insert into marketing_ops.campaigns (
+        id, tenant_id, name, course_slug, version, created_by, updated_by, created_at, updated_at
+      ) values (
+        'cb999999-9999-4999-8999-999999999999', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        'Mass assignment probe', null, 999,
+        '11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111111',
+        '2001-01-01 00:00:00+00', '2001-01-01 00:00:00+00'
+      );
+      raise exception using errcode = 'P0001', message = 'campaign INSERT accepted protected columns';
+    end
+    $probe$
+  $$,
+  '42501',
+  null,
+  'campaign INSERT rejects caller-controlled version and timestamps'
+);
+
 select lives_ok(
   $test$
     do $writer$
@@ -112,6 +133,40 @@ select lives_ok(
     $writer$
   $test$,
   'the F1 writer creates a draft with an automatically promoted primary owner'
+);
+
+select lives_ok(
+  $test$
+    do $writer$
+    begin
+      insert into marketing_ops.campaigns (
+        id, tenant_id, name, course_slug, objective, reference_type, reference_key,
+        reference_title_snapshot, reference_document_id, reference_verified_at,
+        audience, starts_on, ends_on, primary_channel, secondary_channels,
+        briefing, notes, created_by, updated_by
+      ) values (
+        'cb222222-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        'Progressive draft campaign', 'progressive-course', 'Exercise the progressive draft contract',
+        'course', 'progressive-course', 'Progressive course',
+        'dddddddd-dddd-4ddd-8ddd-dddddddddddd', now(), 'Prospective students',
+        current_date + 7, current_date + 14, 'email',
+        array['instagram']::marketing_ops.campaign_channel[], 'Progressive briefing',
+        'Progressive notes', '11111111-1111-4111-8111-111111111111',
+        '11111111-1111-4111-8111-111111111111'
+      );
+      insert into marketing_ops.campaign_members (
+        tenant_id, campaign_id, user_id, member_role, created_by
+      ) values (
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cb222222-2222-4222-8222-222222222222',
+        '11111111-1111-4111-8111-111111111111', 'owner',
+        '11111111-1111-4111-8111-111111111111'
+      );
+      execute 'set constraints all immediate';
+      execute 'set constraints all deferred';
+    end
+    $writer$
+  $test$,
+  'authenticated writer creates a progressive draft through the exact INSERT surface'
 );
 
 select results_eq(
@@ -698,15 +753,17 @@ reset role;
 
 select ok(
   (
-    select count(*) = 6
+    select count(*) = 8
     from pg_proc as function_meta
     join pg_namespace as function_schema on function_schema.oid = function_meta.pronamespace
     where function_schema.nspname = 'marketing_ops_private'
       and function_meta.proname = any (array[
-        'can_manage_campaign', 'can_bootstrap_campaign_owner', 'can_administer_campaign_participants',
+        'can_edit_campaign', 'can_manage_campaign', 'can_bootstrap_campaign_owner',
+        'can_administer_campaign_participants', 'lock_campaign_aggregate',
         'promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update'
       ])
       and function_meta.prosecdef
+      and function_meta.provolatile = 'v'
       and function_meta.proconfig @> array['search_path=""']::text[]
       and not exists (
         select 1
@@ -720,10 +777,10 @@ select ok(
       and not has_function_privilege('anon', function_meta.oid, 'EXECUTE')
       and not has_function_privilege('service_role', function_meta.oid, 'EXECUTE')
       and (
-        (function_meta.proname in ('can_manage_campaign', 'can_bootstrap_campaign_owner', 'can_administer_campaign_participants')
+        (function_meta.proname in ('can_edit_campaign', 'can_manage_campaign', 'can_bootstrap_campaign_owner', 'can_administer_campaign_participants')
           and has_function_privilege('authenticated', function_meta.oid, 'EXECUTE'))
         or
-        (function_meta.proname in ('promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update')
+        (function_meta.proname in ('lock_campaign_aggregate', 'promote_first_campaign_owner', 'assert_campaign_primary_owner', 'enforce_campaign_update')
           and not has_function_privilege('authenticated', function_meta.oid, 'EXECUTE'))
       )
   ),
@@ -1219,7 +1276,50 @@ select results_eq(
   'admin can archive any nonarchived campaign'
 );
 
+select lives_ok(
+  $test$
+    do $probe$
+    declare
+      locks_before integer;
+      locks_after integer;
+    begin
+      select count(*)::integer
+      into locks_before
+      from pg_locks
+      where pid = pg_backend_pid()
+        and locktype = 'advisory';
+
+      perform marketing_ops_private.can_edit_campaign('ffffffff-ffff-4fff-8fff-ffffffffffff');
+
+      select count(*)::integer
+      into locks_after
+      from pg_locks
+      where pid = pg_backend_pid()
+        and locktype = 'advisory';
+
+      if locks_after <> locks_before then
+        raise exception using errcode = 'P0001', message = 'unauthorized UUID consumed an aggregate lock';
+      end if;
+    end
+    $probe$
+  $test$,
+  'authorization helpers do not lock nonexistent campaign UUIDs'
+);
+
 reset role;
+
+select is(
+  (
+    select string_agg(distinct column_name, ',' order by column_name)
+    from information_schema.column_privileges
+    where table_schema = 'marketing_ops'
+      and table_name = 'campaigns'
+      and grantee = 'authenticated'
+      and privilege_type = 'INSERT'
+  ),
+  'audience,briefing,course_slug,created_by,ends_on,id,name,notes,objective,primary_channel,reference_document_id,reference_key,reference_title_snapshot,reference_type,reference_verified_at,secondary_channels,starts_on,tenant_id,updated_by',
+  'campaign INSERT grants expose only progressive draft columns'
+);
 
 select is(
   (

@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "validate:rls": "node scripts/validate_rls.mjs",
     "validate:rag-rls": "node scripts/validate_rag_rls.mjs",
+    "test:campaign-concurrency": "node scripts/test_campaign_aggregate_concurrency.mjs",
     "security:gate": "node scripts/security_gate.mjs"
   },
   "dependencies": {

@@ -93,7 +93,11 @@ select ok(not has_table_privilege('anon', 'marketing_ops.delegation_uses', 'SELE
 select ok(not has_table_privilege('anon', 'marketing_ops.schema_versions', 'SELECT'), 'anon cannot read schema versions');
 
 select ok(has_table_privilege('authenticated', 'marketing_ops.campaigns', 'SELECT'), 'authenticated has explicit campaign read grant');
-select ok(has_table_privilege('authenticated', 'marketing_ops.campaigns', 'INSERT'), 'authenticated has explicit campaign insert grant');
+select ok(
+  not has_table_privilege('authenticated', 'marketing_ops.campaigns', 'INSERT')
+    and has_any_column_privilege('authenticated', 'marketing_ops.campaigns', 'INSERT'),
+  'authenticated has a column-scoped campaign insert grant'
+);
 select ok(has_table_privilege('authenticated', 'marketing_ops.campaign_items', 'SELECT'), 'authenticated has explicit item read grant');
 select ok(has_table_privilege('authenticated', 'marketing_ops.audit_events', 'INSERT'), 'authenticated has explicit audit insert grant');
 select ok(has_table_privilege('service_role', 'marketing_ops.domain_events', 'SELECT,INSERT,UPDATE'), 'service role can operate the outbox');
