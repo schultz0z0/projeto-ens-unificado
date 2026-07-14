@@ -2,9 +2,14 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from './auth/actor.js';
-import { createCampaignDraft, updateCampaignDraft } from './domain/campaigns.js';
+import {
+  createCampaignDraft,
+  updateCampaign,
+  updateCampaignDraft
+} from './domain/campaigns.js';
 import { hashCanonicalPayload } from './domain/hash.js';
 import { createCampaignItemDraft, updateCampaignItemDraft } from './domain/items.js';
+import { getCampaign, listCampaigns } from './domain/queries.js';
 
 const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 const actor: Actor = { userId: '11111111-1111-4111-8111-111111111111', tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', tenantSlug: 'ens', role: 'member' };
@@ -34,6 +39,20 @@ describe('idempotent draft domain', () => {
     expect(counts.rows[0]).toEqual({ campaigns: 1, audits: 1, events: 1 });
   });
 
+  it('creates a name-only draft with the creator as primary owner', async () => {
+    const campaign = await createCampaignDraft(context(), {
+      name: 'Progressive draft',
+      idempotencyKey: randomUUID()
+    });
+    const owner = await pool.query(`
+      select member_role::text as "memberRole", is_primary as "isPrimary"
+      from marketing_ops.campaign_members
+      where campaign_id = $1 and user_id = $2
+    `, [campaign.id, actor.userId]);
+    expect(campaign).toMatchObject({ name: 'Progressive draft', status: 'draft', version: 1 });
+    expect(owner.rows[0]).toEqual({ memberRole: 'owner', isPrimary: true });
+  });
+
   it('rejects stale versions without modifying the campaign', async () => {
     const campaign = await createCampaignDraft(context(), { name: 'Versioned campaign', idempotencyKey: randomUUID() });
     const updated = await updateCampaignDraft(context(), campaign.id, 1, { name: 'Version two', idempotencyKey: randomUUID() });
@@ -41,6 +60,77 @@ describe('idempotent draft domain', () => {
     await expect(updateCampaignDraft(context(), campaign.id, 1, { name: 'Stale write', idempotencyKey: randomUUID() })).rejects.toMatchObject({ code: 'version_conflict' });
     const row = await pool.query('select name, version::int from marketing_ops.campaigns where id = $1', [campaign.id]);
     expect(row.rows[0]).toMatchObject({ name: 'Version two', version: 2 });
+  });
+
+  it('patches the complete operational shape and returns the current version on conflict', async () => {
+    const campaign = await createCampaignDraft(context(), {
+      name: 'Complete patch campaign',
+      idempotencyKey: randomUUID()
+    });
+    const updated = await updateCampaign(context(), campaign.id, campaign.version, {
+      name: 'Complete campaign',
+      objective: 'Increase awareness',
+      referenceType: 'product',
+      referenceKey: 'product-2026',
+      referenceTitleSnapshot: 'Product 2026',
+      referenceDocumentId: null,
+      audience: 'Marketing leaders',
+      startsOn: '2026-08-01',
+      endsOn: '2026-08-31',
+      primaryChannel: 'email',
+      secondaryChannels: ['instagram', 'linkedin'],
+      briefing: 'Operational briefing',
+      notes: 'Weekly follow-up',
+      idempotencyKey: randomUUID()
+    });
+    expect(updated).toMatchObject({
+      name: 'Complete campaign',
+      objective: 'Increase awareness',
+      referenceType: 'product',
+      primaryChannel: 'email',
+      secondaryChannels: ['instagram', 'linkedin'],
+      version: 2
+    });
+    await expect(updateCampaign(context(), campaign.id, 1, {
+      notes: 'Stale patch',
+      idempotencyKey: randomUUID()
+    })).rejects.toMatchObject({
+      code: 'version_conflict',
+      details: { currentVersion: 2 }
+    });
+  });
+
+  it('searches and combines operational campaign filters with stable pagination', async () => {
+    const campaign = await createCampaignDraft(context(), {
+      name: 'Searchable Alpha Campaign',
+      idempotencyKey: randomUUID()
+    });
+    await updateCampaign(context(), campaign.id, campaign.version, {
+      referenceType: 'initiative',
+      referenceTitleSnapshot: 'Nexus Initiative Alpha',
+      startsOn: '2026-09-01',
+      endsOn: '2026-09-30',
+      primaryChannel: 'linkedin',
+      secondaryChannels: ['email'],
+      idempotencyKey: randomUUID()
+    });
+
+    const result = await listCampaigns(context(), {
+      q: 'Nexus Alpha',
+      referenceType: 'initiative',
+      channel: 'email',
+      responsibleId: actor.userId,
+      periodFrom: '2026-09-15',
+      periodTo: '2026-09-20',
+      limit: 1
+    });
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({ id: campaign.id, name: 'Searchable Alpha Campaign' });
+    expect(result.nextCursor).toBeNull();
+    expect(await getCampaign(context(), campaign.id)).toMatchObject({
+      id: campaign.id,
+      referenceTitleSnapshot: 'Nexus Initiative Alpha'
+    });
   });
 
   it('creates and version-updates a campaign item', async () => {
