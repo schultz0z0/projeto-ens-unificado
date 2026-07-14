@@ -1,6 +1,6 @@
 begin;
 
-select plan(92);
+select plan(98);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -146,6 +146,36 @@ begin
   end if;
 end
 $setup$;
+
+insert into marketing_ops.audit_events (
+  id, tenant_id, actor_user_id, actor_role, actor_type, origin,
+  entity_type, entity_id, action, before_state, after_state, correlation_id
+) values (
+  'd8888888-8888-4888-8888-888888888888',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  '11111111-1111-4111-8111-111111111111',
+  'member', 'user', 'rest', 'campaign',
+  'c1111111-1111-4111-8111-111111111111',
+  'campaign.updated',
+  '{"briefing":"Briefing secreto","status":"draft"}'::jsonb,
+  '{"briefing":"Briefing alterado","status":"planned","signedUrl":"https://files.test/?token=secret"}'::jsonb,
+  'd8888888-8888-4888-8888-888888888889'
+);
+
+insert into marketing_ops.audit_events (
+  id, tenant_id, actor_user_id, actor_role, actor_type, origin,
+  entity_type, entity_id, action, before_state, after_state, correlation_id
+) values (
+  'd9999999-9999-4999-8999-999999999999',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  '11111111-1111-4111-8111-111111111111',
+  'member', 'user', 'rest', 'campaign',
+  'c1111111-1111-4111-8111-111111111111',
+  'campaign.updated:Briefing secreto',
+  '{"cliente-confidencial":"valor anterior"}'::jsonb,
+  '{"cliente-confidencial":"valor novo"}'::jsonb,
+  'd9999999-9999-4999-8999-999999999998'
+);
 
 select set_config('request.jwt.claim.sub', '66666666-6666-4666-8666-666666666666', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
@@ -1782,6 +1812,89 @@ select lives_ok(
     $probe$
   $test$,
   'authorization helpers do not lock nonexistent campaign UUIDs'
+);
+
+reset role;
+
+select ok(
+  (
+    select function_meta.prosecdef
+      and function_meta.provolatile = 's'
+      and function_meta.proconfig @> array['search_path=""']::text[]
+      and not has_function_privilege('anon', function_meta.oid, 'EXECUTE')
+      and has_function_privilege('authenticated', function_meta.oid, 'EXECUTE')
+      and not has_function_privilege('service_role', function_meta.oid, 'EXECUTE')
+      and pg_get_function_result(function_meta.oid) not like '%before_state%'
+      and pg_get_function_result(function_meta.oid) not like '%after_state%'
+    from pg_proc as function_meta
+    where function_meta.oid = to_regprocedure(
+      'marketing_ops_private.list_campaign_timeline(uuid,integer,timestamp with time zone,uuid)'
+    )
+  ),
+  'timeline projection is security definer with a fixed path, minimal ACL and no raw snapshots'
+);
+
+select set_config('request.jwt.claim.sub', '66666666-6666-4666-8666-666666666666', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select is(
+  (
+    select count(*)::integer
+    from marketing_ops_private.list_campaign_timeline(
+      'c1111111-1111-4111-8111-111111111111', 25, null, null
+    ) as timeline
+    where timeline.id = 'd8888888-8888-4888-8888-888888888888'
+      and timeline.changes @> '[{"field":"briefing","kind":"changed"}]'::jsonb
+      and timeline.changes @> '[{"field":"signedUrl","kind":"added"}]'::jsonb
+      and timeline.changes::text not like '%Briefing secreto%'
+      and timeline.changes::text not like '%token=secret%'
+  ),
+  1,
+  'participant reads only the safe campaign timeline projection'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from marketing_ops_private.list_campaign_timeline(
+      'c1111111-1111-4111-8111-111111111111', 25, null, null
+    ) as timeline
+    where timeline.id = 'd9999999-9999-4999-8999-999999999999'
+      and timeline.action = 'campaign.changed'
+      and timeline.changes = '[]'::jsonb
+      and timeline.action not like '%Briefing secreto%'
+  ),
+  1,
+  'timeline normalizes unknown actions and drops unrecognized field names'
+);
+
+select results_eq(
+  $$select count(*)::bigint from marketing_ops.audit_events where id = 'd8888888-8888-4888-8888-888888888888'$$,
+  array[0::bigint],
+  'participant still cannot read raw audit rows'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '77777777-7777-4777-8777-777777777777', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+
+select results_eq(
+  $$select count(*)::bigint from marketing_ops_private.list_campaign_timeline('c1111111-1111-4111-8111-111111111111', 25, null, null)$$,
+  array[0::bigint],
+  'nonparticipant member receives no campaign timeline rows'
+);
+
+reset role;
+select set_config('request.jwt.claim.sub', '44444444-4444-4444-8444-444444444444', true);
+select set_config('marketing_ops.tenant_id', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', true);
+set local role authenticated;
+
+select results_eq(
+  $$select count(*)::bigint from marketing_ops_private.list_campaign_timeline('c1111111-1111-4111-8111-111111111111', 25, null, null)$$,
+  array[0::bigint],
+  'cross-tenant actor receives no campaign timeline rows'
 );
 
 reset role;

@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(33);
 
 select is(
   (
@@ -438,6 +438,13 @@ select ok(
     and coalesce(has_column_privilege('authenticated', to_regclass('marketing_ops.campaign_materials'), 'unlinked_at', 'UPDATE'), false)
     and not coalesce(has_table_privilege('authenticated', to_regclass('marketing_ops.campaign_materials'), 'DELETE'), false),
   'campaign material grants remain explicit and minimal'
+);
+
+select has_function(
+  'marketing_ops_private',
+  'list_campaign_timeline',
+  array['uuid', 'integer', 'timestamp with time zone', 'uuid'],
+  'safe campaign timeline projection exists'
 );
 
 select * from finish();

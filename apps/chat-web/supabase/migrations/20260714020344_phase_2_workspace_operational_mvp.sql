@@ -1020,6 +1020,133 @@ grant update (
   updated_by
 ) on marketing_ops.campaign_items to authenticated;
 
+create function marketing_ops_private.list_campaign_timeline(
+  p_campaign_id uuid,
+  p_limit integer default 25,
+  p_before_created_at timestamptz default null,
+  p_before_id uuid default null
+)
+returns table (
+  id uuid,
+  action text,
+  occurred_at timestamptz,
+  actor_display_name text,
+  origin marketing_ops.origin_type,
+  changes jsonb,
+  correlation_id uuid
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    audit.id,
+    case
+      when audit.action = any (array[
+        'campaign.created',
+        'campaign.updated',
+        'campaign.status_changed',
+        'campaign.archived',
+        'participant.added',
+        'participant.updated',
+        'participant.removed',
+        'material.linked',
+        'material.unlinked'
+      ]::text[]) then audit.action
+      else 'campaign.changed'
+    end as action,
+    audit.created_at as occurred_at,
+    case
+      when nullif(pg_catalog.btrim(profile.full_name), '') is not null
+        and pg_catalog.lower(pg_catalog.btrim(profile.full_name)) is distinct from
+          pg_catalog.lower(nullif(pg_catalog.btrim(profile.email), ''))
+        and pg_catalog.strpos(pg_catalog.btrim(profile.full_name), '@') = 0
+      then pg_catalog.btrim(profile.full_name)
+      else 'Usuario ' || pg_catalog.left(audit.actor_user_id::text, 8)
+    end as actor_display_name,
+    audit.origin,
+    change_set.changes,
+    audit.correlation_id
+  from marketing_ops.audit_events as audit
+  left join public.profiles as profile on profile.id = audit.actor_user_id
+  cross join lateral (
+    select
+      case
+        when pg_catalog.jsonb_typeof(audit.before_state) = 'object' then audit.before_state
+        else '{}'::jsonb
+      end as before_object,
+      case
+        when pg_catalog.jsonb_typeof(audit.after_state) = 'object' then audit.after_state
+        else '{}'::jsonb
+      end as after_object
+  ) as snapshots
+  cross join lateral (
+    select coalesce(
+      pg_catalog.jsonb_agg(
+        pg_catalog.jsonb_build_object(
+          'field', changed.field,
+          'kind', changed.kind
+        ) order by changed.field
+      ),
+      '[]'::jsonb
+    ) as changes
+    from (
+      select
+        fields.field,
+        case
+          when not (snapshots.before_object ? fields.field) then 'added'
+          when not (snapshots.after_object ? fields.field) then 'removed'
+          else 'changed'
+        end as kind
+      from pg_catalog.jsonb_object_keys(
+        snapshots.before_object || snapshots.after_object
+      ) as fields(field)
+      where snapshots.before_object -> fields.field
+        is distinct from snapshots.after_object -> fields.field
+        and fields.field = any (array[
+          'name',
+          'courseSlug',
+          'objective',
+          'referenceType',
+          'referenceKey',
+          'referenceTitleSnapshot',
+          'referenceDocumentId',
+          'referenceVerifiedAt',
+          'audience',
+          'startsOn',
+          'endsOn',
+          'primaryChannel',
+          'secondaryChannels',
+          'briefing',
+          'notes',
+          'status',
+          'archivedAt',
+          'participant',
+          'userId',
+          'memberRole',
+          'isPrimary',
+          'material',
+          'materialId',
+          'artifactId'
+        ]::text[])
+    ) as changed
+  ) as change_set
+  where audit.tenant_id = marketing_ops_private.current_tenant_id()
+    and audit.entity_type = 'campaign'
+    and audit.entity_id = p_campaign_id
+    and marketing_ops_private.can_access_campaign(p_campaign_id)
+    and (
+      p_before_created_at is null
+      or (
+        p_before_id is not null
+        and (audit.created_at, audit.id) < (p_before_created_at, p_before_id)
+      )
+    )
+  order by audit.created_at desc, audit.id desc
+  limit pg_catalog.greatest(1, pg_catalog.least(coalesce(p_limit, 25), 101))
+$$;
+
 revoke all on function marketing_ops_private.can_edit_campaign(uuid)
   from public, anon, authenticated, service_role;
 grant execute on function marketing_ops_private.can_edit_campaign(uuid) to authenticated;
@@ -1060,6 +1187,11 @@ grant execute on function marketing_ops_private.list_campaign_participant_candid
 revoke all on function marketing_ops_private.is_campaign_participant_candidate(uuid, uuid)
   from public, anon, authenticated, service_role;
 grant execute on function marketing_ops_private.is_campaign_participant_candidate(uuid, uuid)
+  to authenticated;
+
+revoke all on function marketing_ops_private.list_campaign_timeline(uuid, integer, timestamptz, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function marketing_ops_private.list_campaign_timeline(uuid, integer, timestamptz, uuid)
   to authenticated;
 
 insert into marketing_ops.schema_versions (version, description)

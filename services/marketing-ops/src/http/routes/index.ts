@@ -9,6 +9,7 @@ import { registerItems } from './items.js';
 import { registerMaterials } from './materials.js';
 import { registerParticipants } from './participants.js';
 import { registerReferences } from './references.js';
+import { registerTimeline } from './timeline.js';
 import type { ArtifactClient } from '../../integrations/artifactClient.js';
 import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
@@ -34,6 +35,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerParticipants(router, deps.pool, deps.features);
   registerMaterials(router, deps.pool, deps.artifactClient, deps.features);
   registerReferences(router, deps.ragCourseClient, deps.features);
+  registerTimeline(router, deps.pool, deps.features);
   registerItems(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
   if (deps.keyring) router.use(createMcpRouter({
