@@ -360,17 +360,20 @@ set search_path = ''
 as $$
   select coalesce((
     select
-      marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
-      or (
-        marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
-        and exists (
-          select 1
-          from marketing_ops.campaign_members as participant
-          where participant.campaign_id = campaign.id
-            and participant.tenant_id = campaign.tenant_id
-            and participant.user_id = (select auth.uid())
-            and participant.member_role = 'owner'
-            and participant.is_primary
+      campaign.status <> 'archived'
+      and (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and exists (
+            select 1
+            from marketing_ops.campaign_members as participant
+            where participant.campaign_id = campaign.id
+              and participant.tenant_id = campaign.tenant_id
+              and participant.user_id = (select auth.uid())
+              and participant.member_role = 'owner'
+              and participant.is_primary
+          )
         )
       )
     from marketing_ops.campaigns as campaign
@@ -387,7 +390,9 @@ security definer
 set search_path = ''
 as $$
   select coalesce((
-    select marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+    select
+      campaign.status <> 'archived'
+      and marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
@@ -408,6 +413,7 @@ as $$
     select
       campaign.created_by = (select auth.uid())
       and p_user_id = (select auth.uid())
+      and campaign.status = 'draft'
       and marketing_ops_private.current_actor_role(campaign.tenant_id) is not null
       and not exists (
         select 1
@@ -430,20 +436,111 @@ set search_path = ''
 as $$
   select coalesce((
     select
-      marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
-      or exists (
-        select 1
-        from marketing_ops.campaign_members as participant
-        where participant.campaign_id = campaign.id
-          and participant.tenant_id = campaign.tenant_id
-          and participant.user_id = (select auth.uid())
-          and participant.member_role in ('owner', 'editor')
+      campaign.status <> 'archived'
+      and (
+        marketing_ops_private.current_actor_role(campaign.tenant_id) in ('manager', 'admin')
+        or (
+          marketing_ops_private.current_actor_role(campaign.tenant_id) = 'member'
+          and exists (
+            select 1
+            from marketing_ops.campaign_members as participant
+            where participant.campaign_id = campaign.id
+              and participant.tenant_id = campaign.tenant_id
+              and participant.user_id = (select auth.uid())
+              and participant.member_role in ('owner', 'editor')
+          )
+        )
       )
     from marketing_ops.campaigns as campaign
     where campaign.id = p_campaign_id
       and campaign.tenant_id = marketing_ops_private.current_tenant_id()
   ), false)
 $$;
+
+create function marketing_ops_private.enforce_campaign_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor_role marketing_ops.membership_role;
+  is_forward_transition boolean;
+  is_reopen_transition boolean;
+begin
+  if (select auth.uid()) is null then
+    return new;
+  end if;
+
+  if old.status = 'archived' then
+    raise exception using
+      errcode = '42501',
+      message = 'archived campaign is read-only';
+  end if;
+
+  if new.version <> old.version + 1 then
+    raise exception using
+      errcode = '42501',
+      message = 'authenticated campaign update must increment version by one';
+  end if;
+
+  if new.status = old.status then
+    return new;
+  end if;
+
+  actor_role := marketing_ops_private.current_actor_role(old.tenant_id);
+  is_forward_transition := (old.status::text, new.status::text) in (
+    ('draft', 'planned'),
+    ('planned', 'active'),
+    ('active', 'completed')
+  );
+  is_reopen_transition := (old.status::text, new.status::text) in (
+    ('planned', 'draft'),
+    ('active', 'planned'),
+    ('completed', 'active')
+  );
+
+  if is_forward_transition
+    and marketing_ops_private.can_manage_campaign(old.id)
+  then
+    return new;
+  end if;
+
+  if is_reopen_transition
+    and actor_role in ('manager', 'admin')
+  then
+    return new;
+  end if;
+
+  if new.status = 'archived'
+    and actor_role in ('manager', 'admin')
+  then
+    return new;
+  end if;
+
+  raise exception using
+    errcode = '42501',
+    message = format('campaign status transition %s -> %s is not allowed', old.status, new.status);
+end;
+$$;
+
+create trigger campaigns_enforce_authenticated_update
+before update on marketing_ops.campaigns
+for each row execute function marketing_ops_private.enforce_campaign_update();
+
+drop policy campaigns_update on marketing_ops.campaigns;
+
+create policy campaigns_update on marketing_ops.campaigns
+for update to authenticated
+using (
+  tenant_id = (select marketing_ops_private.current_tenant_id())
+  and (select marketing_ops_private.can_edit_campaign(id))
+)
+with check (
+  tenant_id = (select marketing_ops_private.current_tenant_id())
+  and updated_by = (select auth.uid())
+  and (select marketing_ops_private.can_edit_campaign(id))
+);
 
 drop policy campaign_members_insert on marketing_ops.campaign_members;
 drop policy campaign_members_update on marketing_ops.campaign_members;
@@ -538,6 +635,43 @@ grant select, insert on table marketing_ops.campaign_materials to authenticated;
 grant update (unlinked_by, unlinked_at) on table marketing_ops.campaign_materials to authenticated;
 grant all on table marketing_ops.campaign_materials to service_role;
 
+revoke update on table marketing_ops.campaigns from authenticated;
+grant update (
+  name,
+  status,
+  version,
+  updated_by,
+  archived_at,
+  course_slug,
+  objective,
+  reference_type,
+  reference_key,
+  reference_title_snapshot,
+  reference_document_id,
+  reference_verified_at,
+  audience,
+  starts_on,
+  ends_on,
+  primary_channel,
+  secondary_channels,
+  briefing,
+  notes
+) on marketing_ops.campaigns to authenticated;
+
+revoke insert, update on table marketing_ops.campaign_members from authenticated;
+grant insert (
+  tenant_id,
+  campaign_id,
+  user_id,
+  member_role,
+  is_primary,
+  created_by
+) on marketing_ops.campaign_members to authenticated;
+grant update (
+  member_role,
+  is_primary
+) on marketing_ops.campaign_members to authenticated;
+
 revoke all on function marketing_ops_private.can_edit_campaign(uuid)
   from public, anon, authenticated, service_role;
 grant execute on function marketing_ops_private.can_edit_campaign(uuid) to authenticated;
@@ -557,6 +691,8 @@ grant execute on function marketing_ops_private.can_bootstrap_campaign_owner(uui
 revoke all on function marketing_ops_private.promote_first_campaign_owner()
   from public, anon, authenticated, service_role;
 revoke all on function marketing_ops_private.assert_campaign_primary_owner()
+  from public, anon, authenticated, service_role;
+revoke all on function marketing_ops_private.enforce_campaign_update()
   from public, anon, authenticated, service_role;
 
 insert into marketing_ops.schema_versions (version, description)
