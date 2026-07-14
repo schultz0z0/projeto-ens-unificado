@@ -43,6 +43,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 - [ ] viewer/member sem autoridade não retém advisory lock;
 - [ ] 12 cenários DB da Task 4, 5 da Task 5, 3 da Task 6 e referência canônica da Task 7 aprovados;
 - [ ] 6 testes REST, 6 MCP e 5 production-gate diferidos na Task 9 aprovados;
+- [ ] client da Task 10 integrado à API real preserva auth, correlação, ETag, `If-Match`, idempotência, upload binário e `currentVersion` no 409;
 - [ ] lint/advisors sem erro/achado novo nos objetos alterados;
 - [ ] imagens Linux constroem e Compose fica saudável;
 - [ ] nenhuma fixture residual após cleanup.

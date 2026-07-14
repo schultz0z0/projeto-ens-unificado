@@ -5,11 +5,11 @@ Este documento é a fonte de continuidade da Fase 2. Ele registra o estado versi
 ## 1. Ponto de retomada
 
 - **Branch única:** `main`
-- **Último commit de código da fase:** `6c713e7 feat: publica api rest do workspace operacional`
+- **Último commit de código da fase:** `32acff2 feat: expande cliente web de marketing ops`
 - **Commit de handoff:** o HEAD de `main` que contém este documento
 - **Estado do worktree no snapshot:** limpo
 - **Plano:** [2026-07-13-phase-2-workspace-operacional-mvp-implementation.md](../plans/2026-07-13-phase-2-workspace-operacional-mvp-implementation.md)
-- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–9 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 10 é a próxima frente
+- **Estado de execução:** Task 1 concluída; Tasks 2 e 4–10 em `implemented_pending_vps_validation`; Task 3 `completed_reviewed`; Task 11 é a próxima frente
 - **Ambientes remotos:** nenhum deploy Supabase ou VPS da Fase 2
 - **Progresso detalhado:** [implementation-progress.md](implementation-progress.md)
 - **Rastreabilidade:** [requirements-traceability.md](requirements-traceability.md)
@@ -33,6 +33,7 @@ Commits relevantes, em ordem:
 | `5d5cf8f` | referências oficiais read-only, snapshot canônico, rota REST e integração RAG MCP |
 | `42d43f3` | snapshots minimizados, timeline privada segura, rota REST, cursor e testes de não vazamento |
 | `6c713e7` | REST v1 completo, transições, adapters estritos, ETags, erros e OpenAPI válido |
+| `32acff2` | client frontend tipado, query keys, upload binário e conflito 409 com versão atual |
 
 Os relatórios em `.superpowers/` eram scratch local ignorado pelo Git. Toda evidência necessária para continuar foi consolidada neste documento e em [local-validation.md](local-validation.md).
 
@@ -159,6 +160,16 @@ Permanecem `deferred_to_vps`: observação RED/GREEN, reset/migrations, 228 asse
 - OpenAPI 3.1 foi validado pelo Redocly sem erro/warning e preserva itens F1 como compatibilidade deprecated;
 - 75 testes nativos, typecheck e build passaram;
 - 6 testes REST, 6 MCP e 5 production-gate dependentes de PostgreSQL permanecem `deferred_to_vps`.
+
+### Task 10 — implementada, integração VPS pendente
+
+- tipos cobrem o contrato público de campanhas, transições, participantes, materiais, timeline e referências oficiais;
+- todas as mutações enviam idempotência e, no agregado existente, `If-Match`; ETag e correlação são preservados no resultado;
+- `MarketingOpsApiError` expõe `currentVersion` validada no 409 sem alterar o patch mantido pela futura UI;
+- upload envia o `File` como corpo bruto com MIME e filename, sem serializar bytes em JSON;
+- query keys separam lista, detalhe e recursos aninhados para invalidação previsível no TanStack Query;
+- RED esperado observado; 11/11 testes focados, 131/131 na regressão frontend, lint sem erro, typecheck e build aprovados;
+- auth/CORS/TLS, respostas reais, conflito concorrente e upload ponta a ponta permanecem `deferred_to_vps`.
 
 ### Pacote documental — completo para o estado atual
 
@@ -288,11 +299,11 @@ Neste computador, executar arquivos e filtros Vitest explicitamente sem banco, a
 - o agente não executa deploy VPS; entrega comandos ao usuário no fechamento.
 - o agente pode executar o deploy do Supabase do app depois desse fechamento interno e da confirmação inequívoca do projeto remoto;
 
-## 8. Trabalho restante após a Task 9
+## 8. Trabalho restante após a Task 10
 
-As Tasks 10–15 permanecem pendentes: cliente frontend, lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
+As Tasks 11–15 permanecem pendentes: lista, workspace, UI completa, observabilidade/E2E/documentação, deploy Supabase, integração final e handoff VPS.
 
-O backend das Tasks 3–9 existe, mas as Tasks dependentes de banco ainda não possuem aceite PostgreSQL/VPS. O frontend da Fase 2 permanece não iniciado.
+O backend das Tasks 3–9 e a fundação tipada frontend da Task 10 existem, mas as tasks dependentes de banco/integração ainda não possuem aceite VPS. A experiência visual começa na Task 11.
 
 Antes de cada próximo commit documental, atualizar [implementation-progress.md](implementation-progress.md), [local-validation.md](local-validation.md), a rastreabilidade afetada e este handoff. O pacote de operação deve permanecer com checkboxes pendentes até a evidência real correspondente.
 

@@ -21,11 +21,12 @@
 - **Task 7:** `implemented_pending_vps_validation` no commit `5d5cf8f`; busca e verificação read-only no RAG MCP, snapshot canônico, rota/configuração e fail-closed implementados. Dez contratos da Task 7 e 26 testes do RAG passaram; persistência PostgreSQL e chamada MCP real no Compose estão `deferred_to_vps`.
 - **Task 8:** `implemented_pending_vps_validation` no commit `42d43f3`; minimização de auditoria/outbox, projeção privada, cursor, rota e allowlists implementados. Sete testes da task e 65 checks nativos segmentados passaram; 7 novos asserts pgTAP e a prova do histórico/RLS real estão `deferred_to_vps`.
 - **Task 9:** `implemented_pending_vps_validation` no commit `6c713e7`; adapters REST estritos, transição, ETags, erros, capabilities e OpenAPI 3.1 completos. Setenta e cinco testes nativos e o lint Redocly passaram; 17 cenários REST/MCP/production-gate estão `deferred_to_vps`.
-- **Tasks 10–15:** `not_started`.
+- **Task 10:** `implemented_pending_vps_validation` no commit `32acff2`; client tipado completo, query keys, headers de mutação, upload binário, ETag/correlação e `currentVersion` implementados. Onze testes focados, regressão frontend 131/131, lint sem erro, typecheck e build passaram; integração real client/API está `deferred_to_vps`.
+- **Tasks 11–15:** `not_started`.
 - **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 10, preservando a lista nominal de provas de banco e Linux que deverão rodar na VPS.
+- **Próxima frente:** Task 11, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–9 só podem ser marcadas concluídas depois dos respectivos gates PostgreSQL/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–10 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
 
 ## Global Constraints
 
@@ -683,7 +684,7 @@ git commit -m "feat: publica api rest do workspace operacional"
 **Interfaces:**
 - Produces: cliente de campanhas, transições, participantes, materiais, timeline, referências e `MarketingOpsApiError` com versão atual.
 
-- [ ] **Step 1: RED de headers, upload e erro 409**
+- [x] **Step 1: RED de headers, upload e erro 409**
 
 ```ts
 it('keeps local values and exposes currentVersion on a version conflict', async () => {
@@ -695,13 +696,15 @@ it('keeps local values and exposes currentVersion on a version conflict', async 
 });
 ```
 
-- [ ] **Step 2: Observar RED**
+- [x] **Step 2: Observar RED**
 
 Run: `cd apps/chat-web && npm test -- src/lib/marketingOps/client.test.ts src/lib/marketingOps/queryKeys.test.ts`
 
 Expected: FAIL nas APIs novas.
 
-- [ ] **Step 3: Implementar cliente e query keys**
+Resultado observado: suite de query keys falhou por módulo ausente; client falhou por `currentVersion`, transição e APIs de recursos inexistentes.
+
+- [x] **Step 3: Implementar cliente e query keys**
 
 ```ts
 export const marketingOpsKeys = {
@@ -716,13 +719,15 @@ export const marketingOpsKeys = {
 
 O upload envia `File` como corpo com headers de filename/content-type, sem serializar bytes em JSON. Cada mutação gera correlação preservada, `Idempotency-Key` e `If-Match`.
 
-- [ ] **Step 4: Verificar GREEN**
+- [x] **Step 4: Verificar GREEN**
 
 Run: `cd apps/chat-web && npm test -- src/lib/marketingOps && npm run typecheck`
 
 Expected: cliente e tipos passam.
 
-- [ ] **Step 5: Commit**
+Resultado executado: 11/11 testes focados, regressão frontend 131/131, ESLint sem erro, typecheck e build passaram. Dez warnings de lint e os warnings de bundle são preexistentes e estão fora do módulo. A integração real client/API permanece `deferred_to_vps`, portanto a task não recebe aceite final.
+
+- [x] **Step 5: Commit**
 
 ```powershell
 git add apps/chat-web/src/lib/marketingOps

@@ -1,6 +1,6 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_9_not_executed_in_vps`
+- **Estado:** `prepared_through_task_10_not_executed_in_vps`
 - **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy
@@ -55,7 +55,7 @@ npm run build
 npm run security:gate
 ```
 
-A lista cresce conforme Tasks 10–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado.
+A lista cresce conforme Tasks 11–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado.
 
 ## Gate diferido de banco e Linux
 

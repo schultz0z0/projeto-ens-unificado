@@ -1,11 +1,11 @@
 # Validação local parcial da Fase 2
 
-- **Estado:** `task_9_implemented_pending_vps_validation`
+- **Estado:** `task_10_implemented_pending_vps_validation`
 - **Ambiente da evidência histórica:** Windows, PowerShell, Git Bash, Docker Desktop e Supabase CLI local no computador anterior
 - **Data:** 2026-07-14
 - **Código do baseline histórico:** `1a49c4d` e ancestrais da Fase 2
 - **Correção da Task 2:** `c921294`
-- **Último código da fase:** `6c713e7`
+- **Último código da fase:** `32acff2`
 
 ## Evidência concluída
 
@@ -160,6 +160,17 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - **Compatibilidade:** endpoints REST de `campaign_items` da Fase 1 permanecem documentados como deprecated; tools MCP v1 continuam registradas;
 - **Diferido para VPS:** 6 testes REST com PostgreSQL, 6 testes MCP com PostgreSQL e 5 cenários de `production-gate.test.ts`, incluindo draft completo, transition, replay, auditoria e tenant forjado.
 
+## Task 10 — client frontend tipado
+
+- **Commit:** `32acff2`;
+- **RED observado:** `queryKeys.ts` ausente; `MarketingOpsApiError` sem `currentVersion`; transição, participantes, materiais, timeline e referências inexistentes no client;
+- **GREEN focado:** 11/11 testes em `client.test.ts` e `queryKeys.test.ts`;
+- **Regressão frontend:** 35 arquivos e 131/131 testes aprovados;
+- **Lint:** zero erro; 10 warnings preexistentes fora do módulo da Task 10;
+- **Typecheck/build:** exit code 0; build repetiu apenas os warnings conhecidos de chunk grande e importação mista de `supabase.ts`;
+- **Implementação:** tipos completos do OpenAPI, campanhas/transições/participantes/materiais/timeline/referências, query keys por recurso, ETag e correlação preservados, 409 com `currentVersion` e upload de `File` sem JSON;
+- **Diferido para VPS:** chamada do client contra a API autenticada real, CORS/TLS, ETag/409 reais e upload binário até o Artifact Server no Compose.
+
 ## Avisos conhecidos
 
 - 81 warnings do advisor já existiam fora dos objetos novos/alterados da Task 2;
@@ -168,7 +179,7 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 - o Supabase do RAG não foi acessado ou alterado;
 - nenhum projeto Supabase remoto foi mutado.
 
-## Auditoria documental após a Task 9
+## Auditoria documental após a Task 10
 
 | Verificação | Resultado |
 |---|---|
@@ -177,6 +188,6 @@ Os 197 testes verdes permanecem apenas como baseline histórico. As implementaç
 | Estados remotos | Supabase `not_executed`; VPS `pending_user_execution`; nenhuma evidência antecipada |
 | Supabase CLI | versão local `2.109.1`; sintaxe de `migration list`, `db dump`, `db push --dry-run`, `test db`, `lint` e `advisors` conferida via `--help` |
 | Separação RAG/app | runbook e deploy proíbem variáveis/migrations do RAG |
-| Continuidade | README, progresso e handoff apontam Task 10 como próxima frente |
+| Continuidade | README, progresso e handoff apontam Task 11 como próxima frente |
 
 Esta auditoria valida completude e coerência documental, não banco, containers ou deploy.
