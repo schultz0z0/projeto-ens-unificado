@@ -123,6 +123,18 @@ const nullableDate = (value: Date | string | null): string | null => {
   return value instanceof Date ? value.toISOString().slice(0, 10) : value;
 };
 
+const parsePgArray = <T>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value === 'string') {
+    if (value === '{}') return [];
+    return value
+      .slice(1, -1)
+      .split(',')
+      .map((item) => item.trim().replace(/^"|"$/g, '')) as T[];
+  }
+  return [];
+};
+
 export function mapCampaign(row: CampaignRow): Campaign {
   return {
     id: row.id,
@@ -139,7 +151,7 @@ export function mapCampaign(row: CampaignRow): Campaign {
     startsOn: nullableDate(row.starts_on),
     endsOn: nullableDate(row.ends_on),
     primaryChannel: row.primary_channel,
-    secondaryChannels: row.secondary_channels,
+    secondaryChannels: parsePgArray<CampaignChannel>(row.secondary_channels),
     briefing: row.briefing,
     notes: row.notes,
     status: row.status,
