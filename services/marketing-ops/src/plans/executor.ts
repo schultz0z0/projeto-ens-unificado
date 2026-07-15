@@ -60,6 +60,7 @@ export async function executeMarketingOpsPlan(
       }
       completed.push({ index, type: action.type, data });
     } catch (error) {
+      console.error('[PLAN EXECUTOR ERROR]', error);
       const safe = error instanceof AppError
         ? { code: error.code, message: error.message, status: error.status }
         : { code: 'internal_error', message: 'Internal server error', status: 500 };
