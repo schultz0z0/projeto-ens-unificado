@@ -167,6 +167,7 @@ function CampaignWorkspace({
       return { ...previous, data: next };
     });
     void queryClient.invalidateQueries({ queryKey: marketingOpsKeys.campaigns() });
+    void queryClient.invalidateQueries({ queryKey: marketingOpsKeys.timeline(next.id) });
   };
 
   const applyCampaignVersion = (version: number) => {
