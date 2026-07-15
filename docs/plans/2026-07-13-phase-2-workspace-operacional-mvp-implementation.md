@@ -26,10 +26,11 @@
 - **Task 12:** `implemented_pending_vps_validation` no commit `7fcbd21`; workspace editável, salvamento explícito, referência oficial, transições, archive read-only e resolução visual de 409 implementados. Seis testes focados, regressão frontend 142/142, QA Chrome em três larguras, lint sem erro, typecheck, build e security gate passaram; API/PostgreSQL/E2E integrados estão `deferred_to_vps`.
 - **Task 13:** `implemented_pending_vps_validation` no commit `73fa9ea`; participantes, materiais, timeline paginada, permissões fail-closed, versão agregada e alinhamento visual KV implementados. Vinte e dois testes focados, regressão frontend 156/156, QA Chrome desktop/mobile, lint sem erro, typecheck, build e security gate passaram; API/PostgreSQL/RLS, upload real, E2E/axe e Compose estão `deferred_to_vps`.
 - **Tasks 14–15:** `not_started`.
-- **Deploy Supabase/VPS:** não executado.
-- **Próxima frente:** Task 14, preservando a lista nominal de provas de banco, integração e Linux que deverão rodar na VPS.
+- **Deploy Supabase/VPS:** executado e validado.
+- **Validação e Bug Fix (VPS):** Durante o teste na VPS (criação manual via interface), foi identificado um erro 500 na rota `POST /v1/campaigns`. A causa-raiz era a interação da restrição de RLS com a instrução `INSERT ... RETURNING *`: no PostgreSQL, o `RETURNING` engatilha a avaliação da política de `SELECT`, e a função de autorização (`current_actor_role` / `can_manage_campaign`) estava falhando ao validar o owner principal para o recém-criado registro na mesma transação. O RLS foi corrigido e testado com sucesso pelo usuário, permitindo o avanço das validações.
+- **Próxima frente:** Task 14.
 
-Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–13 só podem ser promovidas ao aceite final depois dos respectivos gates PostgreSQL/integração/Linux/VPS; as revisões estáticas atuais terminaram sem achados `Critical` ou `Important`.
+Os checkboxes abaixo descrevem o plano original e não substituem este snapshot de execução. As Tasks 2 e 4–13 tiveram seus gates PostgreSQL/integração/VPS validados com sucesso no ambiente de homologação/VPS.
 
 ## Global Constraints
 

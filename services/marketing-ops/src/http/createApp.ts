@@ -239,16 +239,23 @@ export function createApp(deps: AppDependencies) {
   if (deps.router) app.use(deps.router);
   app.use((_request, _response, next) => next(appError('not_found', 404, 'Route not found')));
   app.use((error: unknown, request: Request, response: Response, _next: NextFunction) => {
-    const normalized = error instanceof AppError
-      ? error
-      : error instanceof Error && error.name === 'ZodError'
-        ? appError('validation_error', 400, 'Request validation failed')
-        : appError('internal_error', 500, 'Internal server error');
+    let normalized: AppError;
+    if (error instanceof AppError) {
+      normalized = error;
+    } else if (error instanceof Error && error.name === 'ZodError') {
+      const issues = (error as any).issues;
+      normalized = appError('validation_error', 400, 'Request validation failed', { issues });
+      deps.logger.warn('Zod validation failed', { correlationId: request.correlationId, issues });
+    } else {
+      normalized = appError('internal_error', 500, 'Internal server error');
+    }
     deps.metrics.increment('marketing_ops_errors_total', { code: normalized.code, status: String(normalized.status) });
     if (normalized.code === 'version_conflict') {
       deps.metrics.increment('marketing_ops_campaign_version_conflicts_total');
     }
-    if (normalized.status >= 500) deps.logger.error(normalized.message, { correlationId: request.correlationId, error });
+    if (normalized.status >= 500) {
+      deps.logger.error(normalized.message, { correlationId: request.correlationId, error });
+    }
     response.status(normalized.status).json(errorEnvelope(normalized, request.correlationId));
   });
   return app;

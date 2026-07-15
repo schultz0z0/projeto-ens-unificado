@@ -62,12 +62,13 @@ function defaultIdempotencyKey(): string {
   return globalThis.crypto.randomUUID();
 }
 
-function errorDetails(error: unknown): { status: number | null; message: string; correlationId: string | null } {
-  const candidate = error as { status?: unknown; message?: unknown; correlationId?: unknown } | null;
+function errorDetails(error: unknown): { status: number | null; message: string; correlationId: string | null; details?: unknown } {
+  const candidate = error as { status?: unknown; message?: unknown; correlationId?: unknown; details?: unknown } | null;
   return {
     status: typeof candidate?.status === 'number' ? candidate.status : null,
     message: typeof candidate?.message === 'string' ? candidate.message : 'Não foi possível concluir a operação.',
-    correlationId: typeof candidate?.correlationId === 'string' ? candidate.correlationId : null
+    correlationId: typeof candidate?.correlationId === 'string' ? candidate.correlationId : null,
+    details: candidate?.details
   };
 }
 
@@ -304,6 +305,15 @@ function CampaignWorkspace({
               <AlertTitle>Não foi possível concluir a operação</AlertTitle>
               <AlertDescription>
                 <p>{details.message}</p>
+                {details.details && typeof details.details === 'object' && 'issues' in details.details && Array.isArray((details.details as any).issues) ? (
+                  <ul className="mt-2 list-disc pl-5 text-xs text-red-850">
+                    {(details.details as any).issues.map((issue: any, index: number) => (
+                      <li key={index}>
+                        <strong>Campo "{issue.path.join('.') || 'geral'}":</strong> {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 {details.correlationId ? <p className="mt-1 text-xs">Correlação: {details.correlationId}</p> : null}
               </AlertDescription>
             </Alert>
