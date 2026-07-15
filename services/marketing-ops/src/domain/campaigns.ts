@@ -359,7 +359,7 @@ export async function createCampaignDraft(
         });
         const persistedInput = resolvedReference.input;
         const campaignId = randomUUID();
-        const result = await client.query<CampaignRow>(`
+        await client.query(`
           insert into marketing_ops.campaigns (
             id, tenant_id, name, course_slug, objective, reference_type, reference_key,
             reference_title_snapshot, reference_document_id, reference_verified_at,
@@ -369,7 +369,6 @@ export async function createCampaignDraft(
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
             $13, $14, $15::marketing_ops.campaign_channel[], $16, $17, $18, $18
           )
-          returning *
         `, [
           campaignId, context.actor.tenantId, persistedInput.name, courseSlug,
           persistedInput.objective, persistedInput.referenceType, persistedInput.referenceKey,
@@ -384,6 +383,10 @@ export async function createCampaignDraft(
             tenant_id, campaign_id, user_id, member_role, created_by
           ) values ($1, $2, $3, 'owner', $3)
         `, [context.actor.tenantId, campaignId, context.actor.userId]);
+
+        const result = await client.query<CampaignRow>(`
+          select * from marketing_ops.campaigns where id = $1
+        `, [campaignId]);
         const campaign = mapCampaign(result.rows[0]!);
         await writeAudit(client, context, 'campaign', campaign.id, 'campaign.created', null, campaign);
         await writeDomainEvent(
