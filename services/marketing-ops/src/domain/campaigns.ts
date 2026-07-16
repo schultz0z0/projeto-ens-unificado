@@ -572,7 +572,7 @@ async function changeCampaignStatus(
 
         const result = await client.query<CampaignRow>(`
           update marketing_ops.campaigns
-          set status = $2,
+          set status = $2::marketing_ops.campaign_status,
               archived_at = case when $2::text = 'archived' then now() else null end,
               version = version + 1,
               updated_by = $3
