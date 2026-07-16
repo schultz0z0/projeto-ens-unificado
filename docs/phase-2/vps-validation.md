@@ -140,3 +140,20 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 | Aceite do usuário | `pending` |
 
 A fase só passa a `production_validated`/`completed` quando todos os bloqueadores estiverem verdes, o piloto for aceito e não houver falha alta ou crítica conhecida.
+
+## Histórico de Correções e Ajustes (QA)
+
+Durante o ciclo de homologação na VPS, os seguintes incidentes foram identificados e corrigidos via hotfix:
+
+### 1. Parsing de Arrays PG no Backend (PATCH)
+* **Incidente:** O driver do PostgreSQL (`pg`) retornava arrays de enums customizados (ex: `secondary_channels`) como strings formatadas (`"{}"` ou `"{email,instagram}"`). O frontend interpretava a string crua e a quebrava em caracteres isolados (`['{', '}']`) ao re-salvar, estourando erro de validação (400 Bad Request).
+* **Solução:** Adicionado parser customizado `parsePgArray` na camada de mapeamento da API do backend (`campaigns.ts`) para converter as strings cruas do PostgreSQL em arrays JavaScript nativos antes da validação.
+
+### 2. Invalidação da Timeline no Workspace (Frontend)
+* **Incidente:** O painel de atividades (timeline) do Workspace da campanha não atualizava em tempo real após o salvamento de alterações ou transições de status, exigindo que o usuário recarregasse a aba (F5).
+* **Solução:** Adicionada a invalidação de cache explícita da query de timeline (`marketingOpsKeys.timeline(next.id)`) nos hooks de salvamento e atualização do Workspace.
+
+### 3. Erro 42P08 (Ambiguous Parameter) no Postgres durante Transição (Transitions)
+* **Incidente:** Ao clicar em "Planejar", a chamada de transição de status falhava com erro interno 500. Os logs revelaram que o Postgres rejeitava a query com código `42P08` porque o parâmetro `$2` (status da campanha) era usado de forma ambígua (tanto na comparação do tipo enum quanto na coação de texto para a verificação de arquivamento).
+* **Solução:** Adicionado typecast explícito do enum `$2::marketing_ops.campaign_status` na cláusula `set status` da query de transição no backend, resolvendo a ambiguidade.
+
