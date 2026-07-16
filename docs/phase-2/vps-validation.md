@@ -167,4 +167,11 @@ Durante o ciclo de homologação na VPS, os seguintes incidentes foram identific
   c) Criada a migração [2026-07-16-optimize-mcp-search.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/services/rag-mcp/supabase/migrations/2026-07-16-optimize-mcp-search.sql) para reescrever a query utilizando `UNION ALL`, separando a busca textual (GIN) e a busca de títulos em ramos independentes para garantir o escaneamento por índice (Index Scan).
 * **Estado:** Validado funcionalmente pelo usuário com sucesso na VPS (busca de cursos agora responde instantaneamente).
 
+### 5. Sincronização de Novos Usuários Criados pelo Painel Administrativo
+* **Incidente:** Usuários recém-criados administrativamente pelo painel (como a Amanda Silva) não apareciam como candidatos para vinculação de participantes nas campanhas. Isso acontecia porque a Edge Function `admin-create-user` insere os perfis em `public.profiles` com o `tenant_id` como `NULL`, enquanto a trigger de sincronização de banco de dados (`sync_ens_profile_membership`) exigia obrigatoriamente que o `tenant_id` fosse `'ens'` para gerar a entrada correspondente na tabela `marketing_ops.memberships`.
+* **Solução:** 
+  a) Executado script de correção no banco para associar Amanda Silva ao `tenant_id = 'ens'`.
+  b) Criada a migração incremental [20260716181000_fix_sync_ens_profile_membership.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/apps/chat-web/supabase/migrations/20260716181000_fix_sync_ens_profile_membership.sql) que atualiza a função da trigger para tratar perfis criados com `tenant_id IS NULL`, mapeando-os automaticamente para o tenant padrão `'ens'`.
+* **Estado:** Validado funcionalmente pelo usuário com sucesso na VPS (usuários criados administrativamente agora são sincronizados e pesquisáveis na modal de participantes).
+
 
