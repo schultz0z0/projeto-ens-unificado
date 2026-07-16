@@ -134,8 +134,11 @@ export class RagCourseClient {
     let result: unknown;
     try {
       result = await this.callToolImpl(name, args);
-    } catch {
-      throw appError('dependency_unavailable', 503, 'RAG is unavailable');
+    } catch (error) {
+      throw appError('dependency_unavailable', 503, 'RAG is unavailable', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
     return payloadFromToolResult(result);
   }
@@ -149,7 +152,8 @@ export class RagCourseClient {
       intent: 'course_fact',
       limit: Math.min(normalizedLimit * 4, 50),
       actor_profile: this.actorProfile,
-      require_evidence: true
+      require_evidence: true,
+      search_mode: 'text'
     }));
     if (!payload.success) invalidResponse();
 

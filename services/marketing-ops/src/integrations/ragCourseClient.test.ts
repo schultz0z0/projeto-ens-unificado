@@ -81,7 +81,8 @@ describe('RagCourseClient', () => {
       intent: 'course_fact',
       limit: 40,
       actor_profile: 'marketing_ops',
-      require_evidence: true
+      require_evidence: true,
+      search_mode: 'text'
     });
   });
 

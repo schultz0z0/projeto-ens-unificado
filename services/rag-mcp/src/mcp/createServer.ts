@@ -48,7 +48,8 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
         include_stale: z.boolean().optional(),
         course_filters: courseFiltersSchema,
         require_evidence: z.boolean().default(true),
-        actor_profile: actorProfileSchema
+        actor_profile: actorProfileSchema,
+        search_mode: z.enum(['hybrid', 'text']).optional()
       }
     },
     async input => {
@@ -62,7 +63,8 @@ export function createEnsRagMcpServer({ config, repository }: ServerDependencies
           intent: input.intent as RagSearchIntent | undefined,
           explicitFilters: toCourseFilters(input.course_filters)
         });
-        const [queryEmbedding] = await embeddingProvider.embed([input.query]);
+        const useVector = input.search_mode !== 'text';
+        const [queryEmbedding] = useVector ? await embeddingProvider.embed([input.query]) : [undefined];
         const candidateResults = await repository.searchChunks({
           query: input.query,
           allowedTenants: ['ens'],
