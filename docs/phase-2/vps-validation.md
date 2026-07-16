@@ -60,11 +60,11 @@ curl -fsS http://127.0.0.1:8091/ready
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=10m marketing-ops artifact-server rag-mcp app-frontend
 ```
 
-- [ ] Marketing Ops → RAG pesquisa e verifica curso ENS sem conexão direta ao banco RAG;
+- [x] Marketing Ops → RAG pesquisa e verifica curso ENS sem conexão direta ao banco RAG;
 - [ ] indisponibilidade do RAG não bloqueia campos alheios à referência e bloqueia validação necessária;
-- [ ] upload permitido, MIME/extensão/tamanho inválidos e artifact de outro owner são exercitados;
-- [ ] access link é curto, autorizado e não aparece em logs;
-- [ ] unlink remove vínculo sem apagar bytes compartilhados;
+- [x] upload permitido, MIME/extensão/tamanho inválidos e artifact de outro owner são exercitados;
+- [x] access link é curto, autorizado e não aparece em logs;
+- [x] unlink remove vínculo sem apagar bytes compartilhados;
 - [ ] falha entre upload e commit aciona compensação;
 - [ ] logs não contêm bearer, delegação, chaves, briefing, notas, filename bruto, URL assinada ou payload RAG.
 
@@ -165,6 +165,6 @@ Durante o ciclo de homologação na VPS, os seguintes incidentes foram identific
   a) Introduzido o parâmetro `search_mode` no RAG MCP. Quando configurado como `'text'`, o servidor pula a chamada de embedding na OpenAI (latência de rede reduzida a zero).
   b) O backend do `marketing-ops` passou a invocar o RAG no modo `'text'` para pesquisas de formulário.
   c) Criada a migração [2026-07-16-optimize-mcp-search.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/services/rag-mcp/supabase/migrations/2026-07-16-optimize-mcp-search.sql) para reescrever a query utilizando `UNION ALL`, separando a busca textual (GIN) e a busca de títulos em ramos independentes para garantir o escaneamento por índice (Index Scan).
-* **Estado:** Correções aplicadas no código e migração executada manualmente pelo usuário no banco de dados do RAG; validação funcional na VPS pendente de conclusão pelo usuário.
+* **Estado:** Validado funcionalmente pelo usuário com sucesso na VPS (busca de cursos agora responde instantaneamente).
 
 
