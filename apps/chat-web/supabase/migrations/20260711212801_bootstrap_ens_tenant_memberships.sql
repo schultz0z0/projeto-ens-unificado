@@ -9,7 +9,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if new.tenant_id::text = 'ens' and new.role::text in ('member', 'manager', 'admin') then
+  if (new.tenant_id::text = 'ens' or new.tenant_id is null) and new.role::text in ('member', 'manager', 'admin') then
     insert into marketing_ops.memberships (tenant_id, user_id, role, active)
     values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
