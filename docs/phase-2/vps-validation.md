@@ -157,3 +157,14 @@ Durante o ciclo de homologação na VPS, os seguintes incidentes foram identific
 * **Incidente:** Ao clicar em "Planejar", a chamada de transição de status falhava com erro interno 500. Os logs revelaram que o Postgres rejeitava a query com código `42P08` porque o parâmetro `$2` (status da campanha) era usado de forma ambígua (tanto na comparação do tipo enum quanto na coação de texto para a verificação de arquivamento).
 * **Solução:** Adicionado typecast explícito do enum `$2::marketing_ops.campaign_status` na cláusula `set status` da query de transição no backend, resolvendo a ambiguidade.
 
+### 4. Lentidão e Timeout na Busca de Referências Oficiais (Courses Autocomplete)
+* **Incidente:** Ao realizar pesquisas por cursos no autocomplete do formulário, as chamadas para `/references/courses` demoravam mais de 15 segundos, estourando o timeout com erro `503 Service Unavailable`. A análise revelou que:
+  a) A chamada de rede para gerar o embedding do termo de busca na API da OpenAI adicionava de 1 a 3 segundos de atraso síncrono.
+  b) A cláusula `OR` com busca parcial `LIKE` na query SQL `match_document_chunks_advanced` forçava o planejador do PostgreSQL a desabilitar índices e rodar um Full Table Scan (Varredura Sequencial) pesado na tabela `document_chunks` em cada alteração de caractere.
+* **Solução:** 
+  a) Introduzido o parâmetro `search_mode` no RAG MCP. Quando configurado como `'text'`, o servidor pula a chamada de embedding na OpenAI (latência de rede reduzida a zero).
+  b) O backend do `marketing-ops` passou a invocar o RAG no modo `'text'` para pesquisas de formulário.
+  c) Criada a migração [2026-07-16-optimize-mcp-search.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/services/rag-mcp/supabase/migrations/2026-07-16-optimize-mcp-search.sql) para reescrever a query utilizando `UNION ALL`, separando a busca textual (GIN) e a busca de títulos em ramos independentes para garantir o escaneamento por índice (Index Scan).
+* **Estado:** Correções aplicadas no código e migração executada manualmente pelo usuário no banco de dados do RAG; validação funcional na VPS pendente de conclusão pelo usuário.
+
+
