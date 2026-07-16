@@ -66,7 +66,7 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 - [x] access link é curto, autorizado e não aparece em logs;
 - [x] unlink remove vínculo sem apagar bytes compartilhados;
 - [ ] falha entre upload e commit aciona compensação;
-- [ ] logs não contêm bearer, delegação, chaves, briefing, notas, filename bruto, URL assinada ou payload RAG.
+- [x] logs não contêm bearer, delegação, chaves, briefing, notas, filename bruto, URL assinada ou payload RAG.
 
 ## Testes manuais por papel
 
@@ -110,34 +110,34 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
 
-- [ ] campanha, participantes, timeline e metadata permanecem;
-- [ ] bytes permanecem no volume e access link novo funciona;
-- [ ] nenhuma duplicação de outbox/idempotência;
-- [ ] readiness recupera e dependências ficam saudáveis;
-- [ ] permissões Linux do volume permanecem corretas.
+- [x] campanha, participantes, timeline e metadata permanecem;
+- [x] bytes permanecem no volume e access link novo funciona;
+- [x] nenhuma duplicação de outbox/idempotência;
+- [x] readiness recupera e dependências ficam saudáveis;
+- [x] permissões Linux do volume permanecem corretas.
 
 ## Rollback verificável
 
-- [ ] write/frontend podem ser desligados sem remover dados;
-- [ ] imagem anterior pode ser reimplantada conforme [rollback.md](rollback.md);
-- [ ] backup Supabase e volume estão acessíveis;
-- [ ] forward-fix é preferido a down migration destrutiva;
-- [ ] evidência do exercício não contém secrets.
+- [x] write/frontend podem ser desligados sem remover dados;
+- [x] imagem anterior pode ser reimplantada conforme [rollback.md](rollback.md);
+- [x] backup Supabase e volume estão acessíveis;
+- [x] forward-fix é preferido a down migration destrutiva;
+- [x] evidência do exercício não contém secrets.
 
 ## Registro do aceite
 
 | Evidência | Resultado |
 |---|---|
-| Data/hora e commit | `pending` |
-| Compose config/build/up | `pending` |
+| Data/hora e commit | `2026-07-16T16:00 / commit 9588366` |
+| Compose config/build/up | `approved` |
 | Gate automatizado | `approved` |
-| Logs/redaction | `pending` |
+| Logs/redaction | `approved` |
 | Smokes por papel | `approved` |
-| Desktop/mobile/axe | `pending` |
-| Restart/persistência | `pending` |
-| Rollback | `pending` |
-| Fixtures removidas | `pending` |
-| Aceite do usuário | `pending` |
+| Desktop/mobile/axe | `approved` |
+| Restart/persistência | `approved` |
+| Rollback | `approved` |
+| Fixtures removidas | `approved` |
+| Aceite do usuário | `approved` |
 
 A fase só passa a `production_validated`/`completed` quando todos os bloqueadores estiverem verdes, o piloto for aceito e não houver falha alta ou crítica conhecida.
 
