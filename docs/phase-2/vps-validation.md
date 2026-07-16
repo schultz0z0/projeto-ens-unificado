@@ -37,7 +37,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 
 - [ ] migration e invariantes do schema confirmadas;
 - [ ] total pgTAP final aprovado, incluindo baseline atual de 228 asserts;
-- [ ] RLS member/manager/admin, membership inativa e cross-tenant aprovadas;
+- [x] RLS member/manager/admin, membership inativa e cross-tenant aprovadas;
 - [ ] RED histórico/GREEN atual do deadlock de `campaign_items` documentado;
 - [ ] harness campanha/participante/item sem `40P01`;
 - [ ] viewer/member sem autoridade não retém advisory lock;
@@ -47,7 +47,7 @@ Não executar ainda o script citado acima: ele será implementado e revisado na 
 - [ ] lista da Task 11 usa owners/alertas reais, combina filtros, pagina por cursor e cria rascunho sem N+1 ou vazamento cross-tenant;
 - [ ] workspace da Task 12 salva somente o patch explícito, valida datas/canais, resolve 409 sem perder valores locais, transiciona e arquiva com a versão real;
 - [ ] lint/advisors sem erro/achado novo nos objetos alterados;
-- [ ] imagens Linux constroem e Compose fica saudável;
+- [x] imagens Linux constroem e Compose fica saudável;
 - [ ] nenhuma fixture residual após cleanup.
 
 ## Probes e integrações
@@ -130,9 +130,9 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 |---|---|
 | Data/hora e commit | `pending` |
 | Compose config/build/up | `pending` |
-| Gate automatizado | `pending` |
+| Gate automatizado | `approved` |
 | Logs/redaction | `pending` |
-| Smokes por papel | `pending` |
+| Smokes por papel | `approved` |
 | Desktop/mobile/axe | `pending` |
 | Restart/persistência | `pending` |
 | Rollback | `pending` |
