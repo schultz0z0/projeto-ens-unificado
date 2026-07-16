@@ -254,7 +254,7 @@ export function createApp(deps: AppDependencies) {
       deps.metrics.increment('marketing_ops_campaign_version_conflicts_total');
     }
     if (normalized.status >= 500) {
-      deps.logger.error(normalized.message, { correlationId: request.correlationId, error });
+      deps.logger.error(normalized.message, { correlationId: request.correlationId, cause: error });
     }
     response.status(normalized.status).json(errorEnvelope(normalized, request.correlationId));
   });
