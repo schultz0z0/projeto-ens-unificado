@@ -34,6 +34,7 @@ import { MarketingOpsApiError, type MarketingOpsClient } from '@/lib/marketingOp
 import { marketingOpsFlags } from '@/lib/marketingOps/flags';
 import { marketingOpsKeys } from '@/lib/marketingOps/queryKeys';
 import { marketingOpsClient } from '@/lib/marketingOps/runtime';
+import { validationIssues } from '@/lib/marketingOps/validationIssues';
 import type {
   MarketingOpsCampaign,
   MarketingOpsCampaignPatch,
@@ -156,6 +157,7 @@ function CampaignWorkspace({
   const readOnly = !canEditCampaign || campaign.status === 'archived';
   const nestedReadOnly = !canWrite || campaign.status === 'archived';
   const details = errorDetails(operationError);
+  const issues = validationIssues(details.details);
 
   const applyCampaign = (next: MarketingOpsCampaign) => {
     setCampaign(next);
@@ -306,9 +308,9 @@ function CampaignWorkspace({
               <AlertTitle>Não foi possível concluir a operação</AlertTitle>
               <AlertDescription>
                 <p>{details.message}</p>
-                {details.details && typeof details.details === 'object' && 'issues' in details.details && Array.isArray((details.details as any).issues) ? (
+                {issues ? (
                   <ul className="mt-2 list-disc pl-5 text-xs text-red-850">
-                    {(details.details as any).issues.map((issue: any, index: number) => (
+                    {issues.map((issue, index) => (
                       <li key={index}>
                         <strong>Campo "{issue.path.join('.') || 'geral'}":</strong> {issue.message}
                       </li>
