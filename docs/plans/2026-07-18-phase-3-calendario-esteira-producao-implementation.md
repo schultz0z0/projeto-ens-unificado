@@ -295,15 +295,16 @@ git commit -m "feat: expose phase 3 REST and typed client"
 - Create: `apps/chat-web/src/lib/marketingOps/scheduleUrl.ts`
 - Create: `apps/chat-web/src/lib/marketingOps/scheduleUrl.test.ts`
 - Modify: `apps/chat-web/src/App.tsx`
-- Modify: `apps/chat-web/src/components/layout/AppSidebar.tsx`
+- Modify: `apps/chat-web/src/components/Sidebar.tsx`
+- Modify: `apps/chat-web/vite.config.ts`
 
 **Produz:** referência funcional para criar, filtrar, listar, editar,
 reagendar e transicionar sem calendário/drag.
 
-- [ ] REDs para URL, filtros, paginação, sem data, atraso/bloqueio, criação,
+- [x] REDs para URL, filtros, paginação, sem data, atraso/bloqueio, criação,
   formulário timezone, teclado, 403/404/409 e estados vazios.
-- [ ] Implementar rota lazy e UI responsiva com tabela/cards.
-- [ ] GREEN:
+- [x] Implementar rota lazy e UI responsiva com tabela/cards.
+- [x] GREEN:
 
 ```powershell
 Set-Location apps/chat-web
@@ -313,7 +314,7 @@ npm run typecheck
 npm run build
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- apps/chat-web/src docs/phase-3

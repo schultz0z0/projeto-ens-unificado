@@ -17,6 +17,7 @@ import { marketingOpsFlags } from "./lib/marketingOps/flags";
 const queryClient = new QueryClient();
 const CampaignListPage = lazy(() => import("./pages/marketing-ops/CampaignListPage"));
 const CampaignWorkspacePage = lazy(() => import("./pages/marketing-ops/CampaignWorkspacePage"));
+const ProductionListPage = lazy(() => import("./pages/marketing-ops/ProductionListPage"));
 const marketingOps = marketingOpsFlags(import.meta.env);
 
 const CampaignRouteLoading = () => (
@@ -81,6 +82,26 @@ const App = () => (
                     <ProtectedRoute>
                       <Suspense fallback={<CampaignRouteLoading />}>
                         <CampaignWorkspacePage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/marketing-ops/production"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <ProductionListPage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/marketing-ops/production/items/:itemId"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <ProductionListPage />
                       </Suspense>
                     </ProtectedRoute>
                   }

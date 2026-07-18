@@ -1,10 +1,10 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 60%
+- **Progresso:** 70%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 7 — lista acessível
+- **Próxima task:** Task 8 — views semana e mês
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -14,7 +14,7 @@
 | 4 | grafo de dependências | `validated_locally` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
 | 5 | conteúdo, versões e artifacts | `validated_locally` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
 | 6 | REST/OpenAPI e client tipado | `validated_locally` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
-| 7 | lista acessível | `not_started` | — |
+| 7 | lista acessível | `validated_locally` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
 | 8 | views semana e mês | `not_started` | — |
 | 9 | notificações in-app e lote | `not_started` | — |
 | 10 | E2E, performance, docs e handoff VPS | `not_started` | — |
@@ -175,3 +175,30 @@ Ao concluir uma task:
   container permaneceu healthy.
 - GREEN: 15/15 REST, 13/13 SDK/query keys, 170/170 serviço, 2 E2E condicionais
   skipped, p95 367,39 ms, typechecks/builds, Redocly, Docker build/health.
+
+## Ciclo Task 7 — 2026-07-18
+
+- RED inicial observado: os testes não eram coletados porque
+  `ProductionListPage` e `scheduleUrl` ainda não existiam.
+- Implementada rota lazy `/marketing-ops/production` e deep link
+  `/marketing-ops/production/items/:itemId`, com entrada na sidebar.
+- Lista e cards reutilizam `listProductionSchedule` e a query key canônica;
+  filtros allowlisted ficam na URL, paginação preserva páginas anteriores e
+  itens sem data/atrasados/bloqueados têm estados explícitos.
+- O diálogo compartilhado cria, edita, reagenda e transiciona com
+  `Idempotency-Key`/`If-Match`, exibe timezone e trata 403/404/409 com
+  correlação/currentVersion.
+- Bug corrigido no ciclo TDD: o carregamento tardio de campanhas reidratava o
+  formulário de detalhe e podia sobrescrever uma edição digitada. A hidratação
+  do item foi separada do default de campanha e bloqueia interação até concluir.
+- Bug encontrado no smoke: o container local mantém CORS restrito à origem de
+  produção. Foi adicionado proxy somente ao servidor Vite, que remove `Origin`
+  no salto interno same-origin; build/produção não foram afrouxados.
+- Smoke manual real no navegador: login manager, lista, paginação,
+  atraso/bloqueio, criação, deep link, edição, rejeição de prontidão incompleta,
+  cancelamento e filtros URL passaram. Em 390×844 a tabela ficou oculta e o card
+  equivalente permaneceu visível.
+- Fixture manual `F3 UI manual validado` foi removida pelo reset; o serviço
+  retornou `healthy`.
+- GREEN: 7/7 focados, 167/167 frontend, lint sem erros, typecheck/build,
+  Supabase reset e health Docker.

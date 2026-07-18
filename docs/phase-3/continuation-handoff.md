@@ -1,9 +1,9 @@
 # Handoff de continuação — Fase 3
 
-- **Estado:** `ready_to_start_task_7`
+- **Estado:** `ready_to_start_task_8`
 - **Branch única:** `main`
 - **Snapshot:** 2026-07-18
-- **Código/schema Fase 3:** Tasks 1–6 validadas localmente (60%)
+- **Código/schema Fase 3:** Tasks 1–7 validadas localmente (70%)
 
 ## Ordem de leitura
 
@@ -16,13 +16,12 @@
 
 ## Ponto de continuação
 
-Começar pela Task 7 do plano:
+Começar pela Task 8 do plano:
 
-- escrever REDs da URL, filtros, paginação, estados e teclado;
-- implementar `/marketing-ops/production` como referência acessível;
-- reutilizar `listProductionSchedule`, `productionSchedule` query key e o
-  diálogo de item; não criar query específica de view;
-- manter operações de data em UTC e exibir o timezone retornado pela API.
+- escrever REDs de timezone, limites UTC, virada mês/ano e equivalência;
+- implementar semana/mês como agrupamentos da resposta canônica;
+- reutilizar filtros, `productionSchedule` query key e diálogo da lista;
+- validar teclado, overflow, card móvel e axe sem exigir drag-and-drop.
 
 ## Último gate confirmado
 
@@ -33,6 +32,9 @@ Começar pela Task 7 do plano:
 - smoke real de upload, ownership, URL assinada, download e cleanup passou.
 - OpenAPI 26 paths/38 operações, 15 REST e 13 SDK/query keys verdes;
 - smoke REST Docker real passou e o serviço ficou healthy após reset.
+- lista acessível: 7/7 focados e 167/167 frontend;
+- smoke browser desktop/mobile passou; proxy Vite local validado;
+- reset removeu a fixture manual e Marketing Ops retornou healthy.
 
 ## Pré-condição de deploy futuro
 

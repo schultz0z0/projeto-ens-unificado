@@ -120,5 +120,23 @@ E2E da Task 10.
 | Regressão | suíte completa + builds | 170 testes, typechecks e builds verdes |
 | Docker/manual | build, readiness, login e comandos reais | smoke PASS; healthy antes/depois do reset |
 
-O aceite das visualizações ainda depende das Tasks 7–8; notificações e lote
-dependem da Task 9. Esses paths não foram publicados como placeholders.
+O aceite das visualizações de calendário ainda depende da Task 8; notificações
+e lote dependem da Task 9. Esses paths não foram publicados como placeholders.
+
+## Evidência Task 7
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Lista canônica | `ProductionListPage.test.tsx` + browser | mesma query/key; lista e card verdes |
+| URL/filtros | `scheduleUrl.test.ts` + smoke | allowlist, enums/UUID e persistência verdes |
+| Paginação/estados | teste focado + dados reais | cursor, vazio, sem data, atraso e bloqueio verdes |
+| Comandos | diálogo + SDK real | create, patch, reagendamento e transition verdes |
+| Concorrência | erro 409/currentVersion | conflito explícito e recarga disponível |
+| Autorização/ausência | estados 403/404 | mensagens seguras e correlação |
+| Timezone | meta da agenda + formulário | IANA visível; persistência UTC explícita |
+| Responsividade | viewport 390×844 | card visível e tabela oculta |
+| Regressão | suíte/lint/typecheck/build | 167 testes; zero erro de lint; builds verdes |
+| Limpeza | Supabase reset + Docker health | fixture removida; serviço healthy |
+
+A lista acessível está validada localmente. Equivalência semanal/mensal,
+limites UTC por view e axe completo permanecem na Task 8.

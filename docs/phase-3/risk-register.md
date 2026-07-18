@@ -62,3 +62,15 @@ falha alta/crítica sem mitigação.
 - Novo risco operacional observado: `.env` de desenvolvimento pode apontar para
   destinos não locais. Smokes locais devem classificar endpoints antes de subir
   containers e usar overrides explícitos; nenhum remoto foi acessado.
+
+## Revisão após a Task 7
+
+- F3-R-01: timezone retornado pela API ficou visível e o formulário declara
+  persistência UTC; limites locais e DST continuam no gate da Task 8.
+- F3-R-02: lista usa o client/query key canônicos e filtros URL compartilháveis;
+  permanece aberto somente até semana/mês comprovarem equivalência.
+- F3-R-08: lista desktop/mobile, labels, diálogo e controles nativos foram
+  validados por testes e browser. Axe e navegação dos calendários ficam na
+  Task 8.
+- O CORS de produção permaneceu fechado. Desenvolvimento local usa proxy Vite
+  same-origin e não altera imagem, compose ou allowlist do serviço.

@@ -9,6 +9,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8081,
+    proxy: {
+      "/marketing-ops-api": {
+        target: process.env.VITE_MARKETING_OPS_PROXY_TARGET ?? "http://127.0.0.1:8091",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/marketing-ops-api/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyRequest) => proxyRequest.removeHeader("origin"));
+        },
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

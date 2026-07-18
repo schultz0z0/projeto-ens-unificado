@@ -1,4 +1,4 @@
-import { MessageSquare, Image, Settings, LogOut, Camera, Key, Loader2, ClipboardCheck, Megaphone } from "lucide-react";
+import { MessageSquare, Image, Settings, LogOut, Camera, Key, Loader2, ClipboardCheck, Megaphone, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -204,19 +204,34 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
         </Button>
 
         {marketingOps.read ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
-              location.pathname.startsWith("/marketing-ops/campaigns") && "bg-brand-primary/20 text-brand-primary"
-            )}
-            onClick={() => { navigate("/marketing-ops/campaigns"); onMobileClose?.(); }}
-            aria-label="Abrir campanhas"
-            title="Campanhas"
-          >
-            <Megaphone className="w-5 h-5" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
+                location.pathname.startsWith("/marketing-ops/campaigns") && "bg-brand-primary/20 text-brand-primary"
+              )}
+              onClick={() => { navigate("/marketing-ops/campaigns"); onMobileClose?.(); }}
+              aria-label="Abrir campanhas"
+              title="Campanhas"
+            >
+              <Megaphone className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
+                location.pathname.startsWith("/marketing-ops/production") && "bg-brand-primary/20 text-brand-primary"
+              )}
+              onClick={() => { navigate("/marketing-ops/production"); onMobileClose?.(); }}
+              aria-label="Abrir esteira de produção"
+              title="Produção"
+            >
+              <CalendarRange className="w-5 h-5" />
+            </Button>
+          </>
         ) : null}
 
         {canManageValidatedWorks && (

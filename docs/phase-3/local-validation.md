@@ -339,3 +339,52 @@ continuam sendo o gate pertinente para não ampliar esse chunk.
 5. O hostname Docker era classificado como remoto e recebia TLS forçado.
    `createPool` agora respeita `sslmode=disable` explícito; URL remota continua
    com TLS.
+
+## Task 7 — Lista acessível
+
+### RED observado
+
+- `ProductionListPage.test.tsx` e `scheduleUrl.test.ts` falharam na coleta pela
+  ausência dos módulos.
+- A primeira implementação revelou duas falhas: assert duplicado pelas
+  representações desktop/mobile e reidratação tardia que sobrescrevia título.
+  O segundo caso era defeito real e foi corrigido no componente.
+
+### GREEN observado
+
+| Comando/gate | Resultado |
+|---|---|
+| testes de lista + URL | 7/7 |
+| `npm test` no frontend | 167/167 |
+| `npm run lint` | zero erros; 10 warnings baseline |
+| `npm run typecheck` | passou |
+| `npm run build` | passou; `ProductionListPage` em chunk lazy próprio |
+| navegador desktop | create/list/filter/edit/transition/deep link passaram |
+| viewport 390×844 | tabela invisível; card funcional visível |
+| `npx supabase db reset --local --workdir .` | fixtures removidas |
+| health após reset | Marketing Ops `healthy` |
+
+### Critérios exercitados
+
+- filtros allowlisted na URL e UUID/enum inválidos descartados;
+- cursor carrega a próxima página sem substituir itens visíveis;
+- estados vazio/filtrado, sem data, atraso e bloqueio;
+- criação, edição de título, reagendamento UTC e transições;
+- timezone IANA explicitamente visível no formulário;
+- deep link de detalhe e fechamento preservando filtros;
+- respostas 403/404/409, correlação e `currentVersion`;
+- tabela desktop e card mobile equivalente;
+- controles nativos, labels, foco do diálogo e ações acessíveis por teclado.
+
+### Bugs e correções
+
+1. Campanhas concluíam a query enquanto o usuário editava o detalhe e
+   reexecutavam a hidratação do formulário. Os efeitos foram separados e a
+   versão hidratada agora controla o estado de carregamento.
+2. O Vite local chamava diretamente um container com CORS de produção e o
+   browser recebia `origin_forbidden`. Um proxy exclusivo de desenvolvimento
+   mantém a chamada same-origin e remove `Origin` apenas no salto interno.
+3. A contagem plural exibiu “items”; corrigida para “itens”.
+
+O teste manual tentou avançar o item sem todos os campos de prontidão e recebeu
+a rejeição estável esperada; a transição permitida para `cancelled` passou.
