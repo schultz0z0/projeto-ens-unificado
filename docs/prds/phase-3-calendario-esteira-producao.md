@@ -1,178 +1,254 @@
 # PRD — Fase 3: Calendário e Esteira de Produção
 
-- **Status:** draft
-- **Dependência:** Fase 2 concluída
+- **Status:** `approved`
+- **Prontidão:** `ready_for_implementation`
+- **Implementação:** `not_started`
+- **Aprovação do escopo:** 2026-07-18
+- **Dependência:** Fase 2 `production_validated`
 - **Resultado:** trabalho de campanha planejado, produzido e acompanhável
 
 ## Resumo
 
-A fase adiciona itens operacionais, calendário e conteúdo versionado. Ela organiza o que precisa ser produzido e quando, sem realizar disparos nem introduzir a aprovação institucional completa da Fase 5.
+A Fase 3 evolui o agregado `campaign_items` existente para organizar tarefas,
+mensagens, peças, revisões e marcos em lista, semana e mês. Ela entrega
+planejamento manual e conteúdo versionado, sem disparos, aprovação
+institucional ou operação autônoma do Hermes.
 
 ## Problema
 
-Uma campanha registrada sem tarefas, datas, peças e responsáveis ainda não substitui a operação diária. O time precisa transformar objetivos em itens executáveis e acompanhar produção sem perder versões em conversas ou arquivos soltos.
+Uma campanha registrada sem itens, datas, responsáveis e versões ainda não é
+uma referência diária de produção. O time precisa transformar objetivos em
+trabalho executável sem perder prazos, dependências e versões em conversas ou
+arquivos soltos.
 
 ## Objetivos
 
 - criar agenda operacional ligada às campanhas;
-- representar tarefas, mensagens, peças, revisões e marcos;
-- atribuir responsáveis e prazos;
-- versionar conteúdo;
-- visualizar conflitos e pendências;
-- preparar o domínio para o Hermes e aprovações.
+- atribuir responsáveis, prioridade e prazos;
+- oferecer lista acessível, semana e mês sobre a mesma query;
+- representar bloqueios e atrasos;
+- versionar conteúdo sem alterar versões congeladas;
+- produzir eventos internos para atribuição e prazo;
+- preparar o domínio para Hermes e aprovações posteriores.
 
 ## Não objetivos
 
-- disparar mensagens;
-- aprovar institucionalmente conteúdo;
+- disparar mensagens ou publicar conteúdo;
+- aprovar institucionalmente;
 - integrar provedores externos;
-- calcular performance;
-- criar automações proativas.
+- calcular performance de campanha;
+- automação proativa do Hermes;
+- recorrência de itens;
+- timeline de recursos/capacidade;
+- drag-and-drop obrigatório;
+- notificações por e-mail, WhatsApp ou push externo.
 
-## Jornadas
+## Personas
 
-1. Criar item dentro de uma campanha.
+- **Member:** opera itens de campanhas em que pode editar.
+- **Manager:** redistribui e corrige itens do tenant.
+- **Admin:** possui diagnóstico e operação ampla autorizada.
+
+Papéis desta fase não concedem aprovação editorial nem execução de canal.
+
+## Jornadas prioritárias
+
+1. Criar item em campanha autorizada.
 2. Agendar e atribuir responsável.
-3. Visualizar agenda mensal, semanal ou lista.
-4. Produzir conteúdo e salvar nova versão.
-5. Mover item pela esteira permitida.
-6. Identificar atraso, bloqueio ou conflito.
-7. Reagendar com histórico.
+3. Encontrar o mesmo item na lista, semana e mês.
+4. Reagendar com justificativa e histórico.
+5. Criar dependência e identificar bloqueio.
+6. Produzir conteúdo e criar versão.
+7. Mover item pela esteira permitida.
+8. Executar ação segura em lote.
+9. Consultar notificações internas.
 
 ## Requisitos funcionais
 
-### F3-RF-01 — Tipos de item
+### F3-RF-01 — Tipos
 
-Suportar inicialmente `task`, `email`, `whatsapp`, `post`, `creative`, `review` e `milestone`, com extensão controlada.
+Suportar `task`, `email`, `whatsapp`, `post`, `creative`, `review` e
+`milestone`. Metadata específica é validada por tipo; valores desconhecidos
+falham fechados.
 
 ### F3-RF-02 — Campos
 
-Título, campanha, tipo, status, responsável, início, prazo/horário, prioridade, canal, descrição, dependências e metadata específica validada.
+Título obrigatório, campanha, tipo, status, responsável opcional, início,
+prazo/horário, prioridade, canal opcional, descrição, metadata validada e
+versão otimista.
 
 ### F3-RF-03 — Visualizações
 
-Mensal, semanal e lista devem representar os mesmos dados. Filtros: campanha, canal, tipo, responsável, status e período.
+Lista, semana e mês representam a mesma consulta canônica por intervalo.
+Filtros por campanha, canal, tipo, responsável, status, prioridade e período
+combinam e persistem na URL. A lista é a referência funcional e acessível.
 
 ### F3-RF-04 — Timezone
 
-Persistir instantes em UTC e exibir no timezone configurado. A interface deve deixar o fuso explícito em operações sensíveis.
+Instantes são persistidos em `timestamptz`/UTC. A API retorna timestamps ISO
+8601; o frontend exibe o timezone efetivo do tenant. No primeiro corte, o
+timezone do tenant é configuração explícita com fallback `America/Sao_Paulo`.
+Operações sensíveis mostram data, hora e fuso.
 
 ### F3-RF-05 — Reagendamento
 
-Alterações de data geram auditoria. Itens aprovados ou sensíveis terão restrições adicionadas na Fase 5.
+Alterações de início/prazo exigem `If-Match`, geram auditoria e evento. Não
+existe reagendamento silencioso.
 
 ### F3-RF-06 — Dependências
 
-Um item pode depender de outro. Ciclos são proibidos. A interface deve indicar bloqueios.
+Um item pode depender de outro item ativo da mesma campanha e tenant.
+Self-loop, duplicata e ciclos são proibidos. Item fica bloqueado enquanto
+alguma dependência não estiver `completed`.
 
 ### F3-RF-07 — Conteúdo
 
-Itens podem vincular um ou mais `content_assets`. Conteúdo textual e metadata possuem versões.
+Itens podem possuir `content_assets` com identidade estável. Texto e metadata
+são gravados em `content_versions`; conteúdo binário permanece no Artifact
+Server.
 
 ### F3-RF-08 — Versões
 
-Cada edição confirmada cria ou atualiza rascunho conforme regra técnica; versões submetidas a revisão futura ficam imutáveis.
+Cada salvamento explícito cria nova versão numerada. Uma versão congelada não
+é alterada nem removida. O asset aponta para sua versão corrente; histórico
+continua consultável.
 
 ### F3-RF-09 — Artefatos
 
-Peças e arquivos usam Artifact Server/Storage. O domínio guarda ID, owner, tipo, checksum quando disponível e vínculo.
+`item_artifacts` vincula item/asset a artifact ID, owner, MIME, tamanho e hash.
+Ownership e access link seguem o contrato validado na Fase 2.
 
 ### F3-RF-10 — Estados
 
-Item: `draft`, `ready`, `in_review`, `approved`, `scheduled`, `executing`, `completed`, `failed`, `cancelled`. Nesta fase, `approved` e posteriores podem permanecer indisponíveis até a Fase 5/6.
+Estados disponíveis na Fase 3:
 
-### F3-RF-11 — Notificações básicas
+`draft → ready → in_review → completed`
 
-Gerar eventos internos para atribuição, prazo próximo e atraso. A entrega pode ser apenas in-app inicialmente.
+`draft`, `ready` e `in_review` podem ir para `cancelled`; `cancelled` e
+`completed` são terminais nesta fase. `approved`, `scheduled`, `executing` e
+`failed` ficam reservados às Fases 5/6 e não podem ser enviados pela API.
+
+### F3-RF-11 — Notificações internas
+
+Persistir projeções in-app para atribuição, prazo próximo e atraso. A entrega
+externa não faz parte desta fase. Eventos são deduplicáveis e não carregam
+conteúdo sensível.
 
 ### F3-RF-12 — Ações em lote
 
-Somente operações seguras e reversíveis aprovadas no design técnico; toda ação respeita permissões e retorna resultado por item.
+Permitir somente operações reversíveis e enumeradas:
 
-## Dados
+- reatribuir responsável;
+- alterar prioridade;
+- reagendar início/prazo.
 
-- `campaign_items`;
-- `item_dependencies`;
-- `content_assets`;
-- `content_versions`;
-- `item_artifacts`;
-- eventos e auditoria.
+Cada item é autorizado e versionado individualmente. A resposta informa
+sucesso/falha por item; não existe sucesso parcial oculto.
 
-Conteúdo binário não será armazenado em colunas JSON/base64.
+## Regras de negócio
 
-## Regras
+- item pertence a uma campanha não arquivada;
+- responsável precisa ter acesso ativo à campanha;
+- prazo não antecede início;
+- datas ausentes ficam fora das views semana/mês, mas aparecem na lista;
+- dependência concluída desbloqueia, sem concluir automaticamente;
+- conteúdo congelado é append-only;
+- item terminal não aceita mutação comum;
+- hard delete não é exposto;
+- toda mutação usa idempotência, auditoria, outbox e versão otimista;
+- tenant e autoridade são derivados no servidor.
 
-- item pertence a uma campanha;
-- campanha arquivada não recebe novo item;
-- responsável precisa ter acesso à campanha;
-- dependência concluída desbloqueia, mas não conclui automaticamente;
-- prazo anterior ao início é inválido;
-- conteúdo submetido não é alterado in-place;
-- exclusão comum vira cancelamento/arquivamento conforme entidade.
+## UX e acessibilidade
 
-## UX
-
-- drag-and-drop é melhoria, não requisito para o primeiro corte;
-- toda mudança de data deve ser possível sem drag-and-drop;
-- cores nunca são o único indicador de status;
-- calendário possui navegação por teclado aplicável;
-- lista é alternativa acessível e funcional;
-- filtros persistem na URL;
-- detalhes abrem sem perder contexto da visão.
+- lista funcional antes das views de calendário;
+- semana e mês possuem alternativa tabular/lista equivalente;
+- cores não são o único indicador;
+- filtros e intervalo persistem na URL;
+- detalhes abrem sem perder contexto;
+- toda mudança possível por teclado e formulário, sem depender de drag;
+- loading, vazio, sem resultado, erro, acesso negado e conflito;
+- desktop, tablet e mobile;
+- locale `pt-BR`, com timezone sempre visível em edição/reagendamento.
 
 ## Permissões
 
-Members operam itens de campanhas autorizadas. Managers podem redistribuir e corrigir itens no escopo. Admin possui diagnóstico amplo. Permissões de aprovação não são inferidas dessas ações.
+| Ação | Member autorizado | Manager | Admin |
+|---|---:|---:|---:|
+| Ler item | Sim | Sim no tenant | Sim no tenant autorizado |
+| Criar/editar | Conforme campanha | Sim | Sim |
+| Reatribuir | Conforme capability | Sim | Sim |
+| Gerenciar dependência | Conforme edição | Sim | Sim |
+| Versionar conteúdo | Conforme edição | Sim | Sim |
+| Lote | Não por padrão | Sim | Sim |
 
-## Observabilidade e métricas
+## Observabilidade
 
 - itens criados por tipo;
-- atraso por campanha/canal;
+- atraso e bloqueio agregados;
 - tempo por estado;
 - reagendamentos;
 - conflitos de versão;
-- itens sem responsável;
-- latência das visualizações;
-- eventos de notificação produzidos.
+- versões por asset;
+- eventos in-app produzidos;
+- latência e cardinalidade de lista/semana/mês;
+- resultado por item em lote.
+
+Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinada.
 
 ## Critérios de aceite
 
 - [ ] Usuário cria item em campanha autorizada.
-- [ ] Tipos e metadata inválida são rejeitados.
-- [ ] Visualizações mensal, semanal e lista são consistentes.
-- [ ] Filtros combinam e persistem na URL.
-- [ ] Datas respeitam timezone explícito.
-- [ ] Reagendamento gera auditoria.
-- [ ] Dependências cíclicas são bloqueadas.
-- [ ] Conteúdo possui histórico de versões.
-- [ ] Versão congelada não é alterada.
-- [ ] Arquivos mantêm ownership e referência.
+- [ ] Tipo e metadata inválidos são rejeitados.
+- [ ] Lista, semana e mês usam dados e filtros consistentes.
+- [ ] Filtros e intervalo persistem na URL.
+- [ ] Datas usam UTC e timezone explícito.
+- [ ] Reagendamento gera auditoria e respeita versão.
+- [ ] Dependências inválidas e cíclicas são bloqueadas.
+- [ ] Bloqueio é derivado corretamente.
+- [ ] Conteúdo possui histórico imutável de versões.
+- [ ] Artefatos mantêm ownership e referência.
+- [ ] Estados reservados às Fases 5/6 são rejeitados.
 - [ ] Itens atrasados e bloqueados são identificáveis.
 - [ ] Lista oferece jornada equivalente sem drag-and-drop.
-- [ ] Reinício não perde agenda ou versões.
+- [ ] Ação em lote retorna resultado por item.
+- [ ] Notificações in-app são persistidas e deduplicáveis.
+- [ ] Reinício não perde agenda, dependências, versões ou eventos.
 
-## Testes
+## Gates
 
-Unitários para estados, datas, timezone, dependências e versões. Integração para CRUD, filtros, RLS, auditoria e artefatos. E2E para planejar semana, reagendar, versionar conteúdo e resolver bloqueio. Performance com volume representativo de itens.
+### Local
 
-## Gate local
+- migration aditiva, reset, pgTAP, RLS e schema diff;
+- unitários, integração, contratos, OpenAPI, frontend e E2E;
+- lista/semana/mês, timezone, dependências e versões;
+- concorrência e idempotência;
+- performance com volume representativo;
+- Compose, restart, persistência, logs e security gate;
+- documentação e rollback atualizados.
 
-Migrations/rollback, testes, três visualizações, timezone, papéis, versões, dependências, responsividade, acessibilidade e persistência.
+### VPS
 
-## Gate VPS
+- backup/dry-run/push do Supabase do app;
+- build e deploy dos serviços;
+- smoke por papel e cross-tenant;
+- agenda no timezone ENS;
+- dependências, conteúdo, artifacts, eventos e lote;
+- desktop/mobile/axe;
+- logs/correlation ID;
+- restart, persistência, cleanup e rollback.
 
-Smoke de agenda com timezone da ENS, volumes/artefatos, CORS, eventos, reinício, logs e rollback.
-
-## Riscos
+## Riscos principais
 
 | Risco | Mitigação |
 |---|---|
-| Calendário dominar o escopo | Lista funcional primeiro; views compartilham query |
-| Timezone gerar disparo incorreto | UTC + fuso explícito + testes de DST aplicáveis |
-| Tipos virarem tabelas isoladas | Núcleo comum com metadata versionada |
-| Dependências complexas | Apenas bloqueio simples no primeiro corte |
-| Versionamento confuso | Identidade do asset separada da versão |
+| calendário dominar o escopo | lista canônica primeiro e uma query compartilhada |
+| timezone deslocar prazo | UTC + timezone efetivo visível + testes de borda |
+| grafo complexo/deadlock | dependência simples, ordem de lock e detecção transacional |
+| versões confusas | identidade do asset separada de versões append-only |
+| estados anteciparem aprovação/execução | enum e API rejeitam estados reservados |
+| lote ocultar falhas | autorização/versão/resultados por item |
 
 ## Gate de saída
 
-A Fase 4 inicia quando campanhas possuem itens e versões confiáveis, e as operações manuais estão validadas localmente e na VPS.
+A Fase 4 só inicia quando itens, agenda, dependências, versões e eventos internos
+estiverem validados localmente e homologados na VPS, sem falha alta/crítica.

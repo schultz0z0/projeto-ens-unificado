@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1 e 2 `production_validated`; Fase 3 `ready_for_execution` como próxima frente
-- **Atualização:** 16 de julho de 2026
+- **Status:** Fases 0, 1 e 2 `production_validated`; Fase 3 `ready_for_implementation`
+- **Atualização:** 18 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -227,7 +227,11 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 
 **Estado:** `production_validated` — Todas as Tasks (1 a 15) concluídas, implantadas e homologadas funcionalmente com sucesso na VPS. Todos os testes de concorrência, segurança de RLS por papel (Member, Manager, Admin, Viewer), integração com RAG MCP e Artifact Server, health/readiness checks, resiliência contra restarts e omissão de dados confidenciais de logs foram validados com sucesso.
 
-**Exceção operacional aprovada para esta fase:** o computador atual não usará Docker Desktop, WSL ou Podman. Testes que exigem Supabase/PostgreSQL conteinerizado, imagens Linux, Docker Compose, restart ou persistência serão preparados durante a implementação e executados na VPS de produção depois do fechamento interno das Tasks 1–15. Esse fechamento interno não promove a fase a `completed`: o estado intermediário será `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`.
+**Reconciliação final:** a homologação VPS foi aprovada em 16 de julho. Em 18
+de julho, o saneamento local com Docker Desktop repetiu banco, pgTAP,
+concorrência e performance. O índice aditivo da lista está validado localmente
+e será aplicado no próximo deploy controlado; isso não reabre o escopo
+funcional da fase.
 
 **Objetivo:** entregar o primeiro release de valor para campanhas reais.
 
@@ -247,6 +251,10 @@ As três últimas entregas são um hardening da superfície de escrita da Fase 1
 **PRD:** [Fase 2 — Workspace Operacional MVP](docs/prds/phase-2-workspace-operacional-mvp.md)
 
 ### Fase 3: Calendário e Esteira de Produção
+
+**Estado:** `ready_for_implementation` — PRD, design, rastreabilidade, riscos e
+plano técnico aprovados em 18 de julho de 2026; implementação ainda não
+iniciada.
 
 **Objetivo:** transformar campanhas em trabalho planejado e acompanhável.
 
