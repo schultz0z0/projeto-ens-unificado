@@ -1,15 +1,15 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 20%
+- **Implementação:** 30%
 - **Data:** 2026-07-18
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
 | F3-RF-01 Tipos | 4.1, 5 | 1–2 | `domain_validated` |
 | F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `domain_validated` |
-| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `planned` |
-| F3-RF-04 Timezone | 7 | 3, 7–8 | `planned` |
+| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `query_validated` |
+| F3-RF-04 Timezone | 7 | 3, 7–8 | `backend_validated` |
 | F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `domain_validated` |
 | F3-RF-06 Dependências | 4.2, 10 | 4 | `planned` |
 | F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `planned` |
@@ -57,3 +57,17 @@ contratos e domínio. O aceite público depende das APIs, UI e E2E das Tasks
 
 O status `domain_validated` não equivale a aceite público: REST/OpenAPI, UI e
 E2E ainda dependem das Tasks 6–10.
+
+## Evidência Task 3
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Query canônica e filtros | `scheduling.test.ts` + `queries.test.ts` | range, filtros, cursores e itens sem data verdes |
+| Timezone | config, Compose e testes IANA/DST | backend validado com fallback São Paulo |
+| Cross-tenant | cenário com ator do segundo tenant + pgTAP de função | nenhuma linha externa; grants/search path validados |
+| Performance | harness de 10.000 itens + EXPLAIN | p95 40,02 ms; função 18,68 ms |
+| Reprodutibilidade | pgTAP, lint e diff | 299 testes, lint vazio e diff vazio |
+| Regressão | suíte de serviço + typecheck + build | 153 pass, 2 skips condicionais |
+
+As visualizações ainda não estão aceitas: a fonte canônica está validada, mas
+lista/semana/mês e acessibilidade pertencem às Tasks 7–8.

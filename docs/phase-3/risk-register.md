@@ -1,6 +1,6 @@
 # Registro de riscos da Fase 3
 
-- **Estado:** `active_before_implementation`
+- **Estado:** `active_during_implementation`
 - **Revisão:** 2026-07-18
 
 | ID | Risco | Impacto | Mitigação/gate | Owner |
@@ -22,3 +22,12 @@
 Bloqueiam rollout: cross-tenant, perda/mutação de versão, ciclo/deadlock,
 timezone incorreto, estado reservado aceito, dado sensível em log/evento ou
 falha alta/crítica sem mitigação.
+
+## Revisão após a Task 3
+
+- F3-R-01: mitigação backend validada com UTC, IANA, São Paulo e timezone DST;
+  permanece aberto até a validação visual das Tasks 7–8.
+- F3-R-02: query canônica validada; permanece aberto até todas as views usarem o
+  mesmo client/query key.
+- F3-R-09: gate local validado em p95 40,02 ms/10.000 itens. O EXPLAIN confirmou
+  a remoção da avaliação RLS por linha e não justificou índice adicional.

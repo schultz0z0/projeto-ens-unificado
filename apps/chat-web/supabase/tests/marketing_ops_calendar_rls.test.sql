@@ -1,6 +1,6 @@
 begin;
 
-select plan(30);
+select plan(34);
 
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid = to_regclass('marketing_ops.item_dependencies')), 'item dependencies force RLS');
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid = to_regclass('marketing_ops.content_assets')), 'content assets force RLS');
@@ -95,6 +95,41 @@ select ok(
   ),
   'notification reads are scoped to auth.uid'
 );
+
+select has_function(
+  'marketing_ops_private',
+  'list_production_schedule',
+  array[
+    'timestamp with time zone', 'timestamp with time zone', 'uuid',
+    'marketing_ops.item_kind', 'marketing_ops.item_channel', 'uuid',
+    'marketing_ops.item_status', 'marketing_ops.item_priority',
+    'timestamp with time zone', 'integer', 'uuid', 'integer'
+  ],
+  'canonical production schedule function exists'
+);
+select ok(
+  (select prosecdef from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.list_production_schedule(timestamptz,timestamptz,uuid,marketing_ops.item_kind,marketing_ops.item_channel,uuid,marketing_ops.item_status,marketing_ops.item_priority,timestamptz,integer,uuid,integer)'
+  )),
+  'canonical production schedule is security definer'
+);
+select is(
+  (select proconfig::text from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.list_production_schedule(timestamptz,timestamptz,uuid,marketing_ops.item_kind,marketing_ops.item_channel,uuid,marketing_ops.item_status,marketing_ops.item_priority,timestamptz,integer,uuid,integer)'
+  )),
+  '{"search_path=\"\""}',
+  'canonical production schedule has an empty search path'
+);
+select ok(not exists (
+  select 1
+  from pg_proc p
+  cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+  where p.oid = to_regprocedure(
+    'marketing_ops_private.list_production_schedule(timestamptz,timestamptz,uuid,marketing_ops.item_kind,marketing_ops.item_channel,uuid,marketing_ops.item_status,marketing_ops.item_priority,timestamptz,integer,uuid,integer)'
+  )
+    and acl.grantee = 0
+    and acl.privilege_type = 'EXECUTE'
+), 'PUBLIC cannot execute canonical production schedule');
 
 select * from finish();
 rollback;

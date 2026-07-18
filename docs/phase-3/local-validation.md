@@ -92,3 +92,56 @@ O clone não está ligado pelo Supabase CLI: `migration list --linked` retorna
    content-only.
 3. A regressão ampla expôs fixture antigo de busca não idempotente: múltiplas
    execuções acumulavam campanhas “Nexus Alpha”. O teste agora usa token único.
+
+## Task 3 — agenda, query canônica e timezone
+
+### RED observado
+
+| Comando/cenário | Resultado |
+|---|---|
+| `npx vitest run src/domain/scheduling.test.ts src/domain/queries.test.ts` | falhas porque scheduling e a consulta canônica não existiam |
+| `npx vitest run src/schedule.performance.test.ts --pool=forks --maxWorkers=1` | p95 2.566,34 ms para 10.000 itens; limite 500 ms |
+| `EXPLAIN (ANALYZE, BUFFERS)` inicial | 2.401,49 ms; 195.471 buffer hits; helper RLS reavaliado por linha |
+
+### Correção medida
+
+A consulta passou a usar
+`marketing_ops_private.list_production_schedule`, validando tenant/ator uma vez
+e aplicando a autorização de campanha no mesmo plano. A função é
+`security definer`, usa `search_path` vazio e não possui grant para `PUBLIC`.
+O `EXPLAIN` posterior concluiu a função em 18,68 ms com 16.319 buffer hits.
+Como a meta foi superada pela correção da causa, nenhum índice especulativo foi
+adicionado.
+
+### GREEN observado
+
+| Comando | Resultado |
+|---|---|
+| `npx vitest run src/domain/scheduling.test.ts src/domain/queries.test.ts src/foundation.test.ts` | 39/39 |
+| `npm run test:schedule-performance` | 1/1; p95 40,02 ms/10.000 itens |
+| `npx supabase test db --local --workdir .` | 6 arquivos, 299/299 |
+| `npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error` | nenhum erro |
+| `npx supabase db diff --local --schema marketing_ops,marketing_ops_private` | diff vazio |
+| `npm test` | 153 pass; 2 E2E condicionais skipped |
+| `npm run typecheck` | passou |
+| `npm run build` | passou |
+
+Na regressão completa executada em paralelo com typecheck/build, o mesmo gate
+de volume registrou p95 de 316,31 ms e permaneceu abaixo de 500 ms.
+
+### Critérios exercitados
+
+- intervalo `[from,to)`, exclusão de item sem data no range e inclusão sem range;
+- filtros combinados e paginação determinística com timestamps iguais;
+- viradas de mês/ano, prioridades e cursor de item sem data;
+- atraso e bloqueio derivados sem persistência;
+- fallback `America/Sao_Paulo`, configuração IANA e timezone com DST;
+- isolamento cross-tenant da função privilegiada;
+- contrato de Compose e `.env.example` para timezone explícito.
+
+### Bugs e correções
+
+1. A consulta inicial reutilizava policies/helper RLS por linha e falhou o gate
+   de performance. A autorização foi consolidada na função canônica privada.
+2. O CLI Supabase local não aceita execução concorrente confiável dos pgTAP; os
+   gates de banco permaneceram serializados conforme incidente da Task 1.

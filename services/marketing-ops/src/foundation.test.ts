@@ -398,7 +398,9 @@ describe('production Compose contract', () => {
       MARKETING_OPS_ARTIFACT_URL: '${NEXUS_ARTIFACT_INTERNAL_URL:-http://artifact-server:8095}',
       MARKETING_OPS_ARTIFACT_TIMEOUT_MS: '${NEXUS_MARKETING_OPS_ARTIFACT_TIMEOUT_MS:-5000}',
       MARKETING_OPS_RAG_URL: '${NEXUS_MARKETING_OPS_RAG_URL:-http://rag-mcp:8000/mcp}',
-      MARKETING_OPS_RAG_TIMEOUT_MS: '${NEXUS_MARKETING_OPS_RAG_TIMEOUT_MS:-5000}'
+      MARKETING_OPS_RAG_TIMEOUT_MS: '${NEXUS_MARKETING_OPS_RAG_TIMEOUT_MS:-5000}',
+      MARKETING_OPS_TENANT_TIME_ZONE:
+        '${NEXUS_MARKETING_OPS_TENANT_TIME_ZONE:-America/Sao_Paulo}'
     });
     expect(production.services['rag-mcp']?.labels).toContain('traefik.enable=false');
   });

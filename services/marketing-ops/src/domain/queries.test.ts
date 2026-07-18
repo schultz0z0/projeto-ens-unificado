@@ -5,6 +5,7 @@ import {
   getCampaignAttention,
   normalizeCampaignFilters
 } from './queries.js';
+import { normalizeScheduleFilters } from './scheduling.js';
 
 describe('campaign query contracts', () => {
   it('normalizes search text and escapes a parameterized ILIKE prefix', () => {
@@ -45,5 +46,11 @@ describe('campaign query contracts', () => {
       startsOn: '2026-07-01',
       endsOn: '2026-07-13'
     }, [{ isPrimary: true }], '2026-07-14')).toEqual(['active_past_end']);
+  });
+
+  it('keeps campaign and production schedule filter contracts independent', () => {
+    expect(normalizeCampaignFilters({ status: 'planned', limit: 25 }).status).toBe('planned');
+    expect(normalizeScheduleFilters({ status: 'in_review', limit: 25 }).status)
+      .toBe('in_review');
   });
 });

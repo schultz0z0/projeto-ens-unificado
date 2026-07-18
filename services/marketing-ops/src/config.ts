@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertIanaTimeZone, DEFAULT_TENANT_TIME_ZONE } from './domain/scheduling.js';
 
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
@@ -8,6 +9,7 @@ export interface AppConfig {
   supabaseAnonKey: string;
   corsOrigins: string[];
   internalKey: string;
+  tenantTimeZone: string;
   delegation: {
     activeKid: string;
     activeKey: string;
@@ -110,6 +112,9 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     corsOrigins: (env.MARKETING_OPS_CORS_ORIGINS ?? 'http://127.0.0.1:8088,http://localhost:5173')
       .split(',').map((value) => value.trim()).filter(Boolean),
     internalKey,
+    tenantTimeZone: assertIanaTimeZone(
+      env.MARKETING_OPS_TENANT_TIME_ZONE?.trim() || DEFAULT_TENANT_TIME_ZONE
+    ),
     delegation,
     delegationRefresh: {
       url: z.string().url().parse(delegationRefreshUrl),

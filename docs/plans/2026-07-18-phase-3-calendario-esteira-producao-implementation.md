@@ -141,10 +141,10 @@ git commit -m "feat: implement production item lifecycle"
 **Produz:** range `[from,to)`, filtros, cursor, atraso/bloqueio derivados,
 timezone efetivo e gate de volume.
 
-- [ ] REDs para interseção de intervalo, sem data, filtros combinados, cursor,
+- [x] REDs para interseção de intervalo, sem data, filtros combinados, cursor,
   virada de mês/ano, São Paulo e timezone com DST.
-- [ ] RED de performance com 10.000 itens e p95 <= 500 ms.
-- [ ] Executar RED:
+- [x] RED de performance com 10.000 itens e p95 <= 500 ms.
+- [x] Executar RED:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -152,9 +152,9 @@ npx vitest run src/domain/scheduling.test.ts src/domain/queries.test.ts
 npx vitest run src/schedule.performance.test.ts --pool=forks --maxWorkers=1
 ```
 
-- [ ] Implementar query única sem N+1, timezone IANA/fallback e índices apenas
+- [x] Implementar query única sem N+1, timezone IANA/fallback e índices apenas
   após revisar `EXPLAIN (ANALYZE, BUFFERS)`.
-- [ ] GREEN:
+- [x] GREEN:
 
 ```powershell
 npx vitest run src/domain/scheduling.test.ts src/domain/queries.test.ts
@@ -163,7 +163,7 @@ npm run typecheck
 npm run build
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- services/marketing-ops docs/phase-3

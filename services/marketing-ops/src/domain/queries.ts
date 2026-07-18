@@ -12,6 +12,17 @@ import {
   type CampaignStatus,
   type ReferenceType
 } from './contracts.js';
+import {
+  mapProductionItem,
+  type ProductionItem
+} from './items.js';
+import {
+  DEFAULT_TENANT_TIME_ZONE,
+  encodeScheduleCursor,
+  normalizeScheduleFilters,
+  PRIORITY_RANK,
+  type ScheduleFilters
+} from './scheduling.js';
 
 export interface CampaignFilters {
   q?: string;
@@ -295,6 +306,103 @@ export async function getCampaign(context: CommandContext, id: string): Promise<
     if (!result.rows[0]) throw appError('not_found', 404, 'Campaign not found');
     return mapCampaign(result.rows[0]);
   });
+}
+
+type ProductionItemRow = Parameters<typeof mapProductionItem>[0];
+
+interface ProductionScheduleRow extends ProductionItemRow {
+  campaign_name: string;
+  effective_at: Date | string | null;
+  is_overdue: boolean;
+  is_blocked: boolean;
+}
+
+export interface ProductionScheduleItem extends ProductionItem {
+  campaignName: string;
+  effectiveAt: string | null;
+  isOverdue: boolean;
+  isBlocked: boolean;
+}
+
+function mapProductionScheduleItem(row: ProductionScheduleRow): ProductionScheduleItem {
+  const item = mapProductionItem(row);
+  return {
+    ...item,
+    campaignName: row.campaign_name,
+    effectiveAt: row.effective_at === null
+      ? null
+      : new Date(row.effective_at).toISOString(),
+    isOverdue: row.is_overdue,
+    isBlocked: row.is_blocked
+  };
+}
+
+export async function listProductionSchedule(
+  context: CommandContext,
+  input: ScheduleFilters,
+  timeZone = DEFAULT_TENANT_TIME_ZONE
+): Promise<{
+  data: ProductionScheduleItem[];
+  nextCursor: string | null;
+  timeZone: string;
+}> {
+  authorize(context.actor, 'item.read');
+  const filters = normalizeScheduleFilters(input);
+  return withActorTransaction(
+    context.pool,
+    context.actor,
+    context.correlationId,
+    async (client) => {
+      const cursorPriorityRank = filters.cursor
+        ? PRIORITY_RANK[filters.cursor.priority]
+        : null;
+      const result = await client.query<ProductionScheduleRow>(`
+        select *
+        from marketing_ops_private.list_production_schedule(
+          $1::timestamptz,
+          $2::timestamptz,
+          $3::uuid,
+          $4::marketing_ops.item_kind,
+          $5::marketing_ops.item_channel,
+          $6::uuid,
+          $7::marketing_ops.item_status,
+          $8::marketing_ops.item_priority,
+          $9::timestamptz,
+          $10::integer,
+          $11::uuid,
+          $12::integer
+        )
+      `, [
+        filters.from,
+        filters.to,
+        filters.campaignId,
+        filters.kind,
+        filters.channel,
+        filters.assigneeId,
+        filters.status,
+        filters.priority,
+        filters.cursor?.effectiveAt ?? null,
+        cursorPriorityRank,
+        filters.cursor?.id ?? null,
+        filters.limit + 1
+      ]);
+      const rows = result.rows.map(mapProductionScheduleItem);
+      const hasNextPage = rows.length > filters.limit;
+      const data = rows.slice(0, filters.limit);
+      const last = data.at(-1);
+      return {
+        data,
+        nextCursor: hasNextPage && last
+          ? encodeScheduleCursor({
+            effectiveAt: last.effectiveAt,
+            priority: last.priority,
+            id: last.id
+          })
+          : null,
+        timeZone
+      };
+    }
+  );
 }
 
 export async function listAuditEvents(context: CommandContext, limit: number) {
