@@ -16,12 +16,28 @@ import {
   parseCampaignPatchBody,
   parseCampaignTransitionBody
 } from './http/routes/campaigns.js';
+import {
+  parseProductionItemCreateBody,
+  parseProductionItemPatchBody,
+  parseProductionItemScheduleQuery,
+  parseProductionItemTransitionBody
+} from './http/routes/items.js';
+import { parseDependencyBody } from './http/routes/dependencies.js';
+import {
+  parseContentAssetBody,
+  parseContentVersionBody,
+  parseItemArtifactLinkBody,
+  parseItemArtifactRemovalBody
+} from './http/routes/content.js';
 
 const pool = new pg.Pool({ connectionString: process.env.MARKETING_OPS_TEST_DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:55322/postgres' });
 afterAll(() => pool.end());
 
-function app(features = { read: true, write: true }) {
-  const router = apiRouter(features);
+function app(
+  features = { read: true, write: true },
+  artifactClient?: ArtifactClient
+) {
+  const router = apiRouter(features, artifactClient);
   return createApp({
     readiness: async () => true,
     logger: createLogger(() => undefined),
@@ -31,16 +47,19 @@ function app(features = { read: true, write: true }) {
   });
 }
 
-function apiRouter(features = { read: true, write: true }) {
+function apiRouter(
+  features = { read: true, write: true },
+  artifactClient = new ArtifactClient({
+    baseUrl: 'http://127.0.0.1:8095',
+    internalKey: 'artifact-test-key',
+    timeoutMs: 1_000
+  })
+) {
   return createApiRouter({
     pool,
     corsOrigins: ['http://frontend.local'],
     features,
-    artifactClient: new ArtifactClient({
-      baseUrl: 'http://127.0.0.1:8095',
-      internalKey: 'artifact-test-key',
-      timeoutMs: 1_000
-    }),
+    artifactClient,
     ragCourseClient: new RagCourseClient({
       endpoint: 'http://127.0.0.1:8000/mcp',
       timeoutMs: 1_000
@@ -57,6 +76,12 @@ describe('Marketing Ops REST v1', () => {
     const document = parse(readFileSync(new URL('../openapi/marketing-ops.v1.yaml', import.meta.url), 'utf8')) as { paths: Record<string, unknown> };
     expect(Object.keys(document.paths).sort()).toEqual([
       '/audit-events', '/campaigns',
+      '/campaign-items', '/campaign-items/{itemId}',
+      '/campaign-items/{itemId}/artifacts',
+      '/campaign-items/{itemId}/artifacts/{artifactLinkId}/access-link',
+      '/campaign-items/{itemId}/content-assets',
+      '/campaign-items/{itemId}/dependencies',
+      '/campaign-items/{itemId}/transition',
       '/campaigns/{campaignId}/items', '/campaigns/{campaignId}/items/{itemId}',
       '/campaigns/{campaignId}/materials', '/campaigns/{campaignId}/materials/link',
       '/campaigns/{campaignId}/materials/upload',
@@ -67,8 +92,76 @@ describe('Marketing Ops REST v1', () => {
       '/campaigns/{campaignId}/participants/{userId}',
       '/campaigns/{campaignId}/timeline', '/campaigns/{id}',
       '/campaigns/{id}/archive', '/campaigns/{id}/transitions',
-      '/capabilities', '/references/courses'
-    ]);
+      '/capabilities', '/content-assets/{assetId}/versions',
+      '/references/courses'
+    ].sort());
+  });
+
+  it('parses strict production item, schedule, dependency and content contracts', () => {
+    const campaignId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const assigneeId = '11111111-1111-4111-8111-111111111111';
+    expect(parseProductionItemCreateBody({
+      campaignId,
+      kind: 'email',
+      title: 'E-mail de abertura',
+      assigneeUserId: assigneeId,
+      priority: 'high',
+      channel: 'email',
+      description: 'Preparar conteúdo',
+      startsAt: '2026-08-01T12:00:00.000Z',
+      dueAt: '2026-08-01T15:00:00.000Z',
+      metadata: { audience: 'alumni' }
+    })).toMatchObject({ campaignId, kind: 'email', priority: 'high' });
+    expect(parseProductionItemPatchBody({ priority: 'urgent' })).toEqual({
+      priority: 'urgent'
+    });
+    expect(parseProductionItemTransitionBody({ to: 'ready' })).toEqual({
+      to: 'ready'
+    });
+    expect(parseProductionItemScheduleQuery({
+      from: '2026-08-01T00:00:00.000Z',
+      to: '2026-09-01T00:00:00.000Z',
+      campaignId,
+      kind: 'email',
+      assigneeId,
+      priority: 'high',
+      limit: '50'
+    })).toMatchObject({ campaignId, kind: 'email', limit: 50 });
+    expect(parseDependencyBody({ dependsOnItemId: campaignId })).toEqual({
+      dependsOnItemId: campaignId
+    });
+    expect(parseContentAssetBody({ assetKind: 'email_body', title: 'Corpo' }))
+      .toEqual({ assetKind: 'email_body', title: 'Corpo' });
+    expect(parseContentVersionBody({
+      body: 'Conteúdo',
+      metadata: { locale: 'pt-BR' },
+      freeze: true
+    })).toMatchObject({ freeze: true });
+    expect(parseItemArtifactLinkBody({ artifactId: campaignId })).toEqual({
+      artifactId: campaignId
+    });
+    expect(parseItemArtifactRemovalBody({ artifactLinkId: campaignId })).toEqual({
+      artifactLinkId: campaignId
+    });
+
+    expect(() => parseProductionItemScheduleQuery({ unknown: 'field' })).toThrow();
+    expect(() => parseProductionItemCreateBody({
+      campaignId,
+      kind: 'email',
+      title: 'Mass assignment',
+      status: 'completed'
+    })).toThrow();
+    expect(() => parseProductionItemTransitionBody({ to: 'approved' })).toThrow();
+    expect(() => parseDependencyBody({
+      dependsOnItemId: campaignId,
+      itemVersion: 99
+    })).toThrow();
+    expect(() => parseContentVersionBody({
+      body: 'Conteúdo',
+      metadata: {},
+      freeze: false,
+      versionNumber: 42
+    })).toThrow();
   });
 
   it('parses the complete strict campaign REST contract', () => {
@@ -134,6 +227,15 @@ describe('Marketing Ops REST v1', () => {
       ['/campaigns/{campaignId}/materials/upload', 'post', true],
       ['/campaigns/{campaignId}/materials/link', 'post', true],
       ['/campaigns/{campaignId}/materials/{materialId}', 'delete', true]
+      ,['/campaign-items', 'post', false]
+      ,['/campaign-items/{itemId}', 'patch', true]
+      ,['/campaign-items/{itemId}/transition', 'post', true]
+      ,['/campaign-items/{itemId}/dependencies', 'post', true]
+      ,['/campaign-items/{itemId}/dependencies', 'delete', true]
+      ,['/campaign-items/{itemId}/content-assets', 'post', true]
+      ,['/content-assets/{assetId}/versions', 'post', true]
+      ,['/campaign-items/{itemId}/artifacts', 'post', true]
+      ,['/campaign-items/{itemId}/artifacts', 'delete', true]
     ] as const;
     for (const [path, method, requiresVersion] of mutations) {
       const operation = document.paths[path]?.[method];
@@ -240,6 +342,212 @@ describe('Marketing Ops REST v1', () => {
     expect(transitioned.status).toBe(200);
     expect(transitioned.headers.etag).toBe('"2"');
     expect(transitioned.body.data.status).toBe('planned');
+  });
+
+  it('creates, queries, edits and transitions a production item through canonical REST', async () => {
+    const headers = {
+      Authorization: 'Bearer valid-member',
+      'X-Tenant-Id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    };
+    const campaign = await request(app()).post('/v1/campaigns')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: `Production REST ${randomUUID()}` });
+    expect(campaign.status).toBe(201);
+
+    const created = await request(app()).post('/v1/campaign-items')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        campaignId: campaign.body.data.id,
+        kind: 'task',
+        title: 'Preparar briefing',
+        assigneeUserId: '11111111-1111-4111-8111-111111111111',
+        dueAt: '2099-08-01T15:00:00.000Z'
+      });
+    expect(created.status).toBe(201);
+    expect(created.headers.etag).toBe('"1"');
+
+    const detail = await request(app())
+      .get(`/v1/campaign-items/${created.body.data.id}`)
+      .set(headers);
+    expect(detail.status).toBe(200);
+    expect(detail.headers.etag).toBe('"1"');
+
+    const schedule = await request(app())
+      .get(`/v1/campaign-items?campaignId=${campaign.body.data.id}&limit=10`)
+      .set(headers);
+    expect(schedule.status).toBe(200);
+    expect(schedule.body).toMatchObject({
+      meta: { timeZone: 'America/Sao_Paulo' }
+    });
+    expect(schedule.body.data.some((item: { id: string }) =>
+      item.id === created.body.data.id
+    )).toBe(true);
+
+    const patched = await request(app())
+      .patch(`/v1/campaign-items/${created.body.data.id}`)
+      .set(headers)
+      .set('If-Match', '"1"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ priority: 'high' });
+    expect(patched.status).toBe(200);
+    expect(patched.headers.etag).toBe('"2"');
+
+    const transitioned = await request(app())
+      .post(`/v1/campaign-items/${created.body.data.id}/transition`)
+      .set(headers)
+      .set('If-Match', '"2"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ to: 'ready' });
+    expect(transitioned.status).toBe(200);
+    expect(transitioned.headers.etag).toBe('"3"');
+    expect(transitioned.body.data.status).toBe('ready');
+  });
+
+  it('exposes dependency, immutable content and artifact resources through REST', async () => {
+    const headers = {
+      Authorization: 'Bearer valid-member',
+      'X-Tenant-Id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    };
+    const artifactId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+    const artifactClient = new ArtifactClient({
+      baseUrl: 'http://artifact.test',
+      internalKey: 'artifact-test-key',
+      timeoutMs: 1_000,
+      fetchImpl: async (input, init) => {
+        if (String(input).endsWith('/access-link') && init?.method === 'POST') {
+          return new Response(JSON.stringify({
+            url: 'https://artifact.test/signed',
+            expires_at: '2099-08-01T15:05:00.000Z'
+          }), { status: 200 });
+        }
+        return new Response(JSON.stringify({
+          id: artifactId,
+          owner_id: '11111111-1111-4111-8111-111111111111',
+          filename: 'peca.txt',
+          content_type: 'text/plain',
+          size: 5,
+          sha256: 'a'.repeat(64),
+          created_at: '2099-08-01T15:00:00.000Z',
+          source: 'marketing_ops'
+        }), { status: 200 });
+      }
+    });
+    const testApp = app({ read: true, write: true }, artifactClient);
+    const campaign = await request(testApp).post('/v1/campaigns')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: `Nested REST ${randomUUID()}` });
+    const dependent = await request(testApp).post('/v1/campaign-items')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ campaignId: campaign.body.data.id, kind: 'email', title: 'Dependente' });
+    const predecessor = await request(testApp).post('/v1/campaign-items')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ campaignId: campaign.body.data.id, kind: 'task', title: 'Predecessor' });
+    expect(dependent.status).toBe(201);
+    expect(predecessor.status).toBe(201);
+
+    const added = await request(testApp)
+      .post(`/v1/campaign-items/${dependent.body.data.id}/dependencies`)
+      .set(headers)
+      .set('If-Match', '"1"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ dependsOnItemId: predecessor.body.data.id });
+    expect(added.status).toBe(201);
+    expect(added.headers.etag).toBe('"2"');
+    const dependencies = await request(testApp)
+      .get(`/v1/campaign-items/${dependent.body.data.id}/dependencies`)
+      .set(headers);
+    expect(dependencies.body.data).toHaveLength(1);
+    expect(dependencies.body.data[0]).toMatchObject({ isBlocking: true });
+
+    const removed = await request(testApp)
+      .delete(`/v1/campaign-items/${dependent.body.data.id}/dependencies`)
+      .set(headers)
+      .set('If-Match', '"2"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ dependsOnItemId: predecessor.body.data.id });
+    expect(removed.status).toBe(200);
+    expect(removed.headers.etag).toBe('"3"');
+
+    const asset = await request(testApp)
+      .post(`/v1/campaign-items/${dependent.body.data.id}/content-assets`)
+      .set(headers)
+      .set('If-Match', '"3"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ assetKind: 'email_body', title: 'Corpo do e-mail' });
+    expect(asset.status).toBe(201);
+    expect(asset.headers.etag).toBe('"4"');
+    expect(asset.body.data).toMatchObject({ version: 1, itemVersion: 4 });
+
+    const version = await request(testApp)
+      .post(`/v1/content-assets/${asset.body.data.id}/versions`)
+      .set(headers)
+      .set('If-Match', '"1"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ body: 'Olá', metadata: { locale: 'pt-BR' }, freeze: true });
+    expect(version.status).toBe(201);
+    expect(version.headers.etag).toBe('"2"');
+    expect(version.body.data).toMatchObject({
+      versionNumber: 1,
+      assetVersion: 2
+    });
+    const mediumVersion = await request(testApp)
+      .post(`/v1/content-assets/${asset.body.data.id}/versions`)
+      .set(headers)
+      .set('If-Match', '"2"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ body: 'x'.repeat(300 * 1024), metadata: {}, freeze: false });
+    expect(mediumVersion.status).toBe(201);
+    expect(mediumVersion.headers.etag).toBe('"3"');
+    const oversizedVersion = await request(testApp)
+      .post(`/v1/content-assets/${asset.body.data.id}/versions`)
+      .set(headers)
+      .set('If-Match', '"3"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ body: 'x'.repeat(1150 * 1024), metadata: {}, freeze: false });
+    expect(oversizedVersion.status).toBe(413);
+    expect(oversizedVersion.body.error.code).toBe('payload_too_large');
+    const staleVersion = await request(testApp)
+      .post(`/v1/content-assets/${asset.body.data.id}/versions`)
+      .set(headers)
+      .set('If-Match', '"1"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ body: 'Stale', metadata: {}, freeze: false });
+    expect(staleVersion.status).toBe(409);
+    expect(staleVersion.body.error).toMatchObject({
+      code: 'version_conflict',
+      details: { currentVersion: 3 }
+    });
+
+    const linked = await request(testApp)
+      .post(`/v1/campaign-items/${dependent.body.data.id}/artifacts`)
+      .set(headers)
+      .set('If-Match', '"4"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ artifactId, assetId: asset.body.data.id });
+    expect(linked.status).toBe(201);
+    expect(linked.headers.etag).toBe('"5"');
+    const access = await request(testApp)
+      .post(
+        `/v1/campaign-items/${dependent.body.data.id}/artifacts/` +
+        `${linked.body.data.artifact.id}/access-link`
+      )
+      .set(headers);
+    expect(access.status).toBe(200);
+    expect(access.body.data.url).toBe('https://artifact.test/signed');
+
+    const unlinked = await request(testApp)
+      .delete(`/v1/campaign-items/${dependent.body.data.id}/artifacts`)
+      .set(headers)
+      .set('If-Match', '"5"')
+      .set('Idempotency-Key', randomUUID())
+      .send({ artifactLinkId: linked.body.data.artifact.id });
+    expect(unlinked.status).toBe(200);
+    expect(unlinked.headers.etag).toBe('"6"');
   });
 
   it('filters by course, status, owner and period with cursor pagination', async () => {

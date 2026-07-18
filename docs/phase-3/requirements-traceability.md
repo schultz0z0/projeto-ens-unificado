@@ -1,21 +1,21 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 50%
+- **Implementação:** 60%
 - **Data:** 2026-07-18
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
 | F3-RF-01 Tipos | 4.1, 5 | 1–2 | `domain_validated` |
-| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `domain_validated` |
-| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `query_validated` |
-| F3-RF-04 Timezone | 7 | 3, 7–8 | `backend_validated` |
-| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `domain_validated` |
-| F3-RF-06 Dependências | 4.2, 10 | 4 | `domain_validated` |
-| F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `domain_validated` |
-| F3-RF-08 Versões | 4.4, 10 | 5 | `domain_validated` |
-| F3-RF-09 Artefatos | 4.5 | 5 | `domain_validated` |
-| F3-RF-10 Estados | 5 | 1–2 | `domain_validated` |
+| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `api_validated` |
+| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `client_validated` |
+| F3-RF-04 Timezone | 7 | 3, 7–8 | `api_validated` |
+| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `api_validated` |
+| F3-RF-06 Dependências | 4.2, 10 | 4, 6 | `api_validated` |
+| F3-RF-07 Conteúdo | 4.3–4.4 | 5–6 | `api_validated` |
+| F3-RF-08 Versões | 4.4, 10 | 5–6 | `api_validated` |
+| F3-RF-09 Artefatos | 4.5 | 5–6 | `api_validated` |
+| F3-RF-10 Estados | 5 | 1–2, 6 | `api_validated` |
 | F3-RF-11 Notificações | 4.6, 12 | 9 | `planned` |
 | F3-RF-12 Lote | 8, 10 | 9 | `planned` |
 
@@ -84,8 +84,8 @@ lista/semana/mês e acessibilidade pertencem às Tasks 7–8.
 | Auditoria/outbox | contagem por ação/evento | um registro por mutação efetiva |
 | Reprodutibilidade | reset, 307 pgTAP, lint e diff | todos verdes |
 
-O requisito está validado no domínio e banco. O aceite público ainda depende dos
-endpoints REST/OpenAPI da Task 6 e do E2E da Task 10.
+O requisito está validado no domínio, banco e contrato REST/OpenAPI. O aceite
+visual e ponta a ponta ainda depende das Tasks 7–8 e do E2E da Task 10.
 
 ## Evidência Task 5
 
@@ -101,5 +101,24 @@ endpoints REST/OpenAPI da Task 6 e do E2E da Task 10.
 | Reprodutibilidade | reset, 320 pgTAP, lint e diff | todos verdes |
 | Regressão | serviço, Artifact Server, typecheck e build | 166 + 8 testes verdes |
 
-Os requisitos estão validados no domínio, banco e integração local. O aceite
-público ainda depende dos endpoints REST/OpenAPI da Task 6, UI e E2E da Task 10.
+Os requisitos estão validados no domínio, banco, integração local e contrato
+REST/OpenAPI. O aceite visual e ponta a ponta ainda depende das Tasks 7–8 e do
+E2E da Task 10.
+
+## Evidência Task 6
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Contrato público | `rest.test.ts` + OpenAPI | 26 paths/38 operações em lockstep |
+| Strict/headers/ETag | parsers, inventário e integração REST | mass assignment rejeitado; guards e versões verdes |
+| Itens/agenda | fluxo REST real | create/get/list/patch/transition e timezone verdes |
+| Dependências | add/list/remove REST | ETags 2/3 e bloqueio derivado verdes |
+| Conteúdo/versões | asset/version/stale REST | freeze, asset ETag e 409/currentVersion verdes |
+| Artifacts | client fake estrito no router | link/access/unlink e ownership contratual verdes |
+| SDK frontend | `client.test.ts` + `queryKeys.test.ts` | 13 testes; auth/correlação/arquivo/query key verdes |
+| Payload | 300 KiB e excesso de envelope | aceito dentro do domínio; 413 acima do transporte |
+| Regressão | suíte completa + builds | 170 testes, typechecks e builds verdes |
+| Docker/manual | build, readiness, login e comandos reais | smoke PASS; healthy antes/depois do reset |
+
+O aceite das visualizações ainda depende das Tasks 7–8; notificações e lote
+dependem da Task 9. Esses paths não foram publicados como placeholders.

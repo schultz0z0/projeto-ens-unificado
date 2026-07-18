@@ -71,6 +71,11 @@ export interface MarketingOpsResult<T> {
   correlationId: string | null;
   etag: string | null;
   page?: MarketingOpsPage;
+  meta?: MarketingOpsResponseMeta;
+}
+
+export interface MarketingOpsResponseMeta {
+  timeZone?: string;
 }
 
 export interface MarketingOpsPage {
@@ -211,4 +216,176 @@ export interface MarketingOpsErrorEnvelope {
     correlationId?: string;
     details?: unknown;
   };
+}
+
+export type MarketingOpsItemKind =
+  | 'task'
+  | 'email'
+  | 'whatsapp'
+  | 'post'
+  | 'creative'
+  | 'review'
+  | 'milestone';
+export type MarketingOpsItemStatus =
+  | 'draft'
+  | 'ready'
+  | 'in_review'
+  | 'completed'
+  | 'cancelled';
+export type MarketingOpsItemPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface MarketingOpsProductionItemEditableFields {
+  kind: MarketingOpsItemKind;
+  title: string;
+  assigneeUserId: string | null;
+  priority: MarketingOpsItemPriority;
+  channel: MarketingOpsCampaignChannel | null;
+  description: string | null;
+  startsAt: string | null;
+  dueAt: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface MarketingOpsProductionItem
+  extends MarketingOpsProductionItemEditableFields {
+  id: string;
+  tenantId: string;
+  campaignId: string;
+  content: unknown;
+  status: MarketingOpsItemStatus;
+  version: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+  cancelledAt: string | null;
+}
+
+export interface MarketingOpsProductionScheduleItem
+  extends MarketingOpsProductionItem {
+  campaignName: string;
+  effectiveAt: string | null;
+  isOverdue: boolean;
+  isBlocked: boolean;
+}
+
+export type MarketingOpsProductionItemCreate =
+  Pick<MarketingOpsProductionItemEditableFields, 'kind' | 'title'> &
+  Partial<Omit<MarketingOpsProductionItemEditableFields, 'kind' | 'title'>> & {
+    campaignId: string;
+  };
+
+export type MarketingOpsProductionItemPatch =
+  Partial<MarketingOpsProductionItemEditableFields>;
+
+export interface MarketingOpsProductionScheduleFilters {
+  from?: string;
+  to?: string;
+  campaignId?: string;
+  kind?: MarketingOpsItemKind;
+  channel?: MarketingOpsCampaignChannel;
+  assigneeId?: string;
+  status?: MarketingOpsItemStatus;
+  priority?: MarketingOpsItemPriority;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface MarketingOpsItemDependency {
+  itemId: string;
+  dependsOnItemId: string;
+  predecessorTitle: string;
+  predecessorStatus: MarketingOpsItemStatus;
+  createdBy: string;
+  createdAt: string;
+  isBlocking: boolean;
+}
+
+export interface MarketingOpsItemDependencyMutation
+  extends MarketingOpsItemDependency {
+  itemVersion: number;
+}
+
+export interface MarketingOpsItemDependencyRemoval {
+  itemId: string;
+  dependsOnItemId: string;
+  itemVersion: number;
+  removed: true;
+}
+
+export interface MarketingOpsContentAssetCreate {
+  assetKind: string;
+  title: string;
+}
+
+export interface MarketingOpsContentAsset {
+  id: string;
+  itemId: string;
+  campaignId: string;
+  assetKind: string;
+  title: string;
+  currentVersionNumber: number;
+  version: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingOpsContentAssetMutation
+  extends MarketingOpsContentAsset {
+  itemVersion: number;
+}
+
+export interface MarketingOpsContentVersionCreate {
+  body: string | null;
+  metadata: Record<string, unknown>;
+  freeze: boolean;
+}
+
+export interface MarketingOpsContentVersion {
+  assetId: string;
+  versionNumber: number;
+  body: string | null;
+  metadata: Record<string, unknown>;
+  contentHash: string;
+  createdBy: string;
+  createdAt: string;
+  frozenAt: string | null;
+}
+
+export interface MarketingOpsContentVersionMutation
+  extends MarketingOpsContentVersion {
+  assetVersion: number;
+}
+
+export interface MarketingOpsItemArtifactLink {
+  artifactId: string;
+  assetId?: string;
+}
+
+export interface MarketingOpsItemArtifact {
+  id: string;
+  itemId: string;
+  campaignId: string;
+  assetId: string | null;
+  artifactId: string;
+  artifactOwnerId: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface MarketingOpsItemArtifactMutation {
+  artifact: MarketingOpsItemArtifact;
+  itemVersion: number;
+}
+
+export interface MarketingOpsItemArtifactRemoval {
+  artifactLinkId: string;
+  itemVersion: number;
 }

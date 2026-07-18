@@ -184,6 +184,131 @@ describe('Marketing Ops frontend contracts', () => {
     expect(accessHeaders.has('Idempotency-Key')).toBe(false);
   });
 
+  it('maps the complete Phase 3 production contract and mutation guards', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      data: {},
+      page: { limit: 25, count: 0, nextCursor: null },
+      meta: { timeZone: 'America/Sao_Paulo' }
+    }), { status: 200, headers: { ETag: '"8"' } }));
+    const client = createMarketingOpsClient({
+      baseUrl: 'https://ops.local',
+      getAccessToken: async () => 'token',
+      fetch
+    });
+    const campaignId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const itemId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const predecessorId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const assetId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const artifactId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+    const artifactLinkId = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+    const schedule = await client.listProductionSchedule({
+      campaignId,
+      kind: 'email',
+      status: 'ready',
+      from: '2026-08-01T00:00:00.000Z',
+      to: '2026-09-01T00:00:00.000Z',
+      limit: 25
+    });
+    await client.getProductionItem(itemId);
+    await client.createProductionItem({
+      campaignId,
+      kind: 'email',
+      title: 'E-mail'
+    }, 'idem-create-item');
+    await client.updateProductionItem(
+      itemId,
+      1,
+      { priority: 'high' },
+      'idem-update-item'
+    );
+    await client.transitionProductionItem(itemId, 2, 'ready', 'idem-transition-item');
+    await client.listProductionItemDependencies(itemId);
+    await client.addProductionItemDependency(
+      itemId,
+      predecessorId,
+      3,
+      'idem-add-dependency'
+    );
+    await client.removeProductionItemDependency(
+      itemId,
+      predecessorId,
+      4,
+      'idem-remove-dependency'
+    );
+    await client.listContentAssets(itemId);
+    await client.createContentAsset(
+      itemId,
+      5,
+      { assetKind: 'email_body', title: 'Corpo' },
+      'idem-content-asset'
+    );
+    await client.listContentVersions(assetId);
+    await client.createContentVersion(
+      assetId,
+      1,
+      { body: 'Olá', metadata: { locale: 'pt-BR' }, freeze: true },
+      'idem-content-version'
+    );
+    await client.listProductionItemArtifacts(itemId);
+    await client.linkProductionItemArtifact(
+      itemId,
+      6,
+      { artifactId, assetId },
+      'idem-link-artifact'
+    );
+    const file = new File(['arquivo'], 'peca.txt', { type: 'text/plain' });
+    await client.uploadProductionItemArtifact(
+      itemId,
+      7,
+      file,
+      'idem-upload-artifact',
+      assetId
+    );
+    await client.unlinkProductionItemArtifact(
+      itemId,
+      artifactLinkId,
+      8,
+      'idem-unlink-artifact'
+    );
+    await client.createProductionItemArtifactAccessLink(itemId, artifactLinkId);
+
+    expect(schedule.meta).toEqual({ timeZone: 'America/Sao_Paulo' });
+    expect(fetch.mock.calls.map(([url, init]) => [url, (init as RequestInit).method]))
+      .toEqual([
+        [`https://ops.local/v1/campaign-items?campaignId=${campaignId}&kind=email&status=ready&from=2026-08-01T00%3A00%3A00.000Z&to=2026-09-01T00%3A00%3A00.000Z&limit=25`, undefined],
+        [`https://ops.local/v1/campaign-items/${itemId}`, undefined],
+        ['https://ops.local/v1/campaign-items', 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}`, 'PATCH'],
+        [`https://ops.local/v1/campaign-items/${itemId}/transition`, 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, undefined],
+        [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, 'DELETE'],
+        [`https://ops.local/v1/campaign-items/${itemId}/content-assets`, undefined],
+        [`https://ops.local/v1/campaign-items/${itemId}/content-assets`, 'POST'],
+        [`https://ops.local/v1/content-assets/${assetId}/versions`, undefined],
+        [`https://ops.local/v1/content-assets/${assetId}/versions`, 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}/artifacts`, undefined],
+        [`https://ops.local/v1/campaign-items/${itemId}/artifacts`, 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}/artifacts`, 'POST'],
+        [`https://ops.local/v1/campaign-items/${itemId}/artifacts`, 'DELETE'],
+        [`https://ops.local/v1/campaign-items/${itemId}/artifacts/${artifactLinkId}/access-link`, 'POST']
+      ]);
+
+    for (const [index, version] of [
+      [3, 1], [4, 2], [6, 3], [7, 4], [9, 5], [11, 1],
+      [13, 6], [14, 7], [15, 8]
+    ] as const) {
+      const headers = fetch.mock.calls[index]?.[1]?.headers as Headers;
+      expect(headers.get('If-Match')).toBe(`"${version}"`);
+      expect(headers.get('Idempotency-Key')).toBeTruthy();
+    }
+    const upload = fetch.mock.calls[14]?.[1] as RequestInit;
+    expect(upload.body).toBe(file);
+    expect((upload.headers as Headers).get('X-Nexus-Asset-Id')).toBe(assetId);
+    expect((upload.headers as Headers).get('X-Nexus-Filename')).toBe('peca.txt');
+  });
+
   it('keeps read and write off by default and honors the kill switch', () => {
     expect(marketingOpsFlags({})).toEqual({ enabled: false, read: false, write: false });
     expect(marketingOpsFlags({ VITE_MARKETING_OPS_ENABLED: 'true', VITE_MARKETING_OPS_READ: 'true', VITE_MARKETING_OPS_WRITE: 'true', VITE_MARKETING_OPS_KILL_SWITCH: 'true' }))

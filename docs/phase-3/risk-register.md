@@ -48,3 +48,17 @@ falha alta/crítica sem mitigação.
   assinada, download e cleanup. Permanece aberto até restart/E2E da Task 10.
 - A URL pública do Artifact Server deve ser configurada por ambiente. O smoke
   local usa endpoint local explícito; produção não foi chamada nem alterada.
+
+## Revisão após a Task 6
+
+- F3-R-02: API e SDK usam uma única consulta/query key canônica. Permanece
+  aberto até lista/semana/mês reutilizarem esses contratos nas Tasks 7–8.
+- F3-R-07: ETag/If-Match/currentVersion estão validados individualmente; lote
+  continua aberto para a Task 9.
+- F3-R-09: 26 paths/38 operações foram comparados automaticamente entre router
+  e OpenAPI; p95 amplo permaneceu em 367,39 ms, abaixo do limite de 500 ms.
+- F3-R-11: reset completo após o smoke reaplicou todas as migrations e o
+  serviço voltou healthy.
+- Novo risco operacional observado: `.env` de desenvolvimento pode apontar para
+  destinos não locais. Smokes locais devem classificar endpoints antes de subir
+  containers e usar overrides explícitos; nenhum remoto foi acessado.

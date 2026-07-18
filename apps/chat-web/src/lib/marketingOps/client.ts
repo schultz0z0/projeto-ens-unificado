@@ -10,6 +10,19 @@ import type {
   MarketingOpsMaterialAccessLink,
   MarketingOpsMaterialMutation,
   MarketingOpsMaterialRemoval,
+  MarketingOpsContentAsset,
+  MarketingOpsContentAssetCreate,
+  MarketingOpsContentAssetMutation,
+  MarketingOpsContentVersion,
+  MarketingOpsContentVersionCreate,
+  MarketingOpsContentVersionMutation,
+  MarketingOpsItemArtifact,
+  MarketingOpsItemArtifactLink,
+  MarketingOpsItemArtifactMutation,
+  MarketingOpsItemArtifactRemoval,
+  MarketingOpsItemDependency,
+  MarketingOpsItemDependencyMutation,
+  MarketingOpsItemDependencyRemoval,
   MarketingOpsPage,
   MarketingOpsParticipant,
   MarketingOpsParticipantCandidate,
@@ -19,6 +32,12 @@ import type {
   MarketingOpsParticipantPatch,
   MarketingOpsParticipantRemoval,
   MarketingOpsResult,
+  MarketingOpsProductionItem,
+  MarketingOpsProductionItemCreate,
+  MarketingOpsProductionItemPatch,
+  MarketingOpsProductionScheduleFilters,
+  MarketingOpsProductionScheduleItem,
+  MarketingOpsItemStatus,
   MarketingOpsTimelineEvent,
   MarketingOpsTimelineFilters,
   MarketingOpsTransitionTarget
@@ -84,6 +103,7 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
     const payload = await response.json().catch(() => ({})) as {
       data?: T;
       page?: MarketingOpsPage;
+      meta?: { timeZone?: string };
     } & MarketingOpsErrorEnvelope;
     const correlationId = response.headers.get('X-Correlation-Id') ?? payload.error?.correlationId ?? null;
     if (!response.ok) {
@@ -100,12 +120,15 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
       data: payload.data as T,
       correlationId,
       etag: response.headers.get('ETag'),
-      ...(payload.page ? { page: payload.page } : {})
+      ...(payload.page ? { page: payload.page } : {}),
+      ...(payload.meta ? { meta: payload.meta } : {})
     };
   };
 
   const campaignPath = (campaignId: string): string =>
     `/v1/campaigns/${encodeURIComponent(campaignId)}`;
+  const productionItemPath = (itemId: string): string =>
+    `/v1/campaign-items/${encodeURIComponent(itemId)}`;
 
   return {
     listCampaigns: (filters: MarketingOpsCampaignFilters = {}) =>
@@ -254,7 +277,176 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
     searchCourseReferences: (query: string, limit = 10) =>
       request<MarketingOpsCourseReference[]>(
         withQuery('/v1/references/courses', { q: query, limit })
-      )
+      ),
+
+    listProductionSchedule: (filters: MarketingOpsProductionScheduleFilters = {}) =>
+      request<MarketingOpsProductionScheduleItem[]>(
+        withQuery('/v1/campaign-items', filters)
+      ),
+
+    getProductionItem: (itemId: string) =>
+      request<MarketingOpsProductionItem>(productionItemPath(itemId)),
+
+    createProductionItem: (
+      input: MarketingOpsProductionItemCreate,
+      idempotencyKey: string
+    ) => request<MarketingOpsProductionItem>('/v1/campaign-items', {
+      method: 'POST',
+      headers: mutationHeaders(idempotencyKey),
+      body: JSON.stringify(input)
+    }),
+
+    updateProductionItem: (
+      itemId: string,
+      version: number,
+      patch: MarketingOpsProductionItemPatch,
+      idempotencyKey: string
+    ) => request<MarketingOpsProductionItem>(productionItemPath(itemId), {
+      method: 'PATCH',
+      headers: mutationHeaders(idempotencyKey, version),
+      body: JSON.stringify(patch)
+    }),
+
+    transitionProductionItem: (
+      itemId: string,
+      version: number,
+      to: MarketingOpsItemStatus,
+      idempotencyKey: string
+    ) => request<MarketingOpsProductionItem>(`${productionItemPath(itemId)}/transition`, {
+      method: 'POST',
+      headers: mutationHeaders(idempotencyKey, version),
+      body: JSON.stringify({ to })
+    }),
+
+    listProductionItemDependencies: (itemId: string) =>
+      request<MarketingOpsItemDependency[]>(
+        `${productionItemPath(itemId)}/dependencies`
+      ),
+
+    addProductionItemDependency: (
+      itemId: string,
+      dependsOnItemId: string,
+      version: number,
+      idempotencyKey: string
+    ) => request<MarketingOpsItemDependencyMutation>(
+      `${productionItemPath(itemId)}/dependencies`,
+      {
+        method: 'POST',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify({ dependsOnItemId })
+      }
+    ),
+
+    removeProductionItemDependency: (
+      itemId: string,
+      dependsOnItemId: string,
+      version: number,
+      idempotencyKey: string
+    ) => request<MarketingOpsItemDependencyRemoval>(
+      `${productionItemPath(itemId)}/dependencies`,
+      {
+        method: 'DELETE',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify({ dependsOnItemId })
+      }
+    ),
+
+    listContentAssets: (itemId: string) =>
+      request<MarketingOpsContentAsset[]>(
+        `${productionItemPath(itemId)}/content-assets`
+      ),
+
+    createContentAsset: (
+      itemId: string,
+      version: number,
+      input: MarketingOpsContentAssetCreate,
+      idempotencyKey: string
+    ) => request<MarketingOpsContentAssetMutation>(
+      `${productionItemPath(itemId)}/content-assets`,
+      {
+        method: 'POST',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify(input)
+      }
+    ),
+
+    listContentVersions: (assetId: string) =>
+      request<MarketingOpsContentVersion[]>(
+        `/v1/content-assets/${encodeURIComponent(assetId)}/versions`
+      ),
+
+    createContentVersion: (
+      assetId: string,
+      version: number,
+      input: MarketingOpsContentVersionCreate,
+      idempotencyKey: string
+    ) => request<MarketingOpsContentVersionMutation>(
+      `/v1/content-assets/${encodeURIComponent(assetId)}/versions`,
+      {
+        method: 'POST',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify(input)
+      }
+    ),
+
+    listProductionItemArtifacts: (itemId: string) =>
+      request<MarketingOpsItemArtifact[]>(`${productionItemPath(itemId)}/artifacts`),
+
+    linkProductionItemArtifact: (
+      itemId: string,
+      version: number,
+      input: MarketingOpsItemArtifactLink,
+      idempotencyKey: string
+    ) => request<MarketingOpsItemArtifactMutation>(
+      `${productionItemPath(itemId)}/artifacts`,
+      {
+        method: 'POST',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify(input)
+      }
+    ),
+
+    uploadProductionItemArtifact: (
+      itemId: string,
+      version: number,
+      file: File,
+      idempotencyKey: string,
+      assetId?: string
+    ) => request<MarketingOpsItemArtifactMutation>(
+      `${productionItemPath(itemId)}/artifacts`,
+      {
+        method: 'POST',
+        headers: {
+          ...mutationHeaders(idempotencyKey, version),
+          'Content-Type': file.type,
+          'X-Nexus-Filename': file.name,
+          ...(assetId === undefined ? {} : { 'X-Nexus-Asset-Id': assetId })
+        },
+        body: file
+      }
+    ),
+
+    unlinkProductionItemArtifact: (
+      itemId: string,
+      artifactLinkId: string,
+      version: number,
+      idempotencyKey: string
+    ) => request<MarketingOpsItemArtifactRemoval>(
+      `${productionItemPath(itemId)}/artifacts`,
+      {
+        method: 'DELETE',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify({ artifactLinkId })
+      }
+    ),
+
+    createProductionItemArtifactAccessLink: (
+      itemId: string,
+      artifactLinkId: string
+    ) => request<MarketingOpsMaterialAccessLink>(
+      `${productionItemPath(itemId)}/artifacts/${encodeURIComponent(artifactLinkId)}/access-link`,
+      { method: 'POST' }
+    )
   };
 }
 

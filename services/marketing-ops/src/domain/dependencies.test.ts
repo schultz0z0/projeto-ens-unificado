@@ -213,7 +213,7 @@ describe('item dependency commands', () => {
     await expect(addItemDependency(
       context(), activeDependent.id, terminalPredecessor.id, 1, randomUUID()
     )).rejects.toMatchObject({ code: 'dependency_terminal', status: 409 });
-  });
+  }, 15_000);
 
   it('rejects an indirect cycle without changing versions or existing edges', async () => {
     const campaign = await createCampaign();

@@ -1,5 +1,6 @@
 import type {
   MarketingOpsCampaignFilters,
+  MarketingOpsProductionScheduleFilters,
   MarketingOpsParticipantCandidateFilters,
   MarketingOpsTimelineFilters
 } from './types';
@@ -22,5 +23,17 @@ export const marketingOpsKeys = {
     ? ['marketing-ops', 'campaign', campaignId, 'timeline'] as const
     : ['marketing-ops', 'campaign', campaignId, 'timeline', { ...filters }] as const,
   courseReferences: (query: string, limit = 10) =>
-    ['marketing-ops', 'references', 'courses', query, limit] as const
+    ['marketing-ops', 'references', 'courses', query, limit] as const,
+  productionSchedule: (filters: MarketingOpsProductionScheduleFilters = {}) =>
+    ['marketing-ops', 'production', 'schedule', { ...filters }] as const,
+  productionItem: (itemId: string) =>
+    ['marketing-ops', 'production', 'item', itemId] as const,
+  productionItemDependencies: (itemId: string) =>
+    ['marketing-ops', 'production', 'item', itemId, 'dependencies'] as const,
+  contentAssets: (itemId: string) =>
+    ['marketing-ops', 'production', 'item', itemId, 'content-assets'] as const,
+  contentVersions: (assetId: string) =>
+    ['marketing-ops', 'production', 'content-asset', assetId, 'versions'] as const,
+  productionItemArtifacts: (itemId: string) =>
+    ['marketing-ops', 'production', 'item', itemId, 'artifacts'] as const
 };

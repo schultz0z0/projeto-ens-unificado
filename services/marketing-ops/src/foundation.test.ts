@@ -9,6 +9,7 @@ import { createApp } from './http/createApp.js';
 import { createLogger } from './observability/logger.js';
 import { createMetrics } from './observability/metrics.js';
 import { createReadinessProbe } from './observability/readiness.js';
+import { resolveDatabaseSsl } from './db/pool.js';
 
 describe('runtime foundation', () => {
   it('fails closed in production when required values are missing', () => {
@@ -80,6 +81,18 @@ describe('runtime foundation', () => {
     const config = loadConfig({ NODE_ENV: 'test' });
     expect(config.databaseUrl).toBe('postgresql://postgres:postgres@127.0.0.1:55322/postgres');
     expect(config.supabaseUrl).toBe('http://127.0.0.1:55321');
+  });
+
+  it('honors explicit local Docker SSL disable without weakening remote TLS', () => {
+    expect(resolveDatabaseSsl(
+      'postgresql://postgres:local@supabase_db_chat-web:5432/postgres?sslmode=disable'
+    )).toBe(false);
+    expect(resolveDatabaseSsl(
+      'postgresql://postgres:local@127.0.0.1:55322/postgres'
+    )).toBeUndefined();
+    expect(resolveDatabaseSsl(
+      'postgresql://postgres:remote@db.example.test:5432/postgres'
+    )).toEqual({ rejectUnauthorized: false });
   });
 
   it('configures the private Artifact Server dependency', () => {

@@ -1,10 +1,10 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 50%
+- **Progresso:** 60%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 6 — REST, OpenAPI e client tipado
+- **Próxima task:** Task 7 — lista acessível
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -13,7 +13,7 @@
 | 3 | agenda, query canônica e timezone | `validated_locally` | 299 pgTAP; p95 40,02 ms/10 mil itens; 153 testes verdes |
 | 4 | grafo de dependências | `validated_locally` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
 | 5 | conteúdo, versões e artifacts | `validated_locally` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
-| 6 | REST/OpenAPI e client tipado | `not_started` | — |
+| 6 | REST/OpenAPI e client tipado | `validated_locally` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
 | 7 | lista acessível | `not_started` | — |
 | 8 | views semana e mês | `not_started` | — |
 | 9 | notificações in-app e lote | `not_started` | — |
@@ -144,3 +144,34 @@ Ao concluir uma task:
   cleanup passaram.
 - GREEN amplo: 320/320 pgTAP, lint vazio, diff vazio, 166/166 testes do
   serviço, 8/8 do Artifact Server, typecheck, build e imagens Docker.
+
+## Ciclo Task 6 — 2026-07-18
+
+- RED inicial observado: a suíte de contrato não foi coletada porque as rotas
+  canônicas de dependências/conteúdo não existiam; após criar os adapters,
+  OpenAPI e SDK ainda falharam por inventário/métodos ausentes.
+- Expostos `campaign-items`, agenda canônica, detalhe/patch/transição,
+  dependências, content assets/versions e artifacts. Os endpoints legados
+  aninhados em campanha permanecem compatíveis.
+- Query/body desconhecidos falham; mutações usam `Idempotency-Key`, entidades
+  existentes usam `If-Match`, e o ETag acompanha a versão do agregado correto.
+- OpenAPI e router ficaram em lockstep com 26 paths e 38 operações. O SDK
+  preserva token fresco, tenant, correlação, ETag, `currentVersion` e uma única
+  query key de agenda para lista/semana/mês.
+- Notificações e lote não receberam endpoint vazio: seus paths serão adicionados
+  junto do domínio da Task 9, mantendo o contrato público sempre executável.
+- Bug corrigido: o domínio aceitava corpo de conteúdo de 1 MiB, mas o parser
+  JSON global limitava 256 KiB e retornava 500. O envelope HTTP agora comporta
+  o contrato e excesso retorna `413 payload_too_large`.
+- Gate instável corrigido: um teste de integração com várias transações
+  ultrapassava o timeout genérico de 5 s sob paralelismo. Isolado passou em
+  495 ms; recebeu timeout explícito de 15 s e a regressão passou 170/170.
+- Gate de segurança Docker recusou o `.env` por destinos Supabase não locais.
+  O smoke usou overrides de processo, rede do Supabase local e
+  `sslmode=disable` explícito. `createPool` agora honra esse modo sem enfraquecer
+  TLS de URLs remotas.
+- Smoke manual real: login local, campanha, item, agenda/timezone, patch, asset,
+  versão congelada e conflito 409 passaram; reset removeu fixtures e o
+  container permaneceu healthy.
+- GREEN: 15/15 REST, 13/13 SDK/query keys, 170/170 serviço, 2 E2E condicionais
+  skipped, p95 367,39 ms, typechecks/builds, Redocly, Docker build/health.

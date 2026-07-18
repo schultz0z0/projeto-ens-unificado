@@ -246,7 +246,7 @@ git commit -m "feat: add immutable content versions and item artifacts"
 - Modify: `services/marketing-ops/src/http/routes/items.ts`
 - Create: `services/marketing-ops/src/http/routes/dependencies.ts`
 - Create: `services/marketing-ops/src/http/routes/content.ts`
-- Create: `services/marketing-ops/src/http/routes/notifications.ts`
+- Defer to Task 9: `services/marketing-ops/src/http/routes/notifications.ts`
 - Modify: `services/marketing-ops/src/http/routes/index.ts`
 - Modify: `services/marketing-ops/src/rest.test.ts`
 - Modify: `services/marketing-ops/openapi/marketing-ops.v1.yaml`
@@ -256,13 +256,15 @@ git commit -m "feat: add immutable content versions and item artifacts"
 - Modify: `apps/chat-web/src/lib/marketingOps/queryKeys.ts`
 - Modify: `apps/chat-web/src/lib/marketingOps/queryKeys.test.ts`
 
-**Produz:** contrato v1 completo, compatibilidade legada e SDK frontend.
+**Produz:** contrato v1 dos domínios das Tasks 1–5, compatibilidade legada e
+SDK frontend. Notificações e lote completam o inventário na Task 9 junto das
+regras de domínio correspondentes.
 
-- [ ] REDs para inventário path+método, schemas strict, query desconhecida,
+- [x] REDs para inventário path+método, schemas strict, query desconhecida,
   mutation headers, ETag/409, range/filtros, dependências, versões e artifacts.
-- [ ] Implementar adapters sem regra de domínio e client que preserva auth,
+- [x] Implementar adapters sem regra de domínio e client que preserva auth,
   correlação, ETag, idempotência e `currentVersion`.
-- [ ] GREEN:
+- [x] GREEN:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -275,7 +277,7 @@ npx vitest run src/lib/marketingOps/client.test.ts src/lib/marketingOps/queryKey
 npm run typecheck
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- services/marketing-ops apps/chat-web/src/lib/marketingOps docs/phase-3

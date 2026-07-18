@@ -24,7 +24,7 @@ const uuid = z.string().uuid();
 const campaignParamsSchema = z.object({ campaignId: uuid }).strict();
 const materialParamsSchema = z.object({ campaignId: uuid, materialId: uuid }).strict();
 
-async function readBinaryBody(request: Request): Promise<Buffer> {
+export async function readBinaryBody(request: Request): Promise<Buffer> {
   const declaredLength = Number(request.header('content-length') ?? 0);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_CAMPAIGN_MATERIAL_BYTES) {
     throw appError('material_too_large', 413, 'Material exceeds 25 MiB');

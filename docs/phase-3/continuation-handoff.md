@@ -1,9 +1,9 @@
 # Handoff de continuação — Fase 3
 
-- **Estado:** `ready_to_start_task_6`
+- **Estado:** `ready_to_start_task_7`
 - **Branch única:** `main`
 - **Snapshot:** 2026-07-18
-- **Código/schema Fase 3:** Tasks 1–5 validadas localmente (50%)
+- **Código/schema Fase 3:** Tasks 1–6 validadas localmente (60%)
 
 ## Ordem de leitura
 
@@ -16,22 +16,23 @@
 
 ## Ponto de continuação
 
-Começar pela Task 6 do plano:
+Começar pela Task 7 do plano:
 
-- escrever REDs do inventário REST/OpenAPI e do client frontend;
-- expor itens, agenda, dependências, conteúdo, versões e artifacts sem duplicar
-  regra de domínio nos adapters;
-- preservar autenticação, correlação, ETag, `Idempotency-Key`, `If-Match` e
-  `currentVersion`;
-- manter notificações/lote como domínio da Task 9, sem antecipar semântica.
+- escrever REDs da URL, filtros, paginação, estados e teclado;
+- implementar `/marketing-ops/production` como referência acessível;
+- reutilizar `listProductionSchedule`, `productionSchedule` query key e o
+  diálogo de item; não criar query específica de view;
+- manter operações de data em UTC e exibir o timezone retornado pela API.
 
 ## Último gate confirmado
 
 - 320/320 pgTAP, lint vazio e diff vazio após reset;
-- 166/166 testes do Marketing Ops e 8/8 do Artifact Server;
+- 170/170 testes do Marketing Ops e 8/8 do Artifact Server;
 - typecheck/build verdes;
 - imagens Docker de Marketing Ops/Artifact Server construídas;
 - smoke real de upload, ownership, URL assinada, download e cleanup passou.
+- OpenAPI 26 paths/38 operações, 15 REST e 13 SDK/query keys verdes;
+- smoke REST Docker real passou e o serviço ficou healthy após reset.
 
 ## Pré-condição de deploy futuro
 

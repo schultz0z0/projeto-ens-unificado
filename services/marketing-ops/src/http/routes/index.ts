@@ -6,6 +6,8 @@ import { registerAudit } from './audit.js';
 import { registerCampaigns } from './campaigns.js';
 import { registerCapabilities } from './capabilities.js';
 import { registerItems } from './items.js';
+import { registerDependencies } from './dependencies.js';
+import { registerContent } from './content.js';
 import { registerMaterials } from './materials.js';
 import { registerParticipants } from './participants.js';
 import { registerReferences } from './references.js';
@@ -14,6 +16,7 @@ import type { ArtifactClient } from '../../integrations/artifactClient.js';
 import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
 import { createMcpRouter } from '../../mcp/http.js';
+import { DEFAULT_TENANT_TIME_ZONE } from '../../domain/scheduling.js';
 
 export interface ApiRouterDependencies {
   pool: Pool;
@@ -24,6 +27,7 @@ export interface ApiRouterDependencies {
   ragCourseClient: RagCourseClient;
   keyring?: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
+  tenantTimeZone?: string;
 }
 
 export function createApiRouter(deps: ApiRouterDependencies): Router {
@@ -36,7 +40,14 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerMaterials(router, deps.pool, deps.artifactClient, deps.features);
   registerReferences(router, deps.ragCourseClient, deps.features);
   registerTimeline(router, deps.pool, deps.features);
-  registerItems(router, deps.pool, deps.features);
+  registerItems(
+    router,
+    deps.pool,
+    deps.features,
+    deps.tenantTimeZone ?? DEFAULT_TENANT_TIME_ZONE
+  );
+  registerDependencies(router, deps.pool, deps.features);
+  registerContent(router, deps.pool, deps.artifactClient, deps.features);
   registerAudit(router, deps.pool, deps.features);
   if (deps.keyring) router.use(createMcpRouter({
     pool: deps.pool,

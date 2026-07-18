@@ -111,7 +111,8 @@ export function createApp(deps: AppDependencies) {
   app.disable('x-powered-by');
   // Production traffic arrives through one trusted Traefik hop.
   app.set('trust proxy', 1);
-  app.use(express.json({ limit: '256kb' }));
+  // Content versions allow a 1 MiB body plus bounded JSON metadata/envelope.
+  app.use(express.json({ limit: '1100kb' }));
   app.use((request: Request, response: Response, next: NextFunction) => {
     const startedAt = process.hrtime.bigint();
     const supplied = request.header('x-correlation-id')?.trim();
@@ -242,6 +243,11 @@ export function createApp(deps: AppDependencies) {
     let normalized: AppError;
     if (error instanceof AppError) {
       normalized = error;
+    } else if (
+      error instanceof Error &&
+      (error as Error & { type?: string }).type === 'entity.too.large'
+    ) {
+      normalized = appError('payload_too_large', 413, 'JSON payload exceeds the allowed size');
     } else if (error instanceof Error && error.name === 'ZodError') {
       const issues = (error as any).issues;
       normalized = appError('validation_error', 400, 'Request validation failed', { issues });

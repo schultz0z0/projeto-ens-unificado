@@ -261,3 +261,81 @@ de volume registrou p95 de 316,31 ms e permaneceu abaixo de 500 ms.
 3. O primeiro download assinado local retornou 404 porque a URL pública no
    `.env` era a de produção. O container foi recriado com URL pública local e o
    smoke completo passou; nenhum endpoint remoto foi alterado.
+
+## Task 6 — REST, OpenAPI e SDK frontend
+
+### RED observado
+
+| Comando/cenário | Resultado |
+|---|---|
+| `npx vitest run src/rest.test.ts` | suite não coletada: rotas de dependências/conteúdo inexistentes |
+| REST após adapters | 3 falhas: paths/headers/OpenAPI ainda ausentes |
+| SDK frontend | `listProductionSchedule` e query keys da produção inexistentes |
+| versão de conteúdo com 300 KiB | HTTP 500 antes da rota por limite JSON de 256 KiB |
+| regressão ampla inicial | 168 pass; teste multi-transação de dependência encerrou em 5,049 s pelo timeout genérico |
+| primeiro Compose local | bloqueado antes de alterar container por descoberta de Compose incorreto/variável obrigatória |
+| readiness com URL de host | banco inacessível pelo loopback do Windows e depois TLS indevido no hostname Docker |
+
+### Implementação
+
+- recursos canônicos em `/v1/campaign-items` com agenda, CRUD e transição;
+- dependências, content assets, versões append-only e artifacts;
+- adapters legados de item preservados;
+- validação Zod strict de query/body, estados reservados rejeitados;
+- guards de mutação, ETags e erro de conflito com `currentVersion`;
+- OpenAPI 3.1 com 26 paths/38 operações em lockstep com Express;
+- SDK frontend e query keys compartilhadas para todas as visualizações;
+- parser JSON alinhado ao limite de conteúdo, com `413 payload_too_large`;
+- `sslmode=disable` explícito para Docker local e TLS mantido no remoto.
+
+Notificações/lote permanecem na Task 9. Nenhum endpoint placeholder foi
+publicado antes da existência de domínio, autorização e testes correspondentes.
+
+### GREEN observado
+
+| Comando | Resultado |
+|---|---|
+| `npx vitest run src/rest.test.ts` | 15/15 |
+| `npm test` em Marketing Ops | 170 pass; 2 E2E condicionais skipped; p95 367,39 ms |
+| `npm run typecheck` e `npm run build` em Marketing Ops | passaram |
+| Redocly 2.18.1 `--extends=minimal` | OpenAPI válido |
+| testes client/query keys frontend | 13/13 |
+| `npm run typecheck` e `npm run build` no frontend | passaram |
+| `docker compose --env-file .env build marketing-ops` | imagem construída |
+| health/readiness com Supabase local | container healthy |
+| smoke REST manual | login, campanha, item, agenda, patch, asset, versão e 409 passaram |
+| `npx supabase db reset --local --workdir .` | fixtures removidas e todas as migrations reaplicadas |
+| health após reset | container healthy |
+
+O build frontend manteve os avisos baseline de Browserslist e chunk principal
+acima de 500 KiB. Não houve regressão de build; as rotas lazy das Tasks 7–8
+continuam sendo o gate pertinente para não ampliar esse chunk.
+
+### Critérios exercitados
+
+- inventário path+método e lockstep router/OpenAPI;
+- query/body strict e mass assignment rejeitado;
+- headers obrigatórios, ETag por item/asset e conflito `currentVersion`;
+- range, filtros, cursor, paginação e timezone na resposta;
+- create/get/patch/transição reais;
+- add/list/remove de dependência reais;
+- asset, versão congelada, histórico e stale write reais;
+- link/access/unlink de artifact com client controlado;
+- payload intermediário aceito e envelope excessivo rejeitado em 413;
+- auth real e fluxo Docker contra Supabase estritamente local;
+- client preserva auth/correlação e arquivo binário sem JSON/base64.
+
+### Bugs e correções
+
+1. O parser HTTP contradizia o limite de 1 MiB do domínio. Alinhado para o
+   envelope necessário e adicionada resposta pública 413.
+2. O teste composto de dependências era correto, mas o timeout de 5 s era
+   instável sob concorrência das suites. O cenário isolado confirmou 495 ms; o
+   harness usa 15 s e não mascara timeout de produção.
+3. O `.env` local contém destinos Supabase não locais. O gate bloqueou seu uso;
+   o smoke derivou credenciais do Supabase CLI sem imprimi-las e usou overrides.
+4. PostgreSQL do Supabase local não é acessível pelo loopback do host a partir
+   do container. A validação anexou a rede local do Supabase.
+5. O hostname Docker era classificado como remoto e recebia TLS forçado.
+   `createPool` agora respeita `sslmode=disable` explícito; URL remota continua
+   com TLS.

@@ -31,4 +31,31 @@ describe('Marketing Ops query keys', () => {
       'marketing-ops', 'references', 'courses', 'gestao', 10
     ]);
   });
+
+  it('shares one canonical production schedule scope across every view', () => {
+    const filters = {
+      campaignId: 'campaign-1',
+      from: '2026-08-01T00:00:00.000Z',
+      to: '2026-09-01T00:00:00.000Z',
+      status: 'ready' as const
+    };
+    expect(marketingOpsKeys.productionSchedule(filters)).toEqual([
+      'marketing-ops', 'production', 'schedule', filters
+    ]);
+    expect(marketingOpsKeys.productionItem('item-1')).toEqual([
+      'marketing-ops', 'production', 'item', 'item-1'
+    ]);
+    expect(marketingOpsKeys.productionItemDependencies('item-1')).toEqual([
+      'marketing-ops', 'production', 'item', 'item-1', 'dependencies'
+    ]);
+    expect(marketingOpsKeys.contentAssets('item-1')).toEqual([
+      'marketing-ops', 'production', 'item', 'item-1', 'content-assets'
+    ]);
+    expect(marketingOpsKeys.contentVersions('asset-1')).toEqual([
+      'marketing-ops', 'production', 'content-asset', 'asset-1', 'versions'
+    ]);
+    expect(marketingOpsKeys.productionItemArtifacts('item-1')).toEqual([
+      'marketing-ops', 'production', 'item', 'item-1', 'artifacts'
+    ]);
+  });
 });
