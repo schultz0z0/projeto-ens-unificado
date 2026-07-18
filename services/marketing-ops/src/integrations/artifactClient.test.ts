@@ -96,6 +96,26 @@ describe('ArtifactClient', () => {
     });
   });
 
+  it('validates artifact ownership before a domain link is persisted', async () => {
+    const client = new ArtifactClient({
+      baseUrl: 'http://artifact-server:8095',
+      internalKey: 'internal-test-key',
+      timeoutMs: 1_000,
+      fetchImpl: vi.fn(async () => new Response(JSON.stringify(metadataPayload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+      }))
+    });
+
+    await expect(client.getOwnedMetadata(
+      metadataPayload.id,
+      '22222222-2222-4222-8222-222222222222'
+    )).rejects.toMatchObject({
+      code: 'artifact_not_owned',
+      status: 403
+    });
+  });
+
   it('treats delete as idempotent when the artifact is already absent', async () => {
     const client = new ArtifactClient({
       baseUrl: 'http://artifact-server:8095',

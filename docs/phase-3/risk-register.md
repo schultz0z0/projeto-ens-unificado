@@ -37,3 +37,14 @@ falha alta/crítica sem mitigação.
 - F3-R-03: mitigação local validada. A ordem global de locks é campanha → UUID
   menor → UUID maior; o harness concorrente terminou sem deadlock e aceitou no
   máximo uma aresta A↔B. Permanece aberto até o E2E/restart da Task 10.
+
+## Revisão após a Task 5
+
+- F3-R-04: mitigação local validada com trigger append-only, grants mínimos,
+  função atômica, concorrência otimista e pgTAP negativo para update/delete.
+  Permanece aberto até o E2E e o gate de produção.
+- F3-R-06: ownership, tenant/item composto, compensação e unlink sem deleção de
+  bytes foram validados no domínio. O smoke Docker comprovou upload, URL
+  assinada, download e cleanup. Permanece aberto até restart/E2E da Task 10.
+- A URL pública do Artifact Server deve ser configurada por ambiente. O smoke
+  local usa endpoint local explícito; produção não foi chamada nem alterada.

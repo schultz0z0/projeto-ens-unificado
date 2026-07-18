@@ -1,6 +1,6 @@
 begin;
 
-select plan(45);
+select plan(58);
 
 select is(
   (
@@ -164,6 +164,139 @@ select ok(
       and acl.privilege_type = 'EXECUTE'
   ),
   'PUBLIC cannot execute dependency graph helpers'
+);
+
+select has_function(
+  'marketing_ops_private',
+  'create_content_version',
+  array['uuid', 'bigint', 'text', 'jsonb', 'text', 'boolean'],
+  'atomic content version function exists'
+);
+select has_function(
+  'marketing_ops_private',
+  'backfill_legacy_item_content',
+  array[]::text[],
+  'legacy content backfill function exists'
+);
+select ok(
+  (select prosecdef from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.create_content_version(uuid,bigint,text,jsonb,text,boolean)'
+  )),
+  'atomic content version function is security definer'
+);
+select is(
+  (select proconfig::text from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.create_content_version(uuid,bigint,text,jsonb,text,boolean)'
+  )),
+  '{"search_path=\"\""}',
+  'atomic content version function has an empty search path'
+);
+select ok(
+  not exists (
+    select 1
+    from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    where p.oid in (
+      to_regprocedure(
+        'marketing_ops_private.create_content_version(uuid,bigint,text,jsonb,text,boolean)'
+      ),
+      to_regprocedure('marketing_ops_private.backfill_legacy_item_content()')
+    )
+      and acl.grantee = 0
+      and acl.privilege_type = 'EXECUTE'
+  ),
+  'PUBLIC cannot execute content write/backfill functions'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'marketing_ops_private.create_content_version(uuid,bigint,text,jsonb,text,boolean)',
+    'EXECUTE'
+  ),
+  'authenticated can execute the atomic content version function'
+);
+select ok(
+  not has_table_privilege('authenticated', 'marketing_ops.content_versions', 'INSERT'),
+  'authenticated cannot bypass atomic content version creation'
+);
+select is(
+  (
+    select array_length(constraint_meta.conkey, 1)
+    from pg_constraint as constraint_meta
+    where constraint_meta.conname = 'item_artifacts_asset_fk'
+      and constraint_meta.conrelid = 'marketing_ops.item_artifacts'::regclass
+  ),
+  3,
+  'item artifact asset FK includes tenant, item, and asset'
+);
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
+set local role authenticated;
+select throws_ok(
+  $$
+    select *
+    from marketing_ops_private.create_content_version(
+      'e7777777-7777-4777-8777-777777777777',
+      null,
+      'body',
+      '{}'::jsonb,
+      repeat('0', 64),
+      false
+    )
+  $$,
+  '23514',
+  'Expected content asset version must be positive',
+  'atomic content creation rejects a missing expected version'
+);
+reset role;
+
+insert into marketing_ops.campaign_items (
+  id, tenant_id, campaign_id, kind, title, content, created_by, updated_by
+) values (
+  'e7777777-7777-4777-8777-777777777777',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'c1111111-1111-4111-8111-111111111111',
+  'email',
+  'Legacy content fixture',
+  '{"text":"legacy body"}'::jsonb,
+  '11111111-1111-4111-8111-111111111111',
+  '11111111-1111-4111-8111-111111111111'
+);
+select is(
+  marketing_ops_private.backfill_legacy_item_content(),
+  1,
+  'legacy material content is backfilled once'
+);
+select ok(
+  exists (
+    select 1
+    from marketing_ops.content_assets
+    where item_id = 'e7777777-7777-4777-8777-777777777777'
+      and asset_kind = 'legacy_campaign_item'
+      and current_version_number = 1
+      and version = 2
+  ),
+  'legacy item receives a stable asset at version one'
+);
+select ok(
+  exists (
+    select 1
+    from marketing_ops.content_versions as content_version
+    join marketing_ops.content_assets as asset
+      on asset.tenant_id = content_version.tenant_id
+      and asset.id = content_version.asset_id
+    where asset.item_id = 'e7777777-7777-4777-8777-777777777777'
+      and content_version.version_number = 1
+      and content_version.body = '{"text": "legacy body"}'
+      and content_version.content_hash ~ '^[0-9a-f]{64}$'
+      and content_version.frozen_at is not null
+  ),
+  'legacy content is preserved in a frozen immutable version'
+);
+select is(
+  marketing_ops_private.backfill_legacy_item_content(),
+  0,
+  'legacy content backfill is idempotent'
 );
 
 select has_index('marketing_ops', 'campaign_items', 'campaign_items_tenant_starts_idx', 'start range index exists');

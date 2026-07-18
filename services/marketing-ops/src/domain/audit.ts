@@ -18,7 +18,9 @@ const SAFE_TEXT_FIELDS = new Set([
   'unlinkedAt', 'verifiedAt', 'referenceVerifiedAt', 'startsOn', 'endsOn',
   'primaryChannel', 'secondaryChannels', 'expiresAt', 'assigneeUserId',
   'priority', 'channel', 'startsAt', 'dueAt', 'completedAt', 'cancelledAt',
-  'dependsOnItemId', 'itemVersion', 'predecessorStatus'
+  'dependsOnItemId', 'itemVersion', 'predecessorStatus',
+  'assetId', 'assetKind', 'assetVersion', 'versionNumber', 'contentHash',
+  'frozenAt', 'frozen'
 ]);
 
 const SECRET_FIELD = /(authorization|bearer|cookie|password|secret|token|delegation|access.?url|signed.?url)/i;

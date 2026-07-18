@@ -1,10 +1,10 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 40%
+- **Progresso:** 50%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 5 — conteúdo, versões e artifacts
+- **Próxima task:** Task 6 — REST, OpenAPI e client tipado
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -12,7 +12,7 @@
 | 2 | CRUD e máquina de estados | `validated_locally` | 7 cenários novos; 142 testes do serviço verdes |
 | 3 | agenda, query canônica e timezone | `validated_locally` | 299 pgTAP; p95 40,02 ms/10 mil itens; 153 testes verdes |
 | 4 | grafo de dependências | `validated_locally` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
-| 5 | conteúdo, versões e artifacts | `not_started` | — |
+| 5 | conteúdo, versões e artifacts | `validated_locally` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
 | 6 | REST/OpenAPI e client tipado | `not_started` | — |
 | 7 | lista acessível | `not_started` | — |
 | 8 | views semana e mês | `not_started` | — |
@@ -116,3 +116,31 @@ Ao concluir uma task:
   o cleanup roda em `finally`.
 - GREEN amplo: reset completo, 307/307 pgTAP, lint vazio, diff vazio, 157/157
   testes do serviço, 2 E2E condicionais skipped, typecheck e build.
+
+## Ciclo Task 5 — 2026-07-18
+
+- RED de domínio observado: `content.ts` e `itemArtifacts.ts` não existiam e o
+  client do Artifact Server não expunha metadata com ownership.
+- RED de banco observado: a função atômica de criação de versão, os grants
+  mínimos e o vínculo composto asset/item ainda não existiam.
+- Migration gerada:
+  `20260718202716_add_content_versioning_and_item_artifact_guards.sql`.
+- Conteúdo agora separa asset mutável de versões append-only, calcula SHA-256
+  do corpo, congela versões na criação e incrementa número/ponteiro sob lock.
+- O backfill converte conteúdo legado de forma determinística, preserva o JSON
+  original, cria versão congelada e pode ser reexecutado sem duplicação.
+- Artifacts validam tamanho/MIME, ownership e vínculo ao mesmo item. Falha após
+  upload aciona compensação; unlink é lógico e não remove bytes compartilhados.
+- Bug de concorrência otimista corrigido: `expectedVersion = null` podia
+  contornar uma comparação SQL com semântica ternária. A função agora rejeita
+  explicitamente null e o caso ganhou pgTAP negativo.
+- Na regressão executada junto de build/typecheck, um teste antigo de
+  dependências ultrapassou o timeout de 5 s por contenção do host. O teste
+  focado passou em aproximadamente 504 ms e a regressão completa serializada
+  passou com 166/166; não foi reproduzido defeito de produto.
+- O primeiro smoke local de URL assinada retornou 404 porque o `.env` apontava
+  a URL pública do Artifact Server para produção. O container foi recriado com
+  override local; upload, ownership, URL assinada, download de 27 bytes e
+  cleanup passaram.
+- GREEN amplo: 320/320 pgTAP, lint vazio, diff vazio, 166/166 testes do
+  serviço, 8/8 do Artifact Server, typecheck, build e imagens Docker.

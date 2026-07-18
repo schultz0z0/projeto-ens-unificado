@@ -1,7 +1,7 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 40%
+- **Implementação:** 50%
 - **Data:** 2026-07-18
 
 | Requisito | Design | Tasks planejadas | Estado |
@@ -12,9 +12,9 @@
 | F3-RF-04 Timezone | 7 | 3, 7–8 | `backend_validated` |
 | F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `domain_validated` |
 | F3-RF-06 Dependências | 4.2, 10 | 4 | `domain_validated` |
-| F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `planned` |
-| F3-RF-08 Versões | 4.4, 10 | 5 | `planned` |
-| F3-RF-09 Artefatos | 4.5 | 5 | `planned` |
+| F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `domain_validated` |
+| F3-RF-08 Versões | 4.4, 10 | 5 | `domain_validated` |
+| F3-RF-09 Artefatos | 4.5 | 5 | `domain_validated` |
 | F3-RF-10 Estados | 5 | 1–2 | `domain_validated` |
 | F3-RF-11 Notificações | 4.6, 12 | 9 | `planned` |
 | F3-RF-12 Lote | 8, 10 | 9 | `planned` |
@@ -86,3 +86,20 @@ lista/semana/mês e acessibilidade pertencem às Tasks 7–8.
 
 O requisito está validado no domínio e banco. O aceite público ainda depende dos
 endpoints REST/OpenAPI da Task 6 e do E2E da Task 10.
+
+## Evidência Task 5
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Asset e versões | `content.test.ts` + função atômica | primeira/próxima versão, histórico, hash e freeze verdes |
+| Imutabilidade | trigger + pgTAP update/delete | versões append-only inclusive em SQL privilegiado |
+| Concorrência/versão | duas escritas no mesmo `expectedVersion` | uma vence e uma retorna conflito |
+| Conteúdo legado | backfill + pgTAP de reexecução | corpo preservado, versão congelada, sem duplicação |
+| Artifact/ownership | `itemArtifacts.test.ts` + FK composta | owner/tenant/item validados |
+| Compensação/unlink | falha injetada + artifact compartilhado | rollback remove upload novo; unlink não apaga bytes |
+| Integração real | build Docker + smoke do Artifact Server | upload, metadata, URL assinada, download e cleanup verdes |
+| Reprodutibilidade | reset, 320 pgTAP, lint e diff | todos verdes |
+| Regressão | serviço, Artifact Server, typecheck e build | 166 + 8 testes verdes |
+
+Os requisitos estão validados no domínio, banco e integração local. O aceite
+público ainda depende dos endpoints REST/OpenAPI da Task 6, UI e E2E da Task 10.

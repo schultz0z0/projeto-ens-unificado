@@ -135,7 +135,7 @@ export function validateMaterialFile(input: MaterialFileInput): ValidatedMateria
   };
 }
 
-function validateArtifactMetadata(metadata: ArtifactMetadata): ArtifactMetadata {
+export function validateArtifactMetadata(metadata: ArtifactMetadata): ArtifactMetadata {
   const filename = normalizeFilename(metadata.filename);
   const contentType = normalizeContentType(metadata.contentType);
   assertApprovedDescriptor(filename, contentType, metadata.size);

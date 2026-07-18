@@ -138,6 +138,17 @@ export class ArtifactClient {
     return this.mapMetadata(payload);
   }
 
+  async getOwnedMetadata(
+    artifactId: string,
+    ownerId: string
+  ): Promise<ArtifactMetadata> {
+    const metadata = await this.getMetadata(artifactId);
+    if (metadata.ownerId !== ownerId) {
+      throw appError('artifact_not_owned', 403, 'Artifact belongs to another user');
+    }
+    return metadata;
+  }
+
   async createAccessLink(
     artifactId: string,
     ownerId: string,

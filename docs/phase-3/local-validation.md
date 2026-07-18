@@ -198,3 +198,66 @@ de volume registrou p95 de 316,31 ms e permaneceu abaixo de 500 ms.
 2. O harness deixava um timer de 10 segundos ativo após sucesso e não garantia
    cleanup em falha. O timeout agora é cancelado e fixtures são removidas em
    `finally`.
+
+## Task 5 — conteúdo imutável e artifacts
+
+### RED observado
+
+| Comando/cenário | Resultado |
+|---|---|
+| `npx vitest run src/domain/content.test.ts src/domain/itemArtifacts.test.ts src/integrations/artifactClient.test.ts` | módulos de conteúdo/artifacts e operação de metadata inexistentes |
+| pgTAP de calendário | função atômica, grants mínimos e vínculo composto ausentes |
+| concorrência de versões | apenas uma escrita deveria vencer no mesmo `expectedVersion` |
+| mutação privilegiada de versão | update/delete deveriam falhar mesmo fora do fluxo da aplicação |
+
+### Implementação
+
+- migration `20260718202716_add_content_versioning_and_item_artifact_guards.sql`;
+- função privada `create_content_version` com lock do asset, versão esperada,
+  incremento atômico, SHA-256, limites de payload e `search_path` vazio;
+- versões congeladas na criação e trigger append-only para update/delete;
+- backfill legado estável e idempotente, preservando o corpo JSON original;
+- FK composta assegurando que artifact e asset pertencem ao mesmo item/tenant;
+- upload/link/list/access/unlink com validação de MIME/tamanho/ownership;
+- compensação de bytes quando a transação falha após upload;
+- auditoria registra IDs, hashes e fingerprints, nunca corpo/metadata brutos.
+
+### GREEN observado
+
+| Comando | Resultado |
+|---|---|
+| `npx vitest run src/domain/content.test.ts src/domain/itemArtifacts.test.ts src/integrations/artifactClient.test.ts` | 13/13 |
+| suíte focada incluindo regressão de materiais | 20/20 |
+| `npm test` em `services/marketing-ops` | 166 pass; 2 E2E condicionais skipped; p95 69,08 ms |
+| `npm run typecheck` e `npm run build` | passaram |
+| `npx supabase db reset --local --workdir .` | todas as migrations e seed aplicadas do zero |
+| `npx supabase test db --local --workdir .` | 6 arquivos, 320/320 |
+| `npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error` | nenhum erro |
+| `npx supabase db diff --local --schema marketing_ops,marketing_ops_private` | diff vazio |
+| `npm test` em `services/artifact-server` | 8/8 |
+| `docker compose --env-file .env build marketing-ops artifact-server` | duas imagens construídas |
+| smoke real do Artifact Server | upload de 27 bytes, owner, URL assinada, download e cleanup passaram |
+
+### Critérios exercitados
+
+- primeira/próxima versão, histórico ordenado, hash e freeze;
+- duas escritas concorrentes com exatamente uma vencedora;
+- update/delete bloqueados por trigger append-only;
+- `expectedVersion` ausente/null/stale rejeitado;
+- isolamento cross-tenant e autorização do item;
+- backfill legado com preservação e reexecução idempotente;
+- owner incorreto, asset de outro item e artifact externo rejeitados;
+- compensação de upload em rollback e unlink sem apagar bytes compartilhados;
+- auditoria/outbox únicos e sem conteúdo sensível.
+
+### Bugs e correções
+
+1. Uma comparação SQL permitia que `expectedVersion = null` escapasse devido à
+   semântica ternária de null. A função passou a rejeitar null explicitamente e
+   ganhou teste pgTAP.
+2. Um teste de dependência excedeu 5 s somente quando a regressão, typecheck e
+   build disputaram recursos. Isolado passou em cerca de 504 ms e a suíte
+   completa, executada sozinha, passou 166/166. Gates amplos ficam serializados.
+3. O primeiro download assinado local retornou 404 porque a URL pública no
+   `.env` era a de produção. O container foi recriado com URL pública local e o
+   smoke completo passou; nenhum endpoint remoto foi alterado.

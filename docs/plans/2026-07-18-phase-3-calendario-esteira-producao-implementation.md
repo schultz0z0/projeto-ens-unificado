@@ -219,11 +219,11 @@ git commit -m "feat: enforce acyclic item dependencies"
 
 **Produz:** asset, versão append-only, freeze, histórico e artifact seguro.
 
-- [ ] REDs para primeira/próxima versão, hash, corrida de número, tentativa de
+- [x] REDs para primeira/próxima versão, hash, corrida de número, tentativa de
   update/delete, freeze, cross-tenant, owner incorreto, compensação e unlink.
-- [ ] Implementar lock do asset, incremento atômico, audit com hash/resumo e
+- [x] Implementar lock do asset, incremento atômico, audit com hash/resumo e
   integração Artifact já validada.
-- [ ] GREEN:
+- [x] GREEN:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -232,7 +232,7 @@ Set-Location ../../apps/chat-web
 npx supabase test db --local --workdir . supabase/tests/marketing_ops_calendar.test.sql supabase/tests/marketing_ops_calendar_rls.test.sql
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- services/marketing-ops apps/chat-web/supabase/tests docs/phase-3
