@@ -1,21 +1,21 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 10%
+- **Implementação:** 20%
 - **Data:** 2026-07-18
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
-| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `schema_validated` |
-| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `schema_validated` |
+| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `domain_validated` |
+| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `domain_validated` |
 | F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `planned` |
 | F3-RF-04 Timezone | 7 | 3, 7–8 | `planned` |
-| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `planned` |
+| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `domain_validated` |
 | F3-RF-06 Dependências | 4.2, 10 | 4 | `planned` |
 | F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `planned` |
 | F3-RF-08 Versões | 4.4, 10 | 5 | `planned` |
 | F3-RF-09 Artefatos | 4.5 | 5 | `planned` |
-| F3-RF-10 Estados | 5 | 1–2 | `contract_validated` |
+| F3-RF-10 Estados | 5 | 1–2 | `domain_validated` |
 | F3-RF-11 Notificações | 4.6, 12 | 9 | `planned` |
 | F3-RF-12 Lote | 8, 10 | 9 | `planned` |
 
@@ -40,5 +40,20 @@
 | Reprodutibilidade | `db reset`, `db lint`, `db diff` | reset verde, lint vazio, diff vazio |
 | Regressão de serviço | `npm test`, `typecheck`, `build` | 135 pass, 2 skips condicionais |
 
-Nenhum requisito funcional foi promovido a `accepted`: Task 1 valida apenas a
-fundação e os contratos. O aceite funcional depende das Tasks 2–10.
+Nenhum requisito foi promovido a `accepted`: Tasks 1–2 validam fundação,
+contratos e domínio. O aceite público depende das APIs, UI e E2E das Tasks
+3–10.
+
+## Evidência Task 2
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| CRUD e campos | `domain/items.test.ts` | create/get/patch e normalização verdes |
+| Estados e terminalidade | `domain/items.test.ts` + contrato | todos os edges aprovados e terminais validados |
+| Versão/idempotência | replay, stale write e contagem audit/outbox | validado localmente |
+| RBAC/cross-tenant | campanha arquivada, assignee externo e leitura externa | 409/422/404 estáveis |
+| Auditoria minimizada | audit JSON não contém descrição/metadata brutas | validado localmente |
+| Regressão | suíte de serviço + typecheck + build | 142 pass, 2 skips condicionais |
+
+O status `domain_validated` não equivale a aceite público: REST/OpenAPI, UI e
+E2E ainda dependem das Tasks 6–10.

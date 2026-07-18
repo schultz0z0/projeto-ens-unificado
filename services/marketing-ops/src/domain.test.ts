@@ -136,13 +136,14 @@ describe('idempotent draft domain', () => {
   });
 
   it('searches and combines operational campaign filters with stable pagination', async () => {
+    const uniqueSearchToken = `alpha-${randomUUID().slice(0, 8)}`;
     const campaign = await createCampaignDraft(context(), {
-      name: 'Searchable Alpha Campaign',
+      name: `Searchable ${uniqueSearchToken} Campaign`,
       idempotencyKey: randomUUID()
     });
     await updateCampaign(context(), campaign.id, campaign.version, {
       referenceType: 'initiative',
-      referenceTitleSnapshot: 'Nexus Initiative Alpha',
+      referenceTitleSnapshot: `Nexus Initiative ${uniqueSearchToken}`,
       startsOn: '2026-09-01',
       endsOn: '2026-09-30',
       primaryChannel: 'linkedin',
@@ -151,7 +152,7 @@ describe('idempotent draft domain', () => {
     });
 
     const result = await listCampaigns(context(), {
-      q: 'Nexus Alpha',
+      q: uniqueSearchToken,
       referenceType: 'initiative',
       channel: 'email',
       responsibleId: actor.userId,
@@ -162,14 +163,14 @@ describe('idempotent draft domain', () => {
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toMatchObject({
       id: campaign.id,
-      name: 'Searchable Alpha Campaign',
+      name: `Searchable ${uniqueSearchToken} Campaign`,
       responsibles: [{ userId: actor.userId, isPrimary: true }],
       attention: []
     });
     expect(result.nextCursor).toBeNull();
     expect(await getCampaign(context(), campaign.id)).toMatchObject({
       id: campaign.id,
-      referenceTitleSnapshot: 'Nexus Initiative Alpha'
+      referenceTitleSnapshot: `Nexus Initiative ${uniqueSearchToken}`
     });
   });
 

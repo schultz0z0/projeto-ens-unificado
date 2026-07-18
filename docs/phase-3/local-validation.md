@@ -52,3 +52,43 @@ silenciados nem tratados como gate verde da Fase 3.
 
 O clone não está ligado pelo Supabase CLI: `migration list --linked` retorna
 `LegacyProjectNotLinkedError`. Nenhum deploy remoto foi realizado.
+
+## Task 2 — CRUD e máquina de estados
+
+### RED observado
+
+`npx vitest run src/domain/items.test.ts src/production-gate.test.ts`:
+
+- `items.test.ts`: 7/7 falhas pela ausência das funções novas;
+- `production-gate.test.ts`: 5/5 pass, comprovando que o RED não era regressão
+  da base anterior.
+
+### GREEN observado
+
+| Comando | Resultado |
+|---|---|
+| `npx vitest run src/domain/items.test.ts src/production-gate.test.ts` | 12/12 |
+| `npm test` | 142 pass; 2 E2E condicionais skipped |
+| `npm run typecheck` | passou |
+| `npm run build` | passou |
+
+### Critérios exercitados
+
+- create/get/patch/cancel e replay idempotente;
+- tipo/data/assignee inválidos;
+- campanha arquivada e isolamento cross-tenant;
+- conflito de versão com versão atual;
+- todos os edges forward/backward/cancel aprovados;
+- título/assignee/prazo para ready;
+- conteúdo editorial antes de review;
+- item terminal sem mutação;
+- auditoria/outbox únicos no replay e sem conteúdo bruto.
+
+### Bugs e correções
+
+1. O tipo TypeScript de create usava a saída do Zod pós-default e exigia campos
+   que a entrada mínima pode omitir. Separados `z.input` e `z.output`.
+2. Wrappers legados receberam autorização explícita e preservação de updates
+   content-only.
+3. A regressão ampla expôs fixture antigo de busca não idempotente: múltiplas
+   execuções acumulavam campanhas “Nexus Alpha”. O teste agora usa token único.

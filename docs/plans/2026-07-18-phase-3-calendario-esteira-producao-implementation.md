@@ -99,18 +99,18 @@ git commit -m "feat: add phase 3 schema contracts"
 **Produz:** create/get/update/transition/cancel com versão, idempotência,
 readiness e terminalidade.
 
-- [ ] REDs para create, patch mínimo, campanha arquivada, assignee sem acesso,
+- [x] REDs para create, patch mínimo, campanha arquivada, assignee sem acesso,
   datas inválidas, todos os edges, estados reservados, 409 e replay.
-- [ ] Executar RED:
+- [x] Executar RED:
 
 ```powershell
 Set-Location services/marketing-ops
 npx vitest run src/domain/items.test.ts src/production-gate.test.ts
 ```
 
-- [ ] Implementar domínio usando `withActorTransaction`, locks do agregado,
+- [x] Implementar domínio usando `withActorTransaction`, locks do agregado,
   audit minimizada e eventos versionados.
-- [ ] GREEN:
+- [x] GREEN:
 
 ```powershell
 npx vitest run src/domain/items.test.ts src/production-gate.test.ts
@@ -119,7 +119,7 @@ npm run typecheck
 npm run build
 ```
 
-- [ ] Atualizar docs e commit:
+- [x] Atualizar docs e commit:
 
 ```powershell
 git add -- services/marketing-ops/src docs/phase-3

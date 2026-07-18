@@ -112,7 +112,8 @@ export const ProductionItemInputSchema = z.object({
   dueAt: productionItemEditableShape.dueAt.default(null),
   metadata: productionItemEditableShape.metadata.default({})
 }).strict().superRefine(validateProductionItemConsistency);
-export type ProductionItemInput = z.infer<typeof ProductionItemInputSchema>;
+export type ProductionItemInput = z.input<typeof ProductionItemInputSchema>;
+export type ParsedProductionItemInput = z.output<typeof ProductionItemInputSchema>;
 
 export const ProductionItemPatchSchema = z.object(productionItemEditableShape)
   .partial()

@@ -1,15 +1,15 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 10%
+- **Progresso:** 20%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 2 — CRUD e máquina de estados
+- **Próxima task:** Task 3 — agenda, timezone e performance
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
 | 1 | gate, tipos, migration, RLS e backfill | `validated_locally` | 295 pgTAP; 19 contratos; reset/lint/diff verdes |
-| 2 | CRUD e máquina de estados | `not_started` | — |
+| 2 | CRUD e máquina de estados | `validated_locally` | 7 cenários novos; 142 testes do serviço verdes |
 | 3 | agenda, query canônica e timezone | `not_started` | — |
 | 4 | grafo de dependências | `not_started` | — |
 | 5 | conteúdo, versões e artifacts | `not_started` | — |
@@ -50,3 +50,25 @@ Ao concluir uma task:
 - O clone não possui link local do Supabase CLI; `migration list --linked`
   retorna `LegacyProjectNotLinkedError`. O deploy remoto permanece bloqueado
   até o gate final da fase.
+
+## Ciclo Task 2 — 2026-07-18
+
+- RED observado: 7/7 cenários novos falharam porque
+  `createProductionItem`/get/patch/transition/cancel ainda não existiam; os 5
+  testes do production gate anterior permaneceram verdes.
+- Implementados create/get/patch/transition/cancel com transação de ator,
+  idempotência, versão otimista, readiness, terminalidade, auditoria minimizada
+  e outbox.
+- Compatibilidade mantida nos adapters legados
+  `createCampaignItemDraft`/`updateCampaignItemDraft`, inclusive para `content`.
+- Autoridade de member exige campanha editável e, para transição, assignee ou
+  owner; manager/admin operam no tenant autorizado. Cross-tenant retorna 404.
+- GREEN focado: 12/12 (`items.test.ts` + `production-gate.test.ts`).
+- GREEN amplo: 142/142 testes do serviço, 2 E2E condicionais skipped,
+  typecheck e build.
+- Bug corrigido: o teste antigo de paginação reutilizava “Nexus Alpha” e
+  acumulava fixtures entre execuções. O termo agora é único por teste e o gate
+  pode ser repetido sem reset.
+- Decisão documental: os cenários da Fase 3 ficam em `items.test.ts`; o arquivo
+  `production-gate.test.ts` continua representando os testes manuais 15–20 da
+  Fase 1 e não recebeu cenários de semântica diferente.

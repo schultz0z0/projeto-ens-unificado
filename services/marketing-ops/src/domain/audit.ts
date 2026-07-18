@@ -16,7 +16,8 @@ const SAFE_TEXT_FIELDS = new Set([
   'origin', 'source', 'kind', 'contentType', 'sha256', 'action', 'entityType',
   'eventType', 'correlationId', 'createdAt', 'updatedAt', 'archivedAt',
   'unlinkedAt', 'verifiedAt', 'referenceVerifiedAt', 'startsOn', 'endsOn',
-  'primaryChannel', 'secondaryChannels', 'expiresAt'
+  'primaryChannel', 'secondaryChannels', 'expiresAt', 'assigneeUserId',
+  'priority', 'channel', 'startsAt', 'dueAt', 'completedAt', 'cancelledAt'
 ]);
 
 const SECRET_FIELD = /(authorization|bearer|cookie|password|secret|token|delegation|access.?url|signed.?url)/i;
