@@ -200,7 +200,8 @@ export async function listCampaigns(
       with filtered_campaigns as materialized (
         select campaign.*
         from marketing_ops.campaigns as campaign
-        where (
+        where campaign.tenant_id = $17
+        and (
           $1::text is null
           or campaign.search_vector @@ websearch_to_tsquery('simple', $1)
           or campaign.name ilike $2 escape '\\'
@@ -271,7 +272,8 @@ export async function listCampaigns(
       filters.updatedTo,
       filters.cursor?.updatedAt ?? null,
       filters.cursor?.id ?? null,
-      filters.limit + 1
+      filters.limit + 1,
+      context.actor.tenantId
     ]);
     const rows = result.rows.map(mapCampaignSummary);
     const hasNextPage = rows.length > filters.limit;
