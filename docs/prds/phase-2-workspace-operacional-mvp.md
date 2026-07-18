@@ -1,8 +1,8 @@
 # PRD — Fase 2: Workspace Operacional MVP
 
-- **Status:** approved
-- **Implementação:** `in_progress_through_task_14`
-- **Última evidência de código:** `bcd8ca3` — observabilidade, E2E, metrics, logging e script VPS implementados
+- **Status:** `completed`
+- **Implementação:** `production_validated`
+- **Última reconciliação:** 2026-07-18 — homologação VPS preservada e gates locais saneados
 - **Dependência:** Fase 1 concluída
 - **Resultado:** primeiro release utilizável por campanhas reais
 
@@ -193,39 +193,35 @@ Métricas não devem incluir conteúdo sensível nos labels.
 
 ## Critérios de aceite
 
-- [ ] Usuário autorizado cria rascunho.
-- [ ] Campos obrigatórios e datas são validados.
-- [ ] Campanha não ativa sem responsável e dados mínimos.
-- [ ] Lista pagina, busca e combina filtros.
-- [ ] URL preserva filtros relevantes.
-- [ ] Workspace mostra visão geral, briefing, participantes, materiais e atividade.
-- [ ] Upload/vínculo respeita ownership e limites.
-- [ ] Conflito de versão não sobrescreve dados.
-- [ ] Member, manager e admin respeitam a matriz.
-- [ ] Arquivamento preserva histórico.
-- [ ] Timeline não expõe campos proibidos.
-- [ ] Estados de erro e vazio estão implementados.
-- [ ] Jornadas críticas são responsivas e acessíveis.
+- [x] Usuário autorizado cria rascunho.
+- [x] Campos obrigatórios e datas são validados.
+- [x] Campanha não ativa sem responsável e dados mínimos.
+- [x] Lista pagina, busca e combina filtros.
+- [x] URL preserva filtros relevantes.
+- [x] Workspace mostra visão geral, briefing, participantes, materiais e atividade.
+- [x] Upload/vínculo respeita ownership e limites.
+- [x] Conflito de versão não sobrescreve dados.
+- [x] Member, manager e admin respeitam a matriz.
+- [x] Arquivamento preserva histórico.
+- [x] Timeline não expõe campos proibidos.
+- [x] Estados de erro e vazio estão implementados.
+- [x] Jornadas críticas são responsivas e acessíveis.
 
 ### Progresso dos critérios de aceite
 
-Os checkboxes permanecem abertos até a evidência completa exigida pelo gate da fase. Implementação parcial é registrada abaixo sem antecipar aceite PostgreSQL, frontend ou VPS.
+Os critérios foram aprovados no gate VPS de 16/07/2026 e reconciliados com os
+gates locais de 18/07/2026.
 
-| Critério | Estado em 14/07/2026 | Evidência/pendência |
+| Critério | Estado final | Evidência |
 |---|---|---|
-| Usuário autorizado cria rascunho | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo name-only, idempotência e navegação ao deep link cobertos; auth/API/banco real e E2E VPS pendentes |
-| Campos obrigatórios e datas são validados | `backend_client_and_ui_implemented_pending_vps_validation` | schemas, formulário, datas e canais verdes; banco/API real pendentes |
-| Campanha não ativa sem responsável e dados mínimos | `backend_implemented_pending_vps_validation` | regra de domínio implementada; PostgreSQL real pendente |
-| Lista pagina, busca e combina filtros | `backend_client_and_ui_implemented_pending_vps_validation` | projeção resumida, tabela/cards, filtros e cursor cobertos por testes nativos; performance, banco e API real pendentes |
-| URL preserva filtros relevantes | `frontend_implemented_pending_vps_validation` | busca/status preservados e combinados no browser; deep link real e E2E VPS pendentes |
-| Workspace mostra visão geral, briefing, participantes, materiais e atividade | `backend_client_and_ui_implemented_pending_vps_validation` | cinco seções responsivas implementadas; integração API/PostgreSQL real e E2E VPS pendentes |
-| Upload/vínculo respeita ownership e limites | `backend_client_and_ui_implemented_pending_vps_validation` | UI bloqueia tamanho/extensão/MIME antes da rede, usa access link sob demanda e confirma unlink; ownership/bytes/Compose reais pendentes |
-| Conflito de versão não sobrescreve dados | `backend_client_and_ui_implemented_pending_vps_validation` | diálogo preserva/compara valor local e reaplica só após decisão; 409 API/DB real pendente |
-| Member, manager e admin respeitam a matriz | `backend_client_and_ui_implemented_pending_vps_validation` | UI deriva capacidades fail-closed e esconde mutações indevidas; RLS, API real e E2E por papel na VPS pendentes |
-| Arquivamento preserva histórico | `backend_client_and_ui_implemented_pending_vps_validation` | confirmação e read-only implementados; preservação no PostgreSQL/timeline/VPS pendente |
-| Timeline não expõe campos proibidos | `backend_client_and_ui_implemented_pending_vps_validation` | UI usa allowlists para ação/campo, paginação por cursor e nunca renderiza payload bruto; pgTAP, API real e inspeção de logs VPS pendentes |
-| Estados de erro e vazio estão implementados | `frontend_implemented_pending_integrated_e2e` | lista, workspace e três painéis cobrem loading, vazio, erro, correlação e retry; API real e E2E VPS pendentes |
-| Jornadas críticas são responsivas e acessíveis | `frontend_implemented_pending_axe_e2e` | semântica e larguras 390/768/1440 px validadas, incluindo painéis e sidebar KV; axe e E2E integrado permanecem pendentes |
+| Criação, campos e transições | `production_validated` | domínio, API, PostgreSQL e jornadas VPS |
+| Lista, busca, filtros e URL | `production_validated` | jornadas VPS; p95 local 21,38–23,36 ms com 5.000 campanhas |
+| Workspace e painéis | `production_validated` | desktop/mobile/axe e integração real |
+| Materiais | `production_validated` | ownership, upload/access/unlink e persistência |
+| Concorrência | `production_validated` | 409/reaplicação e harness sem deadlock |
+| Papéis e isolamento | `production_validated` | member/manager/admin/viewer e cross-tenant |
+| Arquivamento e timeline | `production_validated` | histórico preservado, allowlists, pgTAP e logs |
+| Erro, vazio, responsividade e acessibilidade | `production_validated` | smokes, desktop/mobile/axe |
 
 ## Testes
 
@@ -262,9 +258,12 @@ Lista paginada com volume representativo e detalhe com materiais/timeline.
 - persistência após reinício;
 - evidências do aceite funcional.
 
-### Exceção operacional do computador de retomada
+### Histórico da exceção operacional do computador de retomada
 
-Por decisão do usuário em 14 de julho de 2026, o computador atual não usará Docker Desktop, WSL ou Podman. O desenvolvimento executa localmente os testes nativos, lint, typecheck, build e validações estáticas. Testes que exigem PostgreSQL/Supabase conteinerizado, imagens Linux, Compose, restart ou persistência são preparados durante as tasks e obrigatoriamente executados na VPS de produção com fixtures identificadas e cleanup. O fechamento interno recebe `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`; esta exceção não altera o gate de saída nem permite marcar a fase `completed` antes da homologação VPS.
+Em 14/07/2026, o computador usado na retomada não possuía Docker. Os gates de
+PostgreSQL/Linux foram então executados na VPS. Em 18/07/2026, este computador
+com Docker Desktop repetiu reset, pgTAP, lint/diff, concorrência e performance
+local. A exceção não está mais ativa.
 
 ## Gate VPS
 
@@ -299,4 +298,7 @@ Por decisão do usuário em 14 de julho de 2026, o computador atual não usará 
 
 ## Gate de saída
 
-A Fase 3 inicia quando o Workspace Operacional estiver adotado pelo grupo piloto, sem falhas altas, com auditoria, RLS, filtros e fluxos essenciais validados. A Fase 2 é o primeiro release de valor, mas só recebe status `completed` depois do gate VPS.
+A Fase 2 recebeu `completed`/`production_validated` após o gate VPS e o
+saneamento local. O piloto funcional foi aceito e não existe falha alta
+conhecida. A adoção longitudinal sem planilhas permanece métrica de produto e
+não bloqueia a entrada técnica da Fase 3.

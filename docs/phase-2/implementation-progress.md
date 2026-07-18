@@ -1,85 +1,53 @@
 # Progresso de implementação da Fase 2
 
-- **Estado da fase:** `in_progress`
-- **Snapshot:** 2026-07-14
-- **Branch canônica:** `main`
-- **Último código da fase:** `73fa9ea`
-- **Deploy Supabase da Fase 2:** não executado
-- **Deploy VPS da Fase 2:** não executado
-- **Próxima task:** Task 14 — observabilidade, Compose, E2E e fechamento documental
+- **Estado:** `production_validated`
+- **Snapshot final reconciliado:** 2026-07-18
+- **Branch única:** `main`
+- **Implementação original:** Tasks 1–15 concluídas
+- **Homologação VPS:** aprovada em 2026-07-16
+- **Saneamento pós-homologação:** concluído localmente
 
-## Legenda de estados
+## Quadro final
 
-| Estado | Significado |
-|---|---|
-| `not_started` | implementação ainda não iniciada |
-| `in_progress` | código ou testes em elaboração |
-| `completed_reviewed` | escopo executável neste ambiente concluído e revisado, sem gate externo pendente para a task |
-| `implemented_pending_vps_validation` | implementação e checks nativos concluídos; prova PostgreSQL/Linux/Compose obrigatória ainda pendente |
-| `implementation_complete_pending_vps_validation` | Tasks 1–15 fechadas internamente; fase ainda `in_progress` até deploy e aceite VPS |
-| `production_validated` | deploy, gate VPS e aceite manual registrados |
+| Task | Escopo | Marco principal | Estado final |
+|---:|---|---|---|
+| 1 | Gate, PRD, design, plano e ambiente | `32c2ae4`, `4ed2829`, `ccf20d1` | `production_validated` |
+| 2 | Schema, RLS, agregado e concorrência | `c921294` | `production_validated` |
+| 3 | Contratos e máquina de estados | `9740530` | `production_validated` |
+| 4 | CRUD, busca, filtros e versão | `9b19ec7` | `production_validated` |
+| 5 | Participantes e perfis | `2c119f8` | `production_validated` |
+| 6 | Materiais e Artifact Server | `aed3e1c` | `production_validated` |
+| 7 | Referências oficiais via RAG MCP | `5d5cf8f` | `production_validated` |
+| 8 | Timeline segura | `42d43f3` | `production_validated` |
+| 9 | REST v1 e OpenAPI | `6c713e7` | `production_validated` |
+| 10 | Cliente frontend tipado | `32acff2` | `production_validated` |
+| 11 | Lista, filtros e criação | `df4903b` | `production_validated` |
+| 12 | Workspace e conflitos | `7fcbd21` | `production_validated` |
+| 13 | Participantes, materiais e timeline na UI | `73fa9ea` | `production_validated` |
+| 14 | Observabilidade, Compose e E2E | `bcd8ca3` | `production_validated` |
+| 15 | Revisão, Supabase e handoff VPS | `b99de6a`, homologação `9588366` | `production_validated` |
 
-## Quadro de execução
+## Saneamento de 18/07/2026
 
-| Task | Escopo | Commit de código | Evidência atual | Estado |
-|---:|---|---|---|---|
-| 1 | Gate de entrada, PRD/design/plano e contrato de ambiente | `32c2ae4`, `4ed2829`, `ccf20d1` | baseline local histórico e documentação reconciliada | `completed_reviewed` |
-| 2 | Schema, RLS, agregado, owner principal e concorrência | `c921294` | checks nativos e revisão estática; total atual de 228 asserts e harness real diferidos | `implemented_pending_vps_validation` |
-| 3 | Contratos estritos e máquina de estados | `9740530` | 13 testes da task, regressão nativa, typecheck e build | `completed_reviewed` |
-| 4 | CRUD, busca, filtros, versão e transições | `9b19ec7` | 37 testes nativos; 12 cenários PostgreSQL coletados | `implemented_pending_vps_validation` |
-| 5 | Participantes, owner principal e perfis seguros | `2c119f8` | 39 checks nativos; 5 cenários PostgreSQL coletados | `implemented_pending_vps_validation` |
-| 6 | Materiais e integração Artifact Server | `aed3e1c` | 8 contratos Marketing Ops, 8 testes Artifact e Compose estático; 3 cenários DB coletados | `implemented_pending_vps_validation` |
-| 7 | Referências oficiais read-only via RAG MCP | `5d5cf8f` | 10 contratos da task, 26 testes RAG e Compose estático; persistência real coletada | `implemented_pending_vps_validation` |
-| 8 | Timeline segura e auditoria minimizada | `42d43f3` | 7 testes da task e 65 checks nativos segmentados; 7 asserts pgTAP adicionados e diferidos | `implemented_pending_vps_validation` |
-| 9 | Consolidação REST v1 e OpenAPI | `6c713e7` | 75 testes nativos segmentados, typecheck/build e Redocly válidos; 17 cenários integrados diferidos | `implemented_pending_vps_validation` |
-| 10 | Cliente frontend tipado | `32acff2` | RED das APIs ausentes; 11 testes focados, regressão frontend 131/131, lint sem erro, typecheck e build verdes; integração real diferida | `implemented_pending_vps_validation` |
-| 11 | Lista, filtros em URL e criação | `df4903b` | RED dos componentes ausentes; 5 testes de jornada, regressão frontend 136/136, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 12 | Workspace, salvamento e conflito | `7fcbd21` | RED dos módulos ausentes; 6 testes focados, regressão frontend 142/142, QA Chrome desktop/tablet/mobile, segurança, tipos e build verdes; API/DB/E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 13 | Participantes, materiais e timeline na UI | `73fa9ea` | RED dos painéis ausentes; 22 testes focados, regressão frontend 156/156, revisão solo, QA Chrome desktop/mobile, segurança, tipos e build verdes; API/DB/RLS/upload/E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 14 | Observabilidade, Compose, E2E e fechamento documental | `bcd8ca3` | Readiness/Logger/Prometheus/Playwright/E2E prontos; validação de infra e E2E VPS diferidos | `implemented_pending_vps_validation` |
-| 15 | Revisão final no `main` e handoff VPS | `b99de6a` | DB Push concluído, revisão executada e handoff preparado; aceite VPS pendente | `implementation_complete_pending_vps_validation` |
+| Frente | RED reproduzido | Correção | GREEN |
+|---|---|---|---|
+| Frontend | casts inseguros nos erros de validação | parser fail-closed tipado | 10 testes focados, lint sem erro, typecheck verde |
+| pgTAP | 226/228 por fixture de usuário e assert da timeline | usuário realmente externo e assert da projeção segura | 228/228, lint DB zero erro, schema diff vazio |
+| Performance | lista p95 847,61 ms com 5.000 campanhas | filtro explícito de tenant + índice `(tenant_id, updated_at desc, id desc)` | três execuções p95 entre 21,38 e 23,36 ms |
 
-## Evidências consolidadas até a Task 13
+Commits do saneamento:
 
-- baseline histórico: 197 pgTAP, lint sem erro, schema diff vazio e primeiro harness campanha/participante aprovado no computador anterior;
-- banco atual: 228 asserts esperados (`2 + 95 + 33 + 98`), harness ampliado e provas reais marcadas `deferred_to_vps`;
-- Marketing Ops: suítes nativas segmentadas, typecheck e build aprovados em cada task executada;
-- timeline: snapshots de texto livre são reduzidos a presença/tamanho/SHA-256, secrets são redigidos e a projeção limita ações/campos por allowlist;
-- REST/OpenAPI: 18 paths e 22 operações em lockstep com o Express, schemas estritos, ETags/headers de mutação e erros públicos documentados;
-- frontend: client cobre campanhas, transições, participantes, materiais, timeline e referências; upload preserva `File` bruto, ETag/correlação são expostos e conflitos carregam `currentVersion`;
-- lista frontend: filtros combináveis em URL, paginação por cursor, criação name-only, tabela desktop, cards mobile, estados loading/vazio/erro/acesso negado e correlação;
-- gate frontend da Task 11: 5/5 testes de jornada, 136/136 na regressão completa, ESLint focado sem achados, lint global com zero erro e 10 warnings preexistentes, typecheck, build e security gate aprovados;
-- QA real da Task 11: Chrome em 1440×900 e 390×844, filtros e criação exercitados, largura sem overflow e console sem warning/erro;
-- workspace frontend: edição explícita sem autosave, validação de datas/canais, referência oficial, transições, archive terminal/read-only e comparação de conflito 409 com descarte ou reaplicação;
-- gate frontend da Task 12: 6/6 testes focados, 142/142 na regressão completa, ESLint focado limpo, lint global com zero erro e os mesmos 10 warnings legados, typecheck, build e security gate aprovados;
-- QA real da Task 12: Chrome em 1440×900, 768×900 e 390×844, conflito/reaplicação, transição e archive exercitados, sem overflow; aba final limpa sem warning/erro;
-- colaboração frontend: painel de pessoas com busca, papéis, owner principal e remoção; materiais com validação local de 25 MiB/extensão/MIME, upload, vínculo, access link sob demanda e unlink; timeline semântica paginada com allowlists;
-- gate frontend da Task 13: 22/22 testes focados, 156/156 na regressão completa, ESLint focado limpo, lint global com zero erro e os mesmos 10 warnings legados, typecheck, build e security gate aprovados;
-- revisão solo da Task 13: corrigidas invalidação parcial da timeline, duplicação visual de owner principal no cache e mensagens de erro ocultas por diálogos; nenhuma pendência `Critical` ou `Important` restou na revisão estática;
-- QA real da Task 13: KV visual, sidebar oficial, lista e workspace conferidos em Chrome a 1440×900 e 390×844; validação funcional anterior cobre 768×900; sem overflow, sobreposição do footer ou warning/erro final de console;
-- Artifact Server: 8/8 testes nativos aprovados;
-- RAG MCP: 26/26 testes e typecheck aprovados;
-- Compose: parsing e vínculos estáticos de Artifact/RAG aprovados, sem alegação de build ou execução Linux;
-- remoto: DB Push da Fase 2 executado com sucesso no Supabase (`20260714020344`); validação VPS pendente.
+- `a3f0e0c` — parser seguro dos validation issues;
+- `de0ada4` — fixtures/asserts pgTAP alinhados;
+- `3c1d5a2` — gate p95 e índice da lista.
 
-As contagens e comandos completos estão em [local-validation.md](local-validation.md). Os requisitos parcialmente atendidos estão em [requirements-traceability.md](requirements-traceability.md).
+## Estado operacional
 
-## Sequência de continuidade
+- A migration base da Fase 2 e os hotfixes de QA foram homologados na VPS.
+- A migration de índice `20260718183937_add_campaign_list_tenant_updated_index.sql`
+  está apenas validada localmente e aguarda o próximo deploy controlado.
+- Nenhuma migration ou funcionalidade da Fase 3 foi criada.
+- Nenhum push ou deploy externo foi executado no ciclo de saneamento.
 
-1. Task 14: observabilidade final, E2E, gate reproduzível e fechamento interno.
-2. Task 15: revisão fresca do `main`, deploy Supabase do app e handoff VPS concluídos internamente.
-3. Usuário publica `main` e executa o gate VPS remoto (Docker/E2E).
-4. Agente e usuário validam aceite final da Fase 2.
-
-## Protocolo de atualização
-
-Ao finalizar cada task:
-
-1. registrar RED/GREEN apenas para testes realmente executados;
-2. listar nominalmente qualquer teste `deferred_to_vps`;
-3. atualizar este quadro, [local-validation.md](local-validation.md) e a rastreabilidade afetada;
-4. atualizar [continuation-handoff.md](continuation-handoff.md) com commit, decisão e próxima ação;
-5. manter Roadmap, PRD e README coerentes com o mesmo estado;
-6. criar commit local testado, sem `git push`.
-
-Nenhuma contagem histórica ou inspeção estática promove uma task dependente de banco/containers para `completed`.
+O detalhe dos comandos e contagens está em [local-validation.md](local-validation.md);
+a homologação está em [vps-validation.md](vps-validation.md).

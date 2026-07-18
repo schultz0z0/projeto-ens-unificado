@@ -1,10 +1,22 @@
 # Validação VPS da Fase 2
 
-- **Estado:** `pending_user_execution`
+- **Estado:** `production_validated`
 - **Ambiente alvo:** Ubuntu Linux, Docker Engine/Compose e Traefik
 - **Responsável pelo deploy:** usuário
 - **Responsável por conduzir validação/análise:** agente após o deploy
-- **Supabase:** app separado; RAG sem migration ou escrita
+- **Supabase:** app separado; RAG sem dados transacionais de campanha
+
+## Nota de reconciliação — 18/07/2026
+
+A tabela “Registro do aceite” é a fonte autoritativa deste documento e comprova
+a homologação realizada em 16/07/2026. Os checkboxes ainda abertos abaixo eram
+itens preparatórios do checklist antes da execução e estão substituídos pelo
+resultado consolidado `approved`; eles foram preservados como histórico para
+não inventar evidência granular retroativa.
+
+Durante o QA houve uma migration de performance no RAG. Ela alterou somente a
+função de consulta e não gravou dados de campanha. A decisão está formalizada
+em [decision-log.md](decision-log.md).
 
 ## Pré-condições
 
@@ -31,7 +43,7 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
 
-Não executar ainda o script citado acima: ele será implementado e revisado na Task 14. Este documento registra o contrato que o script deve cumprir.
+O script foi implementado na Task 14 e utilizado como base do gate VPS.
 
 ## Gate automatizado esperado
 
@@ -139,7 +151,8 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 | Fixtures removidas | `approved` |
 | Aceite do usuário | `approved` |
 
-A fase só passa a `production_validated`/`completed` quando todos os bloqueadores estiverem verdes, o piloto for aceito e não houver falha alta ou crítica conhecida.
+Com o registro acima aprovado, a fase passou a `production_validated`. Não há
+falha alta ou crítica conhecida.
 
 ## Histórico de Correções e Ajustes (QA)
 
@@ -164,14 +177,14 @@ Durante o ciclo de homologação na VPS, os seguintes incidentes foram identific
 * **Solução:** 
   a) Introduzido o parâmetro `search_mode` no RAG MCP. Quando configurado como `'text'`, o servidor pula a chamada de embedding na OpenAI (latência de rede reduzida a zero).
   b) O backend do `marketing-ops` passou a invocar o RAG no modo `'text'` para pesquisas de formulário.
-  c) Criada a migração [2026-07-16-optimize-mcp-search.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/services/rag-mcp/supabase/migrations/2026-07-16-optimize-mcp-search.sql) para reescrever a query utilizando `UNION ALL`, separando a busca textual (GIN) e a busca de títulos em ramos independentes para garantir o escaneamento por índice (Index Scan).
+  c) Criada a migração [2026-07-16-optimize-mcp-search.sql](../../services/rag-mcp/supabase/migrations/2026-07-16-optimize-mcp-search.sql) para reescrever a query utilizando `UNION ALL`, separando a busca textual (GIN) e a busca de títulos em ramos independentes para garantir o escaneamento por índice (Index Scan).
 * **Estado:** Validado funcionalmente pelo usuário com sucesso na VPS (busca de cursos agora responde instantaneamente).
 
 ### 5. Sincronização de Novos Usuários Criados pelo Painel Administrativo
 * **Incidente:** Usuários recém-criados administrativamente pelo painel (como a Amanda Silva) não apareciam como candidatos para vinculação de participantes nas campanhas. Isso acontecia porque a Edge Function `admin-create-user` insere os perfis em `public.profiles` com o `tenant_id` como `NULL`, enquanto a trigger de sincronização de banco de dados (`sync_ens_profile_membership`) exigia obrigatoriamente que o `tenant_id` fosse `'ens'` para gerar a entrada correspondente na tabela `marketing_ops.memberships`.
 * **Solução:** 
   a) Executado script de correção no banco para associar Amanda Silva ao `tenant_id = 'ens'`.
-  b) Criada a migração incremental [20260716181000_fix_sync_ens_profile_membership.sql](file:///c:/Users/raphaeloliveira/Desktop/Projetos%20Saas/projeto-ens-unificado/apps/chat-web/supabase/migrations/20260716181000_fix_sync_ens_profile_membership.sql) que atualiza a função da trigger para tratar perfis criados com `tenant_id IS NULL`, mapeando-os automaticamente para o tenant padrão `'ens'`.
+  b) Criada a migração incremental [20260716181000_fix_sync_ens_profile_membership.sql](../../apps/chat-web/supabase/migrations/20260716181000_fix_sync_ens_profile_membership.sql) que atualiza a função da trigger para tratar perfis criados com `tenant_id IS NULL`, mapeando-os automaticamente para o tenant padrão `'ens'`.
 * **Estado:** Validado funcionalmente pelo usuário com sucesso na VPS (usuários criados administrativamente agora são sincronizados e pesquisáveis na modal de participantes).
 
 

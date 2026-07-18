@@ -1,10 +1,24 @@
 # Fase 2 — Design Técnico do Workspace Operacional MVP
 
-- **Estado:** `approved`
-- **Data:** 2026-07-13
+- **Estado:** `approved_as_built`
+- **Data:** 2026-07-13; reconciliação final em 2026-07-18
 - **Dependência:** Fase 1 `production_validated`
 - **PRD:** `docs/prds/phase-2-workspace-operacional-mvp.md`
 - **Roadmap:** `Roadmap.md`
+
+## Reconciliação as built
+
+O design foi implementado e homologado. Três decisões de execução passam a
+integrar o contrato:
+
+1. “Configurações” é representada pelos controles de ciclo de vida e
+   arquivamento no cabeçalho, sem uma seção vazia separada.
+2. O hotfix do RAG aplicado durante QA altera somente a consulta de leitura; o
+   Supabase do app segue como fonte transacional exclusiva.
+3. O saneamento de performance adiciona filtro explícito de tenant e índice de
+   ordenação. A migration está validada localmente e aguarda o próximo deploy.
+
+O detalhe e a justificativa estão em [decision-log.md](decision-log.md).
 
 ## 1. Objetivo
 
@@ -529,11 +543,15 @@ A limpeza de legado será registrada como dívida separada e não será misturad
 
 ## 17. Fluxo de validação e deploy
 
-### Exceção operacional aprovada em 14 de julho de 2026
+### Histórico da exceção operacional de 14 de julho de 2026
 
-O computador de retomada não usará Docker Desktop, WSL ou Podman. Nele serão executados testes nativos sem banco, lint, typecheck, build e validações estáticas. pgTAP, RLS real, concorrência PostgreSQL, migrations/reset, imagens Linux, Compose, restart e persistência serão preparados durante a implementação e executados na VPS depois do fechamento interno das Tasks 1–15.
+O computador usado na retomada original não possuía Docker Desktop, WSL ou
+Podman. Por isso, pgTAP, RLS real, concorrência PostgreSQL, imagens Linux,
+Compose, restart e persistência foram executados na VPS. Em 18/07/2026, outro
+computador com Docker Desktop repetiu os gates locais de banco e performance.
 
-O fechamento interno usa `implementation_complete_pending_vps_validation`, ainda dentro de `in_progress`. Não equivale a `ready_for_production`, `production_validated` ou `completed`. Suítes genéricas que assumem seed local não podem ser apontadas para produção: o gate VPS deve usar fixtures identificadas, transações/rollback quando possível, cleanup explícito e scripts dedicados documentados.
+O subestado histórico `implementation_complete_pending_vps_validation` foi
+superado pelo aceite VPS. A fase encontra-se `production_validated`.
 
 ### Gate local
 
@@ -567,7 +585,7 @@ Com testes locais, Supabase e documentação verdes:
 
 1. criar commits pequenos e revisáveis durante a implementação local;
 2. executar a regressão final sobre o conjunto completo;
-3. atualizar Roadmap/PRD para `implementation_complete_pending_vps_validation` dentro de `in_progress`;
+3. atualizar Roadmap/PRD para o estado coerente com o gate executado;
 4. fazer push da `main` para o GitHub;
 5. fornecer ao responsável comandos sanitizados para `git pull --ff-only`, build e `docker compose up` na VPS;
 6. o responsável executa deploy, logs e testes manuais;

@@ -1,6 +1,6 @@
 # Rollback da Fase 2
 
-- **Estado:** `prepared_not_executed`
+- **Estado:** `verified_in_vps`
 - **Princípio:** rollback normal é de flags e aplicação; dados, auditoria e migrations aditivas são preservados
 
 ## Gatilhos

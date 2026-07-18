@@ -1,7 +1,7 @@
 # Runbook da Fase 2
 
-- **Estado:** `prepared_through_task_12_not_executed_in_vps`
-- **Ambiente local atual:** Windows + PowerShell + Node; sem Docker Desktop, WSL ou Podman
+- **Estado:** `executed_and_reusable`
+- **Ambiente local atual:** Windows + PowerShell + Node + Docker Desktop
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS canônico conhecido da Fase 1:** `/opt/nexus-ens`; confirmar o path real antes do deploy
 
@@ -25,17 +25,15 @@
 - flags de backend e frontend permanecem `false` até rollout controlado;
 - valores `CHANGE_ME_*` são inválidos para produção.
 
-## Gate nativo no Windows
+## Gate local no Windows
 
-Não executar `npm test` sem filtro no Marketing Ops como prova local: há suítes que exigem PostgreSQL em `127.0.0.1:55322`. Usar arquivos explicitamente sem banco e registrar a lista na evidência da task.
+Com o Supabase local ativo, a suíte padrão do Marketing Ops pode ser executada.
+O gate pesado da lista permanece em comando explícito.
 
 ```powershell
 Set-Location services/marketing-ops
-npx vitest run src/foundation.test.ts src/delegation/refresher.test.ts src/plans/token.test.ts src/plans/executor.test.ts src/domain/contracts.test.ts src/domain/queries.test.ts src/domain/campaignReferences.test.ts src/domain/timeline.test.ts src/integrations/artifactClient.test.ts src/integrations/ragCourseClient.test.ts src/http/routes/references.test.ts src/http/middleware.test.ts
-npx vitest run src/rest.test.ts -t "keeps every public REST operation|parses the complete strict campaign REST contract|documents required mutation headers|keeps the Express router and OpenAPI operations|publishes capabilities and default-off flags|answers trusted CORS preflight without authentication"
-npx vitest run src/mcp.test.ts -t "registers versioned tools and serves public capabilities|normalizes a numeric string version before signing an update plan"
-npx vitest run src/domain/participants.test.ts -t "participant input contracts"
-npx vitest run src/domain/materials.test.ts -t "campaign material contracts"
+npm test
+npm run test:campaign-list-performance
 npx --yes @redocly/cli@2.18.1 lint openapi/marketing-ops.v1.yaml --extends=minimal
 npm run typecheck
 npm run build
@@ -56,7 +54,8 @@ $env:DOTENV_CONFIG_PATH='../../.env'
 node --input-type=module -e "import 'dotenv/config'; process.env.SUPABASE_URL=process.env.NEXUS_APP_SUPABASE_URL; process.env.SUPABASE_ANON_KEY=process.env.NEXUS_APP_SUPABASE_ANON_KEY; await import('./scripts/security_gate.mjs')"
 ```
 
-A lista cresce conforme Tasks 12–14. Toda falha deve ser investigada; testes que tentarem abrir banco são separados e marcados `deferred_to_vps`, não ignorados como se tivessem passado. O `validate:rag-rls` legado dentro do security gate não é aceito como prova do Supabase do RAG; o gate oficial do RAG permanece exclusivamente MCP read-only na VPS.
+Toda falha deve ser investigada. O `validate:rag-rls` legado dentro do security
+gate não substitui a prova do RAG via MCP.
 
 ## Gate diferido de banco e Linux
 

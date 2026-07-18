@@ -1,6 +1,6 @@
 # LGPD, minimização e retenção da Fase 2
 
-- **Estado:** `implemented_pending_vps_validation`
+- **Estado:** `production_validated_with_legal_residual`
 - **Escopo:** campanhas, participantes, materiais, timeline, auditoria, logs e métricas do Marketing Ops
 - **Fora do escopo:** definir base legal ou prazo contratual definitivo sem validação jurídica
 
@@ -17,16 +17,16 @@
 
 | Categoria | Finalidade | Persistência permitida | Exposição permitida | Estado atual |
 |---|---|---|---|---|
-| Objetivo, público, briefing e notas | planejamento da campanha | registro da campanha no Supabase do app | participantes autorizados | domínio implementado; RLS real pendente |
-| Participante e papel | autorização/colaboração | UUID, papel, principal e timestamps | nome seguro e avatar | projeção segura implementada; VPS pendente |
+| Objetivo, público, briefing e notas | planejamento da campanha | registro da campanha no Supabase do app | participantes autorizados | RLS e papéis homologados |
+| Participante e papel | autorização/colaboração | UUID, papel, principal e timestamps | nome seguro e avatar | projeção segura homologada |
 | Perfil de candidato | seleção de participante | não duplicar perfil na campanha | `id`, nome não semelhante a e-mail e avatar | implementado na Task 5 |
-| Material | vínculo operacional | artifact ID, owner, MIME, tamanho, hash, fonte e timestamps | metadata mínima e access link efêmero | implementado; persistência/restart pendentes |
-| Bytes do material | acesso ao arquivo | Artifact Server/volume próprio | URL assinada sob demanda | integração real pendente |
-| Referência de curso | vínculo oficial | document ID, `course_id`, título snapshot e data de validação | campos reduzidos do seletor | implementado via MCP read-only; VPS pendente |
-| Auditoria | segurança e prova | ação, ator, entidade, correlação e snapshots minimizados | manager/admin conforme escopo | minimização implementada; PostgreSQL/VPS pendentes |
-| Timeline | histórico operacional | projeção derivada, sem tabela duplicada obrigatória | participante/tenant conforme papel | backend seguro implementado; UI/PostgreSQL/VPS pendentes |
+| Material | vínculo operacional | artifact ID, owner, MIME, tamanho, hash, fonte e timestamps | metadata mínima e access link efêmero | ownership/restart homologados |
+| Bytes do material | acesso ao arquivo | Artifact Server/volume próprio | URL assinada sob demanda | integração homologada |
+| Referência de curso | vínculo oficial | document ID, `course_id`, título snapshot e data de validação | campos reduzidos do seletor | MCP de leitura homologado |
+| Auditoria | segurança e prova | ação, ator, entidade, correlação e snapshots minimizados | manager/admin conforme escopo | minimização e logs homologados |
+| Timeline | histórico operacional | projeção derivada, sem tabela duplicada obrigatória | participante/tenant conforme papel | pgTAP/UI/VPS homologados |
 | Idempotência | retry seguro | hash e resposta conforme schema | não exposta como dado de produto | herdada da Fase 1 |
-| Logs/métricas | diagnóstico e SLO | operação, status, duração e correlação | equipe operacional autorizada | hardening final é Task 14 |
+| Logs/métricas | diagnóstico e SLO | operação, status, duração e correlação | equipe operacional autorizada | redaction homologada |
 
 ## Regra da timeline e auditoria
 
@@ -36,7 +36,7 @@ A Task 8 implementou a barreira de minimização exigida para rollout. O writer 
 { present, length, sha256 }
 ```
 
-A timeline retorna somente ação e nomes de campo allowlisted, timestamp, ator exibível, origem e correlation ID. Ela não retorna briefing, notas, objetivo, público, conteúdo de arquivo, filename bruto, bearer, delegação, chave interna, URL assinada, payload RAG ou estado completo da auditoria. A prova PostgreSQL e a inspeção de logs/histórico real continuam obrigatórias na VPS.
+A timeline retorna somente ação e nomes de campo allowlisted, timestamp, ator exibível, origem e correlation ID. Ela não retorna briefing, notas, objetivo, público, conteúdo de arquivo, filename bruto, bearer, delegação, chave interna, URL assinada, payload RAG ou estado completo da auditoria. A prova PostgreSQL e a inspeção de logs/histórico foram aprovadas no gate local/VPS.
 
 ## Retenção
 

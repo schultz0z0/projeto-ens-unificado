@@ -1,22 +1,22 @@
 # SLO e observabilidade da Fase 2
 
-- **Estado:** `proposed_pending_measurement`
-- **Baseline:** SLO da Fase 1 preservado; metas do Workspace ainda não medidas em produção
-- **Validação:** Task 14 e gate VPS
+- **Estado:** `baseline_established`
+- **Baseline:** probes, métricas e logs homologados na VPS; carga da lista medida localmente em 2026-07-18
+- **Validação:** homologação VPS + saneamento local
 
 ## Indicadores
 
 | Indicador | Objetivo inicial | Alerta inicial | Fonte esperada | Estado |
 |---|---:|---:|---|---|
-| Disponibilidade `/health` | 99,9% mensal | 2 falhas consecutivas | probe/Compose | herdado; VPS pendente |
-| Disponibilidade `/ready` | 99,5% mensal | indisponível por 2 min | probe/Compose | endpoint existe; healthcheck `/ready` é Task 14 |
-| Lista de campanhas p95 | <= 500 ms | > 750 ms por 10 min | métrica HTTP + cenário 5.000 campanhas | não medido |
+| Disponibilidade `/health` | 99,9% mensal | 2 falhas consecutivas | probe/Compose | probe homologado |
+| Disponibilidade `/ready` | 99,5% mensal | indisponível por 2 min | probe/Compose | readiness homologado |
+| Lista de campanhas p95 | <= 500 ms | > 750 ms por 10 min | métrica HTTP + cenário 5.000 campanhas | 21,38–23,36 ms local; índice remoto pendente |
 | Detalhe de campanha p95 | <= 500 ms | > 750 ms por 10 min | métrica HTTP | não medido |
 | Mutação REST p95 | <= 1.000 ms | > 1.500 ms por 10 min | métrica HTTP | não medido |
-| Erros 5xx | < 1% | > 2% por 5 min | status HTTP | baseline herdado; VPS pendente |
-| Outbox não publicada | < 15 min | evento pendente > 15 min | idade da outbox | baseline herdado; VPS pendente |
-| Operação de material com erro | baseline a definir no piloto | > 5% por 10 min | `operation,result` | instrumentação final pendente |
-| Lookup RAG indisponível | baseline a definir no piloto | 3 falhas consecutivas | `dependency,result` | instrumentação final pendente |
+| Erros 5xx | < 1% | > 2% por 5 min | status HTTP | instrumentado e smoke homologado |
+| Outbox não publicada | < 15 min | evento pendente > 15 min | idade da outbox | persistência/restart homologados |
+| Operação de material com erro | baseline a definir no piloto | > 5% por 10 min | `operation,result` | instrumentado |
+| Lookup RAG indisponível | baseline a definir no piloto | 3 falhas consecutivas | `dependency,result` | instrumentado; hotfix de busca homologado |
 
 Conflito de versão não é automaticamente erro de disponibilidade: deve ser contado como resultado de negócio e acompanhado separadamente. Perda de campanha, vínculo ou bytes após restart tem tolerância zero e bloqueia aceite, mesmo que o SLO mensal aparente estar verde.
 
