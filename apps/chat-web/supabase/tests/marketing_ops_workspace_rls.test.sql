@@ -15,7 +15,8 @@ values
   ('00000000-0000-0000-0000-000000000000', '99999999-9999-4999-8999-999999999999', 'authenticated', 'authenticated', 'admin-candidate-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now()),
   ('00000000-0000-0000-0000-000000000000', '12121212-1212-4121-8121-121212121212', 'authenticated', 'authenticated', 'editor-candidate-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now()),
   ('00000000-0000-0000-0000-000000000000', '13131313-1313-4131-8131-131313131313', 'authenticated', 'authenticated', 'inactive-editor-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now()),
-  ('00000000-0000-0000-0000-000000000000', '14141414-1414-4141-8141-141414141414', 'authenticated', 'authenticated', 'archived-candidate-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now());
+  ('00000000-0000-0000-0000-000000000000', '14141414-1414-4141-8141-141414141414', 'authenticated', 'authenticated', 'archived-candidate-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now()),
+  ('00000000-0000-0000-0000-000000000000', '15151515-1515-4151-8151-151515151515', 'authenticated', 'authenticated', 'timeline-nonparticipant-rls@local.test', crypt('local-test-password', gen_salt('bf')), now(), '', '', '', '', jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')), '{}'::jsonb, now(), now());
 
 insert into marketing_ops.memberships (tenant_id, user_id, role, active)
 values
@@ -26,7 +27,8 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'member', true),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '12121212-1212-4121-8121-121212121212', 'member', true),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '13131313-1313-4131-8131-131313131313', 'member', false),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '14141414-1414-4141-8141-141414141414', 'member', true);
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '14141414-1414-4141-8141-141414141414', 'member', true),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '15151515-1515-4151-8151-151515151515', 'member', true);
 
 insert into marketing_ops.campaigns (
   id, tenant_id, name, status, created_by, updated_by, archived_at
@@ -1846,7 +1848,7 @@ select is(
     ) as timeline
     where timeline.id = 'd8888888-8888-4888-8888-888888888888'
       and timeline.changes @> '[{"field":"briefing","kind":"changed"}]'::jsonb
-      and timeline.changes @> '[{"field":"signedUrl","kind":"added"}]'::jsonb
+      and not timeline.changes @> '[{"field":"signedUrl","kind":"added"}]'::jsonb
       and timeline.changes::text not like '%Briefing secreto%'
       and timeline.changes::text not like '%token=secret%'
   ),
@@ -1876,7 +1878,7 @@ select results_eq(
 );
 
 reset role;
-select set_config('request.jwt.claim.sub', '77777777-7777-4777-8777-777777777777', true);
+select set_config('request.jwt.claim.sub', '15151515-1515-4151-8151-151515151515', true);
 select set_config('marketing_ops.tenant_id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true);
 set local role authenticated;
 
