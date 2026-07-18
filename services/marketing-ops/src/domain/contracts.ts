@@ -17,7 +17,116 @@ export const CampaignChannelSchema = z.enum([
 ]);
 export type CampaignChannel = z.infer<typeof CampaignChannelSchema>;
 
+export const ItemKindSchema = z.enum([
+  'task', 'email', 'whatsapp', 'post', 'creative', 'review', 'milestone'
+]);
+export type ItemKind = z.infer<typeof ItemKindSchema>;
+
+export const ItemStatusSchema = z.enum([
+  'draft', 'ready', 'in_review', 'completed', 'cancelled'
+]);
+export type ItemStatus = z.infer<typeof ItemStatusSchema>;
+
+export const ItemPrioritySchema = z.enum(['low', 'normal', 'high', 'urgent']);
+export type ItemPriority = z.infer<typeof ItemPrioritySchema>;
+
+export const ItemChannelSchema = CampaignChannelSchema;
+export type ItemChannel = z.infer<typeof ItemChannelSchema>;
+
 const nullableTrimmedText = (maximum: number) => z.string().trim().max(maximum).nullable();
+
+const nullableItemText = (maximum: number) => z.string().trim().max(maximum).nullable();
+const nullableInstant = z.string().datetime({ offset: true }).nullable();
+const itemMetadata = z.record(z.unknown()).superRefine((metadata, context) => {
+  let encoded: string;
+  try {
+    encoded = JSON.stringify(metadata);
+  } catch {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Item metadata must be JSON serializable'
+    });
+    return;
+  }
+
+  if (Buffer.byteLength(encoded, 'utf8') > 16_384) {
+    context.addIssue({
+      code: z.ZodIssueCode.too_big,
+      type: 'string',
+      maximum: 16_384,
+      inclusive: true,
+      message: 'Item metadata cannot exceed 16384 bytes'
+    });
+  }
+});
+
+const productionItemEditableShape = {
+  kind: ItemKindSchema,
+  title: z.string().trim().min(1).max(200),
+  assigneeUserId: z.string().uuid().nullable(),
+  priority: ItemPrioritySchema,
+  channel: ItemChannelSchema.nullable(),
+  description: nullableItemText(10_000),
+  startsAt: nullableInstant,
+  dueAt: nullableInstant,
+  metadata: itemMetadata
+};
+
+type ProductionItemEditableFields = {
+  kind?: ItemKind | undefined;
+  title?: string | undefined;
+  assigneeUserId?: string | null | undefined;
+  priority?: ItemPriority | undefined;
+  channel?: ItemChannel | null | undefined;
+  description?: string | null | undefined;
+  startsAt?: string | null | undefined;
+  dueAt?: string | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
+function validateProductionItemConsistency(
+  fields: ProductionItemEditableFields,
+  context: z.RefinementCtx
+): void {
+  if (fields.startsAt && fields.dueAt) {
+    const startsAt = Date.parse(fields.startsAt);
+    const dueAt = Date.parse(fields.dueAt);
+    if (dueAt < startsAt) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dueAt'],
+        message: 'Production item due date cannot precede its start date'
+      });
+    }
+  }
+}
+
+export const ProductionItemInputSchema = z.object({
+  kind: productionItemEditableShape.kind,
+  title: productionItemEditableShape.title,
+  assigneeUserId: productionItemEditableShape.assigneeUserId.default(null),
+  priority: productionItemEditableShape.priority.default('normal'),
+  channel: productionItemEditableShape.channel.default(null),
+  description: productionItemEditableShape.description.default(null),
+  startsAt: productionItemEditableShape.startsAt.default(null),
+  dueAt: productionItemEditableShape.dueAt.default(null),
+  metadata: productionItemEditableShape.metadata.default({})
+}).strict().superRefine(validateProductionItemConsistency);
+export type ProductionItemInput = z.infer<typeof ProductionItemInputSchema>;
+
+export const ProductionItemPatchSchema = z.object(productionItemEditableShape)
+  .partial()
+  .strict()
+  .superRefine((fields, context) => {
+    if (Object.keys(fields).length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Production item patch must include at least one editable field'
+      });
+    }
+    validateProductionItemConsistency(fields, context);
+  });
+export type ProductionItemPatch = z.infer<typeof ProductionItemPatchSchema>;
 
 const campaignEditableShape = {
   name: z.string().trim().min(1).max(200),
@@ -235,4 +344,26 @@ export function assertTransitionAllowed(
     from,
     to
   });
+}
+
+const itemTransitions = new Set([
+  'draft:ready',
+  'draft:cancelled',
+  'ready:draft',
+  'ready:in_review',
+  'ready:cancelled',
+  'in_review:ready',
+  'in_review:completed',
+  'in_review:cancelled'
+]);
+
+export function assertItemTransitionAllowed(from: ItemStatus, to: ItemStatus): void {
+  if (!itemTransitions.has(`${from}:${to}`)) {
+    throw appError(
+      'invalid_item_transition',
+      409,
+      `Production item transition ${from} -> ${to} is not allowed`,
+      { from, to }
+    );
+  }
 }

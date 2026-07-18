@@ -38,7 +38,7 @@ Playwright, axe-core e Docker Compose.
 
 **Arquivos**
 
-- Create: `apps/chat-web/supabase/migrations/20260718195000_phase_3_calendar_production_pipeline.sql`
+- Create: `apps/chat-web/supabase/migrations/20260718193003_phase_3_calendar_production_pipeline.sql`
 - Create: `apps/chat-web/supabase/tests/marketing_ops_calendar.test.sql`
 - Create: `apps/chat-web/supabase/tests/marketing_ops_calendar_rls.test.sql`
 - Modify: `services/marketing-ops/src/domain/contracts.ts`
@@ -49,10 +49,10 @@ Playwright, axe-core e Docker Compose.
 **Produz:** tipos, evolução de `campaign_items`, tabelas auxiliares, backfill,
 constraints, RLS, grants e contratos Zod.
 
-- [ ] Escrever REDs pgTAP para enums, colunas, FKs, índices, RLS forçada,
+- [x] Escrever REDs pgTAP para enums, colunas, FKs, índices, RLS forçada,
   grants, backfill `archived → cancelled` e preservação de IDs/versões.
-- [ ] Escrever REDs unitários para tipos/metadata/status reservados e datas.
-- [ ] Executar RED:
+- [x] Escrever REDs unitários para tipos/metadata/status reservados e datas.
+- [x] Executar RED:
 
 ```powershell
 Set-Location apps/chat-web
@@ -61,11 +61,11 @@ Set-Location ../../services/marketing-ops
 npx vitest run src/domain/contracts.test.ts
 ```
 
-- [ ] Implementar migration aditiva conforme o design, incluindo
+- [x] Implementar migration aditiva conforme o design, incluindo
   `item_dependencies`, `content_assets`, `content_versions`,
   `item_artifacts` e `in_app_notifications`.
-- [ ] Implementar schemas Zod estritos.
-- [ ] Executar GREEN e regressão:
+- [x] Implementar schemas Zod estritos.
+- [x] Executar GREEN e regressão:
 
 ```powershell
 Set-Location apps/chat-web
@@ -78,7 +78,7 @@ npx vitest run src/domain/contracts.test.ts
 npm run typecheck
 ```
 
-- [ ] Atualizar progresso/rastreabilidade e commit:
+- [x] Atualizar progresso/rastreabilidade e commit:
 
 ```powershell
 git add -- apps/chat-web/supabase services/marketing-ops/src/domain/contracts.ts services/marketing-ops/src/domain/contracts.test.ts docs/phase-3

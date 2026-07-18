@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { authorize } from '../auth/permissions.js';
 import {
+  assertItemTransitionAllowed,
   assertTransitionAllowed,
   CampaignInputSchema,
   CampaignPatchSchema,
+  ItemKindSchema,
+  ItemPrioritySchema,
+  ItemStatusSchema,
+  ProductionItemInputSchema,
+  ProductionItemPatchSchema,
   validatePlanningReadiness,
   type CampaignPlanningReadiness
 } from './contracts.js';
@@ -212,5 +218,117 @@ describe('campaign transition matrix', () => {
     expect(() => authorize(actor('member'), 'campaign.reopen')).toThrow();
     expect(() => authorize(actor('manager'), 'campaign.reopen')).not.toThrow();
     expect(() => authorize(actor('admin'), 'campaign.archive')).not.toThrow();
+  });
+});
+
+describe('production item contracts', () => {
+  const completeItem = {
+    kind: 'email' as const,
+    title: '  E-mail de abertura  ',
+    assigneeUserId: '11111111-1111-4111-8111-111111111111',
+    priority: 'high' as const,
+    channel: 'email' as const,
+    description: '  Primeira mensagem da campanha  ',
+    startsAt: '2026-08-01T12:00:00.000Z',
+    dueAt: '2026-08-01T13:00:00.000Z',
+    metadata: { subject: 'Boas-vindas' }
+  };
+
+  it('exposes only the Phase 3 kinds, statuses, and priorities', () => {
+    expect(ItemKindSchema.options).toEqual([
+      'task', 'email', 'whatsapp', 'post', 'creative', 'review', 'milestone'
+    ]);
+    expect(ItemStatusSchema.options).toEqual([
+      'draft', 'ready', 'in_review', 'completed', 'cancelled'
+    ]);
+    expect(ItemPrioritySchema.options).toEqual(['low', 'normal', 'high', 'urgent']);
+
+    for (const reserved of ['approved', 'scheduled', 'executing', 'failed']) {
+      expect(ItemStatusSchema.safeParse(reserved).success).toBe(false);
+    }
+  });
+
+  it('normalizes editable text and applies safe create defaults', () => {
+    expect(ProductionItemInputSchema.parse(completeItem)).toEqual({
+      ...completeItem,
+      title: 'E-mail de abertura',
+      description: 'Primeira mensagem da campanha'
+    });
+
+    expect(ProductionItemInputSchema.parse({
+      kind: 'task',
+      title: 'Tarefa mínima'
+    })).toEqual({
+      kind: 'task',
+      title: 'Tarefa mínima',
+      assigneeUserId: null,
+      priority: 'normal',
+      channel: null,
+      description: null,
+      startsAt: null,
+      dueAt: null,
+      metadata: {}
+    });
+  });
+
+  it('rejects reversed dates, unknown fields, and oversized metadata', () => {
+    expect(() => ProductionItemInputSchema.parse({
+      ...completeItem,
+      startsAt: '2026-08-02T12:00:00.000Z',
+      dueAt: '2026-08-01T12:00:00.000Z'
+    })).toThrow();
+    expect(() => ProductionItemInputSchema.parse({
+      ...completeItem,
+      status: 'ready'
+    })).toThrow();
+    expect(() => ProductionItemInputSchema.parse({
+      ...completeItem,
+      metadata: { payload: 'x'.repeat(16_385) }
+    })).toThrow();
+  });
+
+  it('keeps PATCH strict, nonempty, and free of lifecycle fields', () => {
+    expect(ProductionItemPatchSchema.parse({
+      title: '  Novo título  ',
+      dueAt: null
+    })).toEqual({
+      title: 'Novo título',
+      dueAt: null
+    });
+    expect(() => ProductionItemPatchSchema.parse({})).toThrow();
+    expect(() => ProductionItemPatchSchema.parse({ status: 'completed' })).toThrow();
+    expect(() => ProductionItemPatchSchema.parse({ version: 2 })).toThrow();
+  });
+});
+
+describe('production item transition matrix', () => {
+  it('allows the approved forward, backward, and cancellation edges', () => {
+    for (const [from, to] of [
+      ['draft', 'ready'],
+      ['ready', 'draft'],
+      ['ready', 'in_review'],
+      ['in_review', 'ready'],
+      ['in_review', 'completed'],
+      ['draft', 'cancelled'],
+      ['ready', 'cancelled'],
+      ['in_review', 'cancelled']
+    ] as const) {
+      expect(() => assertItemTransitionAllowed(from, to)).not.toThrow();
+    }
+  });
+
+  it('rejects skipped edges, no-op transitions, and terminal reopening', () => {
+    for (const [from, to] of [
+      ['draft', 'in_review'],
+      ['ready', 'completed'],
+      ['draft', 'draft'],
+      ['completed', 'in_review'],
+      ['cancelled', 'draft']
+    ] as const) {
+      expect(captureError(() => assertItemTransitionAllowed(from, to))).toMatchObject({
+        code: 'invalid_item_transition',
+        status: 409
+      });
+    }
   });
 });

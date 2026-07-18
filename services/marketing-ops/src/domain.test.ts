@@ -175,7 +175,7 @@ describe('idempotent draft domain', () => {
 
   it('creates and version-updates a campaign item', async () => {
     const campaign = await createCampaignDraft(context(), { name: 'Item campaign', idempotencyKey: randomUUID() });
-    const item = await createCampaignItemDraft(context(), campaign.id, { kind: 'copy', title: 'Draft', content: { text: 'one' }, idempotencyKey: randomUUID() });
+    const item = await createCampaignItemDraft(context(), campaign.id, { kind: 'task', title: 'Draft', content: { text: 'one' }, idempotencyKey: randomUUID() });
     const updated = await updateCampaignItemDraft(context(), campaign.id, item.id, 1, { title: 'Draft two', content: { text: 'two' }, idempotencyKey: randomUUID() });
     expect(updated).toMatchObject({ id: item.id, version: 2, title: 'Draft two' });
   });

@@ -68,46 +68,49 @@ values
 
 insert into marketing_ops.campaign_items (
   id, tenant_id, campaign_id, kind, title, content, status, version,
-  created_by, updated_by, archived_at
+  created_by, updated_by, archived_at, cancelled_at
 )
 values
   (
     'e1111111-1111-4111-8111-111111111111',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'c1111111-1111-4111-8111-111111111111',
-    'task-2-probe',
+    'task',
     'Mutable item',
     '{}'::jsonb,
     'draft',
     1,
     '11111111-1111-4111-8111-111111111111',
     '11111111-1111-4111-8111-111111111111',
+    null,
     null
   ),
   (
     'e5555555-5555-4555-8555-555555555555',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'c5555555-5555-4555-8555-555555555555',
-    'task-2-probe',
+    'task',
     'Item in archived campaign',
     '{}'::jsonb,
     'draft',
     1,
     '11111111-1111-4111-8111-111111111111',
     '11111111-1111-4111-8111-111111111111',
+    null,
     null
   ),
   (
     'e9999999-9999-4999-8999-999999999999',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'c1111111-1111-4111-8111-111111111111',
-    'task-2-probe',
+    'task',
     'Archived item',
     '{}'::jsonb,
-    'archived',
+    'cancelled',
     1,
     '11111111-1111-4111-8111-111111111111',
     '11111111-1111-4111-8111-111111111111',
+    now(),
     now()
   );
 
@@ -190,7 +193,7 @@ select throws_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'viewer-insert', 'Viewer insert', '{}'::jsonb,
+      'task', 'Viewer insert', '{}'::jsonb,
       '66666666-6666-4666-8666-666666666666',
       '66666666-6666-4666-8666-666666666666'
     )
@@ -279,7 +282,7 @@ select lives_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'editor-insert', 'Editor insert', '{}'::jsonb,
+      'task', 'Editor insert', '{}'::jsonb,
       '55555555-5555-4555-8555-555555555555',
       '55555555-5555-4555-8555-555555555555'
     )
@@ -339,7 +342,7 @@ select throws_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c5555555-5555-4555-8555-555555555555',
-      'archived-campaign-insert', 'Archived campaign insert', '{}'::jsonb,
+      'task', 'Archived campaign insert', '{}'::jsonb,
       '55555555-5555-4555-8555-555555555555',
       '55555555-5555-4555-8555-555555555555'
     )
@@ -380,7 +383,7 @@ select lives_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'owner-insert', 'Owner insert', '{}'::jsonb,
+      'task', 'Owner insert', '{}'::jsonb,
       '88888888-8888-4888-8888-888888888888',
       '88888888-8888-4888-8888-888888888888'
     )
@@ -414,7 +417,7 @@ select lives_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'manager-insert', 'Manager insert', '{}'::jsonb,
+      'task', 'Manager insert', '{}'::jsonb,
       '22222222-2222-4222-8222-222222222222',
       '22222222-2222-4222-8222-222222222222'
     )
@@ -448,7 +451,7 @@ select lives_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'admin-insert', 'Admin insert', '{}'::jsonb,
+      'task', 'Admin insert', '{}'::jsonb,
       '33333333-3333-4333-8333-333333333333',
       '33333333-3333-4333-8333-333333333333'
     )
@@ -482,7 +485,7 @@ select throws_ok(
     ) values (
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       'c1111111-1111-4111-8111-111111111111',
-      'inactive-insert', 'Inactive insert', '{}'::jsonb,
+      'task', 'Inactive insert', '{}'::jsonb,
       '13131313-1313-4131-8131-131313131313',
       '13131313-1313-4131-8131-131313131313'
     )
@@ -1963,8 +1966,8 @@ select is(
       and grantee = 'authenticated'
       and privilege_type = 'INSERT'
   ),
-  'campaign_id,content,created_by,kind,tenant_id,title,updated_by',
-  'campaign item INSERT grants expose only writer columns'
+  'assignee_user_id,campaign_id,channel,content,created_by,description,due_at,kind,metadata,priority,starts_at,tenant_id,title,updated_by',
+  'campaign item INSERT grants expose only Phase 3 writer columns'
 );
 
 select is(
@@ -1976,8 +1979,8 @@ select is(
       and grantee = 'authenticated'
       and privilege_type = 'UPDATE'
   ),
-  'content,title,updated_by,version',
-  'campaign item UPDATE grants expose only draft writer columns'
+  'assignee_user_id,cancelled_at,channel,completed_at,content,description,due_at,kind,metadata,priority,starts_at,status,title,updated_by,version',
+  'campaign item UPDATE grants expose only Phase 3 lifecycle columns'
 );
 
 select ok(
