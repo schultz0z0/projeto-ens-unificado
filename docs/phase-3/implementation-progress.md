@@ -1,17 +1,17 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 30%
+- **Progresso:** 40%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 4 — grafo de dependências acíclico
+- **Próxima task:** Task 5 — conteúdo, versões e artifacts
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
 | 1 | gate, tipos, migration, RLS e backfill | `validated_locally` | 295 pgTAP; 19 contratos; reset/lint/diff verdes |
 | 2 | CRUD e máquina de estados | `validated_locally` | 7 cenários novos; 142 testes do serviço verdes |
 | 3 | agenda, query canônica e timezone | `validated_locally` | 299 pgTAP; p95 40,02 ms/10 mil itens; 153 testes verdes |
-| 4 | grafo de dependências | `not_started` | — |
+| 4 | grafo de dependências | `validated_locally` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
 | 5 | conteúdo, versões e artifacts | `not_started` | — |
 | 6 | REST/OpenAPI e client tipado | `not_started` | — |
 | 7 | lista acessível | `not_started` | — |
@@ -92,3 +92,27 @@ Ao concluir uma task:
   `America/Sao_Paulo`, ainda configurável por ambiente.
 - GREEN amplo: 299/299 pgTAP, lint vazio, diff vazio, 153/153 testes de
   serviço, 2 E2E condicionais skipped, typecheck e build.
+
+## Ciclo Task 4 — 2026-07-18
+
+- RED de domínio observado: `dependencies.ts` inexistente.
+- RED de concorrência observado: o banco aceitou simultaneamente A→B e B→A,
+  persistindo duas arestas cíclicas.
+- RED de banco observado: 7/45 contratos falharam pela ausência dos helpers e
+  trigger do grafo.
+- Migration gerada pelo CLI:
+  `20260718201158_enforce_acyclic_item_dependencies.sql`.
+- O trigger autoriza e adquire primeiro o lock do agregado da campanha, depois
+  advisory locks dos dois UUIDs em ordem crescente. O grafo é validado na mesma
+  transação, com `security definer`, `search_path` vazio e sem EXECUTE público.
+- Add/remove/list usam RLS/RBAC, idempotência, versão do item, auditoria e
+  outbox; duplicata, self-loop, campanhas/tenants diferentes, terminais e ciclo
+  indireto falham fechados.
+- O harness concorrente foi repetido com vencedores A→B e B→A; em ambos os
+  casos terminou sem deadlock, persistiu uma aresta e rejeitou a outra pelo
+  constraint `item_dependencies_acyclic`.
+- Bug do próprio harness corrigido: o timeout pendente mantinha o processo vivo
+  por 10 segundos e falhas podiam deixar fixtures. O timer agora é cancelado e
+  o cleanup roda em `finally`.
+- GREEN amplo: reset completo, 307/307 pgTAP, lint vazio, diff vazio, 157/157
+  testes do serviço, 2 E2E condicionais skipped, typecheck e build.

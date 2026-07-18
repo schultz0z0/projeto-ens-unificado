@@ -1,7 +1,7 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 30%
+- **Implementação:** 40%
 - **Data:** 2026-07-18
 
 | Requisito | Design | Tasks planejadas | Estado |
@@ -11,7 +11,7 @@
 | F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `query_validated` |
 | F3-RF-04 Timezone | 7 | 3, 7–8 | `backend_validated` |
 | F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `domain_validated` |
-| F3-RF-06 Dependências | 4.2, 10 | 4 | `planned` |
+| F3-RF-06 Dependências | 4.2, 10 | 4 | `domain_validated` |
 | F3-RF-07 Conteúdo | 4.3–4.4 | 5 | `planned` |
 | F3-RF-08 Versões | 4.4, 10 | 5 | `planned` |
 | F3-RF-09 Artefatos | 4.5 | 5 | `planned` |
@@ -71,3 +71,18 @@ E2E ainda dependem das Tasks 6–10.
 
 As visualizações ainda não estão aceitas: a fonte canônica está validada, mas
 lista/semana/mês e acessibilidade pertencem às Tasks 7–8.
+
+## Evidência Task 4
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Add/list/remove e bloqueio | `dependencies.test.ts` | domínio validado |
+| Self/duplicata/campanha/tenant/terminal | domínio + constraints/FKs/RLS | falha fechada e estável |
+| Ciclo indireto | teste A→B→C e trigger recursivo | terceira aresta rejeitada |
+| Concorrência/deadlock | `test_item_dependency_concurrency.mjs` | uma aresta aceita; nenhuma ocorrência 40P01 |
+| Idempotência/versão | replay, stale remove e versão do item | sem duplicação; rollback íntegro |
+| Auditoria/outbox | contagem por ação/evento | um registro por mutação efetiva |
+| Reprodutibilidade | reset, 307 pgTAP, lint e diff | todos verdes |
+
+O requisito está validado no domínio e banco. O aceite público ainda depende dos
+endpoints REST/OpenAPI da Task 6 e do E2E da Task 10.

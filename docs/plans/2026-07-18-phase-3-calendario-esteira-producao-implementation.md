@@ -182,12 +182,12 @@ git commit -m "feat: add canonical production schedule query"
 
 **Produz:** add/remove/list, detecção de ciclo e bloqueio.
 
-- [ ] REDs para self-loop, duplicata, cross-campaign, cross-tenant, ciclo
+- [x] REDs para self-loop, duplicata, cross-campaign, cross-tenant, ciclo
   indireto, item terminal, ator sem acesso e bloqueio derivado.
-- [ ] RED concorrente com inserções A→B e B→A; harness deve terminar sem
+- [x] RED concorrente com inserções A→B e B→A; harness deve terminar sem
   deadlock e aceitar no máximo uma aresta.
-- [ ] Implementar locks por UUID ordenado e validação transacional do grafo.
-- [ ] GREEN:
+- [x] Implementar locks por UUID ordenado e validação transacional do grafo.
+- [x] GREEN:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -197,7 +197,7 @@ npx supabase test db --local --workdir . supabase/tests/marketing_ops_calendar.t
 node scripts/test_item_dependency_concurrency.mjs
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- services/marketing-ops/src/domain apps/chat-web/scripts apps/chat-web/supabase/tests docs/phase-3

@@ -1,6 +1,6 @@
 begin;
 
-select plan(37);
+select plan(45);
 
 select is(
   (
@@ -106,6 +106,65 @@ select ok(exists (select 1 from pg_constraint where conname = 'campaign_items_te
 select ok(exists (select 1 from pg_constraint where conname = 'campaign_items_ready_fields'), 'ready and review fields are constrained');
 select ok(exists (select 1 from pg_constraint where conname = 'item_dependencies_not_self'), 'dependency self-loops are constrained');
 select ok(exists (select 1 from pg_constraint where conname = 'in_app_notifications_event_unique'), 'notification event keys are deduplicated');
+
+select has_function(
+  'marketing_ops_private',
+  'lock_item_dependency_pair',
+  array['uuid', 'uuid'],
+  'dependency pair lock helper exists'
+);
+select has_function(
+  'marketing_ops_private',
+  'enforce_item_dependency_graph',
+  array[]::text[],
+  'dependency graph trigger function exists'
+);
+select has_trigger(
+  'marketing_ops',
+  'item_dependencies',
+  'item_dependencies_enforce_graph',
+  'dependency graph trigger exists'
+);
+select ok(
+  (select prosecdef from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.lock_item_dependency_pair(uuid,uuid)'
+  )),
+  'dependency pair lock helper is security definer'
+);
+select ok(
+  (select prosecdef from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.enforce_item_dependency_graph()'
+  )),
+  'dependency graph trigger is security definer'
+);
+select is(
+  (select proconfig::text from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.lock_item_dependency_pair(uuid,uuid)'
+  )),
+  '{"search_path=\"\""}',
+  'dependency pair lock helper has an empty search path'
+);
+select is(
+  (select proconfig::text from pg_proc where oid = to_regprocedure(
+    'marketing_ops_private.enforce_item_dependency_graph()'
+  )),
+  '{"search_path=\"\""}',
+  'dependency graph trigger has an empty search path'
+);
+select ok(
+  not exists (
+    select 1
+    from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    where p.oid in (
+      to_regprocedure('marketing_ops_private.lock_item_dependency_pair(uuid,uuid)'),
+      to_regprocedure('marketing_ops_private.enforce_item_dependency_graph()')
+    )
+      and acl.grantee = 0
+      and acl.privilege_type = 'EXECUTE'
+  ),
+  'PUBLIC cannot execute dependency graph helpers'
+);
 
 select has_index('marketing_ops', 'campaign_items', 'campaign_items_tenant_starts_idx', 'start range index exists');
 select has_index('marketing_ops', 'campaign_items', 'campaign_items_tenant_due_idx', 'due range index exists');

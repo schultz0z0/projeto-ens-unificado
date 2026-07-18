@@ -145,3 +145,56 @@ de volume registrou p95 de 316,31 ms e permaneceu abaixo de 500 ms.
    de performance. A autorização foi consolidada na função canônica privada.
 2. O CLI Supabase local não aceita execução concorrente confiável dos pgTAP; os
    gates de banco permaneceram serializados conforme incidente da Task 1.
+
+## Task 4 — dependências acíclicas
+
+### RED observado
+
+| Comando/cenário | Resultado |
+|---|---|
+| `npx vitest run src/domain/dependencies.test.ts` | suite não coletada porque `dependencies.ts` não existia |
+| `node scripts/test_item_dependency_concurrency.mjs` | falhou: A→B e B→A foram aceitas; 2 arestas persistidas |
+| pgTAP de calendário | 7/45 falhas: helpers/trigger ausentes |
+
+### Implementação
+
+- migration `20260718201158_enforce_acyclic_item_dependencies.sql`;
+- lock do agregado da campanha antes dos locks advisory dos UUIDs ordenados;
+- trigger transacional para self-loop, mesmo tenant/campanha, itens ativos e
+  ciclo recursivo;
+- helpers privilegiados sem grants públicos e com `search_path` vazio;
+- comandos add/list/remove idempotentes, versionados, auditados e com outbox;
+- bloqueio derivado do status vivo do predecessor.
+
+### GREEN observado
+
+| Comando | Resultado |
+|---|---|
+| `npx vitest run src/domain/dependencies.test.ts src/domain/items.test.ts src/domain/scheduling.test.ts` | 20/20 |
+| `node scripts/test_item_dependency_concurrency.mjs` | PASS; exatamente uma aresta; sem deadlock |
+| `npx supabase db reset --local --workdir .` | todas as migrations e seed aplicadas do zero |
+| `npx supabase test db --local --workdir .` | 6 arquivos, 307/307 |
+| `npx supabase db lint --local --schema marketing_ops,marketing_ops_private --level warning --fail-on error` | nenhum erro |
+| `npx supabase db diff --local --schema marketing_ops,marketing_ops_private` | diff vazio |
+| `npm test` | 157 pass; 2 E2E condicionais skipped |
+| `npm run typecheck` | passou |
+| `npm run build` | passou |
+
+### Critérios exercitados
+
+- add/list/remove, replay idempotente e conflito de versão com rollback;
+- self-loop, duplicata, cross-campaign, cross-tenant e ator sem participação;
+- item dependente terminal e predecessor terminal na criação;
+- ciclo indireto sem alterar versão/arestas existentes;
+- status concluído do predecessor remove o bloqueio sem concluir o dependente;
+- auditoria/outbox únicos por mutação;
+- duas inserções opostas concorrentes, com ambos os lados observados como
+  vencedor em repetições diferentes.
+
+### Bugs e correções
+
+1. A ordem inicial do trigger poderia inverter os locks do agregado da campanha
+   e dos itens. A ordem global ficou campanha → UUID menor → UUID maior.
+2. O harness deixava um timer de 10 segundos ativo após sucesso e não garantia
+   cleanup em falha. O timeout agora é cancelado e fixtures são removidas em
+   `finally`.

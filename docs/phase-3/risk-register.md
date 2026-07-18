@@ -31,3 +31,9 @@ falha alta/crítica sem mitigação.
   mesmo client/query key.
 - F3-R-09: gate local validado em p95 40,02 ms/10.000 itens. O EXPLAIN confirmou
   a remoção da avaliação RLS por linha e não justificou índice adicional.
+
+## Revisão após a Task 4
+
+- F3-R-03: mitigação local validada. A ordem global de locks é campanha → UUID
+  menor → UUID maior; o harness concorrente terminou sem deadlock e aceitou no
+  máximo uma aresta A↔B. Permanece aberto até o E2E/restart da Task 10.
