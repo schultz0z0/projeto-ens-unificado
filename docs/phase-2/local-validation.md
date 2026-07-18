@@ -135,3 +135,31 @@ permanecem cobertos pelos 228 asserts e pela homologação VPS.
 Todos os gates locais obrigatórios do saneamento estão verdes. Não há evidência
 local vermelha conhecida nem falha alta/crítica aberta. O único delta de
 ambiente é a migration de índice ainda pendente no Supabase remoto.
+
+## Regressão final de prontidão — 18/07/2026
+
+Rodada fresca executada após os commits de reconciliação da Fase 2 e aprovação
+documental da Fase 3:
+
+| Gate | Resultado fresco |
+|---|---|
+| Supabase reset/migrations | exit 0, incluindo `20260718183937` |
+| pgTAP | 228/228 |
+| DB lint/diff | zero erro; diff vazio |
+| Advisors | 79 warnings, zero erro; 8 Marketing Ops `auth_rls_initplan` |
+| Marketing Ops | 129/129; 2 E2E de container skipped por contrato da suíte |
+| Performance | 5.000 campanhas, p95 28,50 ms |
+| Marketing Ops typecheck/build/OpenAPI | exit 0 |
+| Concorrência | participante/item aprovados, sem deadlock |
+| Frontend | 158/158, typecheck/build exit 0 |
+| Frontend lint | 0 erros, 10 warnings históricos |
+| Security gate | RLS app/RAG, lint, build e audit aprovados; 0 vulnerabilidades |
+| Artifact Server | 8/8 |
+| RAG MCP | 26/26 e typecheck |
+| Compose | config válido e quatro imagens alvo construídas |
+| Script VPS safety | 1/1 |
+
+O build do RAG informou uma vulnerabilidade npm de severidade baixa nas
+dependências de desenvolvimento; a imagem runtime usa `npm ci --omit=dev` e
+reportou zero vulnerabilidades. O item permanece observável, sem elevar o risco
+do gate atual.

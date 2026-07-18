@@ -42,7 +42,7 @@ uma seção vazia e está registrada em [decision-log.md](decision-log.md).
 | Artifact Server | ownership, upload/access/unlink e persistência | `production_validated` |
 | RAG MCP | lookup read-only, hotfix de consulta e logs seguros | `production_validated` |
 | Frontend | testes, lint, typecheck, build, desktop/mobile/axe | `production_validated` + `verified_local_2026-07-18` |
-| Performance | 5.000 campanhas; p95 <= 500 ms | 21,38–23,36 ms `verified_local_2026-07-18` |
+| Performance | 5.000 campanhas; p95 <= 500 ms | rodada final p95 28,50 ms `verified_local_2026-07-18` |
 | Banco local | reset, 228 pgTAP, lint e diff | `verified_local_2026-07-18` |
 | Supabase app | migration base e hotfix de perfil homologados | `production_validated` |
 | VPS | Compose, auth, smokes, logs, restart e rollback | `production_validated` |

@@ -69,3 +69,34 @@ deploy ou teste já executado.
 **GO técnico documental:** a implementação da Fase 3 pode iniciar. Este GO não
 autoriza deploy e não afirma que qualquer critério funcional da Fase 3 foi
 atendido.
+
+## Gate final de entrada — 18/07/2026
+
+| Gate obrigatório | Evidência | Decisão |
+|---|---|---|
+| Fase 2 | produção homologada + documentação as built | `go` |
+| Banco local | reset, 228/228 pgTAP, lint zero erro, diff vazio | `go` |
+| Performance Fase 2 | 5.000 campanhas, p95 28,50 ms | `go` |
+| Marketing Ops | 129 testes, tipos, build, OpenAPI e concorrência | `go` |
+| Frontend | 158 testes, lint 0 erros, tipos, build e security gate | `go` |
+| Artifact/RAG | 8 + 26 testes; RAG typecheck | `go` |
+| Compose | config válido e imagens alvo construídas | `go` |
+| PRD/design/plano Fase 3 | aprovados e consistentes | `go` |
+| Falha alta/crítica conhecida | nenhuma | `go` |
+
+### Resíduos não bloqueantes
+
+- migration de índice da Fase 2 ainda não aplicada no Supabase remoto;
+- 79 warnings de advisors, sendo 8 Marketing Ops `auth_rls_initplan`, zero
+  erro;
+- 10 warnings históricos de lint no frontend, zero erro;
+- bundle principal acima de 500 kB;
+- dependência de desenvolvimento do RAG com um advisory de severidade baixa;
+- adoção ampla sem planilhas e prazo jurídico de retenção permanecem métricas/
+  decisões externas.
+
+### Parecer
+
+**GO para iniciar a Task 1 da Fase 3 em ambiente local.** Antes do próximo gate
+de produção, aplicar o índice pendente da Fase 2 pelo fluxo de
+backup/dry-run/push e revalidar os resíduos no contexto das mudanças da Fase 3.
