@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import type { MarketingOpsClient } from '@/lib/marketingOps/client';
 import { MarketingOpsApiError } from '@/lib/marketingOps/client';
 import { marketingOpsKeys } from '@/lib/marketingOps/queryKeys';
+import { localDateTimeToUtc, utcToLocalDateTime } from '@/lib/marketingOps/timezone';
 import type {
   MarketingOpsCampaignChannel,
   MarketingOpsCampaignSummary,
@@ -65,19 +66,21 @@ const emptyForm = (): ItemForm => ({
 
 const selectClass = 'h-11 w-full rounded-[8px] border border-input bg-white/80 px-3 text-sm text-text-primary outline-none transition-colors focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-60';
 
-function utcInput(value: string | null): string {
+function utcInput(value: string | null, timeZone: string): string {
   if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 16);
+  try {
+    return utcToLocalDateTime(value, timeZone);
+  } catch {
+    return '';
+  }
 }
 
-function inputUtc(value: string): string | null {
+function inputUtc(value: string, timeZone: string): string | null {
   if (!value) return null;
-  const date = new Date(`${value}:00.000Z`);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  return localDateTimeToUtc(value, timeZone);
 }
 
-function formFromItem(item: MarketingOpsProductionItem): ItemForm {
+function formFromItem(item: MarketingOpsProductionItem, timeZone: string): ItemForm {
   return {
     campaignId: item.campaignId,
     title: item.title,
@@ -86,8 +89,8 @@ function formFromItem(item: MarketingOpsProductionItem): ItemForm {
     channel: item.channel ?? '',
     assigneeUserId: item.assigneeUserId ?? '',
     description: item.description ?? '',
-    startsAt: utcInput(item.startsAt),
-    dueAt: utcInput(item.dueAt)
+    startsAt: utcInput(item.startsAt, timeZone),
+    dueAt: utcInput(item.dueAt, timeZone)
   };
 }
 
@@ -143,13 +146,13 @@ export function ProductionItemDialog({
       return;
     }
     if (itemQuery.data) {
-      setForm(formFromItem(itemQuery.data));
+      setForm(formFromItem(itemQuery.data, timeZone));
       setHydratedVersion(itemQuery.data.version);
     } else if (isCreate) {
       setForm(emptyForm());
       setHydratedVersion(null);
     }
-  }, [isCreate, itemQuery.data, open]);
+  }, [isCreate, itemQuery.data, open, timeZone]);
 
   useEffect(() => {
     if (!open || !isCreate || !campaigns[0]) return;
@@ -167,8 +170,8 @@ export function ProductionItemDialog({
         channel: form.channel || null,
         assigneeUserId: form.assigneeUserId.trim() || null,
         description: form.description.trim() || null,
-        startsAt: inputUtc(form.startsAt),
-        dueAt: inputUtc(form.dueAt),
+        startsAt: inputUtc(form.startsAt, timeZone),
+        dueAt: inputUtc(form.dueAt, timeZone),
         metadata: {}
       };
       if (isCreate) {
@@ -185,7 +188,7 @@ export function ProductionItemDialog({
       );
     },
     onSuccess: async (response) => {
-      setForm(formFromItem(response.data));
+      setForm(formFromItem(response.data, timeZone));
       setHydratedVersion(response.data.version);
       queryClient.setQueryData(marketingOpsKeys.productionItem(response.data.id), response.data);
       await queryClient.invalidateQueries({ queryKey: ['marketing-ops', 'production', 'schedule'] });
@@ -201,7 +204,7 @@ export function ProductionItemDialog({
       createIdempotencyKey()
     ),
     onSuccess: async (response) => {
-      setForm(formFromItem(response.data));
+      setForm(formFromItem(response.data, timeZone));
       setHydratedVersion(response.data.version);
       queryClient.setQueryData(marketingOpsKeys.productionItem(response.data.id), response.data);
       await queryClient.invalidateQueries({ queryKey: ['marketing-ops', 'production', 'schedule'] });
@@ -376,7 +379,7 @@ export function ProductionItemDialog({
                 />
               </Field>
 
-              <Field label="Início (UTC)" id="production-item-starts-at">
+              <Field label={`Início (${timeZone})`} id="production-item-starts-at">
                 <Input
                   id="production-item-starts-at"
                   type="datetime-local"
@@ -387,7 +390,7 @@ export function ProductionItemDialog({
                 />
               </Field>
 
-              <Field label="Prazo (UTC)" id="production-item-due-at">
+              <Field label={`Prazo (${timeZone})`} id="production-item-due-at">
                 <Input
                   id="production-item-due-at"
                   type="datetime-local"
@@ -413,7 +416,7 @@ export function ProductionItemDialog({
             </div>
 
             <p className="mb-4 rounded-[8px] bg-slate-50 px-3 py-2 text-xs text-text-secondary">
-              Horários persistidos em UTC. Timezone de referência do tenant: <strong>{timeZone}</strong>.
+              Informe o horário local de <strong>{timeZone}</strong>. A API persiste o instante em UTC.
             </p>
 
             {mutationError ? (

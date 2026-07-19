@@ -74,3 +74,16 @@ falha alta/crítica sem mitigação.
   Task 8.
 - O CORS de produção permaneceu fechado. Desenvolvimento local usa proxy Vite
   same-origin e não altera imagem, compose ou allowlist do serviço.
+
+## Revisão após a Task 8
+
+- F3-R-01: mitigação local validada ponta a ponta. Limites semana/mês, São
+  Paulo, DST e conversão de formulário local ↔ UTC passaram. Permanece aberto
+  somente para repetição no gate VPS.
+- F3-R-02: mitigação local validada. Lista/semana/mês reutilizam client, query
+  key, filtros e resposta canônica; não há segunda consulta de negócio.
+- F3-R-08: mitigação local validada com lista equivalente, navegação por
+  teclado/formulário, linhas ARIA, contraste, axe desktop/mobile e overflow
+  interno. Permanece aberto somente para o aceite final de produção.
+- O calendário vazio foi mantido visível, evitando que ausência de dados
+  impeça navegação. Itens sem data continuam deliberadamente fora das grades.

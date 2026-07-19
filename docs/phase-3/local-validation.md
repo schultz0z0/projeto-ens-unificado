@@ -388,3 +388,55 @@ continuam sendo o gate pertinente para não ampliar esse chunk.
 
 O teste manual tentou avançar o item sem todos os campos de prontidão e recebeu
 a rejeição estável esperada; a transição permitida para `cancelled` passou.
+
+## Task 8 — Semana e mês
+
+### RED observado
+
+| Gate | Falha observada |
+|---|---|
+| testes semana/mês/timezone | três suites sem coleta por módulos ausentes |
+| primeiro E2E axe | `aria-required-children` e `aria-required-parent` na grade |
+| primeiro E2E mobile | servidor programático sem utilitários Tailwind não comprovava scroll |
+| segundo E2E axe | contraste 3,25:1 em navegação ativa e CTA primário |
+
+### GREEN observado
+
+| Comando/gate | Resultado |
+|---|---|
+| testes semana + mês + timezone | 7/7 |
+| `npm test` no frontend | 174/174 |
+| `npm run lint` | zero erros; 10 warnings baseline |
+| `npm run typecheck` | passou |
+| `npm run build` | passou; semana/mês e página compartilhada em chunks lazy |
+| Playwright desktop + mobile | 2/2 |
+| axe em `main` | zero violações WCAG A/AA |
+| viewport 390×844 | documento 390 px; grade larga contida por scroll interno |
+| browser/API/Docker reais | login, semana, mês, filtros, overflow e diálogo passaram |
+| `npx supabase db reset --local --workdir apps/chat-web` | fixtures removidas; migrations/seed reaplicadas |
+| health/readiness após reset | banco, Artifact Server e RAG `ok`; container healthy |
+
+### Critérios exercitados
+
+- mesma agenda, query key e filtros nas três visualizações;
+- limites UTC corretos para semana/mês, virada de ano e DST;
+- timezone IANA visível e input local convertido para UTC;
+- intervalo e filtros persistentes em query string;
+- calendário navegável inclusive vazio e itens sem data exclusivos da lista;
+- overflow mensal explícito e lista acessível sem truncamento;
+- abertura de detalhes preservando URL e contexto;
+- teclado/formulário sem dependência de drag;
+- grade ARIA com `row`/`gridcell`, contraste e axe;
+- layout desktop/mobile com overflow interno controlado.
+
+### Bugs e correções
+
+1. O primeiro markup usava `gridcell` diretamente sob `grid`. Axe exigiu
+   `row`; os dias agora são agrupados em uma linha semanal ou seis linhas
+   mensais com `className="contents"`.
+2. Botões ativos e CTA usavam branco sobre `#009cb8`, com contraste 3,25:1.
+   Texto `slate-950` mantém o background da marca e passa WCAG AA.
+3. O estado vazio substituía a própria grade, impedindo navegar períodos sem
+   itens. A mensagem agora acompanha o calendário vazio, não o remove.
+4. O formulário da Task 7 tratava `datetime-local` como UTC. O campo agora usa
+   o IANA efetivo e converte wall time local para o instante UTC persistido.

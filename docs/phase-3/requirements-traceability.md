@@ -140,3 +140,21 @@ e lote dependem da Task 9. Esses paths não foram publicados como placeholders.
 
 A lista acessível está validada localmente. Equivalência semanal/mensal,
 limites UTC por view e axe completo permanecem na Task 8.
+
+## Evidência Task 8
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Fonte canônica | week/month tests + client/query key | mesmos filtros, range e endpoint |
+| Limites/fuso | `timezone.test.ts` | São Paulo, ano, mês curto, DST e wall time inválido verdes |
+| URL | testes de página + E2E | `date` e filtros preservados na navegação |
+| Equivalência | `ProductionCalendar` + lista acessível | mesmos itens; sem truncamento na alternativa |
+| Sem data/vazio | componente + E2E | fora da grade; calendário vazio navegável |
+| Detalhe/reagendamento | diálogo compartilhado + browser | contexto mantido; local convertido para UTC |
+| Overflow | cinco itens no mesmo dia + mobile | `+2` na célula e todos na lista |
+| Acessibilidade | Playwright + axe | rows/gridcells, teclado e zero violação A/AA |
+| Responsividade | viewport 390×844 | documento sem overflow; scroll interno da grade |
+| Regressão | suite/lint/typecheck/build | 174 testes; zero erro de lint; builds verdes |
+
+Lista, semana e mês estão validadas localmente sobre o contrato canônico. A
+repetição no ambiente VPS permanece parte do gate final da Task 10.

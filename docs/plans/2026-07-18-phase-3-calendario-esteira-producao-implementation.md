@@ -332,14 +332,15 @@ git commit -m "feat: add accessible production list"
 - Create: `apps/chat-web/src/components/marketing-ops/ProductionCalendar.tsx`
 - Create: `apps/chat-web/src/lib/marketingOps/timezone.ts`
 - Create: `apps/chat-web/src/lib/marketingOps/timezone.test.ts`
+- Create: `apps/chat-web/e2e/phase-3-calendar.spec.ts`
 - Modify: `apps/chat-web/src/App.tsx`
 
 **Produz:** agrupamentos semana/mês equivalentes à lista.
 
-- [ ] REDs para mesma query key/filtros, limites UTC, virada mês/ano,
+- [x] REDs para mesma query key/filtros, limites UTC, virada mês/ano,
   timezone, foco/teclado, overflow e abertura de detalhe.
-- [ ] Implementar sem drag obrigatório; toda ação reutiliza diálogo da lista.
-- [ ] GREEN:
+- [x] Implementar sem drag obrigatório; toda ação reutiliza diálogo da lista.
+- [x] GREEN:
 
 ```powershell
 Set-Location apps/chat-web
@@ -350,7 +351,8 @@ npm run typecheck
 npm run build
 ```
 
-- [ ] Commit:
+- [x] E2E desktop/mobile e axe A/AA sem violações.
+- [x] Commit:
 
 ```powershell
 git add -- apps/chat-web/src docs/phase-3

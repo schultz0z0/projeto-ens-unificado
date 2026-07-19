@@ -1,15 +1,15 @@
 # Fase 3 — Calendário e Esteira de Produção
 
-Este diretório é o pacote de entrada da Fase 3 no padrão documental das Fases
-0–2. Ele define o que será implementado; não contém alegação de código, schema,
-deploy ou teste já executado.
+Este diretório reúne o pacote aprovado e a evidência de implementação da Fase 3
+no padrão documental das Fases 0–2. Evidências locais só são promovidas após
+execução real; o aceite de produção continua reservado ao gate VPS.
 
 ## Status
 
-- **Fase:** `ready_for_implementation`
+- **Fase:** `in_progress`
 - **Snapshot:** 2026-07-18
-- **Implementação:** `not_started`
-- **Progresso:** 0%
+- **Implementação:** `tasks_1_to_8_validated_locally`
+- **Progresso:** 80%
 - **Branch única:** `main`
 - **Dependência:** Fase 2 `production_validated`
 - **PRD:** [phase-3-calendario-esteira-producao.md](../prds/phase-3-calendario-esteira-producao.md)
@@ -23,10 +23,10 @@ deploy ou teste já executado.
 | PRD | `approved` |
 | Design técnico | `approved` |
 | Rastreabilidade inicial | `approved_for_execution` |
-| Registro de riscos | `active_before_implementation` |
+| Registro de riscos | `active_during_implementation` |
 | Plano TDD | `approved` |
-| Progresso | `not_started` |
-| Handoff | `ready` |
+| Progresso | `80_percent` |
+| Handoff | `ready_to_start_task_9` |
 
 ## Corte técnico
 
@@ -52,7 +52,7 @@ deploy ou teste já executado.
 | Falha alta/crítica conhecida | nenhuma |
 | Forward-fix de índice da Fase 2 | `accepted_residual`; aplicar antes do próximo gate VPS |
 | PRD/design/plano da Fase 3 | coerentes e aprovados |
-| Migration/código da Fase 3 | inexistente, como esperado |
+| Migration/código da Fase 3 | Tasks 1–8 validadas localmente; sem deploy remoto |
 
 ## Governança
 

@@ -18,6 +18,8 @@ const queryClient = new QueryClient();
 const CampaignListPage = lazy(() => import("./pages/marketing-ops/CampaignListPage"));
 const CampaignWorkspacePage = lazy(() => import("./pages/marketing-ops/CampaignWorkspacePage"));
 const ProductionListPage = lazy(() => import("./pages/marketing-ops/ProductionListPage"));
+const ProductionWeekPage = lazy(() => import("./pages/marketing-ops/ProductionWeekPage"));
+const ProductionMonthPage = lazy(() => import("./pages/marketing-ops/ProductionMonthPage"));
 const marketingOps = marketingOpsFlags(import.meta.env);
 
 const CampaignRouteLoading = () => (
@@ -102,6 +104,26 @@ const App = () => (
                     <ProtectedRoute>
                       <Suspense fallback={<CampaignRouteLoading />}>
                         <ProductionListPage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/marketing-ops/production/week"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <ProductionWeekPage />
+                      </Suspense>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/marketing-ops/production/month"
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<CampaignRouteLoading />}>
+                        <ProductionMonthPage />
                       </Suspense>
                     </ProtectedRoute>
                   }

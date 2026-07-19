@@ -1,8 +1,8 @@
 # PRD — Fase 3: Calendário e Esteira de Produção
 
 - **Status:** `approved`
-- **Prontidão:** `ready_for_implementation`
-- **Implementação:** `not_started`
+- **Prontidão:** `in_progress`
+- **Implementação:** `tasks_1_to_8_validated_locally`
 - **Aprovação do escopo:** 2026-07-18
 - **Dependência:** Fase 2 `production_validated`
 - **Resultado:** trabalho de campanha planejado, produzido e acompanhável
@@ -199,9 +199,9 @@ Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinad
 
 - [ ] Usuário cria item em campanha autorizada.
 - [ ] Tipo e metadata inválidos são rejeitados.
-- [ ] Lista, semana e mês usam dados e filtros consistentes.
-- [ ] Filtros e intervalo persistem na URL.
-- [ ] Datas usam UTC e timezone explícito.
+- [x] Lista, semana e mês usam dados e filtros consistentes.
+- [x] Filtros e intervalo persistem na URL.
+- [x] Datas usam UTC e timezone explícito.
 - [ ] Reagendamento gera auditoria e respeita versão.
 - [ ] Dependências inválidas e cíclicas são bloqueadas.
 - [ ] Bloqueio é derivado corretamente.
@@ -209,7 +209,7 @@ Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinad
 - [ ] Artefatos mantêm ownership e referência.
 - [ ] Estados reservados às Fases 5/6 são rejeitados.
 - [ ] Itens atrasados e bloqueados são identificáveis.
-- [ ] Lista oferece jornada equivalente sem drag-and-drop.
+- [x] Lista oferece jornada equivalente sem drag-and-drop.
 - [ ] Ação em lote retorna resultado por item.
 - [ ] Notificações in-app são persistidas e deduplicáveis.
 - [ ] Reinício não perde agenda, dependências, versões ou eventos.

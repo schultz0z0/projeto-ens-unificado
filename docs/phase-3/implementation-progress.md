@@ -1,10 +1,10 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 70%
+- **Progresso:** 80%
 - **Snapshot:** 2026-07-18
 - **Branch única:** `main`
-- **Próxima task:** Task 8 — views semana e mês
+- **Próxima task:** Task 9 — notificações in-app e lote
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -15,7 +15,7 @@
 | 5 | conteúdo, versões e artifacts | `validated_locally` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
 | 6 | REST/OpenAPI e client tipado | `validated_locally` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
 | 7 | lista acessível | `validated_locally` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
-| 8 | views semana e mês | `not_started` | — |
+| 8 | views semana e mês | `validated_locally` | 7 focados; 174 frontend; 2 E2E + axe desktop/mobile |
 | 9 | notificações in-app e lote | `not_started` | — |
 | 10 | E2E, performance, docs e handoff VPS | `not_started` | — |
 
@@ -202,3 +202,28 @@ Ao concluir uma task:
   retornou `healthy`.
 - GREEN: 7/7 focados, 167/167 frontend, lint sem erros, typecheck/build,
   Supabase reset e health Docker.
+
+## Ciclo Task 8 — 2026-07-18
+
+- RED inicial observado: os três arquivos de teste não eram coletados porque
+  `timezone`, `ProductionWeekPage` e `ProductionMonthPage` ainda não existiam.
+- Semana e mês agora são agrupamentos de `listProductionSchedule`, com a mesma
+  query key, filtros allowlisted e limites locais convertidos para UTC `[from,to)`.
+- Funções puras cobrem São Paulo, virada de mês/ano, timezone com DST, wall time
+  inexistente, grade mensal de 42 dias e navegação sem pular mês curto.
+- O diálogo compartilhado passou a apresentar e receber horários no IANA do
+  tenant; a conversão local → UTC ocorre antes do SDK e a API continua
+  persistindo ISO 8601 UTC.
+- Grade e lista acessível apresentam os mesmos itens; mês limita três cards por
+  célula e informa o overflow, enquanto a lista equivalente mantém todos.
+- O calendário vazio continua navegável, itens sem data permanecem na lista e
+  nenhuma ação depende de drag-and-drop.
+- Smoke real no browser: login manager, cinco itens, semana, mês, horário local,
+  filtros/intervalo na URL, overflow `+2` e diálogo sem perder contexto passaram.
+- O primeiro E2E axe encontrou `gridcell` sem `row`; a grade recebeu linhas ARIA
+  explícitas e o segundo gate eliminou as violações estruturais.
+- O segundo E2E encontrou contraste 3,25:1 no estado ativo/CTA. Texto escuro
+  preservou a cor da marca e elevou o contraste; axe passou em desktop e mobile.
+- GREEN: 7/7 focados, 174/174 frontend, 2/2 E2E Playwright, axe WCAG A/AA,
+  documento limitado a 390 px com scroll interno, lint sem erros, typecheck e
+  build.

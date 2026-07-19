@@ -1,9 +1,9 @@
 # Handoff de continuação — Fase 3
 
-- **Estado:** `ready_to_start_task_8`
+- **Estado:** `ready_to_start_task_9`
 - **Branch única:** `main`
 - **Snapshot:** 2026-07-18
-- **Código/schema Fase 3:** Tasks 1–7 validadas localmente (70%)
+- **Código/schema Fase 3:** Tasks 1–8 validadas localmente (80%)
 
 ## Ordem de leitura
 
@@ -16,12 +16,12 @@
 
 ## Ponto de continuação
 
-Começar pela Task 8 do plano:
+Começar pela Task 9 do plano:
 
-- escrever REDs de timezone, limites UTC, virada mês/ano e equivalência;
-- implementar semana/mês como agrupamentos da resposta canônica;
-- reutilizar filtros, `productionSchedule` query key e diálogo da lista;
-- validar teclado, overflow, card móvel e axe sem exigir drag-and-drop.
+- escrever REDs de persistência/deduplicação/segurança de notificações;
+- implementar lote com autorização e versão por item, sem sucesso parcial oculto;
+- publicar REST/OpenAPI/SDK somente junto do domínio executável;
+- integrar sino in-app e formulário de lote para manager/admin.
 
 ## Último gate confirmado
 
@@ -35,6 +35,9 @@ Começar pela Task 8 do plano:
 - lista acessível: 7/7 focados e 167/167 frontend;
 - smoke browser desktop/mobile passou; proxy Vite local validado;
 - reset removeu a fixture manual e Marketing Ops retornou healthy.
+- semana/mês/timezone: 7/7 focados e 174/174 frontend;
+- Playwright desktop/mobile 2/2, axe A/AA sem violações;
+- grade mensal com overflow interno, lista equivalente e diálogo compartilhado.
 
 ## Pré-condição de deploy futuro
 

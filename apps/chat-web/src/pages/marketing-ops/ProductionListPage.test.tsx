@@ -188,7 +188,7 @@ describe('ProductionListPage', () => {
     await screen.findByText('Nenhum item de produção ainda');
     await user.click(screen.getAllByRole('button', { name: /novo item/i })[0]);
     const dialog = screen.getByRole('dialog', { name: /novo item/i });
-    expect(within(dialog).getByText(/America\/Sao_Paulo/)).toBeTruthy();
+    expect(within(dialog).getAllByText(/America\/Sao_Paulo/)).toHaveLength(3);
     await user.selectOptions(within(dialog).getByLabelText(/^campanha$/i), campaignId);
     await user.clear(within(dialog).getByLabelText(/^título$/i));
     await user.type(within(dialog).getByLabelText(/^título$/i), 'Novo e-mail');
@@ -224,7 +224,7 @@ describe('ProductionListPage', () => {
 
     const dialog = await screen.findByRole('dialog', { name: /detalhes do item/i });
     const title = await within(dialog).findByLabelText(/^título$/i);
-    const dueAt = within(dialog).getByLabelText(/^prazo \(utc\)$/i);
+    const dueAt = within(dialog).getByLabelText(/^prazo \(America\/Sao_Paulo\)$/i);
     await user.clear(title);
     await user.type(title, 'Disparo revisado');
     fireEvent.change(dueAt, { target: { value: '2026-07-26T16:30' } });
@@ -234,7 +234,7 @@ describe('ProductionListPage', () => {
       2,
       expect.objectContaining({
         title: 'Disparo revisado',
-        dueAt: '2026-07-26T16:30:00.000Z'
+        dueAt: '2026-07-26T19:30:00.000Z'
       }),
       'idem-ui'
     ));
