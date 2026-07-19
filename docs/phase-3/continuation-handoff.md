@@ -1,62 +1,53 @@
 # Handoff de continuação — Fase 3
 
-- **Estado:** `ready_to_start_task_10`
+- **Estado:** `ready_for_vps_validation`
 - **Branch única:** `main`
 - **Snapshot:** 2026-07-19
-- **Código/schema Fase 3:** Tasks 1–9 validadas localmente (90%)
+- **Código/schema:** Tasks 1–10 completas e validadas localmente (100%)
+- **Supabase:** migrations aplicadas; VPS ainda não homologada
+
+## Ponto exato de continuação
+
+Não há task de implementação pendente. A continuação é operacional:
+
+1. rotacionar a credencial de banco indicada no [runbook](runbook.md);
+2. publicar o commit final em `origin/main`;
+3. implantar os quatro alvos na VPS com build limpo;
+4. executar o gate não mutante;
+5. executar jornada manual/E2E controlado;
+6. comprovar logs, métricas, restart, persistência e cleanup;
+7. registrar o aceite e só então promover a fase.
 
 ## Ordem de leitura
 
-1. [PRD](../prds/phase-3-calendario-esteira-producao.md);
-2. [design](design.md);
-3. [plano](../plans/2026-07-18-phase-3-calendario-esteira-producao-implementation.md);
-4. [rastreabilidade](requirements-traceability.md);
-5. [riscos](risk-register.md);
-6. [progresso](implementation-progress.md).
-
-## Ponto de continuação
-
-Começar pela Task 10 do plano:
-
-- ampliar o E2E para fluxo completo, perfis e persistência após restart;
-- fechar métricas/logs allowlisted e readiness operacional;
-- criar o gate VPS fail-closed com fixtures marcadas e cleanup seguro;
-- repetir todos os gates locais e concluir runbook, rollback e handoff.
+1. [README/status](README.md);
+2. [PRD](../prds/phase-3-calendario-esteira-producao.md);
+3. [rastreabilidade](requirements-traceability.md);
+4. [validação local](local-validation.md);
+5. [deploy Supabase](supabase-deployment.md);
+6. [runbook VPS](runbook.md);
+7. [checklist VPS](vps-validation.md);
+8. [rollback](rollback.md);
+9. [riscos](risk-register.md).
 
 ## Último gate confirmado
 
-- 320/320 pgTAP, lint vazio e diff vazio após reset;
-- 170/170 testes do Marketing Ops e 8/8 do Artifact Server;
-- typecheck/build verdes;
-- imagens Docker de Marketing Ops/Artifact Server construídas;
-- smoke real de upload, ownership, URL assinada, download e cleanup passou.
-- OpenAPI 26 paths/38 operações, 15 REST e 13 SDK/query keys verdes;
-- smoke REST Docker real passou e o serviço ficou healthy após reset.
-- lista acessível: 7/7 focados e 167/167 frontend;
-- smoke browser desktop/mobile passou; proxy Vite local validado;
-- reset removeu a fixture manual e Marketing Ops retornou healthy.
-- semana/mês/timezone: 7/7 focados e 174/174 frontend;
-- Playwright desktop/mobile 2/2, axe A/AA sem violações;
-- grade mensal com overflow interno, lista equivalente e diálogo compartilhado.
-- notificações/lote: 5/5 domínio, 16/16 REST e 22/22 frontend/SDK;
-- regressão: 175 Marketing Ops e 179 frontend, typecheck/build/Redocly verdes;
-- smoke browser/Docker: leitura segura, lote por item e layout móvel passaram;
-- reset local removeu fixtures e Marketing Ops permaneceu healthy.
+- 322/322 pgTAP, lint sem erro e schema diff vazio;
+- 181 Marketing Ops, 179 frontend, 8 Artifact e 26 RAG;
+- typecheck/build/OpenAPI/security gate verdes;
+- performance p95 38,41 ms/5 mil campanhas e 45,45 ms/10 mil itens;
+- E2E completo real em Docker, desktop/mobile/axe;
+- métricas protegidas e logs sem sete categorias sensíveis;
+- banco e artifact persistiram após restart;
+- oito migrations promovidas ao Supabase do app após backup/dry-run;
+- invariantes remotas da Fase 3 aprovadas.
 
-## Pré-condição de deploy futuro
-
-O índice
-`20260718183937_add_campaign_list_tenant_updated_index.sql` da Fase 2 está
-validado localmente, mas pendente no remoto. Ele não bloqueia desenvolvimento
-local, porém deve integrar o próximo dry-run/push antes da homologação VPS da
-Fase 3.
-
-## Regras
+## Regras de retomada
 
 - somente `main`;
-- TDD e commits locais pequenos;
-- sem push pelo agente;
-- Supabase remoto apenas após gate local, backup e dry-run;
-- VPS executada pelo usuário;
-- nenhum estado `approved/scheduled/executing/failed` na API da Fase 3;
-- nenhuma recorrência, drag obrigatório ou notificação externa.
+- não executar nova migration ou reset Supabase na VPS;
+- não registrar secrets em comandos/evidências;
+- `--no-cache` é recomendado no primeiro build completo da Fase 3;
+- manter isolated DB gate desativado na VPS;
+- não usar fixtures pessoais;
+- não promover a Fase 4 antes da homologação da Fase 3.

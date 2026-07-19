@@ -131,9 +131,13 @@ export async function projectInAppNotifications(
             item.due_at,
             item.created_at
           from marketing_ops.campaign_items as item
+          join marketing_ops.campaigns as campaign
+            on campaign.tenant_id = item.tenant_id
+            and campaign.id = item.campaign_id
           where item.tenant_id = $1
             and item.assignee_user_id = $2
             and item.status not in ('completed', 'cancelled')
+            and campaign.status <> 'archived'
             and marketing_ops_private.can_access_campaign_item(item.id)
         ),
         candidates as (

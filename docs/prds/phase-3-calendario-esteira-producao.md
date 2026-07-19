@@ -1,8 +1,8 @@
 # PRD — Fase 3: Calendário e Esteira de Produção
 
 - **Status:** `approved`
-- **Prontidão:** `in_progress`
-- **Implementação:** `tasks_1_to_8_validated_locally`
+- **Prontidão:** `implementation_complete_pending_vps_validation`
+- **Implementação:** `tasks_1_to_10_validated_locally`
 - **Aprovação do escopo:** 2026-07-18
 - **Dependência:** Fase 2 `production_validated`
 - **Resultado:** trabalho de campanha planejado, produzido e acompanhável
@@ -197,22 +197,25 @@ Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinad
 
 ## Critérios de aceite
 
-- [ ] Usuário cria item em campanha autorizada.
-- [ ] Tipo e metadata inválidos são rejeitados.
+- [x] Usuário cria item em campanha autorizada.
+- [x] Tipo e metadata inválidos são rejeitados.
 - [x] Lista, semana e mês usam dados e filtros consistentes.
 - [x] Filtros e intervalo persistem na URL.
 - [x] Datas usam UTC e timezone explícito.
-- [ ] Reagendamento gera auditoria e respeita versão.
-- [ ] Dependências inválidas e cíclicas são bloqueadas.
-- [ ] Bloqueio é derivado corretamente.
-- [ ] Conteúdo possui histórico imutável de versões.
-- [ ] Artefatos mantêm ownership e referência.
-- [ ] Estados reservados às Fases 5/6 são rejeitados.
-- [ ] Itens atrasados e bloqueados são identificáveis.
+- [x] Reagendamento gera auditoria e respeita versão.
+- [x] Dependências inválidas e cíclicas são bloqueadas.
+- [x] Bloqueio é derivado corretamente.
+- [x] Conteúdo possui histórico imutável de versões.
+- [x] Artefatos mantêm ownership e referência.
+- [x] Estados reservados às Fases 5/6 são rejeitados.
+- [x] Itens atrasados e bloqueados são identificáveis.
 - [x] Lista oferece jornada equivalente sem drag-and-drop.
 - [x] Ação em lote retorna resultado por item.
 - [x] Notificações in-app são persistidas e deduplicáveis.
-- [ ] Reinício não perde agenda, dependências, versões ou eventos.
+- [x] Reinício local não perde agenda, dependências, versões ou eventos.
+
+Os critérios acima estão aceitos no gate local/Docker. O aceite operacional na
+VPS permanece pendente e não está implícito nestes checkboxes.
 
 ## Gates
 

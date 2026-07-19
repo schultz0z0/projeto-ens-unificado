@@ -24,6 +24,11 @@ export interface WorkspaceMetricsSnapshot {
   briefingCompletionRatio: number;
   timeToPlannedSeconds: { count: number; sum: number };
   statusTransitions: Array<{ from: CampaignMetricStatus; to: CampaignMetricStatus; count: number }>;
+  productionItems: Array<{
+    status: 'draft' | 'ready' | 'in_review' | 'completed' | 'cancelled';
+    kind: 'task' | 'email' | 'whatsapp' | 'post' | 'creative' | 'review' | 'milestone';
+    count: number;
+  }>;
 }
 
 export interface ReadinessReport {
@@ -98,6 +103,28 @@ function referenceResult(status: number): 'success' | 'unavailable' | 'forbidden
   return 'error';
 }
 
+type OperationResult = ReturnType<typeof operationStatus>;
+type ProductionScheduleView = 'list' | 'week' | 'month';
+type ProductionBatchAction = 'reassign' | 'priority' | 'reschedule';
+type ItemConflictOperation = 'update' | 'transition' | 'dependency' | 'content' | 'artifact' | 'batch';
+
+interface ProductionLocals {
+  productionScheduleView?: ProductionScheduleView;
+  productionBatch?: { action: ProductionBatchAction; results: OperationResult[] };
+  contentVersionCreated?: boolean;
+  notificationsProduced?: number;
+}
+
+function itemConflictOperation(route: string): ItemConflictOperation | null {
+  if (route === '/v1/campaign-items/batch') return 'batch';
+  if (route.endsWith('/transition')) return 'transition';
+  if (route.includes('/dependencies')) return 'dependency';
+  if (route.includes('/content-assets') || route.startsWith('/v1/content-assets/')) return 'content';
+  if (route.includes('/artifacts')) return 'artifact';
+  if (route.startsWith('/v1/campaign-items/')) return 'update';
+  return null;
+}
+
 declare global {
   namespace Express {
     interface Request { correlationId: string }
@@ -161,6 +188,45 @@ export function createApp(deps: AppDependencies) {
       }
       if (route === '/v1/references/courses') {
         deps.metrics.increment('marketing_ops_reference_lookup_total', { result: referenceResult(status) });
+      }
+      const productionLocals = response.locals as ProductionLocals;
+      if (route === '/v1/campaign-items' && request.method === 'GET') {
+        const view = productionLocals.productionScheduleView ?? 'list';
+        const result = operationStatus(status);
+        deps.metrics.increment('marketing_ops_schedule_queries_total', { view, result });
+        deps.metrics.increment('marketing_ops_schedule_query_duration_seconds_count', { view, result });
+        deps.metrics.increment(
+          'marketing_ops_schedule_query_duration_seconds_sum',
+          { view, result },
+          durationSeconds
+        );
+      }
+      if (productionLocals.productionBatch) {
+        for (const result of productionLocals.productionBatch.results) {
+          deps.metrics.increment('marketing_ops_batch_items_total', {
+            action: productionLocals.productionBatch.action,
+            result
+          });
+        }
+      }
+      if (productionLocals.contentVersionCreated && status >= 200 && status < 300) {
+        deps.metrics.increment('marketing_ops_content_versions_created_total');
+      }
+      if (
+        typeof productionLocals.notificationsProduced === 'number'
+        && productionLocals.notificationsProduced > 0
+      ) {
+        deps.metrics.increment(
+          'marketing_ops_notifications_produced_total',
+          {},
+          productionLocals.notificationsProduced
+        );
+      }
+      if (status === 409) {
+        const itemOperation = itemConflictOperation(route);
+        if (itemOperation) {
+          deps.metrics.increment('marketing_ops_item_conflicts_total', { operation: itemOperation });
+        }
       }
       deps.logger.info('request completed', {
         correlationId: request.correlationId,
@@ -230,6 +296,12 @@ export function createApp(deps: AppDependencies) {
               to: transition.to
             });
           }
+          for (const item of snapshot.productionItems) {
+            deps.metrics.set('marketing_ops_production_items', item.count, {
+              status: item.status,
+              kind: item.kind
+            });
+          }
         }
         response.type('text/plain; version=0.0.4').send(deps.metrics.render());
       } catch {
@@ -256,6 +328,9 @@ export function createApp(deps: AppDependencies) {
       normalized = appError('internal_error', 500, 'Internal server error');
     }
     deps.metrics.increment('marketing_ops_errors_total', { code: normalized.code, status: String(normalized.status) });
+    if (normalized.code === 'dependency_cycle') {
+      deps.metrics.increment('marketing_ops_dependency_cycles_rejected_total');
+    }
     if (normalized.code === 'version_conflict') {
       deps.metrics.increment('marketing_ops_campaign_version_conflicts_total');
     }

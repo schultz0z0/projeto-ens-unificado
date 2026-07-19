@@ -1,7 +1,9 @@
-const sensitiveKeys = /authorization|cookie|token|secret|password|api[-_]?key|delegation|briefing|notes?|objective|audience|filename|file[-_]?name|signed[-_]?url|access[-_]?url|bytes|payload|query|content|error/i;
+const sensitiveKeys = /authorization|cookie|token|secret|password|api[-_]?key|delegation|briefing|notes?|objective|audience|title|label|metadata|body|event[-_]?key|filename|file[-_]?name|signed[-_]?url|access[-_]?url|bytes|payload|query|content|error/i;
+const sensitiveString = /bearer\s+[a-z0-9._~-]{8,}|eyJ[a-z0-9_-]{10,}\.[a-z0-9_-]{10,}\.[a-z0-9_-]{10,}|https?:\/\/\S+[?&](?:token|signature|sig)=[^\s&]+|(?:api[-_]?key|password|secret)\s*[=:]\s*\S{8,}/i;
 
 function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   if (Array.isArray(value)) return value.map((item) => redact(item, seen));
+  if (typeof value === 'string') return sensitiveString.test(value) ? '[REDACTED]' : value;
   if (!value || typeof value !== 'object') return value;
   if (seen.has(value)) return '[CIRCULAR]';
   seen.add(value);

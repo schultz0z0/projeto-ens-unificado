@@ -280,6 +280,7 @@ export type MarketingOpsProductionItemPatch =
   Partial<MarketingOpsProductionItemEditableFields>;
 
 export interface MarketingOpsProductionScheduleFilters {
+  view?: 'list' | 'week' | 'month';
   from?: string;
   to?: string;
   campaignId?: string;

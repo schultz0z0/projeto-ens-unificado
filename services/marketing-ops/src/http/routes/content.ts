@@ -142,6 +142,7 @@ export function registerContent(
       parseIfMatch(request),
       { ...body, idempotencyKey: requireIdempotencyKey(request) }
     );
+    response.locals.contentVersionCreated = true;
     response.status(201).setHeader('ETag', `"${data.assetVersion}"`).json({ data });
   }));
 

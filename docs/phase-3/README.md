@@ -1,102 +1,79 @@
 # Fase 3 — Calendário e Esteira de Produção
 
-Este diretório reúne o pacote aprovado e a evidência de implementação da Fase 3
-no padrão documental das Fases 0–2. Evidências locais só são promovidas após
-execução real; o aceite de produção continua reservado ao gate VPS.
+Este diretório é a fonte de evidência da implementação da Fase 3 no padrão
+documental das Fases 0–2. O código e o schema estão completos; o aceite de
+produção permanece reservado ao gate executado pelo usuário na VPS.
 
 ## Status
 
 - **Fase:** `in_progress`
+- **Subestado:** `implementation_complete_pending_vps_validation`
 - **Snapshot:** 2026-07-19
-- **Implementação:** `tasks_1_to_9_validated_locally`
-- **Progresso:** 90%
+- **Implementação:** Tasks 1–10 completas
+- **Progresso de implementação:** 100%
+- **Supabase remoto:** `deployed_pending_vps_validation`
 - **Branch única:** `main`
 - **Dependência:** Fase 2 `production_validated`
 - **PRD:** [phase-3-calendario-esteira-producao.md](../prds/phase-3-calendario-esteira-producao.md)
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-07-18-phase-3-calendario-esteira-producao-implementation.md](../plans/2026-07-18-phase-3-calendario-esteira-producao-implementation.md)
 
-## Pacote aprovado
+## Matriz de fechamento interno
 
-| Entregável | Estado |
-|---|---|
-| PRD | `approved` |
-| Design técnico | `approved` |
-| Rastreabilidade inicial | `approved_for_execution` |
-| Registro de riscos | `active_during_implementation` |
-| Plano TDD | `approved` |
-| Progresso | `90_percent` |
-| Handoff | `ready_to_start_task_10` |
-
-## Corte técnico
-
-- evolução aditiva de `campaign_items`;
-- lista é a referência acessível;
-- lista, semana e mês usam a mesma query por intervalo;
-- UTC no banco, timezone do tenant na apresentação;
-- estados disponíveis: `draft`, `ready`, `in_review`, `completed`,
-  `cancelled`;
-- estados de aprovação/execução permanecem indisponíveis;
-- dependências direcionadas, mesma campanha e sem ciclos;
-- conteúdo com asset estável e versões append-only;
-- notificações somente in-app;
-- lote limitado a reatribuição, prioridade e reagendamento;
-- sem drag-and-drop obrigatório e sem recorrência.
-
-## Gate de entrada
-
-| Dependência | Estado |
-|---|---|
-| Fase 2 funcional/VPS | `production_validated` |
-| Saneamento local da Fase 2 | verde |
-| Falha alta/crítica conhecida | nenhuma |
-| Forward-fix de índice da Fase 2 | `accepted_residual`; aplicar antes do próximo gate VPS |
-| PRD/design/plano da Fase 3 | coerentes e aprovados |
-| Migration/código da Fase 3 | Tasks 1–9 validadas localmente; sem deploy remoto |
-
-## Governança
-
-- executar diretamente em `main`, sem criar branch;
-- aplicar TDD task a task e registrar RED/GREEN real;
-- criar commits locais pequenos após gates;
-- o agente não executa `git push` nem deploy VPS;
-- deploy Supabase somente após testes, backup e dry-run aprovados;
-- atualizar progresso, rastreabilidade e evidência no mesmo ciclo de cada task;
-- não promover a fase antes de local + VPS.
-
-## Decisão de entrada
-
-**GO técnico documental:** a implementação da Fase 3 pode iniciar. Este GO não
-autoriza deploy e não afirma que qualquer critério funcional da Fase 3 foi
-atendido.
-
-## Gate final de entrada — 18/07/2026
-
-| Gate obrigatório | Evidência | Decisão |
+| Entregável/gate | Estado | Evidência |
 |---|---|---|
-| Fase 2 | produção homologada + documentação as built | `go` |
-| Banco local | reset, 228/228 pgTAP, lint zero erro, diff vazio | `go` |
-| Performance Fase 2 | 5.000 campanhas, p95 28,50 ms | `go` |
-| Marketing Ops | 129 testes, tipos, build, OpenAPI e concorrência | `go` |
-| Frontend | 158 testes, lint 0 erros, tipos, build e security gate | `go` |
-| Artifact/RAG | 8 + 26 testes; RAG typecheck | `go` |
-| Compose | config válido e imagens alvo construídas | `go` |
-| PRD/design/plano Fase 3 | aprovados e consistentes | `go` |
-| Falha alta/crítica conhecida | nenhuma | `go` |
+| PRD/design/plano | `implemented_as_approved` | PRD, design e plano |
+| Tasks 1–10 | `validated_locally` | [progresso](implementation-progress.md) |
+| Rastreabilidade F3-RF-01–12 | `validated_locally` | [rastreabilidade](requirements-traceability.md) |
+| Supabase local | `validated_locally` | reset, 322/322 pgTAP, lint/diff |
+| Supabase remoto | `deployed_pending_vps_validation` | [deploy](supabase-deployment.md) |
+| Marketing Ops | `validated_locally` | 181 testes, tipos e build |
+| Frontend | `validated_locally` | 179 testes, lint, tipos, build e E2E |
+| Artifact/RAG | `validated_locally` | 8 + 26 testes |
+| Performance | `validated_locally` | 5 mil campanhas e 10 mil itens abaixo de 500 ms |
+| Docker/Linux | `validated_locally` | build limpo, health/readiness, logs e restart |
+| Operação/rollback | `ready_for_vps_execution` | [runbook](runbook.md), [rollback](rollback.md) |
+| Homologação VPS | `pending_user_execution` | [checklist](vps-validation.md) |
 
-### Resíduos não bloqueantes
+## Escopo entregue
 
-- migration de índice da Fase 2 ainda não aplicada no Supabase remoto;
-- 79 warnings de advisors, sendo 8 Marketing Ops `auth_rls_initplan`, zero
-  erro;
-- 10 warnings históricos de lint no frontend, zero erro;
-- bundle principal acima de 500 kB;
-- dependência de desenvolvimento do RAG com um advisory de severidade baixa;
-- adoção ampla sem planilhas e prazo jurídico de retenção permanecem métricas/
-  decisões externas.
+- item operacional aditivo sobre `campaign_items`;
+- lista acessível, semana e mês sobre a mesma query canônica;
+- UTC no banco e timezone IANA na apresentação;
+- estados `draft`, `ready`, `in_review`, `completed`, `cancelled`;
+- dependências direcionadas sem ciclos/deadlocks;
+- assets estáveis e versões append-only;
+- artifacts com ownership e persistência;
+- notificações somente in-app e payload allowlisted;
+- lote seguro para reatribuição, prioridade e reagendamento;
+- métricas de baixa cardinalidade, logs redigidos e readiness real;
+- script VPS fail-closed, rollback e checklist manual.
 
-### Parecer
+Continuam fora do escopo: aprovação, execução/publicação, recorrência,
+drag-and-drop obrigatório e notificações externas.
 
-**GO para iniciar a Task 1 da Fase 3 em ambiente local.** Antes do próximo gate
-de produção, aplicar o índice pendente da Fase 2 pelo fluxo de
-backup/dry-run/push e revalidar os resíduos no contexto das mudanças da Fase 3.
+## Evidência final local
+
+- Supabase: reset fresco, 6 arquivos e 322/322 pgTAP; lint sem erro e diff vazio;
+- Marketing Ops: 181 pass, 2 E2E condicionais skipped; typecheck/build verdes;
+- frontend: 179/179; lint zero erro/10 warnings históricos; typecheck/build;
+- Artifact Server 8/8 e RAG MCP 26/26;
+- performance final fresca: lista 5.000 campanhas p95 38,41 ms; agenda 10.000
+  itens p95 45,45 ms;
+- E2E Phase 3 real em Docker: jornada integrada, mobile e axe aprovados;
+- quatro imagens construídas sem cache e quatro serviços healthy;
+- `/metrics` protegido, readiness, redaction de logs e persistência após restart
+  aprovados;
+- security gate sem vulnerabilidade alta/crítica;
+- migrations remotas aplicadas após backup e dry-run, com invariantes
+  conferidas.
+
+Detalhes e bugs corrigidos estão em [local-validation.md](local-validation.md).
+
+## Decisão
+
+**GO para publicação do `main` e homologação controlada na VPS.** A
+implementação está 100% concluída, mas a Fase 3 ainda não está `completed` nem
+`production_validated`. Esses estados exigem build/deploy, smokes manuais,
+logs, restart, cleanup e aceite do usuário conforme
+[vps-validation.md](vps-validation.md).

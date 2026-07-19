@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/actor.js';
-import { createCampaignDraft } from './campaigns.js';
+import { archiveCampaign, createCampaignDraft } from './campaigns.js';
 import { createProductionItem } from './items.js';
 import {
   listInAppNotifications,
@@ -21,6 +21,12 @@ const member: Actor = {
   tenantSlug: 'ens',
   role: 'member'
 };
+const manager: Actor = {
+  userId: '22222222-2222-4222-8222-222222222222',
+  tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  tenantSlug: 'ens',
+  role: 'manager'
+};
 const otherTenant: Actor = {
   userId: '44444444-4444-4444-8444-444444444444',
   tenantId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -37,14 +43,34 @@ const context = (actor: Actor = member) => ({
   origin: 'rest' as const
 });
 
-async function createNotificationCampaign() {
-  return createCampaignDraft(context(), {
+async function createNotificationCampaign(actor: Actor = member) {
+  return createCampaignDraft(context(actor), {
     name: `Notifications ${randomUUID()}`,
     idempotencyKey: randomUUID()
   });
 }
 
 describe('in-app notification projection', () => {
+  it('ignores assigned items from archived campaigns', async () => {
+    const campaign = await createNotificationCampaign(manager);
+    const item = await createProductionItem(context(manager), campaign.id, {
+      kind: 'task',
+      title: 'Archived notification fixture',
+      assigneeUserId: manager.userId,
+      dueAt: '2026-08-02T12:00:00.000Z',
+      idempotencyKey: randomUUID()
+    });
+    await archiveCampaign(context(manager), campaign.id, campaign.version, randomUUID());
+
+    await expect(projectInAppNotifications(
+      context(manager),
+      new Date('2026-08-01T12:00:00.000Z')
+    )).resolves.toEqual(expect.objectContaining({ produced: expect.any(Number) }));
+    const notifications = await listInAppNotifications(context(manager), { limit: 100 });
+
+    expect(notifications.data.some((notification) => notification.itemId === item.id)).toBe(false);
+  });
+
   it('projects assignment, due-soon, and overdue events once with an allowlisted payload', async () => {
     const campaign = await createNotificationCampaign();
     const confidential = `SEGREDO-${randomUUID()}`;

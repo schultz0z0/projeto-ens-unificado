@@ -49,7 +49,8 @@ export function registerNotifications(
       correlationId: request.correlationId,
       origin: 'rest' as const
     };
-    await projectInAppNotifications(context);
+    const projection = await projectInAppNotifications(context);
+    response.locals.notificationsProduced = projection.produced;
     const result = await listInAppNotifications(context, {
       limit: filters.limit,
       ...(filters.unreadOnly === undefined ? {} : { unreadOnly: filters.unreadOnly }),

@@ -1,10 +1,11 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 90%
+- **Subestado:** `implementation_complete_pending_vps_validation`
+- **Progresso de implementação:** 100%
 - **Snapshot:** 2026-07-19
 - **Branch única:** `main`
-- **Próxima task:** Task 10 — E2E, performance, docs e handoff VPS
+- **Próximo gate:** deploy e homologação manual na VPS
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -17,7 +18,7 @@
 | 7 | lista acessível | `validated_locally` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
 | 8 | views semana e mês | `validated_locally` | 7 focados; 174 frontend; 2 E2E + axe desktop/mobile |
 | 9 | notificações in-app e lote | `validated_locally` | 5 domínio; 16 REST; 22 focados; 175 serviço + 179 frontend; smoke browser/Docker |
-| 10 | E2E, performance, docs e handoff VPS | `not_started` | — |
+| 10 | E2E, performance, observabilidade, operação e handoff VPS | `validated_locally` | 181 serviço; 179 frontend; 322 pgTAP; E2E Docker; restart; Supabase remoto |
 
 ## Protocolo
 
@@ -272,3 +273,64 @@ Ao concluir uma task:
   5. o Vite local iniciou sem as variáveis Supabase e depois com o nome antigo
      da URL do Marketing Ops. O processo foi reiniciado com credenciais locais
      em memória e `VITE_MARKETING_OPS_URL` correto.
+
+## Ciclo Task 10 — 2026-07-19
+
+- RED de observabilidade: `/metrics` real retornou 503. A consulta agregada
+  referenciava `domain_events.created_at`, mas a coluna canônica é
+  `occurred_at`. O collector foi isolado, coberto por teste e corrigido.
+- RED de agenda: campanhas E2E arquivadas ainda deixavam itens visíveis na
+  esteira. O teste de domínio reproduziu a regressão e a forward migration
+  `20260719013000_exclude_archived_campaigns_from_production_schedule.sql`
+  passou a excluir campanhas arquivadas na função canônica.
+- Hardening de notificações:
+  `20260719012000_harden_in_app_notification_projection.sql` restringe a
+  projeção/insert e os testes RLS comprovam ownership e payload seguro.
+- O popover de notificações recebeu semântica/label acessível; o E2E integrado
+  cobre carregamento, leitura e erro seguro.
+- Métricas allowlisted agora cobrem agenda por view, lote por resultado,
+  versões, notificações, itens por status/kind e readiness, sem IDs pessoais.
+- Logs e erros usam correlação, redaction e labels finitas. O scanner real
+  verificou sete categorias sensíveis e encontrou zero ocorrência.
+- Readiness comprova banco, Artifact Server e RAG. Compose e Traefik usam
+  `/ready`; os serviços recebem grace period de 30 segundos.
+- O script `scripts/test/phase-3-vps.sh` é fail-closed: exige Linux, `main`
+  limpo, confirmação literal, `.env` restrito, migrations, RLS, probes,
+  métricas e logs. E2E mutante, banco isolado e restart ficam desligados por
+  padrão e exigem opt-in.
+- E2E real em Docker aprovou criação de campanha/itens, dependência,
+  bloqueio/desbloqueio, versão congelada, artifact, notificação, lote,
+  reagendamento, semana, mobile/axe e cleanup. Campanhas arquivadas não
+  reaparecem na agenda.
+- Persistência real: fingerprint do banco permaneceu idêntico após restart; um
+  artifact foi criado, reiniciado, relido e removido, sem metadata residual.
+- Gate final de banco: reset completo, 6 arquivos e 322/322 pgTAP, lint sem
+  erro e schema diff vazio.
+- Gate final de serviço: 181 pass, 2 E2E condicionais skipped, typecheck e
+  build. Artifact Server 8/8; RAG MCP 26/26.
+- Gate frontend: 179/179, lint zero erro/10 warnings históricos,
+  typecheck/build e security gate sem vulnerabilidade.
+- Performance isolada final: 5.000 campanhas p95 38,41 ms e 10.000 itens p95
+  45,45 ms, ambos abaixo do limite de 500 ms.
+- Quatro imagens foram construídas com `--no-cache`; Compose ficou
+  running/healthy e os quatro probes responderam.
+- Supabase remoto: backup com hash, dry-run de oito migrations, push e
+  invariantes pós-deploy concluídos. O histórico remoto está sincronizado até
+  `20260719013000`.
+- Smoke final após reset: novo login manager, 0 itens, timezone ENS, estado
+  vazio e notificações vazias, sem banner nem erro/warning no navegador.
+- Incidentes de ambiente corrigidos sem mutação remota indevida:
+  1. resets locais invalidaram JWTs do navegador; novo login é obrigatório;
+  2. um primeiro container herdou URL remota do `.env`, mas a requisição
+     falhou antes de criar dados e o serviço foi recriado com endpoints locais;
+  3. a URL pública local de artifact herdou produção, provocando somente um
+     GET 404; o override local foi corrigido;
+  4. uma senha de banco apareceu no terminal durante diagnóstico. Ela não foi
+     gravada no Git, mas sua rotação é pré-condição obrigatória da VPS.
+
+## Decisão de fechamento interno
+
+As dez tasks estão implementadas e validadas. A fase permanece `in_progress`,
+no subestado `implementation_complete_pending_vps_validation`, porque o
+deploy/build, os smokes manuais, logs e restart na VPS ainda dependem do
+usuário. Não iniciar a Fase 4 antes desse aceite.

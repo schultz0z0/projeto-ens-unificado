@@ -89,6 +89,7 @@ const productionBatchSchema = z.object({
 });
 
 const productionItemScheduleQuerySchema = z.object({
+  view: z.enum(['list', 'week', 'month']).default('list'),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   campaignId: uuid.optional(),
@@ -100,6 +101,17 @@ const productionItemScheduleQuerySchema = z.object({
   cursor: z.string().min(1).max(1024).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(25)
 }).strict();
+
+function operationResult(
+  status: number
+): 'success' | 'conflict' | 'forbidden' | 'validation_error' | 'not_found' | 'error' {
+  if (status >= 200 && status < 400) return 'success';
+  if (status === 409) return 'conflict';
+  if (status === 401 || status === 403) return 'forbidden';
+  if (status === 404) return 'not_found';
+  if (status === 400 || status === 413 || status === 422) return 'validation_error';
+  return 'error';
+}
 
 const itemParamsSchema = z.object({ itemId: uuid }).strict();
 const legacyCreateSchema = z.object({
@@ -132,6 +144,7 @@ export function registerItems(
   router.get('/v1/campaign-items', asyncRoute(async (request, response) => {
     requireFeature(features.read, 'read');
     const filters = parseProductionItemScheduleQuery(request.query);
+    response.locals.productionScheduleView = filters.view;
     const scheduleFilters = {
       limit: filters.limit,
       ...(filters.from === undefined ? {} : { from: filters.from }),
@@ -193,6 +206,12 @@ export function registerItems(
       },
       { ...parsed, idempotencyKey: requireIdempotencyKey(request) }
     );
+    response.locals.productionBatch = {
+      action: parsed.action.type,
+      results: data.results.map((result) => result.ok
+        ? 'success'
+        : operationResult(result.error.status))
+    };
     response.json({ data });
   }));
 

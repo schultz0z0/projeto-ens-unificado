@@ -88,6 +88,7 @@ export function InAppNotifications({
       </PopoverTrigger>
       <PopoverContent
         align="end"
+        aria-label="Notificações"
         className="glass-surface w-[min(24rem,calc(100vw-2rem))] rounded-[8px] border-white/60 p-0 shadow-glass"
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">

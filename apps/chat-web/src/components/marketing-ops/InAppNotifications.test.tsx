@@ -78,6 +78,7 @@ describe('InAppNotifications', () => {
 
     const trigger = await screen.findByRole('button', { name: /notificações, 1 não lida/i });
     await user.click(trigger);
+    expect(await screen.findByRole('dialog', { name: 'Notificações' })).toBeTruthy();
     expect(await screen.findByText('Novo item atribuído')).toBeTruthy();
     expect(screen.getByText('Item em atraso')).toBeTruthy();
 

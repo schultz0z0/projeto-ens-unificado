@@ -368,6 +368,13 @@ paths:
       operationId: listProductionSchedule
       summary: List the canonical production schedule
       parameters:
+        - name: view
+          in: query
+          description: Allowlisted presentation view used only for operational metrics
+          schema:
+            type: string
+            enum: [list, week, month]
+            default: list
         - { name: from, in: query, schema: { type: string, format: date-time } }
         - { name: to, in: query, schema: { type: string, format: date-time } }
         - { name: campaignId, in: query, schema: { type: string, format: uuid } }

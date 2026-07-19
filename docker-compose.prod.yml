@@ -22,6 +22,9 @@ services:
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.entrypoints=websecure
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.loadbalancer.server.port=8091
+      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.loadbalancer.healthcheck.path=/ready
+      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.loadbalancer.healthcheck.interval=30s
+      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-marketing-ops.loadbalancer.healthcheck.timeout=5s
 
   app-frontend:
     labels:

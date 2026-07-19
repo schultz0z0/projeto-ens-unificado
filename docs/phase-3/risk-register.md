@@ -1,6 +1,6 @@
 # Registro de riscos da Fase 3
 
-- **Estado:** `active_during_implementation`
+- **Estado:** `local_mitigations_validated_pending_vps`
 - **Revisão:** 2026-07-19
 
 | ID | Risco | Impacto | Mitigação/gate | Owner |
@@ -18,6 +18,8 @@
 | F3-R-11 | migration quebrar itens legados | alto | backfill determinístico, pgTAP e imagem anterior compatível | Data/DevOps |
 | F3-R-12 | scope creep para drag/recorrência/aprovação | médio | não objetivos vinculantes e revisão por task | Produto/Tech lead |
 | F3-R-13 | índice F2 não chegar ao remoto antes do gate | médio | pré-condição explícita do deploy | Data/DevOps |
+| F3-R-14 | credencial de banco exposta em evidência de terminal | crítico | rotação obrigatória antes da VPS e `.env` 600 | Security/DevOps |
+| F3-R-15 | advisors legados serem confundidos com regressão F3 | médio | baseline explícito, lint focado e correção em ciclo separado | Data/Security |
 
 Bloqueiam rollout: cross-tenant, perda/mutação de versão, ciclo/deadlock,
 timezone incorreto, estado reservado aceito, dado sensível em log/evento ou
@@ -101,3 +103,39 @@ falha alta/crítica sem mitigação.
   manual. A UI falhou antes de mutar dados; o container foi recriado contra
   `host.docker.internal`/Supabase local e os hosts foram verificados. A Task 10
   deve transformar essa disciplina em gate fail-closed automatizado.
+
+## Revisão após a Task 10
+
+- F3-R-01, F3-R-02 e F3-R-08: mitigados localmente por E2E real
+  desktop/mobile, axe, UTC/IANA, filtros e query canônica. Permanecem sujeitos
+  apenas à repetição na VPS.
+- F3-R-03: dependências passaram nos harnesses concorrentes e no E2E/restart,
+  sem ciclo ou deadlock. Gate local fechado.
+- F3-R-04: versões append-only, concorrência e persistência após restart foram
+  comprovadas. Gate local fechado.
+- F3-R-06: upload/access/unlink/delete, ownership, fingerprint e restart do
+  Artifact Server passaram. Gate local fechado; repetir na VPS.
+- F3-R-07: lote integrado retornou resultado por item, preservou
+  `currentVersion` e não ocultou conflito. Gate local fechado.
+- F3-R-09: p95 final ficou em 38,41 ms para 5.000 campanhas e 45,45 ms para
+  10.000 itens. O filtro de campanha arquivada foi incorporado sem regressão.
+- F3-R-10: projeção endurecida por migration, RLS/ownership, deduplicação e
+  redaction de logs passaram. Gate local fechado.
+- F3-R-11 e F3-R-13: reset/backfill, migration remota e índice F2 foram
+  aplicados. O histórico remoto está sincronizado até `20260719013000`.
+- F3-R-14: uma senha de banco apareceu na saída do terminal de diagnóstico.
+  Não foi persistida no repositório, mas deve ser rotacionada antes do deploy;
+  este é o único bloqueador operacional crítico conhecido.
+- F3-R-15: advisors remotos mantêm erros/warnings históricos em objetos
+  `public`/`smart_mail` e storage. O lint dos schemas alterados tem zero erro e
+  não houve achado novo de Fase 3. O baseline continua aceito, não resolvido.
+
+## Riscos residuais para o gate VPS
+
+1. rotação da credencial e atualização coordenada do `.env`;
+2. configuração real de CORS/URLs/flags de build;
+3. diferenças de kernel, volume e Traefik da VPS;
+4. validação manual por papel/cross-tenant e viewport real;
+5. advisors históricos, fora do escopo da Fase 3.
+
+Nenhum desses resíduos autoriza promover a fase antes do checklist da VPS.

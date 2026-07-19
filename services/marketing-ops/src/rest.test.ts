@@ -143,6 +143,7 @@ describe('Marketing Ops REST v1', () => {
     expect(parseNotificationReadBody({ ids: [campaignId] }))
       .toEqual({ ids: [campaignId] });
     expect(parseProductionItemScheduleQuery({
+      view: 'month',
       from: '2026-08-01T00:00:00.000Z',
       to: '2026-09-01T00:00:00.000Z',
       campaignId,
@@ -150,7 +151,8 @@ describe('Marketing Ops REST v1', () => {
       assigneeId,
       priority: 'high',
       limit: '50'
-    })).toMatchObject({ campaignId, kind: 'email', limit: 50 });
+    })).toMatchObject({ view: 'month', campaignId, kind: 'email', limit: 50 });
+    expect(() => parseProductionItemScheduleQuery({ view: 'tenant-private' })).toThrow();
     expect(parseDependencyBody({ dependsOnItemId: campaignId })).toEqual({
       dependsOnItemId: campaignId
     });

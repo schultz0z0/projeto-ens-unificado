@@ -29,6 +29,12 @@ const mutationOperation = oneOf(
   'material_unlink'
 );
 const operationStatus = oneOf('success', 'conflict', 'forbidden', 'validation_error', 'not_found', 'error');
+const scheduleView = oneOf('list', 'week', 'month');
+const productionItemStatus = oneOf('draft', 'ready', 'in_review', 'completed', 'cancelled');
+const productionItemKind = oneOf('task', 'email', 'whatsapp', 'post', 'creative', 'review', 'milestone');
+const batchAction = oneOf('reassign', 'priority', 'reschedule');
+const readinessResult = oneOf('ready', 'not_ready');
+const itemMutationOperation = oneOf('update', 'transition', 'dependency', 'content', 'artifact', 'batch');
 
 const metricDefinitions: Record<string, MetricDefinition> = {
   marketing_ops_requests_total: { labels: { route: staticRoute, status: httpStatus } },
@@ -61,7 +67,31 @@ const metricDefinitions: Record<string, MetricDefinition> = {
   marketing_ops_workspace_active_users_24h: { labels: {} },
   marketing_ops_briefing_completion_ratio: { labels: {} },
   marketing_ops_time_to_planned_seconds_count: { labels: {} },
-  marketing_ops_time_to_planned_seconds_sum: { labels: {} }
+  marketing_ops_time_to_planned_seconds_sum: { labels: {} },
+  marketing_ops_schedule_queries_total: {
+    labels: { view: scheduleView, result: operationStatus }
+  },
+  marketing_ops_schedule_query_duration_seconds_count: {
+    labels: { view: scheduleView, result: operationStatus }
+  },
+  marketing_ops_schedule_query_duration_seconds_sum: {
+    labels: { view: scheduleView, result: operationStatus }
+  },
+  marketing_ops_production_items: {
+    labels: { status: productionItemStatus, kind: productionItemKind }
+  },
+  marketing_ops_item_conflicts_total: {
+    labels: { operation: itemMutationOperation }
+  },
+  marketing_ops_dependency_cycles_rejected_total: { labels: {} },
+  marketing_ops_batch_items_total: {
+    labels: { action: batchAction, result: operationStatus }
+  },
+  marketing_ops_content_versions_created_total: { labels: {} },
+  marketing_ops_notifications_produced_total: { labels: {} },
+  marketing_ops_readiness_total: { labels: { result: readinessResult } },
+  marketing_ops_readiness_duration_seconds_count: { labels: { result: readinessResult } },
+  marketing_ops_readiness_duration_seconds_sum: { labels: { result: readinessResult } }
 };
 
 function normalizeLabels(name: string, labels: Record<string, string>): Record<string, string> {

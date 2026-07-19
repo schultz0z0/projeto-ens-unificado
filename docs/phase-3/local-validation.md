@@ -498,3 +498,117 @@ a rejeição estável esperada; a transição permitida para `cancelled` passou.
 5. O Vite recebeu primeiro nenhuma configuração e depois
    `VITE_MARKETING_OPS_BASE_URL`, nome antigo. O smoke passou com credenciais
    locais em memória e `VITE_MARKETING_OPS_URL`.
+
+## Task 10 — E2E, performance, observabilidade e operação
+
+### RED observado
+
+| Gate | Falha observada |
+|---|---|
+| `/metrics` real | 503; collector consultava `domain_events.created_at`, coluna inexistente |
+| agenda após cleanup | itens de campanhas `[E2E-PHASE3]` arquivadas continuavam visíveis |
+| deep link no browser | sessão JWT local invalidada por `db reset`, retornando 401 |
+| notificações | policy/projeção permitia uma superfície maior que a necessária |
+| Artifact local | URL pública herdada de produção gerou GET 404, sem mutação |
+| Compose local inicial | `.env` apontava para host remoto; request negada antes de criar dados |
+| script VPS | inventário de migrations não incluía a forward-fix de campanha arquivada |
+| regressão final paralela | 18 integrações distintas atingiram exatamente o timeout de 5 s sob contenção simultânea de frontend/RAG/Artifact |
+
+### Correções
+
+1. O collector de métricas foi extraído para
+   `observability/workspaceMetrics.ts`, testado isoladamente e passou a usar
+   `occurred_at`.
+2. A função canônica de agenda passou a exigir
+   `campaign.status <> 'archived'`; teste de domínio e migration forward-only
+   comprovam a regra.
+3. A projeção/insert de notificação foi endurecida com policy segura e pgTAP.
+4. O popover recebeu label acessível e o erro mantém retry/correlação seguros.
+5. Os containers locais foram recriados com Supabase/CORS/Artifact locais
+   explícitos. Nenhuma mutação foi feita no alvo remoto durante os smokes.
+6. O gate VPS passou a exigir as seis migrations de Fase 3, incluindo
+   `20260719013000`, e o `.env.example` ganhou todo o contrato E2E.
+7. O runbook registra novo login obrigatório depois de reset e proíbe reset na
+   VPS.
+8. A regressão do Marketing Ops foi repetida isoladamente sem alterar
+   timeouts: 181/181 em 8,19 s. Como a falha paralela afetou áreas independentes
+   apenas durante saturação do host, os gates pesados permanecem serializados.
+
+### GREEN final observado
+
+| Comando/gate | Resultado |
+|---|---|
+| Supabase reset | todas as migrations reaplicadas |
+| pgTAP | 6 arquivos; 322/322 |
+| DB lint | zero erro em `marketing_ops,marketing_ops_private` |
+| schema diff | vazio |
+| Marketing Ops `npm test` | 181 pass; 2 skips externos condicionais |
+| Marketing Ops typecheck/build | passaram |
+| frontend `npm test` | 179/179 |
+| frontend lint | zero erro; 10 warnings históricos |
+| frontend typecheck/build/security gate | passaram; zero vulnerabilidade |
+| Artifact Server | 8/8 |
+| RAG MCP | 26/26 + typecheck/build |
+| Redocly | OpenAPI válido |
+| lista 5.000 campanhas | p95 38,41 ms ≤ 500 ms |
+| agenda 10.000 itens | p95 45,45 ms ≤ 500 ms |
+| E2E real em Docker | jornada integrada PASS em 7,1 s |
+| mobile/axe | lista/semana e WCAG A/AA PASS |
+| quatro imagens `--no-cache` | build PASS |
+| Compose/probes | 4/4 running/healthy; health/readiness 200 |
+| `/metrics` real | 200 e métricas Phase 3 presentes |
+| scanner de logs | 7 categorias sensíveis; zero match |
+| restart de banco | fingerprint antes/depois idêntico |
+| restart de artifact | metadata, hash e bytes preservados; cleanup sem residual |
+| script safety | PASS |
+| smoke pós-reset no navegador | login novo, 0 itens, notificações vazias, zero erro/warning |
+
+### Jornada E2E exercitada
+
+- login manager e criação de campanha/item com prefixo controlado;
+- predecessor, dependência, bloqueio e tentativa negada;
+- versão de conteúdo congelada e versão corrente;
+- upload, metadata, acesso, download, unlink e delete de artifact;
+- notificação in-app, badge e leitura;
+- seleção e lote com resultado por item;
+- reagendamento e consulta list/week;
+- deep link e detalhe;
+- conclusão do predecessor, desbloqueio e conclusão do dependente;
+- viewport mobile, teclado e axe;
+- cleanup com campanha arquivada e ausência de resíduos operacionais na agenda.
+
+### Persistência e observabilidade
+
+- a leitura protegida de `/metrics` inclui requests, agenda, lote, versões,
+  notificações, itens por status/kind, outbox e readiness;
+- labels não contêm tenant, usuário, título, conteúdo ou artifact ID;
+- readiness falha fechada para banco, Artifact Server e RAG;
+- Traefik e Compose usam `/ready`, com grace period de 30 segundos;
+- logs reais não continham bearer, JWT, signed URL, password/secret assignment,
+  payload, título ou conteúdo;
+- a reinicialização preservou agenda, dependência, versões, notificação e bytes.
+- depois do reset final, a página real carregou o estado vazio e o popover de
+  notificações sem os erros 401/produção vistos nas capturas.
+
+## Deploy Supabase remoto — evidência
+
+- alvo confirmado: projeto do app Nexus AI — Marketing ENS;
+- backup externo + SHA-256 concluído;
+- dry-run revisado com exatamente oito migrations;
+- oito migrations aplicadas; 14/14 versões sincronizadas;
+- migration mais recente: `20260719013000`;
+- lint dos schemas alterados sem erro;
+- RLS/FORCE RLS, função canônica, search path, policies, triggers e invariantes
+  pós-deploy validados;
+- advisors mantêm baseline histórico fora dos objetos novos; não foi alegado
+  “zero advisor”.
+
+Uma senha foi exposta na saída do terminal durante o diagnóstico. Ela não foi
+persistida no Git, porém deve ser rotacionada antes do deploy VPS. A evidência
+completa está em [supabase-deployment.md](supabase-deployment.md).
+
+## Parecer local
+
+Task 10 e implementação da Fase 3 concluídas. O código pode ser publicado no
+`main` e seguir para a homologação controlada descrita em
+[runbook.md](runbook.md). O status final continua pendente da VPS.

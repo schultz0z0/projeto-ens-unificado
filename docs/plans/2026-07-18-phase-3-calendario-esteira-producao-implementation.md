@@ -421,11 +421,11 @@ git commit -m "feat: add in-app events and safe batch actions"
 
 **Produz:** gate local reproduzível e handoff de produção, sem executar push/VPS.
 
-- [ ] REDs E2E para planejar semana, reagendar, criar/resolver bloqueio,
+- [x] REDs E2E para planejar semana, reagendar, criar/resolver bloqueio,
   versionar, artifact, lote, notificação, member/manager/admin e mobile/axe.
-- [ ] Instrumentar métricas allowlisted e logs redigidos.
-- [ ] Criar script VPS fail-closed, fixtures marcadas e cleanup garantido.
-- [ ] Gate DB fresco:
+- [x] Instrumentar métricas allowlisted e logs redigidos.
+- [x] Criar script VPS fail-closed, fixtures marcadas e cleanup garantido.
+- [x] Gate DB fresco:
 
 ```powershell
 Set-Location apps/chat-web
@@ -435,7 +435,7 @@ npx supabase db lint --local --schema marketing_ops,marketing_ops_private --leve
 npx supabase db diff --local --schema marketing_ops,marketing_ops_private
 ```
 
-- [ ] Regressão completa:
+- [x] Regressão completa:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -463,11 +463,11 @@ npm run security:gate
 node ../../scripts/test/phase-3-vps-safety.test.mjs
 ```
 
-- [ ] Validar Compose config/build/up, health/readiness, restart e persistência
+- [x] Validar Compose config/build/up, health/readiness, restart e persistência
   localmente.
-- [ ] Atualizar matriz final. Se algum gate obrigatório estiver vermelho,
+- [x] Atualizar matriz final. Se algum gate obrigatório estiver vermelho,
   manter `in_progress` e registrar bloqueador.
-- [ ] Commit de fechamento interno:
+- [x] Commit de fechamento interno:
 
 ```powershell
 git add -- Roadmap.md docs/prds docs/phase-3 scripts/test apps/chat-web/e2e docker-compose.yml docker-compose.prod.yml services/marketing-ops/src/observability

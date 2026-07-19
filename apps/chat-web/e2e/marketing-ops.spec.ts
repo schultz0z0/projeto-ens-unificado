@@ -1,10 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { createMarketingOpsClient, MarketingOpsApiError } from '../src/lib/marketingOps/client';
 
 type TestRole = 'member' | 'manager' | 'admin';
 
 const enabled = process.env.MARKETING_OPS_E2E_ENABLED === 'true';
 const fixturePrefix = '[E2E-PHASE2]';
+const phase3FixturePrefix = '[E2E-PHASE3]';
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -24,6 +26,52 @@ function dateFromNow(offsetDays: number): string {
   const value = new Date();
   value.setUTCDate(value.getUTCDate() + offsetDays);
   return value.toISOString().slice(0, 10);
+}
+
+function dateTimeFromNow(offsetDays: number, time = '10:00'): string {
+  return `${dateFromNow(offsetDays)}T${time}`;
+}
+
+async function accessToken(role: TestRole): Promise<string> {
+  const account = credentials(role);
+  const supabaseUrl = requiredEnv('MARKETING_OPS_E2E_SUPABASE_URL').replace(/\/+$/, '');
+  const anonKey = requiredEnv('MARKETING_OPS_E2E_SUPABASE_ANON_KEY');
+  const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(account)
+  });
+  const payload = await response.json() as { access_token?: string };
+  if (!response.ok || !payload.access_token) {
+    throw new Error(`controlled ${role} authentication failed`);
+  }
+  return payload.access_token;
+}
+
+async function apiClient(role: TestRole) {
+  const token = await accessToken(role);
+  return createMarketingOpsClient({
+    baseUrl: requiredEnv('MARKETING_OPS_E2E_API_URL'),
+    getAccessToken: async () => token
+  });
+}
+
+async function deleteControlledArtifact(artifactId: string): Promise<void> {
+  const response = await fetch(
+    `${requiredEnv('MARKETING_OPS_E2E_ARTIFACT_URL').replace(/\/+$/, '')}/v1/artifacts/${encodeURIComponent(artifactId)}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${requiredEnv('MARKETING_OPS_E2E_ARTIFACT_INTERNAL_KEY')}`
+      }
+    }
+  );
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`controlled artifact cleanup failed with ${response.status}`);
+  }
 }
 
 async function login(page: Page, role: TestRole): Promise<void> {
@@ -64,7 +112,7 @@ async function expectNoWcagViolations(page: Page): Promise<void> {
   expect(results.violations.map(({ id, impact, nodes }) => ({ id, impact, nodes: nodes.length }))).toEqual([]);
 }
 
-test.describe('Marketing Ops integrated phase-2 journey', () => {
+test.describe('Marketing Ops integrated Phase 2 and 3 journeys', () => {
   test.skip(!enabled, 'Set MARKETING_OPS_E2E_ENABLED=true only in the controlled VPS gate.');
 
   test('manager completes collaboration, material and timeline flow', async ({ page }) => {
@@ -181,12 +229,197 @@ test.describe('Marketing Ops integrated phase-2 journey', () => {
     }
   });
 
+  test('manager completes the phase-3 production, dependency, content, artifact, notification and batch journey', async ({ page }) => {
+    const manager = await apiClient('manager');
+    const campaignName = `${phase3FixturePrefix} production ${Date.now()}`;
+    const predecessorTitle = `${phase3FixturePrefix} predecessor ${Date.now()}`;
+    const itemTitle = `${phase3FixturePrefix} email ${Date.now()}`;
+    let campaignId: string | null = null;
+    let artifactId: string | null = null;
+
+    await login(page, 'manager');
+    try {
+      const campaign = await manager.createCampaign({ name: campaignName }, crypto.randomUUID());
+      campaignId = campaign.data.id;
+      const predecessor = await manager.createProductionItem({
+        campaignId,
+        kind: 'task',
+        title: predecessorTitle,
+        assigneeUserId: '22222222-2222-4222-8222-222222222222',
+        startsAt: new Date(`${dateFromNow(2)}T12:00:00.000Z`).toISOString(),
+        dueAt: new Date(`${dateFromNow(3)}T12:00:00.000Z`).toISOString()
+      }, crypto.randomUUID());
+      const dependent = await manager.createProductionItem({
+        campaignId,
+        kind: 'email',
+        title: itemTitle,
+        assigneeUserId: '22222222-2222-4222-8222-222222222222',
+        startsAt: new Date(`${dateFromNow(3)}T12:00:00.000Z`).toISOString(),
+        dueAt: new Date(`${dateFromNow(4)}T14:00:00.000Z`).toISOString()
+      }, crypto.randomUUID());
+
+      const dependency = await manager.addProductionItemDependency(
+        dependent.data.id,
+        predecessor.data.id,
+        dependent.data.version,
+        crypto.randomUUID()
+      );
+      const asset = await manager.createContentAsset(
+        dependent.data.id,
+        dependency.data.itemVersion,
+        { assetKind: 'email_body', title: `${phase3FixturePrefix} body` },
+        crypto.randomUUID()
+      );
+      const contentVersion = await manager.createContentVersion(
+        asset.data.id,
+        asset.data.version,
+        {
+          body: 'Synthetic controlled Phase 3 content.',
+          metadata: { fixture: phase3FixturePrefix },
+          freeze: true
+        },
+        crypto.randomUUID()
+      );
+      expect(contentVersion.data.frozenAt).not.toBeNull();
+
+      const uploaded = await manager.uploadProductionItemArtifact(
+        dependent.data.id,
+        asset.data.itemVersion,
+        new File(
+          [Buffer.from('controlled phase 3 artifact\n')],
+          `${phase3FixturePrefix}-artifact.txt`,
+          { type: 'text/plain' }
+        ),
+        crypto.randomUUID(),
+        asset.data.id
+      );
+      artifactId = uploaded.data.artifact.artifactId;
+      const access = await manager.createProductionItemArtifactAccessLink(
+        dependent.data.id,
+        uploaded.data.artifact.id
+      );
+      expect(new URL(access.data.url).protocol).toMatch(/^https?:$/);
+      const unlinked = await manager.unlinkProductionItemArtifact(
+        dependent.data.id,
+        uploaded.data.artifact.id,
+        uploaded.data.itemVersion,
+        crypto.randomUUID()
+      );
+      await deleteControlledArtifact(artifactId);
+      artifactId = null;
+
+      const notifications = await manager.listInAppNotifications({ unreadOnly: true, limit: 25 });
+      expect(notifications.data.some((notification) => (
+        notification.itemId === dependent.data.id
+        && notification.label === 'Novo item atribuído'
+      ))).toBe(true);
+      expect(JSON.stringify(notifications.data)).not.toContain(itemTitle);
+
+      await page.goto(`/marketing-ops/production?campaignId=${campaignId}`);
+      await expect(page.getByText(itemTitle, { exact: true }).first()).toBeVisible();
+      await page.getByRole('checkbox', { name: `Selecionar ${itemTitle}` }).check();
+      await page.getByRole('button', { name: 'Lote (1)' }).click();
+      const batchDialog = page.getByRole('dialog', { name: 'Ação em lote' });
+      await batchDialog.getByRole('combobox', { name: 'Nova prioridade' }).selectOption('high');
+      await batchDialog.getByRole('button', { name: 'Aplicar em 1 item' }).click();
+      await expect(batchDialog.getByText('1 atualizado')).toBeVisible();
+      await expect(batchDialog.getByText('0 falharam')).toBeVisible();
+      await batchDialog.getByRole('button', { name: 'Fechar' }).click();
+
+      await page.getByRole('button', { name: `Abrir item ${itemTitle}` }).click();
+      const itemDialog = page.getByRole('dialog', { name: 'Detalhes do item' });
+      await itemDialog.getByLabel(/Início/).fill(dateTimeFromNow(4, '09:00'));
+      await itemDialog.getByLabel(/Prazo/).fill(dateTimeFromNow(5, '11:00'));
+      const updateResponse = page.waitForResponse((response) => (
+        response.url().includes(`/v1/campaign-items/${dependent.data.id}`)
+        && response.request().method() === 'PATCH'
+      ));
+      await itemDialog.getByRole('button', { name: 'Salvar alterações' }).click();
+      expect((await updateResponse).status()).toBe(200);
+      await itemDialog.getByRole('button', { name: 'Fechar' }).click();
+
+      await page.goto(`/marketing-ops/production/week?date=${dateFromNow(5)}&campaignId=${campaignId}`);
+      await expect(page.getByRole('grid', { name: 'Calendário semanal' })).toBeVisible();
+      await expect(page.getByText(itemTitle, { exact: true }).first()).toBeVisible();
+      await expectNoWcagViolations(page);
+
+      await page.goto(`/marketing-ops/production?campaignId=${campaignId}`);
+      const notificationButton = page.getByRole('button', { name: /Notificações, \d+ não lidas/ });
+      await notificationButton.click();
+      const notificationDialog = page.getByRole('dialog', { name: 'Notificações' });
+      await expect(notificationDialog.getByText('Novo item atribuído').first()).toBeVisible();
+      await expect(notificationDialog.getByText(itemTitle)).toHaveCount(0);
+      const markAll = notificationDialog.getByRole('button', { name: 'Marcar todas como lidas' });
+      if (await markAll.count()) await markAll.click();
+
+      const currentDependent = await manager.getProductionItem(dependent.data.id);
+      const readyDependent = await manager.transitionProductionItem(
+        dependent.data.id,
+        currentDependent.data.version,
+        'ready',
+        crypto.randomUUID()
+      );
+      const reviewDependent = await manager.transitionProductionItem(
+        dependent.data.id,
+        readyDependent.data.version,
+        'in_review',
+        crypto.randomUUID()
+      );
+      await expect(manager.transitionProductionItem(
+        dependent.data.id,
+        reviewDependent.data.version,
+        'completed',
+        crypto.randomUUID()
+      )).rejects.toMatchObject({
+        code: 'item_blocked',
+        status: 409
+      } satisfies Partial<MarketingOpsApiError>);
+
+      const readyPredecessor = await manager.transitionProductionItem(
+        predecessor.data.id,
+        predecessor.data.version,
+        'ready',
+        crypto.randomUUID()
+      );
+      const reviewPredecessor = await manager.transitionProductionItem(
+        predecessor.data.id,
+        readyPredecessor.data.version,
+        'in_review',
+        crypto.randomUUID()
+      );
+      await manager.transitionProductionItem(
+        predecessor.data.id,
+        reviewPredecessor.data.version,
+        'completed',
+        crypto.randomUUID()
+      );
+      const completed = await manager.transitionProductionItem(
+        dependent.data.id,
+        reviewDependent.data.version,
+        'completed',
+        crypto.randomUUID()
+      );
+      expect(completed.data.status).toBe('completed');
+      expect(unlinked.data.itemVersion).toBeGreaterThan(uploaded.data.itemVersion);
+    } finally {
+      if (artifactId) await deleteControlledArtifact(artifactId);
+      if (campaignId) {
+        const current = await manager.getCampaign(campaignId);
+        if (current.data.status !== 'archived') {
+          await manager.archiveCampaign(campaignId, current.data.version, crypto.randomUUID());
+        }
+      }
+    }
+  });
+
   test('manager and admin reach the campaign workspace while a viewer fails closed', async ({ browser }) => {
     for (const role of ['manager', 'admin'] as const) {
       const context = await browser.newContext();
       const rolePage = await context.newPage();
       await login(rolePage, role);
       await expect(rolePage.getByRole('button', { name: 'Nova campanha' }).first()).toBeVisible();
+      await rolePage.goto('/marketing-ops/production');
+      await expect(rolePage.getByRole('button', { name: 'Lote (0)' })).toBeVisible();
       await context.close();
     }
 
@@ -198,6 +431,9 @@ test.describe('Marketing Ops integrated phase-2 journey', () => {
     await expect(viewerPage.getByRole('button', { name: 'Salvar alterações' })).toHaveCount(0);
     await expect(viewerPage.getByRole('button', { name: 'Adicionar participante' })).toHaveCount(0);
     await expect(viewerPage.getByText('Adicionar material')).toHaveCount(0);
+    await viewerPage.goto('/marketing-ops/production');
+    await expect(viewerPage.getByRole('heading', { name: 'Esteira de produção' })).toBeVisible();
+    await expect(viewerPage.getByRole('button', { name: 'Lote (0)' })).toHaveCount(0);
     await viewerContext.close();
   });
 

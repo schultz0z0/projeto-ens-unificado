@@ -123,6 +123,7 @@ export default function ProductionCalendarPage({
     queryKey: marketingOpsKeys.productionSchedule(filters),
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) => client.listProductionSchedule({
+      view,
       ...filters,
       ...(pageParam ? { cursor: pageParam } : {})
     }),

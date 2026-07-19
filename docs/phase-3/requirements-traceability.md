@@ -1,34 +1,36 @@
-# Rastreabilidade inicial da Fase 3
+# Rastreabilidade da Fase 3
 
-- **Estado:** `approved_for_execution`
-- **Implementação:** 90%
+- **Estado:** `implementation_complete_pending_vps_validation`
+- **Implementação:** 100%
 - **Data:** 2026-07-19
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
-| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `domain_validated` |
-| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `api_validated` |
-| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `client_validated` |
-| F3-RF-04 Timezone | 7 | 3, 7–8 | `api_validated` |
-| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `api_validated` |
-| F3-RF-06 Dependências | 4.2, 10 | 4, 6 | `api_validated` |
-| F3-RF-07 Conteúdo | 4.3–4.4 | 5–6 | `api_validated` |
-| F3-RF-08 Versões | 4.4, 10 | 5–6 | `api_validated` |
-| F3-RF-09 Artefatos | 4.5 | 5–6 | `api_validated` |
-| F3-RF-10 Estados | 5 | 1–2, 6 | `api_validated` |
+| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `locally_validated` |
+| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `locally_validated` |
+| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `locally_validated` |
+| F3-RF-04 Timezone | 7 | 3, 7–8 | `locally_validated` |
+| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `locally_validated` |
+| F3-RF-06 Dependências | 4.2, 10 | 4, 6 | `locally_validated` |
+| F3-RF-07 Conteúdo | 4.3–4.4 | 5–6 | `locally_validated` |
+| F3-RF-08 Versões | 4.4, 10 | 5–6 | `locally_validated` |
+| F3-RF-09 Artefatos | 4.5 | 5–6 | `locally_validated` |
+| F3-RF-10 Estados | 5 | 1–2, 6 | `locally_validated` |
 | F3-RF-11 Notificações | 4.6, 12 | 9 | `locally_validated` |
 | F3-RF-12 Lote | 8, 10 | 9 | `locally_validated` |
 
 ## Gates transversais
 
-| Gate | Design | Tasks |
-|---|---|---:|
-| RLS/RBAC/cross-tenant | 9 | 1, 4–6, 10 |
-| Idempotência/concorrência | 10 | 2, 4–6, 9–10 |
-| Auditoria/outbox | 10 | 2, 4–6, 9 |
-| Performance | 6, 12 | 3, 10 |
-| Acessibilidade | 11 | 7–8, 10 |
-| Migration/rollback/VPS | 13–14 | 1, 10 |
+| Gate | Design | Tasks | Estado |
+|---|---|---:|---|
+| RLS/RBAC/cross-tenant | 9 | 1, 4–6, 10 | `locally_validated` |
+| Idempotência/concorrência | 10 | 2, 4–6, 9–10 | `locally_validated` |
+| Auditoria/outbox | 10 | 2, 4–6, 9 | `locally_validated` |
+| Performance | 6, 12 | 3, 10 | `locally_validated` |
+| Acessibilidade | 11 | 7–8, 10 | `locally_validated` |
+| Migration/rollback | 13–14 | 1, 10 | `locally_validated` |
+| Supabase remoto | 13–14 | 10 | `deployed_pending_vps_validation` |
+| VPS | 13–14 | 10 | `pending_user_execution` |
 
 ## Evidência Task 1
 
@@ -175,6 +177,31 @@ repetição no ambiente VPS permanece parte do gate final da Task 10.
 | Regressão | suites/lint/typecheck/build | 175 serviço; 179 frontend; zero erro |
 | Limpeza | reset local + health | fixtures removidas; Marketing Ops healthy |
 
-Notificações e lote estão validados localmente. Persistência por restart,
-observabilidade e repetição operacional completa pertencem à Task 10 e ao gate
-final na VPS.
+Notificações e lote estão validados localmente. Persistência por restart e
+observabilidade foram fechadas na Task 10; a repetição operacional na VPS
+permanece no gate final.
+
+## Evidência Task 10
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Jornada integrada | `e2e/marketing-ops.spec.ts` em Docker | campanha, itens, dependência, versão, artifact, notificação, lote, agenda e cleanup verdes |
+| Agenda arquivada | `scheduling.test.ts` + migration final | itens de campanhas arquivadas ausentes |
+| Banco/RLS | reset, 6 arquivos pgTAP, lint e diff | 322/322; zero erro; diff vazio |
+| Concorrência/persistência | harnesses + restart | sem deadlock; fingerprint estável |
+| Performance | dois gates isolados | 38,41 ms/5 mil; 45,45 ms/10 mil |
+| Observabilidade | métricas protegidas/readiness/log scan | 200, labels allowlisted e zero categoria sensível |
+| Acessibilidade | Playwright desktop/mobile + axe | jornada equivalente e zero violação A/AA |
+| Regressão | serviço/frontend/Artifact/RAG | 181 + 179 + 8 + 26 |
+| Contratos/build | Redocly, typechecks e builds | verdes |
+| Docker | quatro builds sem cache, probes e restart | running/healthy e dados/bytes preservados |
+| Supabase | backup, dry-run, push, lint e invariantes | oito migrations aplicadas; remoto sincronizado |
+| Operação | script safety + runbook/rollback | fail-closed e pronto para execução VPS |
+
+## Parecer
+
+F3-RF-01–12 e todos os gates técnicos estão validados localmente. O schema
+remoto foi implantado, mas isso não substitui a homologação da aplicação. O
+estado final permanece `implementation_complete_pending_vps_validation` até o
+usuário aprovar deploy, smokes por papel, logs, restart, cleanup e rollback na
+VPS.

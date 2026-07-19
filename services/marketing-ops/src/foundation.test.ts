@@ -164,6 +164,28 @@ describe('runtime foundation', () => {
     expect(serialized).not.toContain('private course query');
   });
 
+  it('redacts phase-3 content and sensitive string values even under safe-looking keys', () => {
+    const entries: unknown[] = [];
+    const logger = createLogger((entry) => entries.push(entry));
+    logger.info('phase-3 event', {
+      title: 'private item title',
+      label: 'private notification label',
+      metadata: { audience: 'private audience' },
+      apparentlySafe: 'Bearer phase-3-secret-token',
+      nested: {
+        apparentlySafeUrl: 'https://files.example.test/object?signature=never-log'
+      },
+      route: '/v1/campaign-items/:itemId'
+    });
+    const serialized = JSON.stringify(entries[0]);
+    expect(serialized).toContain('/v1/campaign-items/:itemId');
+    expect(serialized).not.toContain('private item title');
+    expect(serialized).not.toContain('private notification label');
+    expect(serialized).not.toContain('private audience');
+    expect(serialized).not.toContain('phase-3-secret-token');
+    expect(serialized).not.toContain('files.example.test');
+  });
+
   it('records counters and renders Prometheus text', () => {
     const metrics = createMetrics();
     metrics.increment('marketing_ops_requests_total', { route: '/health', status: '200' });
@@ -198,6 +220,40 @@ describe('runtime foundation', () => {
     expect(output).toContain('marketing_ops_campaign_conflicts_total 1');
     expect(output).toContain('marketing_ops_dependency_requests_total{dependency="rag",status="ok"} 1');
     expect(output).toContain('marketing_ops_artifact_bytes_total 1024');
+  });
+
+  it('renders the fixed-cardinality phase-3 operational metric contract', () => {
+    const metrics = createMetrics();
+    metrics.increment('marketing_ops_schedule_queries_total', { view: 'week', result: 'success' });
+    metrics.increment('marketing_ops_schedule_query_duration_seconds_count', {
+      view: 'week',
+      result: 'success'
+    });
+    metrics.increment('marketing_ops_schedule_query_duration_seconds_sum', {
+      view: 'week',
+      result: 'success'
+    }, 0.125);
+    metrics.set('marketing_ops_production_items', 7, { status: 'draft', kind: 'email' });
+    metrics.increment('marketing_ops_batch_items_total', { action: 'priority', result: 'success' }, 2);
+    metrics.increment('marketing_ops_batch_items_total', { action: 'priority', result: 'conflict' });
+    metrics.increment('marketing_ops_dependency_cycles_rejected_total');
+    metrics.increment('marketing_ops_content_versions_created_total');
+    metrics.increment('marketing_ops_notifications_produced_total', {}, 3);
+    metrics.increment('marketing_ops_readiness_total', { result: 'not_ready' });
+    const output = metrics.render();
+    expect(output).toContain('marketing_ops_schedule_queries_total{result="success",view="week"} 1');
+    expect(output).toContain('marketing_ops_schedule_query_duration_seconds_sum{result="success",view="week"} 0.125');
+    expect(output).toContain('marketing_ops_production_items{kind="email",status="draft"} 7');
+    expect(output).toContain('marketing_ops_batch_items_total{action="priority",result="success"} 2');
+    expect(output).toContain('marketing_ops_batch_items_total{action="priority",result="conflict"} 1');
+    expect(output).toContain('marketing_ops_dependency_cycles_rejected_total 1');
+    expect(output).toContain('marketing_ops_content_versions_created_total 1');
+    expect(output).toContain('marketing_ops_notifications_produced_total 3');
+    expect(output).toContain('marketing_ops_readiness_total{result="not_ready"} 1');
+    expect(() => metrics.increment('marketing_ops_schedule_queries_total', {
+      view: 'private-tenant',
+      result: 'success'
+    })).toThrow(/view/i);
   });
 
   it('serves health without dependencies and readiness through its probe', async () => {
@@ -255,6 +311,7 @@ describe('runtime foundation', () => {
     expect(fetchImpl).toHaveBeenCalledWith('http://artifact-server:8095/health', expect.objectContaining({ method: 'GET' }));
     expect(fetchImpl).toHaveBeenCalledWith('http://rag-mcp:8000/health', expect.objectContaining({ method: 'GET' }));
     expect(metrics.render()).toContain('marketing_ops_dependency_requests_total{dependency="artifact",status="error"} 1');
+    expect(metrics.render()).toContain('marketing_ops_readiness_total{result="not_ready"} 1');
     const serialized = JSON.stringify(entries);
     expect(serialized).toContain('artifact');
     expect(serialized).not.toContain('artifact-server:8095');
@@ -325,6 +382,57 @@ describe('runtime foundation', () => {
     expect(output).not.toContain('11111111-1111-4111-8111-111111111111');
   });
 
+  it('records bounded phase-3 route outcomes without item, tenant or user labels', async () => {
+    const metrics = createMetrics();
+    const router = Router();
+    router.get('/v1/campaign-items', (_request, response) => {
+      response.locals.productionScheduleView = 'month';
+      response.json({ data: [] });
+    });
+    router.post('/v1/campaign-items/batch', (_request, response) => {
+      response.locals.productionBatch = {
+        action: 'reschedule',
+        results: ['success', 'conflict', 'forbidden']
+      };
+      response.json({ data: {} });
+    });
+    router.post('/v1/content-assets/:assetId/versions', (_request, response) => {
+      response.locals.contentVersionCreated = true;
+      response.status(201).json({ data: {} });
+    });
+    router.get('/v1/in-app-notifications', (_request, response) => {
+      response.locals.notificationsProduced = 4;
+      response.json({ data: [] });
+    });
+    router.post('/v1/dependencies/cycle', (_request, _response, next) => next(
+      appError('dependency_cycle', 409, 'Dependency edge would create a cycle')
+    ));
+    const app = createApp({
+      readiness: async () => true,
+      logger: createLogger(() => undefined),
+      metrics,
+      router
+    });
+
+    await request(app).get('/v1/campaign-items').expect(200);
+    await request(app).post('/v1/campaign-items/batch').expect(200);
+    await request(app)
+      .post('/v1/content-assets/11111111-1111-4111-8111-111111111111/versions')
+      .expect(201);
+    await request(app).get('/v1/in-app-notifications').expect(200);
+    await request(app).post('/v1/dependencies/cycle').expect(409);
+
+    const output = metrics.render();
+    expect(output).toContain('marketing_ops_schedule_queries_total{result="success",view="month"} 1');
+    expect(output).toContain('marketing_ops_batch_items_total{action="reschedule",result="success"} 1');
+    expect(output).toContain('marketing_ops_batch_items_total{action="reschedule",result="conflict"} 1');
+    expect(output).toContain('marketing_ops_batch_items_total{action="reschedule",result="forbidden"} 1');
+    expect(output).toContain('marketing_ops_content_versions_created_total 1');
+    expect(output).toContain('marketing_ops_notifications_produced_total 4');
+    expect(output).toContain('marketing_ops_dependency_cycles_rejected_total 1');
+    expect(output).not.toMatch(/tenant|user_id|11111111-1111-4111-8111-111111111111/);
+  });
+
   it('protects Prometheus metrics with the internal key', async () => {
     const app = createApp({
       readiness: async () => true,
@@ -348,7 +456,8 @@ describe('runtime foundation', () => {
       activeUsers24h: 3,
       briefingCompletionRatio: 0.5,
       timeToPlannedSeconds: { count: 2, sum: 5400 },
-      statusTransitions: [{ from: 'draft', to: 'planned', count: 2 }]
+      statusTransitions: [{ from: 'draft', to: 'planned', count: 2 }],
+      productionItems: [{ status: 'ready', kind: 'email', count: 5 }]
     });
     const app = createApp({
       readiness: async () => true,
@@ -368,6 +477,7 @@ describe('runtime foundation', () => {
     expect(response.text).toContain('marketing_ops_briefing_completion_ratio 0.5');
     expect(response.text).toContain('marketing_ops_time_to_planned_seconds_count 2');
     expect(response.text).toContain('marketing_ops_time_to_planned_seconds_sum 5400');
+    expect(response.text).toContain('marketing_ops_production_items{kind="email",status="ready"} 5');
     expect(response.text).not.toContain('tenant');
     expect(response.text).not.toContain('user_id');
   });
@@ -394,6 +504,7 @@ describe('production Compose contract', () => {
         environment?: Record<string, string>;
         healthcheck?: { test?: string[] };
         depends_on?: Record<string, { condition?: string }>;
+        stop_grace_period?: string;
       }>;
     };
     const production = parse(readFileSync(new URL('../../../docker-compose.prod.yml', import.meta.url), 'utf8')) as {
@@ -403,6 +514,7 @@ describe('production Compose contract', () => {
 
     expect(marketingOps?.healthcheck?.test?.join(' ')).toContain('/ready');
     expect(marketingOps?.healthcheck?.test?.join(' ')).not.toContain('/health');
+    expect(marketingOps?.stop_grace_period).toBe('30s');
     expect(marketingOps?.depends_on).toMatchObject({
       'artifact-server': { condition: 'service_healthy' },
       'rag-mcp': { condition: 'service_healthy' }
@@ -415,6 +527,11 @@ describe('production Compose contract', () => {
       MARKETING_OPS_TENANT_TIME_ZONE:
         '${NEXUS_MARKETING_OPS_TENANT_TIME_ZONE:-America/Sao_Paulo}'
     });
+    expect(production.services['marketing-ops']?.labels).toEqual(expect.arrayContaining([
+      expect.stringContaining('loadbalancer.healthcheck.path=/ready'),
+      expect.stringContaining('loadbalancer.healthcheck.interval=30s'),
+      expect.stringContaining('loadbalancer.healthcheck.timeout=5s')
+    ]));
     expect(production.services['rag-mcp']?.labels).toContain('traefik.enable=false');
   });
 });

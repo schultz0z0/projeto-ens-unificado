@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(36);
 
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid = to_regclass('marketing_ops.item_dependencies')), 'item dependencies force RLS');
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid = to_regclass('marketing_ops.content_assets')), 'content assets force RLS');
@@ -94,6 +94,30 @@ select ok(
       and qual like '%auth.uid()%'
   ),
   'notification reads are scoped to auth.uid'
+);
+select ok(
+  exists (
+    select 1
+    from pg_policies
+    where schemaname = 'marketing_ops'
+      and tablename = 'in_app_notifications'
+      and cmd = 'INSERT'
+      and with_check like '%user_id%'
+      and with_check like '%auth.uid()%'
+  ),
+  'notification inserts are restricted to the authenticated recipient'
+);
+select ok(
+  exists (
+    select 1
+    from pg_policies
+    where schemaname = 'marketing_ops'
+      and tablename = 'in_app_notifications'
+      and cmd = 'INSERT'
+      and with_check like '%can_access_campaign_item%'
+      and with_check not like '%can_edit_campaign_item%'
+  ),
+  'notification inserts require item access without coupling projection to edit authority'
 );
 
 select has_function(

@@ -58,13 +58,20 @@ export function createReadinessProbe(options: ReadinessProbeOptions): () => Prom
   });
 
   return async () => {
+    const startedAt = process.hrtime.bigint();
     const [database, artifact, rag] = await Promise.all([
       probe('database', options.checkDatabase),
       probeHttp('artifact', options.artifact),
       probeHttp('rag', options.rag)
     ]);
+    const ready = database && artifact && rag;
+    const result = ready ? 'ready' : 'not_ready';
+    const durationSeconds = Number(process.hrtime.bigint() - startedAt) / 1_000_000_000;
+    options.metrics.increment('marketing_ops_readiness_total', { result });
+    options.metrics.increment('marketing_ops_readiness_duration_seconds_count', { result });
+    options.metrics.increment('marketing_ops_readiness_duration_seconds_sum', { result }, durationSeconds);
     return {
-      ready: database && artifact && rag,
+      ready,
       checks: { database, artifact, rag }
     };
   };

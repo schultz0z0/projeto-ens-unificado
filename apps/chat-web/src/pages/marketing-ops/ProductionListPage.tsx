@@ -76,6 +76,7 @@ export default function ProductionListPage({
     queryKey: marketingOpsKeys.productionSchedule(filters),
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) => client.listProductionSchedule({
+      view: 'list',
       ...filters,
       ...(pageParam ? { cursor: pageParam } : {})
     }),

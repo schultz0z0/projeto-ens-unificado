@@ -3,7 +3,7 @@ import pg from 'pg';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Actor } from '../auth/actor.js';
 import { loadConfig } from '../config.js';
-import { createCampaignDraft } from './campaigns.js';
+import { archiveCampaign, createCampaignDraft } from './campaigns.js';
 import { createProductionItem } from './items.js';
 import { listProductionSchedule } from './queries.js';
 import {
@@ -24,6 +24,11 @@ const actor: Actor = {
   tenantId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   tenantSlug: 'ens',
   role: 'member'
+};
+const manager: Actor = {
+  ...actor,
+  userId: '22222222-2222-4222-8222-222222222222',
+  role: 'manager'
 };
 
 afterAll(() => pool.end());
@@ -150,6 +155,27 @@ describe('schedule timezone', () => {
 });
 
 describe('canonical production schedule query', () => {
+  it('excludes items from archived campaigns from the operational schedule', async () => {
+    const campaign = await createCampaignDraft(context(manager), {
+      name: `Archived schedule ${randomUUID()}`,
+      idempotencyKey: randomUUID()
+    });
+    const item = await createProductionItem(context(manager), campaign.id, {
+      kind: 'task',
+      title: 'Archived schedule item',
+      startsAt: '2026-08-01T12:00:00.000Z',
+      idempotencyKey: randomUUID()
+    });
+    await archiveCampaign(context(manager), campaign.id, campaign.version, randomUUID());
+
+    const result = await listProductionSchedule(context(manager), {
+      campaignId: campaign.id,
+      limit: 25
+    });
+
+    expect(result.data.some((candidate) => candidate.id === item.id)).toBe(false);
+  });
+
   it('combines range and item filters, and derives overdue/blocking in one query', async () => {
     const campaign = await createCampaignDraft(context(), {
       name: `Schedule query ${randomUUID()}`,
