@@ -1,9 +1,9 @@
 # Handoff de continuação — Fase 3
 
-- **Estado:** `ready_to_start_task_9`
+- **Estado:** `ready_to_start_task_10`
 - **Branch única:** `main`
-- **Snapshot:** 2026-07-18
-- **Código/schema Fase 3:** Tasks 1–8 validadas localmente (80%)
+- **Snapshot:** 2026-07-19
+- **Código/schema Fase 3:** Tasks 1–9 validadas localmente (90%)
 
 ## Ordem de leitura
 
@@ -16,12 +16,12 @@
 
 ## Ponto de continuação
 
-Começar pela Task 9 do plano:
+Começar pela Task 10 do plano:
 
-- escrever REDs de persistência/deduplicação/segurança de notificações;
-- implementar lote com autorização e versão por item, sem sucesso parcial oculto;
-- publicar REST/OpenAPI/SDK somente junto do domínio executável;
-- integrar sino in-app e formulário de lote para manager/admin.
+- ampliar o E2E para fluxo completo, perfis e persistência após restart;
+- fechar métricas/logs allowlisted e readiness operacional;
+- criar o gate VPS fail-closed com fixtures marcadas e cleanup seguro;
+- repetir todos os gates locais e concluir runbook, rollback e handoff.
 
 ## Último gate confirmado
 
@@ -38,6 +38,10 @@ Começar pela Task 9 do plano:
 - semana/mês/timezone: 7/7 focados e 174/174 frontend;
 - Playwright desktop/mobile 2/2, axe A/AA sem violações;
 - grade mensal com overflow interno, lista equivalente e diálogo compartilhado.
+- notificações/lote: 5/5 domínio, 16/16 REST e 22/22 frontend/SDK;
+- regressão: 175 Marketing Ops e 179 frontend, typecheck/build/Redocly verdes;
+- smoke browser/Docker: leitura segura, lote por item e layout móvel passaram;
+- reset local removeu fixtures e Marketing Ops permaneceu healthy.
 
 ## Pré-condição de deploy futuro
 

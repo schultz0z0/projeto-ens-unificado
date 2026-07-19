@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowRight, CalendarClock, Link2, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type {
   MarketingOpsItemKind,
@@ -14,6 +15,9 @@ interface ProductionItemTableProps {
   items: MarketingOpsProductionScheduleItem[];
   timeZone: string;
   onOpen: (itemId: string) => void;
+  selectable?: boolean;
+  selectedItemIds?: string[];
+  onSelectionChange?: (itemId: string, selected: boolean) => void;
 }
 
 const statusLabels: Record<MarketingOpsItemStatus, string> = {
@@ -85,13 +89,36 @@ function OperationalFlags({ item }: { item: MarketingOpsProductionScheduleItem }
   );
 }
 
-export function ProductionItemTable({ items, timeZone, onOpen }: ProductionItemTableProps) {
+export function ProductionItemTable({
+  items,
+  timeZone,
+  onOpen,
+  selectable = false,
+  selectedItemIds = [],
+  onSelectionChange
+}: ProductionItemTableProps) {
+  const selected = new Set(selectedItemIds);
+  const allSelected = items.length > 0 && items.every((item) => selected.has(item.id));
+  const someSelected = items.some((item) => selected.has(item.id));
+
   return (
     <>
       <div className="glass-surface shadow-glass hidden overflow-hidden rounded-[8px] border-white/60 md:block">
         <Table>
           <TableHeader className="bg-white/45">
             <TableRow className="hover:bg-white/45">
+              {selectable ? (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                    onCheckedChange={(checked) => {
+                      const next = checked === true;
+                      for (const item of items) onSelectionChange?.(item.id, next);
+                    }}
+                    aria-label="Selecionar todos os itens"
+                  />
+                </TableHead>
+              ) : null}
               <TableHead className="w-[28%]">Item</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Agenda</TableHead>
@@ -104,6 +131,16 @@ export function ProductionItemTable({ items, timeZone, onOpen }: ProductionItemT
           <TableBody>
             {items.map((item) => (
               <TableRow key={item.id} className="group bg-white/35 hover:bg-white/55">
+                {selectable ? (
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(item.id)}
+                      onCheckedChange={(checked) =>
+                        onSelectionChange?.(item.id, checked === true)}
+                      aria-label={`Selecionar ${item.title}`}
+                    />
+                  </TableCell>
+                ) : null}
                 <TableCell>
                   <button
                     type="button"
@@ -159,6 +196,17 @@ export function ProductionItemTable({ items, timeZone, onOpen }: ProductionItemT
       <div className="grid grid-cols-1 gap-3 md:hidden">
         {items.map((item) => (
           <article key={item.id} className="glass-surface shadow-glass rounded-[8px] border-white/60 p-4">
+            {selectable ? (
+              <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <Checkbox
+                  checked={selected.has(item.id)}
+                  onCheckedChange={(checked) =>
+                    onSelectionChange?.(item.id, checked === true)}
+                  aria-label={`Selecionar ${item.title}`}
+                />
+                <span className="text-xs font-medium text-text-muted">Selecionar item</span>
+              </div>
+            ) : null}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <button

@@ -210,8 +210,8 @@ Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinad
 - [ ] Estados reservados às Fases 5/6 são rejeitados.
 - [ ] Itens atrasados e bloqueados são identificáveis.
 - [x] Lista oferece jornada equivalente sem drag-and-drop.
-- [ ] Ação em lote retorna resultado por item.
-- [ ] Notificações in-app são persistidas e deduplicáveis.
+- [x] Ação em lote retorna resultado por item.
+- [x] Notificações in-app são persistidas e deduplicáveis.
 - [ ] Reinício não perde agenda, dependências, versões ou eventos.
 
 ## Gates

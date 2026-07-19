@@ -1,8 +1,8 @@
 # Rastreabilidade inicial da Fase 3
 
 - **Estado:** `approved_for_execution`
-- **Implementação:** 60%
-- **Data:** 2026-07-18
+- **Implementação:** 90%
+- **Data:** 2026-07-19
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
@@ -16,8 +16,8 @@
 | F3-RF-08 Versões | 4.4, 10 | 5–6 | `api_validated` |
 | F3-RF-09 Artefatos | 4.5 | 5–6 | `api_validated` |
 | F3-RF-10 Estados | 5 | 1–2, 6 | `api_validated` |
-| F3-RF-11 Notificações | 4.6, 12 | 9 | `planned` |
-| F3-RF-12 Lote | 8, 10 | 9 | `planned` |
+| F3-RF-11 Notificações | 4.6, 12 | 9 | `locally_validated` |
+| F3-RF-12 Lote | 8, 10 | 9 | `locally_validated` |
 
 ## Gates transversais
 
@@ -158,3 +158,23 @@ limites UTC por view e axe completo permanecem na Task 8.
 
 Lista, semana e mês estão validadas localmente sobre o contrato canônico. A
 repetição no ambiente VPS permanece parte do gate final da Task 10.
+
+## Evidência Task 9
+
+| Requisito/gate | Evidência | Resultado |
+|---|---|---|
+| Persistência/deduplicação | `notifications.test.ts` + chave única | projeção reexecutável sem duplicar |
+| Privacidade/ownership | payload allowlisted, RLS e browser | somente destinatário; rótulo genérico |
+| Leitura/paginação | cursor `(occurred_at,id)` + replay | estável e idempotente |
+| Lote/RBAC | `batch.test.ts` + REST | manager/admin; member recebe 403 |
+| Concorrência por item | `expectedVersion` + resultado parcial | conflito explícito sem sucesso oculto |
+| Auditoria/outbox | contagem por item efetivo | um par por mutação, replay sem duplicar |
+| Contrato público | REST/OpenAPI/SDK | 28 paths/41 operações; 16 REST |
+| Interface | componentes, lista e browser | badge, leitura, seleção e lote verdes |
+| Responsividade | viewport 390×844 | cards/seleção/menu; tabela oculta |
+| Regressão | suites/lint/typecheck/build | 175 serviço; 179 frontend; zero erro |
+| Limpeza | reset local + health | fixtures removidas; Marketing Ops healthy |
+
+Notificações e lote estão validados localmente. Persistência por restart,
+observabilidade e repetição operacional completa pertencem à Task 10 e ao gate
+final na VPS.

@@ -223,6 +223,12 @@ describe('Marketing Ops frontend contracts', () => {
       'idem-update-item'
     );
     await client.transitionProductionItem(itemId, 2, 'ready', 'idem-transition-item');
+    await client.executeProductionBatch({
+      items: [{ itemId, version: 3 }],
+      action: { type: 'priority', priority: 'urgent' }
+    }, 'idem-batch');
+    await client.listInAppNotifications({ unreadOnly: true, limit: 25 });
+    await client.markInAppNotificationsRead([itemId], 'idem-read-notification');
     await client.listProductionItemDependencies(itemId);
     await client.addProductionItemDependency(
       itemId,
@@ -281,6 +287,9 @@ describe('Marketing Ops frontend contracts', () => {
         ['https://ops.local/v1/campaign-items', 'POST'],
         [`https://ops.local/v1/campaign-items/${itemId}`, 'PATCH'],
         [`https://ops.local/v1/campaign-items/${itemId}/transition`, 'POST'],
+        ['https://ops.local/v1/campaign-items/batch', 'POST'],
+        ['https://ops.local/v1/in-app-notifications?unreadOnly=true&limit=25', undefined],
+        ['https://ops.local/v1/in-app-notifications', 'PATCH'],
         [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, undefined],
         [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, 'POST'],
         [`https://ops.local/v1/campaign-items/${itemId}/dependencies`, 'DELETE'],
@@ -296,14 +305,14 @@ describe('Marketing Ops frontend contracts', () => {
       ]);
 
     for (const [index, version] of [
-      [3, 1], [4, 2], [6, 3], [7, 4], [9, 5], [11, 1],
-      [13, 6], [14, 7], [15, 8]
+      [3, 1], [4, 2], [9, 3], [10, 4], [12, 5], [14, 1],
+      [16, 6], [17, 7], [18, 8]
     ] as const) {
       const headers = fetch.mock.calls[index]?.[1]?.headers as Headers;
       expect(headers.get('If-Match')).toBe(`"${version}"`);
       expect(headers.get('Idempotency-Key')).toBeTruthy();
     }
-    const upload = fetch.mock.calls[14]?.[1] as RequestInit;
+    const upload = fetch.mock.calls[17]?.[1] as RequestInit;
     expect(upload.body).toBe(file);
     expect((upload.headers as Headers).get('X-Nexus-Asset-Id')).toBe(assetId);
     expect((upload.headers as Headers).get('X-Nexus-Filename')).toBe('peca.txt');

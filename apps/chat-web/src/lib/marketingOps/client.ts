@@ -38,6 +38,10 @@ import type {
   MarketingOpsProductionScheduleFilters,
   MarketingOpsProductionScheduleItem,
   MarketingOpsItemStatus,
+  MarketingOpsInAppNotification,
+  MarketingOpsNotificationFilters,
+  MarketingOpsProductionBatchInput,
+  MarketingOpsProductionBatchResult,
   MarketingOpsTimelineEvent,
   MarketingOpsTimelineFilters,
   MarketingOpsTransitionTarget
@@ -317,6 +321,27 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
       headers: mutationHeaders(idempotencyKey, version),
       body: JSON.stringify({ to })
     }),
+
+    executeProductionBatch: (
+      input: MarketingOpsProductionBatchInput,
+      idempotencyKey: string
+    ) => request<MarketingOpsProductionBatchResult>('/v1/campaign-items/batch', {
+      method: 'POST',
+      headers: mutationHeaders(idempotencyKey),
+      body: JSON.stringify(input)
+    }),
+
+    listInAppNotifications: (filters: MarketingOpsNotificationFilters = {}) =>
+      request<MarketingOpsInAppNotification[]>(
+        withQuery('/v1/in-app-notifications', filters)
+      ),
+
+    markInAppNotificationsRead: (ids: string[], idempotencyKey: string) =>
+      request<MarketingOpsInAppNotification[]>('/v1/in-app-notifications', {
+        method: 'PATCH',
+        headers: mutationHeaders(idempotencyKey),
+        body: JSON.stringify({ ids })
+      }),
 
     listProductionItemDependencies: (itemId: string) =>
       request<MarketingOpsItemDependency[]>(

@@ -18,10 +18,15 @@ import {
 } from './http/routes/campaigns.js';
 import {
   parseProductionItemCreateBody,
+  parseProductionBatchBody,
   parseProductionItemPatchBody,
   parseProductionItemScheduleQuery,
   parseProductionItemTransitionBody
 } from './http/routes/items.js';
+import {
+  parseNotificationListQuery,
+  parseNotificationReadBody
+} from './http/routes/notifications.js';
 import { parseDependencyBody } from './http/routes/dependencies.js';
 import {
   parseContentAssetBody,
@@ -65,8 +70,19 @@ function apiRouter(
       timeoutMs: 1_000
     }),
     verifyToken: async (token) => {
-      if (token !== 'valid-member') throw Object.assign(new Error('bad token'), { code: 'unauthorized', status: 401 });
-      return { id: '11111111-1111-4111-8111-111111111111', email: 'member@local.test' };
+      const users = {
+        'valid-member': {
+          id: '11111111-1111-4111-8111-111111111111',
+          email: 'member@local.test'
+        },
+        'valid-manager': {
+          id: '22222222-2222-4222-8222-222222222222',
+          email: 'manager@local.test'
+        }
+      } as const;
+      const user = users[token as keyof typeof users];
+      if (!user) throw Object.assign(new Error('bad token'), { code: 'unauthorized', status: 401 });
+      return user;
     }
   });
 }
@@ -76,7 +92,7 @@ describe('Marketing Ops REST v1', () => {
     const document = parse(readFileSync(new URL('../openapi/marketing-ops.v1.yaml', import.meta.url), 'utf8')) as { paths: Record<string, unknown> };
     expect(Object.keys(document.paths).sort()).toEqual([
       '/audit-events', '/campaigns',
-      '/campaign-items', '/campaign-items/{itemId}',
+      '/campaign-items', '/campaign-items/batch', '/campaign-items/{itemId}',
       '/campaign-items/{itemId}/artifacts',
       '/campaign-items/{itemId}/artifacts/{artifactLinkId}/access-link',
       '/campaign-items/{itemId}/content-assets',
@@ -93,7 +109,7 @@ describe('Marketing Ops REST v1', () => {
       '/campaigns/{campaignId}/timeline', '/campaigns/{id}',
       '/campaigns/{id}/archive', '/campaigns/{id}/transitions',
       '/capabilities', '/content-assets/{assetId}/versions',
-      '/references/courses'
+      '/in-app-notifications', '/references/courses'
     ].sort());
   });
 
@@ -118,6 +134,14 @@ describe('Marketing Ops REST v1', () => {
     expect(parseProductionItemTransitionBody({ to: 'ready' })).toEqual({
       to: 'ready'
     });
+    expect(parseProductionBatchBody({
+      items: [{ itemId: campaignId, version: 1 }],
+      action: { type: 'priority', priority: 'urgent' }
+    })).toMatchObject({ action: { type: 'priority' } });
+    expect(parseNotificationListQuery({ unreadOnly: 'true', limit: '50' }))
+      .toEqual({ unreadOnly: true, limit: 50 });
+    expect(parseNotificationReadBody({ ids: [campaignId] }))
+      .toEqual({ ids: [campaignId] });
     expect(parseProductionItemScheduleQuery({
       from: '2026-08-01T00:00:00.000Z',
       to: '2026-09-01T00:00:00.000Z',
@@ -152,6 +176,11 @@ describe('Marketing Ops REST v1', () => {
       status: 'completed'
     })).toThrow();
     expect(() => parseProductionItemTransitionBody({ to: 'approved' })).toThrow();
+    expect(() => parseProductionBatchBody({
+      items: [{ itemId: campaignId, version: 1 }],
+      action: { type: 'reschedule' }
+    })).toThrow();
+    expect(() => parseNotificationListQuery({ unreadOnly: 'yes' })).toThrow();
     expect(() => parseDependencyBody({
       dependsOnItemId: campaignId,
       itemVersion: 99
@@ -236,14 +265,16 @@ describe('Marketing Ops REST v1', () => {
       ,['/content-assets/{assetId}/versions', 'post', true]
       ,['/campaign-items/{itemId}/artifacts', 'post', true]
       ,['/campaign-items/{itemId}/artifacts', 'delete', true]
+      ,['/campaign-items/batch', 'post', false, false]
+      ,['/in-app-notifications', 'patch', false, false]
     ] as const;
-    for (const [path, method, requiresVersion] of mutations) {
+    for (const [path, method, requiresVersion, returnsVersion = true] of mutations) {
       const operation = document.paths[path]?.[method];
       const refs = operation?.parameters?.map((parameter) => parameter.$ref) ?? [];
       expect(refs).toContain('#/components/parameters/IdempotencyKey');
       if (requiresVersion) expect(refs).toContain('#/components/parameters/IfMatch');
       const success = operation?.responses?.['200'] ?? operation?.responses?.['201'];
-      expect(success?.headers).toHaveProperty('ETag');
+      if (returnsVersion) expect(success?.headers).toHaveProperty('ETag');
     }
     expect(Object.keys(document.components.schemas)).toEqual(expect.arrayContaining([
       'ErrorEnvelope', 'CampaignCreate', 'CampaignPatch', 'CampaignTransition',
@@ -403,6 +434,74 @@ describe('Marketing Ops REST v1', () => {
     expect(transitioned.status).toBe(200);
     expect(transitioned.headers.etag).toBe('"3"');
     expect(transitioned.body.data.status).toBe('ready');
+  });
+
+  it('executes a manager batch and reads owned in-app notifications through REST', async () => {
+    const headers = {
+      Authorization: 'Bearer valid-manager',
+      'X-Tenant-Id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    };
+    const campaign = await request(app()).post('/v1/campaigns')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ name: `Batch REST ${randomUUID()}` });
+    const item = await request(app()).post('/v1/campaign-items')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        campaignId: campaign.body.data.id,
+        kind: 'task',
+        title: 'Item em lote',
+        assigneeUserId: '22222222-2222-4222-8222-222222222222'
+      });
+
+    const batch = await request(app()).post('/v1/campaign-items/batch')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        items: [{ itemId: item.body.data.id, version: 1 }],
+        action: { type: 'priority', priority: 'urgent' }
+      });
+    expect(batch.status).toBe(200);
+    expect(batch.body.data).toMatchObject({ succeeded: 1, failed: 0 });
+    expect(batch.body.data.results[0].item).toMatchObject({
+      id: item.body.data.id,
+      priority: 'urgent',
+      version: 2
+    });
+
+    const notifications = await request(app())
+      .get('/v1/in-app-notifications?unreadOnly=true&limit=100')
+      .set(headers);
+    expect(notifications.status).toBe(200);
+    const owned = notifications.body.data.filter((notification: { itemId: string }) =>
+      notification.itemId === item.body.data.id
+    );
+    expect(owned).toHaveLength(1);
+    expect(owned[0]).toMatchObject({
+      notificationType: 'assignment',
+      readAt: null
+    });
+
+    const marked = await request(app()).patch('/v1/in-app-notifications')
+      .set(headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ ids: [owned[0].id] });
+    expect(marked.status).toBe(200);
+    expect(marked.body.data[0].readAt).toEqual(expect.any(String));
+
+    const forbidden = await request(app()).post('/v1/campaign-items/batch')
+      .set({
+        Authorization: 'Bearer valid-member',
+        'X-Tenant-Id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+      })
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        items: [{ itemId: item.body.data.id, version: 2 }],
+        action: { type: 'priority', priority: 'low' }
+      });
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.body.error.code).toBe('forbidden');
   });
 
   it('exposes dependency, immutable content and artifact resources through REST', async () => {

@@ -1,9 +1,11 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { AlertCircle, CalendarRange, Inbox, LayoutList, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { AlertCircle, CalendarRange, Inbox, LayoutList, ListChecks, Loader2, Plus, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Sidebar } from '@/components/Sidebar';
 import { MarketingOpsMobileBar } from '@/components/marketing-ops/MarketingOpsMobileBar';
+import { InAppNotifications } from '@/components/marketing-ops/InAppNotifications';
+import { ProductionBatchDialog } from '@/components/marketing-ops/ProductionBatchDialog';
 import { ProductionFilters } from '@/components/marketing-ops/ProductionFilters';
 import { ProductionItemDialog } from '@/components/marketing-ops/ProductionItemDialog';
 import { ProductionItemTable } from '@/components/marketing-ops/ProductionItemTable';
@@ -13,6 +15,7 @@ import type { MarketingOpsClient } from '@/lib/marketingOps/client';
 import { marketingOpsFlags } from '@/lib/marketingOps/flags';
 import { marketingOpsKeys } from '@/lib/marketingOps/queryKeys';
 import { marketingOpsClient } from '@/lib/marketingOps/runtime';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   hasProductionScheduleFilters,
   productionScheduleFiltersFrom,
@@ -23,6 +26,7 @@ import {
 interface ProductionListPageProps {
   client?: MarketingOpsClient;
   canWrite?: boolean;
+  canBatch?: boolean;
   createIdempotencyKey?: () => string;
 }
 
@@ -41,8 +45,12 @@ function correlationId(error: unknown): string | null {
 export default function ProductionListPage({
   client = marketingOpsClient,
   canWrite = marketingOpsFlags(import.meta.env).write,
+  canBatch: canBatchOverride,
   createIdempotencyKey = defaultIdempotencyKey
 }: ProductionListPageProps) {
+  const { normalizedRole } = useAuth();
+  const canBatch = canBatchOverride ??
+    (normalizedRole === 'manager' || normalizedRole === 'admin');
   const [searchParams, setSearchParams] = useSearchParams();
   const { itemId = null } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
@@ -50,6 +58,8 @@ export default function ProductionListPage({
   const [createOpen, setCreateOpen] = useState(false);
   const [assigneeValue, setAssigneeValue] = useState(searchParams.get('assigneeId') ?? '');
   const [assigneeInvalid, setAssigneeInvalid] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [batchOpen, setBatchOpen] = useState(false);
   const filters = useMemo(() => productionScheduleFiltersFrom(searchParams), [searchParams]);
   const hasFilters = hasProductionScheduleFilters(searchParams);
 
@@ -74,6 +84,7 @@ export default function ProductionListPage({
 
   const campaigns = campaignsQuery.data?.data ?? [];
   const items = scheduleQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const selectedItems = items.filter((item) => selectedItemIds.includes(item.id));
   const timeZone = scheduleQuery.data?.pages[0]?.meta?.timeZone ?? 'America/Sao_Paulo';
   const scheduleError = scheduleQuery.error as { status?: number } | null;
   const accessDenied = scheduleError?.status === 403;
@@ -153,6 +164,24 @@ export default function ProductionListPage({
                   Mês
                 </Link>
               </nav>
+              <InAppNotifications
+                client={client}
+                canMarkRead={canWrite}
+                createIdempotencyKey={createIdempotencyKey}
+                onOpenItem={openItem}
+              />
+              {canBatch ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={selectedItems.length === 0}
+                  onClick={() => setBatchOpen(true)}
+                  className="h-10 rounded-[8px] bg-white/80"
+                >
+                  <ListChecks className="mr-2 h-4 w-4" />
+                  Lote ({selectedItems.length})
+                </Button>
+              ) : null}
               {canWrite ? (
                 <Button onClick={() => setCreateOpen(true)} className="hidden h-11 rounded-[8px] text-slate-950 sm:inline-flex">
                   <Plus className="mr-2 h-4 w-4" /> Novo item
@@ -224,7 +253,18 @@ export default function ProductionListPage({
               </div>
             ) : (
               <>
-                <ProductionItemTable items={items} timeZone={timeZone} onOpen={openItem} />
+                <ProductionItemTable
+                  items={items}
+                  timeZone={timeZone}
+                  onOpen={openItem}
+                  selectable={canBatch}
+                  selectedItemIds={selectedItemIds}
+                  onSelectionChange={(nextItemId, selected) => {
+                    setSelectedItemIds((current) => selected
+                      ? current.includes(nextItemId) ? current : [...current, nextItemId]
+                      : current.filter((currentItemId) => currentItemId !== nextItemId));
+                  }}
+                />
                 {scheduleQuery.hasNextPage ? (
                   <div className="flex justify-center pt-5">
                     <Button
@@ -259,6 +299,20 @@ export default function ProductionListPage({
         }}
         onCreated={openItem}
       />
+      {canBatch ? (
+        <ProductionBatchDialog
+          open={batchOpen}
+          selectedItems={selectedItems}
+          timeZone={timeZone}
+          client={client}
+          createIdempotencyKey={createIdempotencyKey}
+          onOpenChange={(nextOpen) => {
+            setBatchOpen(nextOpen);
+            if (!nextOpen) setSelectedItemIds([]);
+          }}
+          onComplete={() => undefined}
+        />
+      ) : null}
     </div>
   );
 }

@@ -376,10 +376,10 @@ git commit -m "feat: add production week and month views"
 
 **Produz:** atribuição/prazo/atraso deduplicáveis e três ações reversíveis.
 
-- [ ] REDs para event key, replay, payload seguro, read, tenant, prazo/atraso,
+- [x] REDs para event key, replay, payload seguro, read, tenant, prazo/atraso,
   autorização de lote, versão por item, resultado parcial explícito e ordem.
-- [ ] Implementar projeção reexecutável e lote somente manager/admin.
-- [ ] GREEN:
+- [x] Implementar projeção reexecutável e lote somente manager/admin.
+- [x] GREEN:
 
 ```powershell
 Set-Location services/marketing-ops
@@ -388,7 +388,7 @@ Set-Location ../../apps/chat-web
 npx vitest run src/components/marketing-ops/InAppNotifications.test.tsx src/components/marketing-ops/ProductionBatchDialog.test.tsx
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add -- services/marketing-ops apps/chat-web/src docs/phase-3

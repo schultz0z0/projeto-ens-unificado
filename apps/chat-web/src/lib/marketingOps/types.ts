@@ -389,3 +389,63 @@ export interface MarketingOpsItemArtifactRemoval {
   artifactLinkId: string;
   itemVersion: number;
 }
+
+export type MarketingOpsNotificationType = 'assignment' | 'due_soon' | 'overdue';
+
+export interface MarketingOpsInAppNotification {
+  id: string;
+  eventKey: string;
+  notificationType: MarketingOpsNotificationType;
+  campaignId: string;
+  itemId: string;
+  label: string;
+  payload: {
+    campaignId: string;
+    itemId: string;
+    dueAt: string | null;
+    priority: MarketingOpsItemPriority;
+  };
+  occurredAt: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface MarketingOpsNotificationFilters {
+  unreadOnly?: boolean;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface MarketingOpsProductionBatchItem {
+  itemId: string;
+  version: number;
+}
+
+export type MarketingOpsProductionBatchAction =
+  | { type: 'reassign'; assigneeUserId: string | null }
+  | { type: 'priority'; priority: MarketingOpsItemPriority }
+  | { type: 'reschedule'; startsAt?: string | null; dueAt?: string | null };
+
+export interface MarketingOpsProductionBatchInput {
+  items: MarketingOpsProductionBatchItem[];
+  action: MarketingOpsProductionBatchAction;
+}
+
+export type MarketingOpsProductionBatchItemResult =
+  | { itemId: string; ok: true; item: MarketingOpsProductionItem }
+  | {
+    itemId: string;
+    ok: false;
+    error: {
+      code: string;
+      status: number;
+      message: string;
+      currentVersion?: number;
+    };
+  };
+
+export interface MarketingOpsProductionBatchResult {
+  results: MarketingOpsProductionBatchItemResult[];
+  succeeded: number;
+  failed: number;
+}

@@ -57,5 +57,8 @@ describe('Marketing Ops query keys', () => {
     expect(marketingOpsKeys.productionItemArtifacts('item-1')).toEqual([
       'marketing-ops', 'production', 'item', 'item-1', 'artifacts'
     ]);
+    expect(marketingOpsKeys.notifications({ unreadOnly: true, limit: 25 })).toEqual([
+      'marketing-ops', 'notifications', { unreadOnly: true, limit: 25 }
+    ]);
   });
 });

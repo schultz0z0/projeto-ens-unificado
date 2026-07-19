@@ -16,6 +16,7 @@ import {
   updateCampaignItemDraft,
   updateProductionItem
 } from '../../domain/items.js';
+import { executeProductionBatch } from '../../domain/batch.js';
 import { listProductionSchedule } from '../../domain/queries.js';
 import { DEFAULT_TENANT_TIME_ZONE } from '../../domain/scheduling.js';
 import {
@@ -46,6 +47,46 @@ const productionItemCreateSchema = z.object({
 const productionItemTransitionSchema = z.object({
   to: ItemStatusSchema
 }).strict();
+const productionBatchSchema = z.object({
+  items: z.array(z.object({
+    itemId: uuid,
+    version: z.number().int().positive()
+  }).strict()).min(1).max(100),
+  action: z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('reassign'),
+      assigneeUserId: uuid.nullable()
+    }).strict(),
+    z.object({
+      type: z.literal('priority'),
+      priority: ItemPrioritySchema
+    }).strict(),
+    z.object({
+      type: z.literal('reschedule'),
+      startsAt: nullableInstant.optional(),
+      dueAt: nullableInstant.optional()
+    }).strict()
+  ])
+}).strict().superRefine((batch, context) => {
+  if (new Set(batch.items.map((item) => item.itemId)).size !== batch.items.length) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['items'],
+      message: 'Batch item IDs must be unique'
+    });
+  }
+  if (
+    batch.action.type === 'reschedule' &&
+    batch.action.startsAt === undefined &&
+    batch.action.dueAt === undefined
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['action'],
+      message: 'Reschedule action must include startsAt or dueAt'
+    });
+  }
+});
 
 const productionItemScheduleQuerySchema = z.object({
   from: z.string().datetime({ offset: true }).optional(),
@@ -77,6 +118,8 @@ export const parseProductionItemPatchBody = (value: unknown) =>
   ProductionItemPatchSchema.parse(value);
 export const parseProductionItemTransitionBody = (value: unknown) =>
   productionItemTransitionSchema.parse(value);
+export const parseProductionBatchBody = (value: unknown) =>
+  productionBatchSchema.parse(value);
 export const parseProductionItemScheduleQuery = (value: unknown) =>
   productionItemScheduleQuerySchema.parse(value);
 
@@ -136,6 +179,21 @@ export function registerItems(
       { ...input, idempotencyKey: requireIdempotencyKey(request) }
     );
     response.status(201).setHeader('ETag', `"${data.version}"`).json({ data });
+  }));
+
+  router.post('/v1/campaign-items/batch', asyncRoute(async (request, response) => {
+    requireFeature(features.write, 'write');
+    const parsed = parseProductionBatchBody(request.body);
+    const data = await executeProductionBatch(
+      {
+        pool,
+        actor: actorFrom(request),
+        correlationId: request.correlationId,
+        origin: 'rest'
+      },
+      { ...parsed, idempotencyKey: requireIdempotencyKey(request) }
+    );
+    response.json({ data });
   }));
 
   router.get('/v1/campaign-items/:itemId', asyncRoute(async (request, response) => {

@@ -12,6 +12,7 @@ import { registerMaterials } from './materials.js';
 import { registerParticipants } from './participants.js';
 import { registerReferences } from './references.js';
 import { registerTimeline } from './timeline.js';
+import { registerNotifications } from './notifications.js';
 import type { ArtifactClient } from '../../integrations/artifactClient.js';
 import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
@@ -46,6 +47,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
     deps.features,
     deps.tenantTimeZone ?? DEFAULT_TENANT_TIME_ZONE
   );
+  registerNotifications(router, deps.pool, deps.features);
   registerDependencies(router, deps.pool, deps.features);
   registerContent(router, deps.pool, deps.artifactClient, deps.features);
   registerAudit(router, deps.pool, deps.features);

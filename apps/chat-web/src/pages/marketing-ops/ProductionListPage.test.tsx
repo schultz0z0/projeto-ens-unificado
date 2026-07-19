@@ -101,6 +101,13 @@ function makeClient(overrides: Partial<Client> = {}): Client {
       status: 'in_review',
       version: 3
     } as MarketingOpsProductionItem)),
+    listInAppNotifications: vi.fn().mockResolvedValue(result([])),
+    markInAppNotificationsRead: vi.fn().mockResolvedValue(result([])),
+    executeProductionBatch: vi.fn().mockResolvedValue(result({
+      results: [],
+      succeeded: 0,
+      failed: 0
+    })),
     ...overrides
   } as unknown as Client;
 }
@@ -110,7 +117,11 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}{location.search}</output>;
 }
 
-function renderPage(client: Client, initialEntry = '/marketing-ops/production') {
+function renderPage(
+  client: Client,
+  initialEntry = '/marketing-ops/production',
+  canBatch = false
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
@@ -123,11 +134,11 @@ function renderPage(client: Client, initialEntry = '/marketing-ops/production') 
         <Routes>
           <Route
             path="/marketing-ops/production"
-            element={<ProductionListPage client={client} canWrite createIdempotencyKey={() => 'idem-ui'} />}
+            element={<ProductionListPage client={client} canWrite canBatch={canBatch} createIdempotencyKey={() => 'idem-ui'} />}
           />
           <Route
             path="/marketing-ops/production/items/:itemId"
-            element={<ProductionListPage client={client} canWrite createIdempotencyKey={() => 'idem-ui'} />}
+            element={<ProductionListPage client={client} canWrite canBatch={canBatch} createIdempotencyKey={() => 'idem-ui'} />}
           />
         </Routes>
         <LocationProbe />
@@ -139,6 +150,27 @@ function renderPage(client: Client, initialEntry = '/marketing-ops/production') 
 afterEach(() => cleanup());
 
 describe('ProductionListPage', () => {
+  it('exposes batch selection only when the caller has manager authority', async () => {
+    const current = item();
+    const client = makeClient({
+      listProductionSchedule: vi.fn().mockResolvedValue(result([current]))
+    });
+    const user = userEvent.setup();
+    const view = renderPage(client);
+
+    await screen.findAllByText(current.title);
+    expect(screen.queryByRole('button', { name: /lote \(0\)/i })).toBeNull();
+    view.unmount();
+
+    renderPage(client, '/marketing-ops/production', true);
+    await screen.findAllByText(current.title);
+    await user.click(screen.getAllByRole('checkbox', {
+      name: `Selecionar ${current.title}`
+    })[0]!);
+    await user.click(screen.getByRole('button', { name: /lote \(1\)/i }));
+    expect(await screen.findByRole('dialog', { name: /ação em lote/i })).toBeTruthy();
+  });
+
   it('uses URL filters, exposes operational states and appends cursor pages', async () => {
     const first = item();
     const second = item({

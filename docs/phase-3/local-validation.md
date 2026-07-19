@@ -440,3 +440,61 @@ a rejeição estável esperada; a transição permitida para `cancelled` passou.
    itens. A mensagem agora acompanha o calendário vazio, não o remove.
 4. O formulário da Task 7 tratava `datetime-local` como UTC. O campo agora usa
    o IANA efetivo e converte wall time local para o instante UTC persistido.
+
+## Task 9 — Notificações in-app e lote
+
+### RED observado
+
+| Gate | Falha observada |
+|---|---|
+| domínio | módulos `notifications.ts` e `batch.ts` inexistentes |
+| frontend | sino e diálogo de lote inexistentes |
+| schema Zod inicial | refinamento no discriminated union incompatível |
+| projeção paralela | limite global misturava fixtures entre testes |
+| suíte funcional inicial | benchmark de agenda concorria com integrações e excedia p95 |
+| primeiro browser local | Vite sem env e depois com variável antiga da API |
+
+### GREEN observado
+
+| Comando/gate | Resultado |
+|---|---|
+| `vitest` de notifications/batch | 5/5 |
+| `vitest` REST | 16/16 |
+| frontend/SDK focado | 22/22 |
+| `npm test` Marketing Ops | 175 pass; 2 skips externos condicionais |
+| `npm test` frontend | 179/179 |
+| typechecks/builds | passaram |
+| lint frontend | zero erros; 10 warnings históricos |
+| Redocly | OpenAPI 3.1 válido; 28 paths/41 operações |
+| Docker/browser real | badge/leitura/lote/resultado/lista passaram |
+| viewport 390×844 | cards, seleção e menu móvel; tabela ausente |
+| reset Supabase local | migrations/seed reaplicadas; fixtures removidas |
+| health pós-reset | Marketing Ops healthy |
+
+### Critérios exercitados
+
+- projeção reexecutável e deduplicada por evento/destinatário;
+- atribuição, prazo próximo e atraso sem transportar conteúdo sensível;
+- RLS/tenant, leitura própria, cursor estável e replay idempotente;
+- lote manager/admin, máximo de 100 itens e três ações reversíveis;
+- ordem determinística, versão e autorização por item;
+- resultado parcial explícito e `currentVersion` seguro;
+- auditoria/outbox por mutação efetiva;
+- REST/OpenAPI/SDK em lockstep;
+- badge, popover, leitura, seleção e diálogo acessíveis;
+- equivalência desktop/mobile e limpeza das fixtures.
+
+### Bugs e correções
+
+1. O schema Zod refinado não podia ser usado diretamente como opção do
+   discriminated union. A regra cruzada foi deslocada para o parser estrito.
+2. O teste de projeção usava um limite compartilhado e podia observar eventos
+   de outras fixtures paralelas. A consulta/harness passou a isolar o cenário.
+3. O script `npm test` incluía o benchmark de agenda em paralelo com toda a
+   integração. Como o plano já exige benchmarks dedicados, ambos foram
+   excluídos da suíte funcional e seguem executados isoladamente.
+4. O primeiro Compose herdou destinos remotos do `.env`. A UI não alcançou a
+   mutação; o container foi recriado com URLs locais em memória antes do smoke.
+5. O Vite recebeu primeiro nenhuma configuração e depois
+   `VITE_MARKETING_OPS_BASE_URL`, nome antigo. O smoke passou com credenciais
+   locais em memória e `VITE_MARKETING_OPS_URL`.

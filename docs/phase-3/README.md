@@ -7,9 +7,9 @@ execução real; o aceite de produção continua reservado ao gate VPS.
 ## Status
 
 - **Fase:** `in_progress`
-- **Snapshot:** 2026-07-18
-- **Implementação:** `tasks_1_to_8_validated_locally`
-- **Progresso:** 80%
+- **Snapshot:** 2026-07-19
+- **Implementação:** `tasks_1_to_9_validated_locally`
+- **Progresso:** 90%
 - **Branch única:** `main`
 - **Dependência:** Fase 2 `production_validated`
 - **PRD:** [phase-3-calendario-esteira-producao.md](../prds/phase-3-calendario-esteira-producao.md)
@@ -25,8 +25,8 @@ execução real; o aceite de produção continua reservado ao gate VPS.
 | Rastreabilidade inicial | `approved_for_execution` |
 | Registro de riscos | `active_during_implementation` |
 | Plano TDD | `approved` |
-| Progresso | `80_percent` |
-| Handoff | `ready_to_start_task_9` |
+| Progresso | `90_percent` |
+| Handoff | `ready_to_start_task_10` |
 
 ## Corte técnico
 
@@ -52,7 +52,7 @@ execução real; o aceite de produção continua reservado ao gate VPS.
 | Falha alta/crítica conhecida | nenhuma |
 | Forward-fix de índice da Fase 2 | `accepted_residual`; aplicar antes do próximo gate VPS |
 | PRD/design/plano da Fase 3 | coerentes e aprovados |
-| Migration/código da Fase 3 | Tasks 1–8 validadas localmente; sem deploy remoto |
+| Migration/código da Fase 3 | Tasks 1–9 validadas localmente; sem deploy remoto |
 
 ## Governança
 

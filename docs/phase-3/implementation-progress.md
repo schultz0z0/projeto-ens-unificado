@@ -1,10 +1,10 @@
 # Progresso de implementação da Fase 3
 
 - **Estado:** `in_progress`
-- **Progresso:** 80%
-- **Snapshot:** 2026-07-18
+- **Progresso:** 90%
+- **Snapshot:** 2026-07-19
 - **Branch única:** `main`
-- **Próxima task:** Task 9 — notificações in-app e lote
+- **Próxima task:** Task 10 — E2E, performance, docs e handoff VPS
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
@@ -16,7 +16,7 @@
 | 6 | REST/OpenAPI e client tipado | `validated_locally` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
 | 7 | lista acessível | `validated_locally` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
 | 8 | views semana e mês | `validated_locally` | 7 focados; 174 frontend; 2 E2E + axe desktop/mobile |
-| 9 | notificações in-app e lote | `not_started` | — |
+| 9 | notificações in-app e lote | `validated_locally` | 5 domínio; 16 REST; 22 focados; 175 serviço + 179 frontend; smoke browser/Docker |
 | 10 | E2E, performance, docs e handoff VPS | `not_started` | — |
 
 ## Protocolo
@@ -227,3 +227,48 @@ Ao concluir uma task:
 - GREEN: 7/7 focados, 174/174 frontend, 2/2 E2E Playwright, axe WCAG A/AA,
   documento limitado a 390 px com scroll interno, lint sem erros, typecheck e
   build.
+
+## Ciclo Task 9 — 2026-07-19
+
+- RED inicial observado: os testes não eram coletados porque os domínios de
+  notificações/lote e os componentes correspondentes ainda não existiam.
+- A projeção de notificações cobre atribuição, prazo próximo e atraso, é
+  reexecutável por `event_key`, pertence ao destinatário e persiste somente
+  payload allowlisted. Títulos, conteúdo, nomes, artifacts e URLs não entram no
+  evento ou no rótulo apresentado.
+- A leitura é idempotente e limitada ao próprio usuário. A listagem usa cursor
+  estável `(occurred_at,id)` e respeita RLS/tenant.
+- O lote aceita no máximo 100 itens únicos e somente as ações reversíveis de
+  reatribuição, prioridade e reagendamento. Manager/admin recebem resultado
+  explícito por item; cada mutação preserva autorização, versão otimista,
+  idempotência, auditoria e outbox.
+- REST/OpenAPI/SDK foram publicados junto do domínio executável: 28 paths e 41
+  operações em lockstep, sem placeholder.
+- A interface oferece sino in-app, badge/leitura, seleção equivalente em
+  tabela/card e diálogo de lote. A permissão visual é conveniência; o backend
+  continua sendo a autoridade.
+- GREEN focado: 5/5 de domínio, 16/16 REST e 22/22 de frontend/SDK.
+- GREEN amplo: 175 testes do Marketing Ops e 179 do frontend; 2 E2E externos
+  condicionais skipped; typecheck/build/Redocly verdes e lint com zero erro
+  (10 warnings históricos).
+- Smoke real no navegador/Docker: manager autenticado, quatro notificações com
+  rótulo genérico, leitura zerando o badge, lote com `1 atualizado / 0
+  falharam`, prioridade refletida na lista e viewport 390×844 com cards,
+  seleção e menu móvel.
+- Após o smoke, `supabase db reset --local` reaplicou todas as migrations e
+  removeu fixtures; o container Marketing Ops permaneceu healthy.
+- Bugs/correções do ciclo:
+  1. a composição inicial do schema discriminado com refinamento era
+     incompatível com Zod; a validação cruzada foi movida para o parser;
+  2. uma projeção com limite global criava interferência entre fixtures
+     paralelas; o harness passou a isolar dados e paginação;
+  3. `npm test` incluía inadvertidamente o benchmark de agenda em paralelo e
+     media contenção do host. Os dois benchmarks agora ficam fora da suíte
+     funcional e são executados isoladamente, como definido no plano;
+  4. o primeiro `docker compose up` herdou destinos remotos do `.env`. A
+     requisição da UI falhou antes de qualquer mutação; o container foi
+     imediatamente recriado com Supabase local explícito e os hosts foram
+     conferidos antes do smoke;
+  5. o Vite local iniciou sem as variáveis Supabase e depois com o nome antigo
+     da URL do Marketing Ops. O processo foi reiniciado com credenciais locais
+     em memória e `VITE_MARKETING_OPS_URL` correto.

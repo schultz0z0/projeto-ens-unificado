@@ -1,7 +1,7 @@
 # Registro de riscos da Fase 3
 
 - **Estado:** `active_during_implementation`
-- **Revisão:** 2026-07-18
+- **Revisão:** 2026-07-19
 
 | ID | Risco | Impacto | Mitigação/gate | Owner |
 |---|---|---|---|---|
@@ -87,3 +87,17 @@ falha alta/crítica sem mitigação.
   interno. Permanece aberto somente para o aceite final de produção.
 - O calendário vazio foi mantido visível, evitando que ausência de dados
   impeça navegação. Itens sem data continuam deliberadamente fora das grades.
+
+## Revisão após a Task 9
+
+- F3-R-07: mitigação local validada. Lote é restrito a manager/admin, limita
+  volume/ações, ordena itens e retorna sucesso/falha por item com
+  `currentVersion` seguro. Permanece aberto para restart/E2E da Task 10 e VPS.
+- F3-R-10: mitigação local validada. `event_key` único, ownership/RLS, cursor
+  estável e payload allowlisted passaram; o browser mostrou apenas
+  “Novo item atribuído”, sem título/conteúdo. Permanece aberto para
+  observabilidade/restart da Task 10 e VPS.
+- O risco operacional do `.env` remoto foi reproduzido no primeiro start
+  manual. A UI falhou antes de mutar dados; o container foi recriado contra
+  `host.docker.internal`/Supabase local e os hosts foram verificados. A Task 10
+  deve transformar essa disciplina em gate fail-closed automatizado.
