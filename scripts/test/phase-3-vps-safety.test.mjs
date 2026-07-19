@@ -42,3 +42,48 @@ test('phase-3 VPS gate is explicit, production-aware and secret-safe', async () 
   assert.doesNotMatch(script, /git (reset|clean)/);
   assert.doesNotMatch(script, /\b(set -x|printenv|source \.env|eval )/);
 });
+
+test('non-mutating native gate never runs database-backed Marketing Ops tests', async () => {
+  const script = await readFile(scriptUrl, 'utf8');
+  const nativeGate = script.match(
+    /run_native_gates\(\) \{(?<body>[\s\S]*?)\n\}\n\nassert_transactional_pgtap/
+  )?.groups?.body;
+  const isolatedGate = script.match(
+    /run_isolated_database_gates\(\) \{(?<body>[\s\S]*?)\n\}\n\nrun_mutating_e2e/
+  )?.groups?.body;
+
+  assert.ok(nativeGate, 'run_native_gates body must be discoverable');
+  assert.ok(isolatedGate, 'run_isolated_database_gates body must be discoverable');
+
+  const nativeMarketingOps = nativeGate.match(
+    /pushd services\/marketing-ops[\s\S]*?popd >\/dev\/null/
+  )?.[0];
+  const nativeChatWeb = nativeGate.match(
+    /pushd apps\/chat-web[\s\S]*?popd >\/dev\/null/
+  )?.[0];
+
+  assert.ok(nativeMarketingOps, 'native Marketing Ops gate must be discoverable');
+  assert.ok(nativeChatWeb, 'native chat-web gate must be discoverable');
+  assert.doesNotMatch(nativeMarketingOps, /^\s*npm test\s*$/m);
+  assert.doesNotMatch(nativeMarketingOps, /test:campaign-list-performance/);
+  assert.doesNotMatch(nativeMarketingOps, /test:schedule-performance/);
+
+  assert.match(
+    nativeChatWeb,
+    /MARKETING_OPS_E2E_ENABLED=false MARKETING_OPS_CALENDAR_E2E_ENABLED=false npm run e2e/
+  );
+  assert.doesNotMatch(nativeChatWeb, /^\s*npm run e2e\s*$/m);
+
+  const localDatabaseUrl = "'postgresql://postgres:postgres@127.0.0.1:55322/postgres'";
+  for (const command of [
+    'npm test',
+    'npm run test:campaign-list-performance',
+    'npm run test:schedule-performance'
+  ]) {
+    assert.ok(
+      isolatedGate.includes(`MARKETING_OPS_TEST_DATABASE_URL=${localDatabaseUrl} ${command}`),
+      `${command} must use the literal local test database`
+    );
+  }
+  assert.doesNotMatch(isolatedGate, /NEXUS_SUPABASE_DATABASE_URL/);
+});

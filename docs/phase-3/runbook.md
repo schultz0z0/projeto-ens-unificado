@@ -143,6 +143,70 @@ bash scripts/test/phase-3-vps.sh
 `PHASE3_RUN_ISOLATED_DB_GATES` deve permanecer `false` na VPS de produção. O
 reset desse gate é destinado apenas a uma instância Supabase local isolada.
 
+O bloco nativo não executa a suíte de integração/benchmarks do Marketing Ops:
+ela é mutante e exige o Supabase local em `127.0.0.1:55322`. Essa cobertura
+permanece obrigatória no gate isolado local e foi aprovada antes da publicação.
+Na VPS, o gate nativo executa os gates estáticos do serviço e combina-os com
+probes somente leitura do schema/runtime de produção. Nunca aponte
+`MARKETING_OPS_TEST_DATABASE_URL` para o banco de produção.
+
+### Reexecução após o incidente de 2026-07-19
+
+Se os quatro serviços do commit anterior já estiverem implantados, somente o
+frontend precisa ser reconstruído: a outra mudança está no próprio script do
+gate.
+
+```bash
+cd /opt/nexus-ens
+git fetch origin
+git checkout main
+git pull --ff-only origin main
+git status --short --branch
+
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --pull --no-cache app-frontend
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps --force-recreate app-frontend
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
+```
+
+`--no-cache` é recomendado nessa repetição para garantir que o bundle contenha
+a correção de sincronização da URL. Não é necessário reconstruir Marketing
+Ops, Artifact ou RAG quando eles já estiverem no commit `a5183c1`; se o estado
+anterior da VPS for incerto, use o build completo de quatro alvos descrito
+acima.
+
+Capture o novo gate integralmente. O subshell preserva como resultado final o
+exit code real do gate mesmo depois de aplicar a permissão ao arquivo:
+
+```bash
+cd /opt/nexus-ens
+mkdir -p tmp/phase-3-vps
+chmod 700 tmp/phase-3-vps
+(
+  set -o pipefail
+  gate_log="tmp/phase-3-vps/non-mutating-$(date -u +%Y%m%dT%H%M%SZ).log"
+  PHASE3_VPS_CONFIRM=RUN_PHASE_3_CONTROLLED_GATE \
+  PHASE3_RUN_NATIVE_GATES=true \
+  PHASE3_RUN_ISOLATED_DB_GATES=false \
+  PHASE3_RUN_MUTATING_E2E=false \
+  PHASE3_RUN_RESTART=false \
+  bash scripts/test/phase-3-vps.sh 2>&1 | tee "$gate_log"
+  gate_status=${PIPESTATUS[0]}
+  chmod 600 "$gate_log"
+  exit "$gate_status"
+)
+```
+
+O log esperado contém
+`Marketing Ops database-backed tests: deferred to
+PHASE3_RUN_ISOLATED_DB_GATES=true` e termina com
+`Phase 3 controlled VPS gate: PASS`.
+
+O bloco nativo força
+`MARKETING_OPS_E2E_ENABLED=false` e
+`MARKETING_OPS_CALENDAR_E2E_ENABLED=false`. O único caminho autorizado para a
+jornada mutante é o bloco “E2E controlado” abaixo, com opt-in explícito.
+
 ## E2E controlado
 
 Preencher no `.env` as variáveis `MARKETING_OPS_E2E_*` com três contas

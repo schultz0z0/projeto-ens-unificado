@@ -67,7 +67,11 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}{location.search}</output>;
 }
 
-function renderPage(client: Client, initialEntry = '/marketing-ops/campaigns') {
+function renderPage(
+  client: Client,
+  initialEntry = '/marketing-ops/campaigns',
+  searchDebounceMs = 0
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
@@ -80,7 +84,7 @@ function renderPage(client: Client, initialEntry = '/marketing-ops/campaigns') {
         <CampaignListPage
           client={client}
           canWrite
-          searchDebounceMs={0}
+          searchDebounceMs={searchDebounceMs}
           createIdempotencyKey={() => 'idem-create'}
         />
         <LocationProbe />
@@ -114,6 +118,21 @@ describe('CampaignListPage', () => {
       .toBe('/marketing-ops/campaigns/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
     expect(screen.queryByRole('dialog', { name: /nova campanha/i })).toBeNull();
     expect(client.createCampaign).toHaveBeenCalledWith({ name: 'Lançamento' }, 'idem-create');
+  });
+
+  it('commits a pending search atomically when another filter changes', async () => {
+    const client = makeClient();
+    const user = userEvent.setup();
+    renderPage(client, '/marketing-ops/campaigns', 60_000);
+
+    expect(await screen.findByText('Nenhuma campanha ainda')).toBeTruthy();
+    await user.type(screen.getByRole('searchbox', { name: /buscar campanhas/i }), 'gestão');
+    expect(screen.getByTestId('location').textContent).toBe('/marketing-ops/campaigns');
+
+    await user.selectOptions(screen.getByLabelText(/^status$/i), 'planned');
+
+    await waitFor(() => expect(screen.getByTestId('location').textContent)
+      .toBe('/marketing-ops/campaigns?q=gest%C3%A3o&status=planned'));
   });
 
   it('loads the next cursor page without replacing visible campaigns', async () => {

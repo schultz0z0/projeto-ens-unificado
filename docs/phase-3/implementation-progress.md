@@ -334,3 +334,29 @@ As dez tasks estão implementadas e validadas. A fase permanece `in_progress`,
 no subestado `implementation_complete_pending_vps_validation`, porque o
 deploy/build, os smokes manuais, logs e restart na VPS ainda dependem do
 usuário. Não iniciar a Fase 4 antes desse aceite.
+
+## Saneamento após o primeiro gate VPS — 2026-07-19
+
+- O gate não mutante do commit `a5183c1` revelou uma configuração inválida:
+  executava 181 testes e dois benchmarks dependentes de
+  `127.0.0.1:55322`, embora o Supabase local isolado estivesse desativado.
+- As 71 falhas recebidas foram classificadas como cascata da conexão recusada;
+  nenhum teste foi redirecionado ao banco de produção.
+- O bloco nativo agora preserva instalação, typecheck, build, OpenAPI e audit;
+  a cobertura com banco permanece integral no bloco isolado local.
+- O safety test passou de 1 para 2 casos e impede a reintrodução dessa
+  duplicidade insegura, exige o DSN local literal e proíbe E2E mutante herdado
+  no bloco nativo.
+- A continuação do gate encontrou uma corrida de frontend entre debounce da
+  busca e mudança de status. A atualização foi tornada atômica e a regressão
+  passou na suíte completa, em cinco repetições focadas e no navegador.
+- Supabase local: reset, 322 pgTAP, lint sem erro, diff vazio, 181 testes e
+  benchmarks p95 de 28,70/37,40 ms.
+- Docker: quatro imagens `--pull --no-cache`, containers healthy e readiness
+  com banco/Artifact/RAG `ok`.
+- O próprio `phase-3-vps.sh` passou integralmente em Linux descartável com
+  isolated DB, E2E mutante e restart desativados; os sete Playwright E2E foram
+  comprovadamente skipped e o scanner de logs passou.
+- O status permanece `implementation_complete_pending_vps_validation`; o
+  próximo passo é publicar o commit corretivo e repetir o gate não mutante na
+  VPS com log integral.

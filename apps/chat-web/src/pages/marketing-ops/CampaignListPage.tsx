@@ -92,11 +92,16 @@ export default function CampaignListPage({
   const setFilter = useCallback((key: keyof MarketingOpsCampaignFilters, value?: string) => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
+      if (key !== 'q') {
+        const pendingSearch = searchValue.trim();
+        if (pendingSearch) next.set('q', pendingSearch);
+        else next.delete('q');
+      }
       if (value) next.set(key, value);
       else next.delete(key);
       return next;
     }, { replace: true });
-  }, [setSearchParams]);
+  }, [searchValue, setSearchParams]);
 
   useEffect(() => {
     const urlSearch = searchParams.get('q') ?? '';

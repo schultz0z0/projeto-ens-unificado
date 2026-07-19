@@ -33,7 +33,8 @@ produção permanece reservado ao gate executado pelo usuário na VPS.
 | Performance | `validated_locally` | 5 mil campanhas e 10 mil itens abaixo de 500 ms |
 | Docker/Linux | `validated_locally` | build limpo, health/readiness, logs e restart |
 | Operação/rollback | `ready_for_vps_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `pending_user_execution` | [checklist](vps-validation.md) |
+| Homologação VPS | `pending_user_reexecution_after_gate_fix` | [checklist](vps-validation.md) |
+| Incidente/reteste do gate VPS | `fixed_locally_pending_vps_retest` | [evidência](vps-gate-incident-2026-07-19.md) |
 
 ## Escopo entregue
 

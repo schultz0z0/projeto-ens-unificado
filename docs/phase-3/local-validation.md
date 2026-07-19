@@ -612,3 +612,48 @@ completa está em [supabase-deployment.md](supabase-deployment.md).
 Task 10 e implementação da Fase 3 concluídas. O código pode ser publicado no
 `main` e seguir para a homologação controlada descrita em
 [runbook.md](runbook.md). O status final continua pendente da VPS.
+
+## Ciclo corretivo do primeiro gate VPS — 2026-07-19
+
+O log parcial da VPS apresentou 71 falhas, das quais 53 continham
+explicitamente `ECONNREFUSED 127.0.0.1:55322`. O gate nativo executava a suíte
+dependente do Supabase local mesmo com
+`PHASE3_RUN_ISOLATED_DB_GATES=false`.
+
+### RED observado
+
+| Gate | Falha |
+|---|---|
+| safety do script | encontrou `npm test` dentro de `run_native_gates` |
+| frontend completo após continuar o gate | busca `gestão` persistida como `gestã` ao alterar status |
+
+### Correções
+
+1. suíte funcional e benchmarks do Marketing Ops foram removidos somente do
+   bloco nativo e permanecem obrigatórios no bloco isolado;
+2. o safety test comprova ambos os lados do contrato;
+3. o bloco nativo força as duas flags Playwright mutantes para `false`;
+4. mudança de qualquer filtro consolida a busca corrente na mesma atualização
+   de URL, eliminando disputa entre debounce e status.
+
+### GREEN observado
+
+| Gate | Resultado |
+|---|---|
+| script safety | 2/2 |
+| pgTAP | 322/322 |
+| DB lint/diff | zero erro / vazio |
+| Marketing Ops | 181 pass; 2 skips condicionais |
+| performance | p95 28,70 ms e 37,40 ms, limite 500 ms |
+| frontend | 180/180 |
+| repetição focada da corrida | 5/5 |
+| teste com debounce pendente de 60 s | RED sem correção; GREEN com correção |
+| Artifact/RAG | 8/8 e 26/26 |
+| build Docker limpo | quatro alvos PASS |
+| Docker/probes | quatro alvos healthy; HTTP/readiness 200 |
+| navegador | busca/status preservados na URL e após reload |
+| script VPS completo em Linux descartável | PASS; três gates mutantes/restart desativados |
+
+O reset atingiu somente o Supabase local. Não houve migration, deploy ou
+mutação no Supabase remoto. A análise completa está em
+[vps-gate-incident-2026-07-19.md](vps-gate-incident-2026-07-19.md).

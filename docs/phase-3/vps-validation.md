@@ -1,6 +1,6 @@
 # Validação VPS da Fase 3
 
-- **Estado:** `pending_user_execution`
+- **Estado:** `pending_user_reexecution_after_gate_fix`
 - **Implementação local:** `complete`
 - **Supabase remoto:** `deployed_pending_vps_validation`
 - **Responsável pelo deploy/testes manuais:** usuário
@@ -35,6 +35,23 @@ quatro alvos e `up -d --force-recreate`.
 | restart/persistência | `pending` |
 | cleanup | `pending` |
 | aceite do usuário | `pending` |
+
+## Tentativa de 2026-07-19
+
+A primeira execução no commit `a5183c1` falhou antes de concluir os gates
+nativos porque a suíte do Marketing Ops tentou acessar o Supabase local
+ausente em `127.0.0.1:55322`. O incidente, a classificação das 71 falhas, a
+correção e as evidências locais estão em
+[vps-gate-incident-2026-07-19.md](vps-gate-incident-2026-07-19.md).
+
+- [x] causa raiz identificada;
+- [x] regressão automatizada RED/GREEN;
+- [x] cobertura completa repetida em Supabase local isolado;
+- [x] build Docker e probes locais aprovados;
+- [ ] commit corretivo publicado em `origin/main`;
+- [ ] frontend corretivo implantado;
+- [ ] gate não mutante repetido com log integral;
+- [ ] checklist manual concluído.
 
 ## Jornada manual — Manager
 
