@@ -172,13 +172,13 @@ export function ProductionItemDialog({
   const activeCampaignId = form.campaignId || itemQuery.data?.campaignId || '';
   const participantsQuery = useQuery({
     queryKey: marketingOpsKeys.participants(activeCampaignId),
-    queryFn: async () => (await client.listParticipants(activeCampaignId)).data,
+    queryFn: () => client.listParticipants(activeCampaignId),
     enabled: open && Boolean(activeCampaignId)
   });
 
   const contentAssetsQuery = useQuery({
     queryKey: marketingOpsKeys.contentAssets(itemId ?? 'new'),
-    queryFn: async () => (await client.listContentAssets(itemId as string)).data,
+    queryFn: () => client.listContentAssets(itemId as string),
     enabled: open && itemId !== null
   });
 
@@ -420,7 +420,7 @@ export function ProductionItemDialog({
                   className={selectClass}
                 >
                   <option value="">Selecione</option>
-                  {participantsQuery.data?.map((p) => (
+                  {participantsQuery.data?.data.map((p) => (
                     <option key={p.userId} value={p.userId}>{p.displayName}</option>
                   ))}
                 </select>
@@ -528,7 +528,7 @@ export function ProductionItemDialog({
                     } else if (transition.to === 'in_review' && itemQuery.data) {
                       const isEditorial = EDITORIAL_KINDS.has(itemQuery.data.kind);
                       const hasContentVersion = Boolean(
-                        contentAssetsQuery.data?.some((asset) => asset.currentVersionNumber > 0)
+                        contentAssetsQuery.data?.data.some((asset) => asset.currentVersionNumber > 0)
                       );
                       if (isEditorial && !hasContentVersion) {
                         blocked = true;

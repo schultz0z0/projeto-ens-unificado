@@ -103,6 +103,20 @@ function makeClient(overrides: Partial<Client> = {}): Client {
     } as MarketingOpsProductionItem)),
     listInAppNotifications: vi.fn().mockResolvedValue(result([])),
     markInAppNotificationsRead: vi.fn().mockResolvedValue(result([])),
+    listParticipants: vi.fn().mockResolvedValue(result([])),
+    listContentAssets: vi.fn().mockResolvedValue(result([{
+      id: 'asset-1',
+      itemId,
+      campaignId,
+      assetKind: 'copy',
+      title: 'Draft copy',
+      currentVersionNumber: 1,
+      version: 1,
+      createdBy: actorId,
+      updatedBy: actorId,
+      createdAt: '2026-07-18T12:00:00.000Z',
+      updatedAt: '2026-07-18T12:00:00.000Z'
+    }])),
     executeProductionBatch: vi.fn().mockResolvedValue(result({
       results: [],
       succeeded: 0,
