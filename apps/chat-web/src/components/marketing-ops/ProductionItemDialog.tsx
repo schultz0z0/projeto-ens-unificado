@@ -161,6 +161,13 @@ export function ProductionItemDialog({
     enabled: open && itemId !== null
   });
 
+  const activeCampaignId = form.campaignId || itemQuery.data?.campaignId || '';
+  const participantsQuery = useQuery({
+    queryKey: marketingOpsKeys.participants(activeCampaignId),
+    queryFn: async () => (await client.listParticipants(activeCampaignId)).data,
+    enabled: open && Boolean(activeCampaignId)
+  });
+
   useEffect(() => {
     if (!open) {
       setForm(emptyForm());
@@ -391,14 +398,18 @@ export function ProductionItemDialog({
               </Field>
 
               <Field label="Responsável" id="production-item-assignee">
-                <Input
+                <select
                   id="production-item-assignee"
                   value={form.assigneeUserId}
                   onChange={(event) => setField('assigneeUserId', event.target.value)}
-                  placeholder="ID do usuário"
-                  disabled={!canWrite}
-                  className="h-11 rounded-[8px] bg-white/80"
-                />
+                  disabled={!canWrite || participantsQuery.isLoading}
+                  className={selectClass}
+                >
+                  <option value="">Selecione</option>
+                  {participantsQuery.data?.map((p) => (
+                    <option key={p.userId} value={p.userId}>{p.displayName}</option>
+                  ))}
+                </select>
               </Field>
 
               <Field label={`Início (${timeZone})`} id="production-item-starts-at">
