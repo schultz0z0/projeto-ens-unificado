@@ -1,24 +1,19 @@
-# Handoff de continuação — Fase 3
+# Handoff de continuação — Fase 3 encerrada
 
-- **Estado:** `gate_fix_validated_pending_vps_retest`
+- **Estado:** `phase_closed`
 - **Branch única:** `main`
-- **Snapshot:** 2026-07-19, após saneamento do primeiro gate VPS
-- **Código/schema:** Tasks 1–10 completas e validadas localmente (100%)
-- **Supabase:** migrations aplicadas; VPS ainda não homologada
+- **Snapshot:** 2026-07-20
+- **Código/schema:** Tasks 1–10 completas e `production_validated`
+- **Homologação VPS:** `production_validated`
 
-## Ponto exato de continuação
+## Próxima frente
 
-Não há task funcional de Fase 3 pendente. O primeiro gate VPS revelou e já
-teve corrigidos dois problemas: a suíte de banco no bloco nativo sem Supabase
-local e uma corrida de URL no filtro de campanhas. A continuação é operacional:
+Não há task funcional nem operacional pendente da Fase 3. O primeiro gate VPS
+revelou dois problemas, ambos corrigidos antes da homologação final: a suíte de
+banco no bloco nativo sem Supabase local e uma corrida de URL no filtro de
+campanhas.
 
-1. rotacionar a credencial de banco indicada no [runbook](runbook.md);
-2. publicar o commit final em `origin/main`;
-3. implantar o frontend corretivo conforme o runbook;
-4. repetir o gate não mutante com captura integral por `tee`;
-5. executar jornada manual/E2E controlado;
-6. comprovar logs, métricas, restart, persistência e cleanup;
-7. registrar o aceite e só então promover a fase.
+A próxima frente é a Fase 4, respeitando o baseline consolidado da Fase 3.
 
 ## Ordem de leitura
 
@@ -58,14 +53,14 @@ local e uma corrida de URL no filtro de campanhas. A continuação é operaciona
 - `phase-3-vps.sh` completo PASS em Linux descartável, sem gate mutante;
 - nenhum deploy/mutação adicional no Supabase remoto.
 
-## Regras de retomada
+## Regras permanentes
 
 - somente `main`;
-- não executar nova migration ou reset Supabase na VPS;
+- não reabrir a Fase 3 sem evidência de regressão ou novo escopo aprovado;
 - não registrar secrets em comandos/evidências;
 - `--no-cache` é recomendado no primeiro build completo da Fase 3;
 - manter isolated DB gate desativado na VPS;
 - não apontar `MARKETING_OPS_TEST_DATABASE_URL` ao banco de produção;
 - capturar o gate com `tee` e preservar o log completo com permissão `600`;
 - não usar fixtures pessoais;
-- não promover a Fase 4 antes da homologação da Fase 3.
+- usar este pacote como baseline da Fase 4.

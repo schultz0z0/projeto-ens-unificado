@@ -1,36 +1,36 @@
 # Rastreabilidade da Fase 3
 
-- **Estado:** `implementation_complete_pending_vps_validation`
-- **Implementação:** 100%
-- **Data:** 2026-07-19
+- **Estado:** `closed`
+- **Implementação:** `production_validated`
+- **Revisão:** 2026-07-20
 
 | Requisito | Design | Tasks planejadas | Estado |
 |---|---|---:|---|
-| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `locally_validated` |
-| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `locally_validated` |
-| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `locally_validated` |
-| F3-RF-04 Timezone | 7 | 3, 7–8 | `locally_validated` |
-| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `locally_validated` |
-| F3-RF-06 Dependências | 4.2, 10 | 4, 6 | `locally_validated` |
-| F3-RF-07 Conteúdo | 4.3–4.4 | 5–6 | `locally_validated` |
-| F3-RF-08 Versões | 4.4, 10 | 5–6 | `locally_validated` |
-| F3-RF-09 Artefatos | 4.5 | 5–6 | `locally_validated` |
-| F3-RF-10 Estados | 5 | 1–2, 6 | `locally_validated` |
-| F3-RF-11 Notificações | 4.6, 12 | 9 | `locally_validated` |
-| F3-RF-12 Lote | 8, 10 | 9 | `locally_validated` |
+| F3-RF-01 Tipos | 4.1, 5 | 1–2 | `production_validated` |
+| F3-RF-02 Campos | 4.1, 8 | 1–2, 6 | `production_validated` |
+| F3-RF-03 Visualizações | 6, 11 | 3, 7–8 | `production_validated` |
+| F3-RF-04 Timezone | 7 | 3, 7–8 | `production_validated` |
+| F3-RF-05 Reagendamento | 5, 8, 10 | 2–3, 6 | `production_validated` |
+| F3-RF-06 Dependências | 4.2, 10 | 4, 6 | `production_validated` |
+| F3-RF-07 Conteúdo | 4.3–4.4 | 5–6 | `production_validated` |
+| F3-RF-08 Versões | 4.4, 10 | 5–6 | `production_validated` |
+| F3-RF-09 Artefatos | 4.5 | 5–6 | `production_validated` |
+| F3-RF-10 Estados | 5 | 1–2, 6 | `production_validated` |
+| F3-RF-11 Notificações | 4.6, 12 | 9 | `production_validated` |
+| F3-RF-12 Lote | 8, 10 | 9 | `production_validated` |
 
 ## Gates transversais
 
 | Gate | Design | Tasks | Estado |
 |---|---|---:|---|
-| RLS/RBAC/cross-tenant | 9 | 1, 4–6, 10 | `locally_validated` |
-| Idempotência/concorrência | 10 | 2, 4–6, 9–10 | `locally_validated` |
-| Auditoria/outbox | 10 | 2, 4–6, 9 | `locally_validated` |
-| Performance | 6, 12 | 3, 10 | `locally_validated` |
-| Acessibilidade | 11 | 7–8, 10 | `locally_validated` |
-| Migration/rollback | 13–14 | 1, 10 | `locally_validated` |
-| Supabase remoto | 13–14 | 10 | `deployed_pending_vps_validation` |
-| VPS | 13–14 | 10 | `pending_user_execution` |
+| RLS/RBAC/cross-tenant | 9 | 1, 4–6, 10 | `production_validated` |
+| Idempotência/concorrência | 10 | 2, 4–6, 9–10 | `production_validated` |
+| Auditoria/outbox | 10 | 2, 4–6, 9 | `production_validated` |
+| Performance | 6, 12 | 3, 10 | `production_validated` |
+| Acessibilidade | 11 | 7–8, 10 | `production_validated` |
+| Migration/rollback | 13–14 | 1, 10 | `production_validated` |
+| Supabase remoto | 13–14 | 10 | `production_validated` |
+| VPS | 13–14 | 10 | `production_validated` |
 
 ## Evidência Task 1
 
@@ -200,8 +200,7 @@ permanece no gate final.
 
 ## Parecer
 
-F3-RF-01–12 e todos os gates técnicos estão validados localmente. O schema
-remoto foi implantado, mas isso não substitui a homologação da aplicação. O
-estado final permanece `implementation_complete_pending_vps_validation` até o
-usuário aprovar deploy, smokes por papel, logs, restart, cleanup e rollback na
-VPS.
+F3-RF-01–12 e todos os gates técnicos e operacionais estão encerrados como
+`production_validated`. O schema remoto, a aplicação, os smokes por papel,
+logs, restart, cleanup e rollback foram reconciliados na homologação manual da
+VPS aprovada em 2026-07-20.

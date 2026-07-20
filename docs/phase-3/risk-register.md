@@ -1,7 +1,7 @@
 # Registro de riscos da Fase 3
 
-- **Estado:** `local_mitigations_validated_pending_vps`
-- **Revisão:** 2026-07-19
+- **Estado:** `closed_with_accepted_residuals`
+- **Revisão:** 2026-07-20
 
 | ID | Risco | Impacto | Mitigação/gate | Owner |
 |---|---|---|---|---|
@@ -130,12 +130,28 @@ falha alta/crítica sem mitigação.
   `public`/`smart_mail` e storage. O lint dos schemas alterados tem zero erro e
   não houve achado novo de Fase 3. O baseline continua aceito, não resolvido.
 
-## Riscos residuais para o gate VPS
+## Revisão final após homologação VPS
 
-1. rotação da credencial e atualização coordenada do `.env`;
-2. configuração real de CORS/URLs/flags de build;
-3. diferenças de kernel, volume e Traefik da VPS;
-4. validação manual por papel/cross-tenant e viewport real;
-5. advisors históricos, fora do escopo da Fase 3.
+- F3-R-01 a F3-R-13: encerrados com evidência local e homologação manual na VPS.
+- F3-R-14: encerrado pela rotação da credencial exposta, atualização coordenada
+  do `.env` e aceite do deploy de produção antes do fechamento da fase.
+- F3-R-15: permanece como resíduo histórico aceito, sem achado novo
+  introduzido pela Fase 3.
 
-Nenhum desses resíduos autoriza promover a fase antes do checklist da VPS.
+## Resíduos aceitos
+
+| ID | Residual | Impacto | Owner | Tratamento |
+|---|---|---|---|---|
+| F3-R-15 | advisors históricos em objetos legados fora do escopo da fase | baixo; dívida técnica e de segurança já conhecida | Data/Security | tratar em ciclo dedicado sem reabrir a Fase 3 |
+
+## Bloqueadores permanentes
+
+Continuam bloqueando qualquer rollout futuro:
+
+- acesso cross-tenant ou elevação de papel;
+- conteúdo, token, chave ou URL assinada em logs/eventos;
+- ciclo/deadlock reproduzível ou perda de bytes/dados;
+- estado reservado aceito pela API antes da fase apropriada;
+- falha alta/crítica conhecida sem mitigação.
+
+Nenhum desses bloqueadores está aberto no encerramento.

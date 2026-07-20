@@ -1,8 +1,8 @@
 # PRD — Fase 3: Calendário e Esteira de Produção
 
-- **Status:** `approved`
-- **Prontidão:** `implementation_complete_pending_vps_validation`
-- **Implementação:** `tasks_1_to_10_validated_locally`
+- **Status:** `completed`
+- **Implementação:** `production_validated`
+- **Última reconciliação:** 2026-07-20 — homologação VPS aprovada e fase encerrada
 - **Aprovação do escopo:** 2026-07-18
 - **Dependência:** Fase 2 `production_validated`
 - **Resultado:** trabalho de campanha planejado, produzido e acompanhável
@@ -214,8 +214,8 @@ Labels não incluem título, conteúdo, nome pessoal, artifact ID ou URL assinad
 - [x] Notificações in-app são persistidas e deduplicáveis.
 - [x] Reinício local não perde agenda, dependências, versões ou eventos.
 
-Os critérios acima estão aceitos no gate local/Docker. O aceite operacional na
-VPS permanece pendente e não está implícito nestes checkboxes.
+Os critérios acima foram aceitos no gate local/Docker e confirmados na
+homologação manual da VPS aprovada em 2026-07-20.
 
 ## Gates
 
@@ -253,5 +253,6 @@ VPS permanece pendente e não está implícito nestes checkboxes.
 
 ## Gate de saída
 
-A Fase 4 só inicia quando itens, agenda, dependências, versões e eventos internos
-estiverem validados localmente e homologados na VPS, sem falha alta/crítica.
+A Fase 3 foi encerrada após itens, agenda, dependências, versões e eventos
+internos serem validados localmente e homologados na VPS, sem falha
+alta/crítica conhecida.

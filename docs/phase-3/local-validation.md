@@ -1,10 +1,12 @@
-# Evidências de validação local da Fase 3
+# Validação local final da Fase 3
 
-- **Data-base:** 2026-07-18
+- **Data-base:** 2026-07-19
 - **Branch:** `main`
-- **Estado:** `in_progress`
-- **Política:** atualizar no mesmo ciclo de cada task; não registrar gate que
-  não tenha sido realmente executado.
+- **Estado:** `verified_local_2026-07-19`
+- **Escopo:** pacote local final antes da homologação VPS já concluída
+
+Este registro consolida os gates locais finais da Fase 3. As provas históricas
+de homologação em produção permanecem em [vps-validation.md](vps-validation.md).
 
 ## Task 1 — schema, RLS e contratos
 

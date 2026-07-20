@@ -1,7 +1,7 @@
 # Runbook da Fase 3
 
-- **Estado:** `ready_for_vps_execution`
-- **Implementação:** `implementation_complete_pending_vps_validation`
+- **Estado:** `executed_and_reusable`
+- **Implementação:** `production_validated`
 - **Supabase do app:** migrations aplicadas e invariantes validadas
 - **Produção:** Ubuntu Linux + Docker Engine/Compose + Traefik
 - **Checkout VPS esperado:** `/opt/nexus-ens`; confirmar antes do deploy
@@ -16,13 +16,13 @@
 | Rotacionar a senha do banco e atualizar o `.env` da VPS | usuário |
 | Deploy e validação manual na VPS | usuário, com análise do agente |
 
-## Bloqueador pré-deploy: rotação de credencial
+## Registro do pré-deploy executado
 
 Uma senha de banco apareceu acidentalmente na saída do terminal durante o
 diagnóstico do deploy Supabase. Ela não foi gravada no repositório nem nesta
 documentação, mas deve ser considerada exposta.
 
-Antes do deploy:
+Antes do deploy aprovado:
 
 1. rotacionar a senha do banco do projeto Supabase do app;
 2. atualizar `NEXUS_SUPABASE_DB_PASSWORD` e

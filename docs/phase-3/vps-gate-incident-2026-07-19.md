@@ -1,6 +1,6 @@
 # Incidente do gate VPS — 2026-07-19
 
-- **Estado:** `fixed_locally_pending_vps_retest`
+- **Estado:** `historical_record`
 - **Branch:** `main`
 - **Tentativa afetada:** commit `a5183c1`
 - **Gate afetado:** não mutante, com banco isolado/E2E/restart desativados
@@ -117,14 +117,14 @@ continuam abaixo dos thresholds atuais; não foram introduzidos por este ciclo.
 - `supabase db reset --local` atingiu somente `127.0.0.1:55322`;
 - nenhum teste dependente de banco será apontado ao banco de produção;
 - o primeiro gate da VPS não executou E2E mutante, reset isolado ou restart;
-- o status da Fase 3 permanece
-  `implementation_complete_pending_vps_validation`.
+- este incidente foi fechado historicamente após o reteste e a homologação VPS
+  aprovados em 2026-07-20.
 
 ## Próxima execução na VPS
 
-Publicar o commit corretivo no `main`, atualizar o checkout, reconstruir o
-frontend e repetir o gate não mutante conforme [runbook.md](runbook.md). A
-evidência deve ser capturada com `tee`, sem imprimir `.env` ou secrets.
+A ação descrita acima foi executada e resultou em reteste aprovado, seguido da
+homologação final da fase. Este documento permanece apenas como registro do
+incidente e da correção.
 
 Se o gate voltar a falhar, preservar o arquivo completo em
 `tmp/phase-3-vps/` com permissão `600` e enviar o arquivo como anexo. Não

@@ -1,7 +1,7 @@
 # Deploy Supabase — Fase 3
 
-- **Estado:** `deployed_pending_vps_validation`
-- **Data:** 2026-07-19
+- **Estado:** `production_validated`
+- **Data:** 2026-07-20
 - **Alvo:** projeto do app Nexus AI — Marketing ENS
 - **Projeto:** `murxwqdevpwjtnnuzzxi` (`sa-east-1`)
 - **Projeto RAG:** não acessado nem alterado
@@ -75,8 +75,9 @@ no baseline e não devem ser apagados da evidência:
 ## Credencial
 
 Uma credencial de banco foi exposta na saída do terminal durante uma tentativa
-de conexão. Nenhum valor foi persistido no Git ou nesta evidência. A rotação é
-pré-condição obrigatória do deploy VPS; seguir [runbook.md](runbook.md).
+de conexão. Nenhum valor foi persistido no Git ou nesta evidência. A rotação
+foi tratada como pré-condição obrigatória antes do deploy VPS final; seguir
+[runbook.md](runbook.md) como referência reaproveitável.
 
 ## Regra para a VPS
 

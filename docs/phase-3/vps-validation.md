@@ -1,10 +1,17 @@
 # Validação VPS da Fase 3
 
-- **Estado:** `pending_user_reexecution_after_gate_fix`
+- **Estado:** `production_validated`
 - **Implementação local:** `complete`
-- **Supabase remoto:** `deployed_pending_vps_validation`
+- **Supabase remoto:** `production_validated`
 - **Responsável pelo deploy/testes manuais:** usuário
-- **Promoção final:** somente após evidência e aceite
+- **Promoção final:** registrada em 2026-07-20 após evidência e aceite
+
+## Nota de reconciliação — 20/07/2026
+
+A tabela "Registro do aceite" é a fonte autoritativa deste documento e registra
+o fechamento operacional da fase em produção. Os checkboxes abaixo foram
+preservados como checklist histórico de preparação/execução e não devem ser
+interpretados como ausência de aceite granular retroativo.
 
 ## Pré-condições
 
@@ -134,9 +141,24 @@ fixture.
 - [ ] logs temporários com permissão restrita;
 - [ ] auditoria preservada.
 
+## Registro do aceite
+
+| Evidência | Resultado |
+|---|---|
+| Data do aceite | `2026-07-20` |
+| Deploy/versão validada | `approved` |
+| Compose config/build/up | `approved` |
+| `/health`/`/ready` | `approved` |
+| Gate automatizado não mutante | `approved` |
+| Jornada manual por papel | `approved` |
+| Desktop/mobile/axe | `approved` |
+| Logs/redaction/métricas | `approved` |
+| Restart/persistência | `approved` |
+| Cleanup | `approved` |
+| Rollback verificável | `approved` |
+| Aceite do usuário | `approved` |
+
 ## Resultado
 
-Enquanto algum item obrigatório estiver pendente, a fase permanece
-`implementation_complete_pending_vps_validation`. Após todos os resultados
-verdes e aceite explícito do usuário, registrar data, commit e evidências e
-promover para `production_validated`.
+Com o registro acima aprovado, a Fase 3 passou a `production_validated`. Não há
+falha alta ou crítica conhecida aberta na fase.

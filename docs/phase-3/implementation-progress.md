@@ -1,24 +1,23 @@
 # Progresso de implementação da Fase 3
 
-- **Estado:** `in_progress`
-- **Subestado:** `implementation_complete_pending_vps_validation`
+- **Estado:** `production_validated`
 - **Progresso de implementação:** 100%
-- **Snapshot:** 2026-07-19
+- **Snapshot final reconciliado:** 2026-07-20
 - **Branch única:** `main`
-- **Próximo gate:** deploy e homologação manual na VPS
+- **Homologação VPS:** aprovada em 2026-07-20
 
 | Task | Entregável | Estado | Evidência |
 |---:|---|---|---|
-| 1 | gate, tipos, migration, RLS e backfill | `validated_locally` | 295 pgTAP; 19 contratos; reset/lint/diff verdes |
-| 2 | CRUD e máquina de estados | `validated_locally` | 7 cenários novos; 142 testes do serviço verdes |
-| 3 | agenda, query canônica e timezone | `validated_locally` | 299 pgTAP; p95 40,02 ms/10 mil itens; 153 testes verdes |
-| 4 | grafo de dependências | `validated_locally` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
-| 5 | conteúdo, versões e artifacts | `validated_locally` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
-| 6 | REST/OpenAPI e client tipado | `validated_locally` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
-| 7 | lista acessível | `validated_locally` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
-| 8 | views semana e mês | `validated_locally` | 7 focados; 174 frontend; 2 E2E + axe desktop/mobile |
-| 9 | notificações in-app e lote | `validated_locally` | 5 domínio; 16 REST; 22 focados; 175 serviço + 179 frontend; smoke browser/Docker |
-| 10 | E2E, performance, observabilidade, operação e handoff VPS | `validated_locally` | 181 serviço; 179 frontend; 322 pgTAP; E2E Docker; restart; Supabase remoto |
+| 1 | gate, tipos, migration, RLS e backfill | `production_validated` | 295 pgTAP; 19 contratos; reset/lint/diff verdes |
+| 2 | CRUD e máquina de estados | `production_validated` | 7 cenários novos; 142 testes do serviço verdes |
+| 3 | agenda, query canônica e timezone | `production_validated` | 299 pgTAP; p95 40,02 ms/10 mil itens; 153 testes verdes |
+| 4 | grafo de dependências | `production_validated` | 4 cenários; concorrência A↔B sem deadlock; 307 pgTAP |
+| 5 | conteúdo, versões e artifacts | `production_validated` | 320 pgTAP; 166 testes do serviço; smoke real do Artifact Server |
+| 6 | REST/OpenAPI e client tipado | `production_validated` | 26 paths/38 operações; 15 REST; 13 SDK; smoke Docker |
+| 7 | lista acessível | `production_validated` | 7 focados; 167 frontend; browser desktop/mobile e Docker |
+| 8 | views semana e mês | `production_validated` | 7 focados; 174 frontend; 2 E2E + axe desktop/mobile |
+| 9 | notificações in-app e lote | `production_validated` | 5 domínio; 16 REST; 22 focados; 175 serviço + 179 frontend; smoke browser/Docker |
+| 10 | E2E, performance, observabilidade, operação e handoff VPS | `production_validated` | 181 serviço; 179 frontend; 322 pgTAP; E2E Docker; restart; Supabase remoto + VPS |
 
 ## Protocolo
 
@@ -330,10 +329,9 @@ Ao concluir uma task:
 
 ## Decisão de fechamento interno
 
-As dez tasks estão implementadas e validadas. A fase permanece `in_progress`,
-no subestado `implementation_complete_pending_vps_validation`, porque o
-deploy/build, os smokes manuais, logs e restart na VPS ainda dependem do
-usuário. Não iniciar a Fase 4 antes desse aceite.
+As dez tasks estão implementadas, validadas e homologadas. A fase foi
+encerrada como `production_validated` após o deploy/build, os smokes manuais,
+logs e restart na VPS serem aprovados pelo usuário em 2026-07-20.
 
 ## Saneamento após o primeiro gate VPS — 2026-07-19
 
@@ -357,6 +355,6 @@ usuário. Não iniciar a Fase 4 antes desse aceite.
 - O próprio `phase-3-vps.sh` passou integralmente em Linux descartável com
   isolated DB, E2E mutante e restart desativados; os sete Playwright E2E foram
   comprovadamente skipped e o scanner de logs passou.
-- O status permanece `implementation_complete_pending_vps_validation`; o
-  próximo passo é publicar o commit corretivo e repetir o gate não mutante na
-  VPS com log integral.
+- O reteste do gate não mutante, a jornada manual e o aceite final foram
+  concluídos na VPS em 2026-07-20, encerrando a fase como
+  `production_validated`.

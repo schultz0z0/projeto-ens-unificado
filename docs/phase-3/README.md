@@ -1,40 +1,39 @@
 # Fase 3 — Calendário e Esteira de Produção
 
-Este diretório é a fonte de evidência da implementação da Fase 3 no padrão
-documental das Fases 0–2. O código e o schema estão completos; o aceite de
-produção permanece reservado ao gate executado pelo usuário na VPS.
+Este diretório reúne o contrato, a implementação executada e as evidências de
+encerramento da Fase 3 no padrão documental das Fases 0–2. O código, o schema,
+o deploy e a homologação manual na VPS foram reconciliados neste pacote.
 
 ## Status
 
-- **Fase:** `in_progress`
-- **Subestado:** `implementation_complete_pending_vps_validation`
-- **Snapshot:** 2026-07-19
-- **Implementação:** Tasks 1–10 completas
-- **Progresso de implementação:** 100%
-- **Supabase remoto:** `deployed_pending_vps_validation`
+- **Fase:** `production_validated`
+- **Snapshot reconciliado:** 2026-07-20
+- **Tasks:** 1–10 concluídas
+- **Homologação VPS:** aprovada em 2026-07-20
+- **Supabase remoto:** `production_validated`
 - **Branch única:** `main`
 - **Dependência:** Fase 2 `production_validated`
 - **PRD:** [phase-3-calendario-esteira-producao.md](../prds/phase-3-calendario-esteira-producao.md)
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-07-18-phase-3-calendario-esteira-producao-implementation.md](../plans/2026-07-18-phase-3-calendario-esteira-producao-implementation.md)
 
-## Matriz de fechamento interno
+## Pacote documental
 
 | Entregável/gate | Estado | Evidência |
 |---|---|---|
-| PRD/design/plano | `implemented_as_approved` | PRD, design e plano |
-| Tasks 1–10 | `validated_locally` | [progresso](implementation-progress.md) |
-| Rastreabilidade F3-RF-01–12 | `validated_locally` | [rastreabilidade](requirements-traceability.md) |
-| Supabase local | `validated_locally` | reset, 322/322 pgTAP, lint/diff |
-| Supabase remoto | `deployed_pending_vps_validation` | [deploy](supabase-deployment.md) |
-| Marketing Ops | `validated_locally` | 181 testes, tipos e build |
-| Frontend | `validated_locally` | 179 testes, lint, tipos, build e E2E |
-| Artifact/RAG | `validated_locally` | 8 + 26 testes |
-| Performance | `validated_locally` | 5 mil campanhas e 10 mil itens abaixo de 500 ms |
-| Docker/Linux | `validated_locally` | build limpo, health/readiness, logs e restart |
-| Operação/rollback | `ready_for_vps_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `pending_user_reexecution_after_gate_fix` | [checklist](vps-validation.md) |
-| Incidente/reteste do gate VPS | `fixed_locally_pending_vps_retest` | [evidência](vps-gate-incident-2026-07-19.md) |
+| PRD/design/plano | `approved_as_built` | PRD, design e plano |
+| Tasks 1–10 | `completed` | [progresso](implementation-progress.md) |
+| Rastreabilidade F3-RF-01–12 | `closed` | [rastreabilidade](requirements-traceability.md) |
+| Supabase local | `verified_local_2026-07-19` | reset, 322/322 pgTAP, lint/diff |
+| Supabase remoto | `production_validated` | [deploy](supabase-deployment.md) |
+| Marketing Ops | `production_validated` | 181 testes, tipos e build + homologação VPS |
+| Frontend | `production_validated` | 179 testes, lint, tipos, build, E2E e jornada manual |
+| Artifact/RAG | `production_validated` | 8 + 26 testes + probes na VPS |
+| Performance | `production_validated` | 5 mil campanhas e 10 mil itens abaixo de 500 ms |
+| Docker/Linux | `production_validated` | build, health/readiness, logs e restart |
+| Operação/rollback | `executed_and_reusable` | [runbook](runbook.md), [rollback](rollback.md) |
+| Homologação VPS | `production_validated` | [checklist](vps-validation.md) |
+| Incidente do primeiro gate VPS | `historical_record` | [evidência](vps-gate-incident-2026-07-19.md) |
 
 ## Escopo entregue
 
@@ -53,7 +52,7 @@ produção permanece reservado ao gate executado pelo usuário na VPS.
 Continuam fora do escopo: aprovação, execução/publicação, recorrência,
 drag-and-drop obrigatório e notificações externas.
 
-## Evidência final local
+## Evidência consolidada
 
 - Supabase: reset fresco, 6 arquivos e 322/322 pgTAP; lint sem erro e diff vazio;
 - Marketing Ops: 181 pass, 2 E2E condicionais skipped; typecheck/build verdes;
@@ -68,13 +67,14 @@ drag-and-drop obrigatório e notificações externas.
 - security gate sem vulnerabilidade alta/crítica;
 - migrations remotas aplicadas após backup e dry-run, com invariantes
   conferidas.
+- deploy de produção e homologação manual na VPS aprovados pelo usuário em
+  2026-07-20;
+- aceite final registrado sem falha alta/crítica conhecida na fase.
 
 Detalhes e bugs corrigidos estão em [local-validation.md](local-validation.md).
 
 ## Decisão
 
-**GO para publicação do `main` e homologação controlada na VPS.** A
-implementação está 100% concluída, mas a Fase 3 ainda não está `completed` nem
-`production_validated`. Esses estados exigem build/deploy, smokes manuais,
-logs, restart, cleanup e aceite do usuário conforme
-[vps-validation.md](vps-validation.md).
+**Fase 3 encerrada como `production_validated`.** O gate de produção foi
+aprovado pelo usuário em 2026-07-20 após deploy, smokes manuais, logs,
+restart, cleanup e aceite funcional conforme [vps-validation.md](vps-validation.md).

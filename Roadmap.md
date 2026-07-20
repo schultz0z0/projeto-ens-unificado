@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1 e 2 `production_validated`; Fase 3 `implementation_complete_pending_vps_validation`
-- **Atualização:** 18 de julho de 2026
+- **Status:** Fases 0, 1, 2 e 3 `production_validated`
+- **Atualização:** 20 de julho de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -252,11 +252,11 @@ funcional da fase.
 
 ### Fase 3: Calendário e Esteira de Produção
 
-**Estado:** `implementation_complete_pending_vps_validation` — Tasks 1–10,
-schema, API, frontend, Docker, E2E, performance, observabilidade, operação e
-documentação concluídos e validados localmente em 19 de julho de 2026. As
-migrations foram aplicadas ao Supabase do app após backup/dry-run. Falta o
-deploy e a homologação manual na VPS para `production_validated`.
+**Estado:** `production_validated` — Tasks 1–10, schema, API, frontend,
+Docker, E2E, performance, observabilidade, operação e documentação concluídos.
+As migrations foram aplicadas ao Supabase do app após backup/dry-run em 19 de
+julho de 2026, e o deploy com a homologação manual na VPS foi aprovado em 20
+de julho de 2026.
 
 **Objetivo:** transformar campanhas em trabalho planejado e acompanhável.
 

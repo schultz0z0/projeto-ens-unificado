@@ -98,6 +98,28 @@ function errorCorrelation(error: unknown): string | null {
   return error instanceof MarketingOpsApiError ? error.correlationId : null;
 }
 
+const READINESS_LABELS: Record<string, string> = {
+  title: 'Título',
+  assigneeUserId: 'Responsável',
+  dueAt: 'Prazo',
+};
+
+function readinessGateFields(item: MarketingOpsProductionItem): string[] {
+  const missing: string[] = [];
+  if (!item.title?.trim()) missing.push('title');
+  if (!item.assigneeUserId) missing.push('assigneeUserId');
+  if (!item.dueAt) missing.push('dueAt');
+  return missing;
+}
+
+function formatMissingFields(details: unknown): string {
+  if (!details || typeof details !== 'object') return 'Preencha todos os campos obrigatórios antes de avançar.';
+  const fields = (details as { fields?: string[] }).fields;
+  if (!Array.isArray(fields) || !fields.length) return 'Preencha todos os campos obrigatórios antes de avançar.';
+  const labels = fields.map(f => READINESS_LABELS[f] ?? f);
+  return `Preencha os campos a seguir antes de marcar como pronto: ${labels.join(', ')}.`;
+}
+
 const transitionOptions: Record<
   Exclude<MarketingOpsItemStatus, 'completed' | 'cancelled'>,
   Array<{ to: MarketingOpsItemStatus; label: string; destructive?: boolean }>
@@ -422,11 +444,19 @@ export function ProductionItemDialog({
             {mutationError ? (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{conflict ? 'O item foi atualizado em outra sessão' : 'Não foi possível salvar'}</AlertTitle>
+                <AlertTitle>
+                  {conflict
+                    ? 'O item foi atualizado em outra sessão'
+                    : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_requirements_missing'
+                      ? 'Campos obrigatórios não preenchidos'
+                      : 'Não foi possível salvar'}
+                </AlertTitle>
                 <AlertDescription>
                   {conflict?.currentVersion
                     ? `A versão atual é a versão ${conflict.currentVersion}. Recarregue antes de tentar novamente.`
-                    : mutationError.message}
+                    : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_requirements_missing'
+                      ? formatMissingFields(mutationError.details)
+                      : mutationError.message}
                   {errorCorrelation(mutationError) ? (
                     <span className="mt-1 block text-xs">Correlação: {errorCorrelation(mutationError)}</span>
                   ) : null}
@@ -452,21 +482,36 @@ export function ProductionItemDialog({
               <section aria-label="Transições do item" className="mb-4 rounded-[8px] border border-slate-200 p-3">
                 <p className="mb-2 text-sm font-medium">Alterar status</p>
                 <div className="flex flex-wrap gap-2">
-                  {transitions.map((transition) => (
-                    <Button
-                      key={transition.to}
-                      type="button"
-                      variant={transition.destructive ? 'destructive' : 'outline'}
-                      onClick={() => transitionMutation.mutate(transition.to)}
-                      disabled={transitionMutation.isPending}
-                      className="rounded-[8px]"
-                    >
-                      {transitionMutation.isPending && transitionMutation.variables === transition.to
-                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        : null}
-                      {transition.label}
-                    </Button>
-                  ))}
+                  {transitions.map((transition) => {
+                    const readinessIssues = transition.to === 'ready' && itemQuery.data
+                      ? readinessGateFields(itemQuery.data)
+                      : [];
+                    const blocked = readinessIssues.length > 0;
+                    return (
+                      <div key={transition.to}>
+                        <Button
+                          type="button"
+                          variant={transition.destructive ? 'destructive' : 'outline'}
+                          onClick={() => transitionMutation.mutate(transition.to)}
+                          disabled={transitionMutation.isPending || blocked}
+                          className="rounded-[8px]"
+                          title={blocked
+                            ? `Preencha antes: ${readinessIssues.map(f => READINESS_LABELS[f] ?? f).join(', ')}`
+                            : undefined}
+                        >
+                          {transitionMutation.isPending && transitionMutation.variables === transition.to
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            : null}
+                          {transition.label}
+                        </Button>
+                        {blocked ? (
+                          <p className="mt-1 text-xs text-amber-600">
+                            Faltam: {readinessIssues.map(f => READINESS_LABELS[f] ?? f).join(', ')}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ) : null}
