@@ -98,6 +98,14 @@ function errorCorrelation(error: unknown): string | null {
   return error instanceof MarketingOpsApiError ? error.correlationId : null;
 }
 
+const EDITORIAL_KINDS = new Set<MarketingOpsItemKind>([
+  'email',
+  'whatsapp',
+  'post',
+  'creative',
+  'review'
+]);
+
 const READINESS_LABELS: Record<string, string> = {
   title: 'Título',
   assigneeUserId: 'Responsável',
@@ -166,6 +174,12 @@ export function ProductionItemDialog({
     queryKey: marketingOpsKeys.participants(activeCampaignId),
     queryFn: async () => (await client.listParticipants(activeCampaignId)).data,
     enabled: open && Boolean(activeCampaignId)
+  });
+
+  const contentAssetsQuery = useQuery({
+    queryKey: marketingOpsKeys.contentAssets(itemId ?? 'new'),
+    queryFn: async () => (await client.listContentAssets(itemId as string)).data,
+    enabled: open && itemId !== null
   });
 
   useEffect(() => {
@@ -460,14 +474,22 @@ export function ProductionItemDialog({
                     ? 'O item foi atualizado em outra sessão'
                     : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_requirements_missing'
                       ? 'Campos obrigatórios não preenchidos'
-                      : 'Não foi possível salvar'}
+                      : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_content_required'
+                        ? 'Versão de conteúdo necessária'
+                        : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_blocked'
+                          ? 'Item com dependências pendentes'
+                          : 'Não foi possível salvar'}
                 </AlertTitle>
                 <AlertDescription>
                   {conflict?.currentVersion
                     ? `A versão atual é a versão ${conflict.currentVersion}. Recarregue antes de tentar novamente.`
                     : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_requirements_missing'
                       ? formatMissingFields(mutationError.details)
-                      : mutationError.message}
+                      : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_content_required'
+                        ? 'Este item de produção é do tipo editorial e requer que ao menos uma versão de conteúdo seja cadastrada antes de ser enviado para revisão.'
+                        : mutationError instanceof MarketingOpsApiError && mutationError.code === 'item_blocked'
+                          ? 'Este item possui dependências de produções anteriores que ainda não foram concluídas.'
+                          : mutationError.message}
                   {errorCorrelation(mutationError) ? (
                     <span className="mt-1 block text-xs">Correlação: {errorCorrelation(mutationError)}</span>
                   ) : null}
@@ -494,10 +516,26 @@ export function ProductionItemDialog({
                 <p className="mb-2 text-sm font-medium">Alterar status</p>
                 <div className="flex flex-wrap gap-2">
                   {transitions.map((transition) => {
-                    const readinessIssues = transition.to === 'ready' && itemQuery.data
-                      ? readinessGateFields(itemQuery.data)
-                      : [];
-                    const blocked = readinessIssues.length > 0;
+                    let blocked = false;
+                    let blockReason: string | null = null;
+
+                    if (transition.to === 'ready' && itemQuery.data) {
+                      const readinessIssues = readinessGateFields(itemQuery.data);
+                      if (readinessIssues.length > 0) {
+                        blocked = true;
+                        blockReason = `Faltam: ${readinessIssues.map(f => READINESS_LABELS[f] ?? f).join(', ')}`;
+                      }
+                    } else if (transition.to === 'in_review' && itemQuery.data) {
+                      const isEditorial = EDITORIAL_KINDS.has(itemQuery.data.kind);
+                      const hasContentVersion = Boolean(
+                        contentAssetsQuery.data?.some((asset) => asset.currentVersionNumber > 0)
+                      );
+                      if (isEditorial && !hasContentVersion) {
+                        blocked = true;
+                        blockReason = 'Requer uma versão de conteúdo antes de enviar para revisão';
+                      }
+                    }
+
                     return (
                       <div key={transition.to}>
                         <Button
@@ -506,18 +544,16 @@ export function ProductionItemDialog({
                           onClick={() => transitionMutation.mutate(transition.to)}
                           disabled={transitionMutation.isPending || blocked}
                           className="rounded-[8px]"
-                          title={blocked
-                            ? `Preencha antes: ${readinessIssues.map(f => READINESS_LABELS[f] ?? f).join(', ')}`
-                            : undefined}
+                          title={blockReason ?? undefined}
                         >
                           {transitionMutation.isPending && transitionMutation.variables === transition.to
                             ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             : null}
                           {transition.label}
                         </Button>
-                        {blocked ? (
+                        {blocked && blockReason ? (
                           <p className="mt-1 text-xs text-amber-600">
-                            Faltam: {readinessIssues.map(f => READINESS_LABELS[f] ?? f).join(', ')}
+                            {blockReason}
                           </p>
                         ) : null}
                       </div>
