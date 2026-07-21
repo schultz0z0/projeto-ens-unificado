@@ -15,8 +15,8 @@
 | 3. Artifact Server | Concluída | eb061a7 | 13 testes verdes |
 | 4. Banco | Concluída e aplicada | 2837702 | 27 pgTAP verdes no remoto |
 | 5. Artifact client | Concluída | 53bc144 | 20 testes, tsc e build verdes |
-| 6. Workspace lifecycle | Concluída | a registrar | 24 testes, tsc e build verdes |
-| 7. Package builder | Pendente | — | — |
+| 6. Workspace lifecycle | Concluída | 4885300 | 24 testes, tsc e build verdes |
+| 7. Package builder | Concluída | a registrar | 28 testes, tsc e build verdes |
 | 8. Jobs e worker | Pendente | — | — |
 | 9. REST/MCP/auth | Pendente | — | — |
 | 10. Container Picture | Pendente | — | — |
@@ -83,3 +83,11 @@
 - Segurança/integridade: todos os acessos são tenant/user scoped; a promoção acontece antes do insert idempotente em validated_works; a limpeza só ocorre depois de status validated e mantém os IDs promovidos ao fechar.
 - Ajuste durante GREEN: o fake de concorrência foi corrigido para reproduzir a atomicidade do índice único do Postgres; os quatro contratos de lifecycle passaram.
 - GREEN: suíte Picture retornou 24 pass, 0 fail; bunx tsc --noEmit e bun run build saíram com código 0.
+
+### Etapa 7 — Package builder e publisher
+
+- RED: os quatro testes de builder/publisher falharam por módulos ausentes.
+- Implementação: pacote temporário determinístico com brief, prompt, plano, steps, overlays, referências saneadas e diretórios intermediate/final; referências são aceitas apenas pelo manifest do workspace.
+- Publicação: varredura sem symlinks, categorias auditáveis, MIME por extensão e reuso de artifact existente quando relative_path e SHA-256 coincidem, evitando duplicação em reruns do mesmo job.
+- Higiene: falhas do builder removem o diretório temporário; o executor recebe cleanup explícito para o finally da próxima etapa.
+- GREEN: bun test retornou 28 pass, 0 fail; typecheck e build saíram com código 0.
