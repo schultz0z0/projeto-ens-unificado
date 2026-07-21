@@ -22,8 +22,8 @@
 | 10. Container Picture | Concluída com validação estática | e338f87 | 45 testes e tsc verdes; Docker CLI indisponível |
 | 11. Hermes MCP/skill | Concluída | 0c051d6 | 16 testes Hermes verdes; 1 POSIX skip |
 | 12. Bridge Picture | Concluída | fe5a111 | 81 testes verdes e syntax check |
-| 13. Sessões frontend | Concluída | a registrar | 7 testes focais e typecheck verdes |
-| 14. Client/hook frontend | Pendente | — | — |
+| 13. Sessões frontend | Concluída | a135527 | 7 testes focais e typecheck verdes |
+| 14. Client/hook frontend | Concluída | a registrar | 9 testes focais e typecheck verdes |
 | 15. UI Picture | Pendente | — | — |
 | 16. Trabalhos Validados | Pendente | — | — |
 | 17. Cutover Designer | Pendente | — | — |
@@ -141,3 +141,12 @@
 - Chat reutilizável: `fixedSessionId`, `experience`, `pictureWorkspaceId`, `hideHistory` e callback de refresh foram adicionados sem alterar defaults; sessão fixa carrega mensagens mas não cria/navega pela sidebar.
 - Isolamento visual: sidebar filtra defensivamente apenas sessões normais e a ação `image_generate` não aparece no composer Picture; o payload normal permaneceu estruturalmente igual.
 - GREEN: 7/7 testes focais passaram e `tsc --noEmit` saiu com código 0.
+
+### Etapa 14 — Client e estado persistente do workspace
+
+- RED: client e hook inexistentes impediram a coleta das duas suítes.
+- Client: cinco operações BFF autenticadas com bearer do Supabase, `AbortSignal`, IDs codificados, nenhum segredo interno e códigos conhecidos convertidos em mensagens seguras em português.
+- Estado: TanStack Query hidrata current/details/files; chaves de detalhes e arquivos incluem `workspace_id`; o servidor permanece fonte da verdade, sem localStorage.
+- Polling: somente `generating` refaz details/files; `drafting`, `review` e `validated` ficam estáveis. Refresh explícito atende ao fim de um turno do chat.
+- Mutações: approve atualiza caches; newPiece troca sessão/workspace, remove cache antigo de arquivos e limpa a seleção local; erro de refresh preserva os dados anteriores.
+- GREEN: 9/9 testes focais passaram e `tsc --noEmit` saiu com código 0.
