@@ -8,9 +8,9 @@
 
 | Etapa | Estado | Commit | Evidência principal |
 |---|---|---|---|
-| 1. Engine Picture | Concluída | a registrar | bun test, tsc e build verdes |
-| 2. Contratos e paths | Em andamento | — | — |
-| 3. Artifact Server | Pendente | — | — |
+| 1. Engine Picture | Concluída | 7ecdbff | 3 testes, tsc e build verdes |
+| 2. Contratos e paths | Concluída | a registrar | 14 testes totais e tsc verdes |
+| 3. Artifact Server | Em andamento | — | — |
 | 4. Banco | Pendente | — | — |
 | 5. Artifact client | Pendente | — | — |
 | 6. Workspace lifecycle | Pendente | — | — |
@@ -42,4 +42,11 @@
 
 ### Etapa 2 — Contratos e confinamento de workspace
 
-- Estado inicial: ainda não implementado.
+- RED: bun test test/contracts.test.ts test/workspace-paths.test.ts retornou 0 pass e 11 fail por módulos ausentes.
+- Implementação: schemas Zod estritos para briefing, plano, operações, jobs, revisões e manifest; normalização POSIX e resolução confinada ao root.
+- Segurança coberta: paths absolutos, drive Windows, backslash, byte nulo e traversal são rejeitados.
+- GREEN: suíte específica retornou 11 pass, 0 fail; suíte Picture completa retornou 14 pass, 0 fail; tsc saiu com código 0.
+
+### Etapa 3 — Evoluir Artifact Server para workspaces
+
+- Estado inicial: Artifact Server oferece upload, URL assinada e delete individual, mas não possui lifecycle/listagem por workspace.

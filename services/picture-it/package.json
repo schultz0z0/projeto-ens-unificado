@@ -17,6 +17,8 @@
     "build": "bun run scripts/build.ts",
     "start": "bun run index.ts",
     "dev": "bun run index.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit",
     "download-fonts": "bun run scripts/download-fonts.ts",
     "prepublishOnly": "bun run build"
   },
@@ -55,7 +57,9 @@
     "@fal-ai/client": "^1.9.5",
     "@resvg/resvg-js": "^2.6.2",
     "commander": "^14.0.3",
+    "jose": "^6.2.3",
     "satori": "^0.26.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "zod": "^4.4.3"
   }
 }
