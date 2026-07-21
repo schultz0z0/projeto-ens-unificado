@@ -3,7 +3,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = {
     "rag": Path("D:/Projetos SaaS/PROJETO ENS/Hermes-RAG-MCP/.env"),
-    "designer": Path("D:/Projetos SaaS/PROJETO ENS/nexus-designer-v4/.env"),
     "chat": Path("D:/Projetos SaaS/PROJETO ENS/Nexus-AI-2.0/.env"),
     "hermes": Path("D:/Projetos SaaS/PROJETO ENS/nexus-ai-hermes/.env"),
 }
@@ -45,42 +44,24 @@ def main() -> None:
         "NEXUS_ENS_API_KEY_HEADER": first(envs, ("rag", "ENS_API_KEY_HEADER")),
         "NEXUS_OPENAI_EMBEDDING_MODEL": first(envs, ("rag", "OPENAI_EMBEDDING_MODEL")),
         "NEXUS_OPENAI_EMBEDDING_BASE_URL": first(envs, ("rag", "OPENAI_EMBEDDING_BASE_URL")),
-        # Designer Supabase
-        "NEXUS_DESIGNER_SUPABASE_URL": first(envs, ("designer", "SUPABASE_URL")),
-        "NEXUS_DESIGNER_SUPABASE_ANON_KEY": first(envs, ("designer", "SUPABASE_ANON_KEY")),
-        "NEXUS_DESIGNER_SUPABASE_SERVICE_ROLE_KEY": first(envs, ("designer", "SUPABASE_SERVICE_ROLE_KEY")),
-        "NEXUS_SUPABASE_PROJECT_REF": first(envs, ("designer", "SUPABASE_PROJECT_REF"), ("chat", "SUPABASE_PROJECT_REF")),
-        "NEXUS_SUPABASE_PROJECT_ID": first(envs, ("designer", "SUPABASE_PROJECT_ID"), ("chat", "SUPABASE_PROJECT_ID")),
-        "NEXUS_SUPABASE_DB_PASSWORD": first(envs, ("designer", "SUPABASE_DB_PASSWORD"), ("chat", "SUPABASE_DB_PASSWORD")),
-        "NEXUS_SUPABASE_DATABASE_URL": first(envs, ("designer", "SUPABASE_DATABASE_URL"), ("chat", "SUPABASE_DATABASE_URL")),
-        "NEXUS_SUPABASE_JWT_SECRET": first(envs, ("designer", "SUPABASE_JWT_SECRET"), ("chat", "SUPABASE_JWT_SECRET")),
-        "NEXUS_SUPABASE_ACCESS_TOKEN": first(envs, ("designer", "SUPABASE_ACCESS_TOKEN"), ("chat", "SUPABASE_ACCESS_TOKEN")),
-        "NEXUS_SUPABASE_OUTPUTS_BUCKET": first(envs, ("designer", "SUPABASE_OUTPUTS_BUCKET")),
-        "NEXUS_SUPABASE_SIGNED_URL_EXPIRES_SECONDS": first(envs, ("designer", "SUPABASE_SIGNED_URL_EXPIRES_SECONDS")),
-        "NEXUS_SUPABASE_UPLOAD_MAX_ATTEMPTS": first(envs, ("designer", "SUPABASE_UPLOAD_MAX_ATTEMPTS")),
-        "NEXUS_SUPABASE_UPLOAD_BACKOFF_SECONDS": first(envs, ("designer", "SUPABASE_UPLOAD_BACKOFF_SECONDS")),
+        # App Supabase / conexão PostgreSQL compartilhada
+        "NEXUS_SUPABASE_PROJECT_REF": first(envs, ("chat", "SUPABASE_PROJECT_REF")),
+        "NEXUS_SUPABASE_PROJECT_ID": first(envs, ("chat", "SUPABASE_PROJECT_ID")),
+        "NEXUS_SUPABASE_DB_PASSWORD": first(envs, ("chat", "SUPABASE_DB_PASSWORD")),
+        "NEXUS_SUPABASE_DATABASE_URL": first(envs, ("chat", "SUPABASE_DATABASE_URL")),
+        "NEXUS_SUPABASE_JWT_SECRET": first(envs, ("chat", "SUPABASE_JWT_SECRET")),
+        "NEXUS_SUPABASE_ACCESS_TOKEN": first(envs, ("chat", "SUPABASE_ACCESS_TOKEN")),
         # Hermes / providers
         "NEXUS_HERMES_API_KEY": first(envs, ("chat", "HERMES_API_KEY"), ("hermes", "HERMES_API_KEY_CORE")),
         "NEXUS_HERMES_MODEL_NAME": first(envs, ("chat", "HERMES_MODEL_NAME")),
         "NEXUS_HERMES_SESSIONS_API_ENABLED": first(envs, ("chat", "HERMES_SESSIONS_API_ENABLED")),
         "NEXUS_HERMES_STREAM_TIMEOUT_MS": first(envs, ("chat", "HERMES_STREAM_TIMEOUT_MS")),
         "NEXUS_HERMES_REQUEST_TIMEOUT_MS": first(envs, ("chat", "HERMES_REQUEST_TIMEOUT_MS")),
-        "NEXUS_OPENAI_API_KEY": first(envs, ("rag", "OPENAI_API_KEY"), ("designer", "OPENAI_API_KEY")),
-        "NEXUS_GEMINI_API_KEY": first(envs, ("designer", "GEMINI_API_KEY"), ("hermes", "GEMINI_API_KEY")),
-        "NEXUS_GOOGLE_API_KEY": first(envs, ("designer", "GOOGLE_API_KEY"), ("hermes", "GOOGLE_API_KEY")),
+        "NEXUS_OPENAI_API_KEY": first(envs, ("rag", "OPENAI_API_KEY"), ("hermes", "OPENAI_API_KEY")),
+        "NEXUS_GEMINI_API_KEY": first(envs, ("hermes", "GEMINI_API_KEY")),
+        "NEXUS_GOOGLE_API_KEY": first(envs, ("hermes", "GOOGLE_API_KEY")),
         "NEXUS_OPENROUTER_API_KEY": first(envs, ("hermes", "OPENROUTER_API_KEY")),
         "NEXUS_ANTHROPIC_API_KEY": first(envs, ("hermes", "ANTHROPIC_API_KEY")),
-        # Designer model flags
-        "NEXUS_DESIGNER_OPENAI_MODEL": first(envs, ("designer", "OPENAI_MODEL")),
-        "NEXUS_DESIGNER_IMAGEN_MODEL": first(envs, ("designer", "IMAGEN_MODEL")),
-        "NEXUS_DESIGNER_IMAGE_SIZE": first(envs, ("designer", "IMAGE_SIZE")),
-        "NEXUS_DESIGNER_IMAGE_ASPECT_RATIO": first(envs, ("designer", "IMAGE_ASPECT_RATIO")),
-        "NEXUS_DESIGNER_GEMINI_MODEL": first(envs, ("designer", "GEMINI_MODEL")),
-        "NEXUS_DESIGNER_GEMINI_PLANNER_MODEL": first(envs, ("designer", "GEMINI_PLANNER_MODEL")),
-        "NEXUS_DESIGNER_ENABLE_STEP1_PLANNER": first(envs, ("designer", "ENABLE_STEP1_PLANNER")),
-        "NEXUS_DESIGNER_ENABLE_STEP2_PLANNER": first(envs, ("designer", "ENABLE_STEP2_PLANNER")),
-        "NEXUS_DESIGNER_ENABLE_STEP3_PLANNER": first(envs, ("designer", "ENABLE_STEP3_PLANNER")),
-        "NEXUS_DESIGNER_EXECUTOR_SINGLE_IMAGE_MODE": first(envs, ("designer", "EXECUTOR_SINGLE_IMAGE_MODE")),
     }
     updates = {key: value for key, value in updates.items() if value is not None}
 

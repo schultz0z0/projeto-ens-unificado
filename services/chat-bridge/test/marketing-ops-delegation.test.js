@@ -72,6 +72,50 @@ test("production requires the internal delegation refresh key", () => {
   }), /MARKETING_OPS_DELEGATION_REFRESH_KEY/);
 });
 
+test("production requires a complete and coherent Picture runtime", () => {
+  const productionConfig = {
+    NODE_ENV: "production",
+    SUPABASE_URL: "https://app.supabase.co",
+    SUPABASE_ANON_KEY: "production-anon-key",
+    SUPABASE_SERVICE_ROLE_KEY: "production-service-role-key",
+    MARKETING_OPS_DELEGATION_ACTIVE_KID: "v1",
+    MARKETING_OPS_DELEGATION_ACTIVE_KEY: "production-delegation-key-at-least-32-bytes",
+    MARKETING_OPS_DELEGATION_REFRESH_KEY: "production-refresh-key-at-least-32-bytes",
+  };
+
+  assert.throws(() => validateBridgeRuntimeConfig(productionConfig), /PICTURE_INTERNAL_URL/);
+  assert.throws(() => validateBridgeRuntimeConfig({
+    ...productionConfig,
+    PICTURE_INTERNAL_URL: "not-a-url",
+  }), /PICTURE_INTERNAL_URL/);
+
+  const withUrl = { ...productionConfig, PICTURE_INTERNAL_URL: "http://picture-it:8090" };
+  assert.throws(() => validateBridgeRuntimeConfig(withUrl), /PICTURE_INTERNAL_KEY/);
+  assert.throws(() => validateBridgeRuntimeConfig({
+    ...withUrl,
+    PICTURE_INTERNAL_KEY: "CHANGE_ME_STRONG_RANDOM_AT_LEAST_32_BYTES",
+  }), /PICTURE_INTERNAL_KEY/);
+
+  const withInternalKey = {
+    ...withUrl,
+    PICTURE_INTERNAL_KEY: "production-picture-internal-key-at-least-32-bytes",
+  };
+  assert.throws(() => validateBridgeRuntimeConfig(withInternalKey), /PICTURE_DELEGATION_ACTIVE_KID/);
+
+  const complete = {
+    ...withInternalKey,
+    PICTURE_DELEGATION_ACTIVE_KID: "v1",
+    PICTURE_DELEGATION_ACTIVE_KEY: "production-picture-delegation-key-at-least-32-bytes",
+    PICTURE_DELEGATION_ISSUER: "nexus-chat-bridge",
+    PICTURE_DELEGATION_AUDIENCE: "nexus-picture",
+  };
+  assert.doesNotThrow(() => validateBridgeRuntimeConfig(complete));
+  assert.throws(() => validateBridgeRuntimeConfig({
+    ...complete,
+    PICTURE_DELEGATION_AUDIENCE: "another-service",
+  }), /PICTURE_DELEGATION_AUDIENCE/);
+});
+
 test("local auth fallback requires an explicit flag", () => {
   assert.throws(() => validateBridgeRuntimeConfig({ NODE_ENV: "development" }), /BRIDGE_ALLOW_INSECURE_LOCAL_AUTH/);
   const config = validateBridgeRuntimeConfig({ NODE_ENV: "development", BRIDGE_ALLOW_INSECURE_LOCAL_AUTH: "true" });

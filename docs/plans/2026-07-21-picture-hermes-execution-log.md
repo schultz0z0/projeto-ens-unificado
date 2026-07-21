@@ -168,3 +168,14 @@
 - Edição: peças visuais permitem somente metadados textuais (título, status, curso e tags); `artifact_id` e conteúdo técnico não são enviados pela edição.
 - Revisão de acesso: previews de trabalhos compartilhados agora resolvem o owner original na Bridge por `artifact_id + tenant_id + peca_visual + validated`; outros tenants não ganham acesso.
 - GREEN: card 2/2, Bridge 82/82 e `tsc --noEmit` passaram.
+
+### Etapa 17 — Cutover de runtime e remoção do Designer API
+
+- RED: o teste novo provou que o Bridge em produção ainda aceitava iniciar sem URL/chaves do Picture.
+- Fail-closed: produção agora exige URL HTTP(S), chave interna e chave de delegação fortes, `kid` ativo e issuer/audience coerentes; o `server.js` usa somente os valores validados.
+- Compose: `picture-it` substituiu `designer-api`, permanece apenas na rede interna/porta exposta 8090, depende da prontidão do Artifact Server, usa o PostgreSQL/Supabase compartilhado, FAL, tmpfs limitado, worker com lease/heartbeat e `/ready` real.
+- Dependências: Hermes e Bridge aguardam o Picture saudável; o Hermes recebe o MCP `nexus_picture`; o frontend deixou de receber as três URLs legadas e não depende mais do gerador antigo.
+- Remoção: `apps/designer-api`, seu script de desenvolvimento e o debug obsoleto do frontend foram apagados; validadores e launcher local agora apontam para `services/picture-it`.
+- Env: `.env.example` passou ao contrato Picture; o `.env` real ignorado foi limpo dos nomes Designer, recebeu 19 variáveis Picture, FAL real e duas chaves fortes novas sem exposição. A sincronização idempotente ficou em `scripts/env/sync-picture-env.ps1`.
+- GREEN: Bridge 83/83; Picture 45/45 + typecheck + build; frontend 199/199 + typecheck + build; Hermes 16 pass/1 skip POSIX; contratos estáticos de ambos os Compose passaram.
+- Limitação local: Docker e Bash não estão instalados, então `docker compose config/build` e smoke de container ficam como gate obrigatório na VPS (etapas 18/19 e runbook).

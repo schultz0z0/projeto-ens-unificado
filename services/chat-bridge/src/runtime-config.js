@@ -2,6 +2,16 @@ const placeholder = /^(?:(?:change|replace)[-_]?me|placeholder|example|secret)(?
 
 const value = (env, names) => names.map((name) => env[name]?.trim()).find(Boolean) || "";
 
+const isStrongSecret = (secret) => secret.length >= 32 && !placeholder.test(secret);
+
+const isHttpUrl = (candidate) => {
+  try {
+    return ["http:", "https:"].includes(new URL(candidate).protocol);
+  } catch {
+    return false;
+  }
+};
+
 export const validateBridgeRuntimeConfig = (env = process.env) => {
   const production = env.NODE_ENV === "production";
   const allowInsecureLocalAuth = !production && env.BRIDGE_ALLOW_INSECURE_LOCAL_AUTH === "true";
@@ -27,6 +37,23 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
   const pictureInternalKey = value(env, ["PICTURE_INTERNAL_KEY"]);
   const pictureDelegationActiveKid = value(env, ["PICTURE_DELEGATION_ACTIVE_KID"]);
   const pictureDelegationActiveKey = value(env, ["PICTURE_DELEGATION_ACTIVE_KEY"]);
+  const pictureDelegationIssuer = value(env, ["PICTURE_DELEGATION_ISSUER"]) || "nexus-chat-bridge";
+  const pictureDelegationAudience = value(env, ["PICTURE_DELEGATION_AUDIENCE"]) || "nexus-picture";
+  if (production && !isHttpUrl(pictureInternalUrl)) {
+    throw new Error("PICTURE_INTERNAL_URL must be a valid http(s) URL in production");
+  }
+  if (production && !isStrongSecret(pictureInternalKey)) {
+    throw new Error("PICTURE_INTERNAL_KEY must contain at least 32 non-placeholder characters in production");
+  }
+  if (production && (!pictureDelegationActiveKid || !isStrongSecret(pictureDelegationActiveKey))) {
+    throw new Error("PICTURE_DELEGATION_ACTIVE_KID and PICTURE_DELEGATION_ACTIVE_KEY are required in production");
+  }
+  if (production && pictureDelegationIssuer !== "nexus-chat-bridge") {
+    throw new Error("PICTURE_DELEGATION_ISSUER must be nexus-chat-bridge in production");
+  }
+  if (production && pictureDelegationAudience !== "nexus-picture") {
+    throw new Error("PICTURE_DELEGATION_AUDIENCE must be nexus-picture in production");
+  }
   return {
     production,
     allowInsecureLocalAuth,
@@ -40,5 +67,7 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
     pictureInternalKey,
     pictureDelegationActiveKid,
     pictureDelegationActiveKey,
+    pictureDelegationIssuer,
+    pictureDelegationAudience,
   };
 };

@@ -13,8 +13,8 @@ required=(
   "services/marketing-ops/package.json"
   "services/rag-mcp/package.json"
   "services/hermes-runtime/docker/hermes.Dockerfile"
-  "apps/designer-api/requirements.txt"
-  "apps/designer-api/api/app.py"
+  "services/picture-it/package.json"
+  "services/picture-it/src/service/main.ts"
   ".env.example"
   "docker-compose.yml"
 )

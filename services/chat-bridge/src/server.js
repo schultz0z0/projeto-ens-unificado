@@ -114,8 +114,8 @@ const config = {
   pictureDelegation: {
     activeKid: runtimeConfig.pictureDelegationActiveKid,
     activeKey: runtimeConfig.pictureDelegationActiveKey,
-    issuer: process.env.PICTURE_DELEGATION_ISSUER || "nexus-chat-bridge",
-    audience: process.env.PICTURE_DELEGATION_AUDIENCE || "nexus-picture",
+    issuer: runtimeConfig.pictureDelegationIssuer,
+    audience: runtimeConfig.pictureDelegationAudience,
     ttlSeconds: Number(process.env.PICTURE_DELEGATION_TTL_SECONDS || 90),
   },
 };

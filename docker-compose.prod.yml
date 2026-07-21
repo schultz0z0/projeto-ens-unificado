@@ -42,14 +42,6 @@ services:
       - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
       - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-bridge.loadbalancer.server.port=8080
 
-  designer-api:
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.rule=Host(`${NEXUS_PUBLIC_DESIGNER_HOST:-designer.solucoes-nexus.tech}`)
-      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.entrypoints=websecure
-      - traefik.http.routers.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.tls.certresolver=${NEXUS_TRAEFIK_CERT_RESOLVER:-letsencrypt}
-      - traefik.http.services.${NEXUS_COMPOSE_PROJECT_NAME:-projeto-ens}-designer.loadbalancer.server.port=${NEXUS_DESIGNER_API_PORT:-8090}
-
   artifact-server:
     labels:
       - traefik.enable=true
