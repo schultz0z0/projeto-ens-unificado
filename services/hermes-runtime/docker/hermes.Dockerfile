@@ -101,8 +101,10 @@ COPY docker/hermes-api-server.sh /usr/local/bin/hermes-api-server.sh
 COPY docker/hermes-kanban-dashboard.sh /usr/local/bin/hermes-kanban-dashboard.sh
 COPY docker/ensure-ens-rag-mcp.sh /usr/local/bin/ensure-ens-rag-mcp.sh
 COPY docker/ensure-ens-rag-mcp.py /usr/local/bin/ensure-ens-rag-mcp.py
+COPY docker/ensure-nexus-skills.sh /usr/local/bin/ensure-nexus-skills.sh
 COPY docker/scrub-marketing-ops-delegations.py /usr/local/bin/scrub-marketing-ops-delegations.py
 COPY templates/hermes/config.yaml /opt/hermes-defaults/config.yaml
+COPY skills /opt/nexus-skills
 
 RUN chmod +x \
       /usr/local/bin/hermes-init.sh \
@@ -110,6 +112,7 @@ RUN chmod +x \
       /usr/local/bin/hermes-kanban-dashboard.sh \
       /usr/local/bin/ensure-ens-rag-mcp.sh \
       /usr/local/bin/ensure-ens-rag-mcp.py \
+      /usr/local/bin/ensure-nexus-skills.sh \
       /usr/local/bin/scrub-marketing-ops-delegations.py
 
 ENTRYPOINT ["/usr/bin/tini", "--"]

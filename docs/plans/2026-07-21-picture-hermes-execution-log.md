@@ -19,8 +19,8 @@
 | 7. Package builder | Concluída | eedaf15 | 28 testes, tsc e build verdes |
 | 8. Jobs e worker | Concluída | a504bb6 | 34 testes, tsc e build verdes |
 | 9. REST/MCP/auth | Concluída | e78200a | 43 testes, tsc e build verdes |
-| 10. Container Picture | Concluída com validação estática | a registrar | 45 testes e tsc verdes; Docker CLI indisponível |
-| 11. Hermes MCP/skill | Pendente | — | — |
+| 10. Container Picture | Concluída com validação estática | e338f87 | 45 testes e tsc verdes; Docker CLI indisponível |
+| 11. Hermes MCP/skill | Concluída | a registrar | 16 testes Hermes verdes; 1 POSIX skip |
 | 12. Bridge Picture | Pendente | — | — |
 | 13. Sessões frontend | Pendente | — | — |
 | 14. Client/hook frontend | Pendente | — | — |
@@ -116,3 +116,11 @@
 - Contexto: .env, node_modules, dist, fixtures, outputs e imagens avulsas são excluídos; scripts shell preservam LF pela regra raiz de gitattributes.
 - GREEN local: contrato Docker 2/2 e suíte Picture 45/45; typecheck saiu com código 0.
 - Limitação de infraestrutura: o comando `docker` não está instalado/disponível no PATH desta máquina, portanto build/run da imagem não puderam ser executados aqui. O smoke ficou mantido para a verificação/deploy em host com Docker.
+
+### Etapa 11 — MCP e skill no Hermes
+
+- Skill aplicado: `hermes-agent`; confirmou paths profile-safe e necessidade de nova sessão/reset para recarregar MCP/skills.
+- RED: suíte focal retornou três falhas (MCP ausente e skill/runtime ausentes) e um skip POSIX.
+- Implementação: `nexus_picture` no template e reparo de todos os perfis, sampling desabilitado, timeout 300s; skill gerenciado instalado no home principal e perfis existentes sem remover skills alheios.
+- Contrato do planner: somente sessão Picture-Hermes, CreativeBrief/CompositionPlan completos, textos/logos determinísticos, consulta antes de revisão, proibição de image_generate/approve/reset e status sem invenção.
+- GREEN: suíte focal 3 pass/1 skip; suíte docker Hermes completa 16 pass/1 skip. O skip é apenas a execução bash idempotente em Windows sem bash; contrato e wiring foram validados estaticamente.

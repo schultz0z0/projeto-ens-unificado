@@ -16,3 +16,15 @@ mcp_servers:
     connect_timeout: 30
     sampling:
       enabled: false
+  nexus_marketing_ops:
+    url: "http://marketing-ops:8091/mcp"
+    timeout: 120
+    connect_timeout: 15
+    sampling:
+      enabled: false
+  nexus_picture:
+    url: "http://picture-it:8090/mcp"
+    timeout: 300
+    connect_timeout: 20
+    sampling:
+      enabled: false
