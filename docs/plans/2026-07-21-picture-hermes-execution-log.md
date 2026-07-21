@@ -14,8 +14,8 @@
 | 2. Contratos e paths | Concluída | 4caef2e | 14 testes totais e tsc verdes |
 | 3. Artifact Server | Concluída | eb061a7 | 13 testes verdes |
 | 4. Banco | Concluída e aplicada | 2837702 | 27 pgTAP verdes no remoto |
-| 5. Artifact client | Concluída | a registrar | 20 testes, tsc e build verdes |
-| 6. Workspace lifecycle | Pendente | — | — |
+| 5. Artifact client | Concluída | 53bc144 | 20 testes, tsc e build verdes |
+| 6. Workspace lifecycle | Concluída | a registrar | 24 testes, tsc e build verdes |
 | 7. Package builder | Pendente | — | — |
 | 8. Jobs e worker | Pendente | — | — |
 | 9. REST/MCP/auth | Pendente | — | — |
@@ -75,3 +75,11 @@
 - Implementação: cliente interno com upload e metadados completos de workspace, listagem owner-scoped, promoção, limpeza, download, metadata e URL temporária; timeout/AbortSignal e erros tipados sem vazamento da chave.
 - Ajuste de contrato: o tsconfig passou a carregar os tipos Fetch/DOM do runtime Bun; buffers enviados à FAL foram normalizados para Uint8Array compatível com File/Blob.
 - GREEN: bun test retornou 20 pass, 0 fail; bunx tsc --noEmit saiu com código 0; bun run build gerou dist/index.js.
+
+### Etapa 6 — Repositórios e lifecycle de workspace
+
+- RED: bun test test/workspace-service.test.ts retornou 0 pass e 4 fail porque o serviço ainda não existia.
+- Implementação: adapter Bun SQL, repositório Postgres com transações e locks, criação convergente sob índice único, guarda de sessão Picture, candidato com optimistic version, aprovação idempotente e reset em duas fases.
+- Segurança/integridade: todos os acessos são tenant/user scoped; a promoção acontece antes do insert idempotente em validated_works; a limpeza só ocorre depois de status validated e mantém os IDs promovidos ao fechar.
+- Ajuste durante GREEN: o fake de concorrência foi corrigido para reproduzir a atomicidade do índice único do Postgres; os quatro contratos de lifecycle passaram.
+- GREEN: suíte Picture retornou 24 pass, 0 fail; bunx tsc --noEmit e bun run build saíram com código 0.
