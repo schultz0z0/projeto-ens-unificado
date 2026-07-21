@@ -6,6 +6,7 @@ export const VALIDATED_WORK_TYPES = [
   "decisao",
   "prompt",
   "estrategia",
+  "peca_visual",
 ] as const;
 
 export type ValidatedWorkType = typeof VALIDATED_WORK_TYPES[number];
@@ -23,6 +24,11 @@ export interface ValidatedWork {
   related_rag_source_id?: string | null;
   tags?: string[] | null;
   metadata?: Record<string, unknown> | null;
+  artifact_id?: string | null;
+  artifact_filename?: string | null;
+  artifact_mime_type?: string | null;
+  artifact_width?: number | null;
+  artifact_height?: number | null;
   created_by_user_id?: string | null;
   created_by_name?: string | null;
   validated_by_user_id?: string | null;
@@ -43,6 +49,7 @@ export const getValidatedWorkTypeLabel = (type: string) => {
     decisao: "Decisao",
     prompt: "Prompt",
     estrategia: "Estrategia",
+    peca_visual: "Peça visual",
   };
   return labels[type] ?? type;
 };

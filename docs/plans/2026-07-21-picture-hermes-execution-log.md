@@ -24,8 +24,8 @@
 | 12. Bridge Picture | Concluída | fe5a111 | 81 testes verdes e syntax check |
 | 13. Sessões frontend | Concluída | a135527 | 7 testes focais e typecheck verdes |
 | 14. Client/hook frontend | Concluída | f73af68 | 9 testes focais e typecheck verdes |
-| 15. UI Picture | Concluída | a registrar | 197 testes, typecheck e build verdes |
-| 16. Trabalhos Validados | Pendente | — | — |
+| 15. UI Picture | Concluída | b7b0e00 | 197 testes, typecheck e build verdes |
+| 16. Trabalhos Validados | Concluída | a registrar | 2 testes de card, 82 da Bridge e typecheck verdes |
 | 17. Cutover Designer | Pendente | — | — |
 | 18. Integração/docs | Pendente | — | — |
 | 19. Verificação final | Pendente | — | — |
@@ -159,3 +159,12 @@
 - Preview: categorias do pacote, destaque da candidata, JSON/text formatado, imagem, fallback para arquivo desconhecido, link assinado cacheado e renovação preventiva/por erro.
 - Ações humanas: aprovação somente em review; nova peça somente em validated; confirmação reproduz integralmente o aviso do PRD; pending bloqueia clique duplicado.
 - GREEN: suíte completa do frontend 197/197; `tsc --noEmit` e build Vite de produção passaram. Restaram somente warnings preexistentes de chunk e caniuse desatualizado.
+
+### Etapa 16 — Peças visuais em Trabalhos Validados
+
+- RED: teste do card falhou inicialmente por componente ausente.
+- Modelo: `peca_visual` e os metadados imutáveis de artefato/dimensões entraram nos tipos e labels do frontend.
+- Card: URL assinada solicitada à Bridge com bearer Supabase, thumbnail, dimensões, preview ampliado, download, renovação de expiração/erro e fallback indisponível; o JSON interno de `content` nunca é o bloco principal.
+- Edição: peças visuais permitem somente metadados textuais (título, status, curso e tags); `artifact_id` e conteúdo técnico não são enviados pela edição.
+- Revisão de acesso: previews de trabalhos compartilhados agora resolvem o owner original na Bridge por `artifact_id + tenant_id + peca_visual + validated`; outros tenants não ganham acesso.
+- GREEN: card 2/2, Bridge 82/82 e `tsc --noEmit` passaram.

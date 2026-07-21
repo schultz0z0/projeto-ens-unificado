@@ -620,6 +620,25 @@ const validateImageOptions = (payload) => {
 
 };
 
+const resolveArtifactAccessOwner = async ({ artifactId, user }) => {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey) return user.id;
+  const query = new URLSearchParams({
+    artifact_id: `eq.${artifactId}`,
+    tenant_id: `eq.${user.tenant_id}`,
+    artifact_type: "eq.peca_visual",
+    status: "eq.validated",
+    select: "created_by_user_id",
+    limit: "1",
+  });
+  const response = await fetch(`${config.supabaseUrl.replace(/\/$/, "")}/rest/v1/validated_works?${query}`, {
+    headers: buildSupabaseAdminHeaders(),
+  });
+  if (!response.ok) return user.id;
+  const rows = await response.json().catch(() => []);
+  const ownerId = Array.isArray(rows) ? rows[0]?.created_by_user_id : null;
+  return typeof ownerId === "string" && ownerId ? ownerId : user.id;
+};
+
 
 
 const validateChatPayload = (payload) => {
@@ -1766,11 +1785,15 @@ const handleRequest = async (req, res) => {
     }
 
     const user = await verifyUser(req);
+    const ownerId = await resolveArtifactAccessOwner({
+      artifactId: decodeURIComponent(artifactAccessMatch[1]),
+      user,
+    });
     const access = await createArtifactAccessLink({
       artifactBaseUrl: config.artifactInternalUrl,
       artifactInternalKey: config.artifactInternalKey,
       artifactId: decodeURIComponent(artifactAccessMatch[1]),
-      ownerId: user.id,
+      ownerId,
       expiresInSeconds: config.artifactAccessTokenTtlSeconds,
     });
 

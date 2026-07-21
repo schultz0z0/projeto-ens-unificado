@@ -21,8 +21,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { ValidatedVisualWorkCard } from "@/components/validated-works/ValidatedVisualWorkCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { chatService } from "@/lib/chatService";
 import {
   getValidatedWorkStatusLabel,
   getValidatedWorkTypeLabel,
@@ -84,6 +86,7 @@ const typeBadgeClass: Record<ValidatedWorkType, string> = {
   decisao: "border-emerald-200 bg-emerald-50 text-emerald-700",
   prompt: "border-indigo-200 bg-indigo-50 text-indigo-700",
   estrategia: "border-orange-200 bg-orange-50 text-orange-700",
+  peca_visual: "border-cyan-200 bg-cyan-50 text-cyan-700",
 };
 
 const formatDate = (value?: string | null) => {
@@ -103,7 +106,7 @@ const getPrimaryDate = (work: ValidatedWork) =>
   work.validated_at ?? work.updated_at ?? work.created_at ?? null;
 
 export default function ValidatedWorksPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const [works, setWorks] = useState<ValidatedWork[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -222,8 +225,9 @@ export default function ValidatedWorksPage() {
 
   const saveEdit = async () => {
     if (!editing) return;
-    if (!formTitle.trim() || !formContent.trim()) {
-      toast.error("Titulo e conteudo sao obrigatorios.");
+    const visualWork = editing.artifact_type === "peca_visual";
+    if (!formTitle.trim() || (!visualWork && !formContent.trim())) {
+      toast.error(visualWork ? "Titulo e obrigatorio." : "Titulo e conteudo sao obrigatorios.");
       return;
     }
     try {
@@ -232,10 +236,10 @@ export default function ValidatedWorksPage() {
       const becameValidated = editing.status !== "validated" && formStatus === "validated";
       const payload: Partial<ValidatedWork> = {
         title: formTitle.trim(),
-        content: formContent.trim(),
         status: formStatus,
         related_course_title: formCourseTitle.trim() || null,
         tags: parseTagsInput(formTags),
+        ...(!visualWork ? { content: formContent.trim() } : {}),
       };
       if (becameValidated) {
         payload.validated_at = now;
@@ -448,7 +452,20 @@ export default function ValidatedWorksPage() {
             </div>
           ) : filteredWorks.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-              {filteredWorks.map((work) => (
+              {filteredWorks.map((work) => work.artifact_type === "peca_visual" ? (
+                <ValidatedVisualWorkCard
+                  key={work.id}
+                  work={work}
+                  bridgeBaseUrl={chatService.resolveChatbotProxyBaseUrl() ?? ""}
+                  accessToken={session?.access_token ?? ""}
+                  actions={(
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="icon" onClick={() => openEdit(work)} aria-label={`Editar ${work.title}`}><Pencil className="h-4 w-4" /></Button>
+                      {work.status !== "deprecated" && <Button variant="destructive" size="icon" onClick={() => archiveWork(work)} disabled={saving} aria-label={`Arquivar ${work.title}`}><Archive className="h-4 w-4" /></Button>}
+                    </div>
+                  )}
+                />
+              ) : (
                 <article
                   key={work.id}
                   className="group relative flex min-h-[300px] overflow-hidden rounded-2xl border border-white/60 bg-white/70 p-4 shadow-glass backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-brand-primary/20 hover:bg-white/80 sm:p-5"
@@ -582,15 +599,23 @@ export default function ValidatedWorksPage() {
               <Label htmlFor="work-tags">Tags</Label>
               <Input id="work-tags" value={formTags} onChange={(event) => setFormTags(event.target.value)} placeholder="marketing, gestao, pos" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="work-content">Conteudo</Label>
-              <Textarea
-                id="work-content"
-                value={formContent}
-                onChange={(event) => setFormContent(event.target.value)}
-                className="min-h-[260px]"
-              />
-            </div>
+            {editing?.artifact_type === "peca_visual" ? (
+              <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-4 text-sm text-cyan-900">
+                <p className="font-medium">Arquivo visual protegido</p>
+                <p className="mt-1 text-cyan-800">Você pode editar título, status, curso e tags. O artefato aprovado não pode ser trocado manualmente.</p>
+                <p className="mt-2 text-xs">{editing.artifact_filename || "arquivo"} · {editing.artifact_width || "?"} × {editing.artifact_height || "?"} px</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="work-content">Conteudo</Label>
+                <Textarea
+                  id="work-content"
+                  value={formContent}
+                  onChange={(event) => setFormContent(event.target.value)}
+                  className="min-h-[260px]"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={closeEdit} disabled={saving}>Cancelar</Button>

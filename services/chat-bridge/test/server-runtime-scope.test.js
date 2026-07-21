@@ -132,3 +132,10 @@ test("Picture chat validates session and imports references before queueing Herm
   assert.match(createRunBlock, /importPreparedReferences/);
   assert.match(createRunBlock, /picture_workspace_summary/);
 });
+
+test("validated visual artifact links resolve the original owner inside the trusted tenant", () => {
+  const artifactRouteBlock = extractBlock(source, "const artifactAccessMatch", 'url.pathname === "/api/picture/workspace/current"');
+  assert.match(artifactRouteBlock, /resolveArtifactAccessOwner/);
+  assert.match(source, /tenant_id: `eq\.\$\{user\.tenant_id\}`/);
+  assert.match(source, /artifact_type: "eq\.peca_visual"/);
+});
