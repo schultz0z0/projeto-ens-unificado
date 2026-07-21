@@ -1,4 +1,5 @@
 import { PictureError } from "../errors.ts";
+import { ManifestEntrySchema, type ManifestEntry } from "./contracts.ts";
 import type { PictureJob } from "./job-service.ts";
 
 interface WorkerJobService {
@@ -14,28 +15,83 @@ interface JobExecutor {
 
 export class PictureJobExecutor implements JobExecutor {
   constructor(private readonly options: {
-    artifactClient: { listWorkspaceArtifacts(input: { ownerId: string; workspaceId: string; signal?: AbortSignal }): Promise<unknown[]> };
+    artifactClient: {
+      listWorkspaceArtifacts(input: { ownerId: string; workspaceId: string; signal?: AbortSignal }): Promise<unknown[]>;
+      downloadArtifact(artifactId: string, signal?: AbortSignal): Promise<{ bytes: Uint8Array; contentType: string }>;
+    };
     packageBuilder: { build(input: Record<string, unknown>): Promise<{ root: string; finalPath: string; cleanup(): Promise<void> }> };
     engine: { execute(input: Record<string, unknown>): Promise<string> };
     publisher: { publish(input: Record<string, unknown>): Promise<Array<Record<string, unknown>>> };
   }) {}
+
+  private normalizeManifest(entries: unknown[], workspaceId: string): ManifestEntry[] {
+    return entries.map((value) => {
+      const artifact = value as Record<string, unknown>;
+      return ManifestEntrySchema.parse({
+        artifact_id: artifact.artifact_id || artifact.id,
+        workspace_id: artifact.workspace_id || workspaceId,
+        relative_path: artifact.relative_path,
+        category: artifact.category,
+        content_type: artifact.content_type,
+        size: Number(artifact.size),
+        lifecycle: artifact.lifecycle,
+        ...(artifact.preview_url ? { preview_url: artifact.preview_url } : {}),
+        ...(artifact.preview_url_expires_at ? { preview_url_expires_at: artifact.preview_url_expires_at } : {}),
+        created_at: artifact.created_at,
+      });
+    });
+  }
+
+  private async restoreRevisionBrief(manifest: ManifestEntry[], signal?: AbortSignal) {
+    const brief = manifest
+      .filter((entry) => entry.category === "brief" && entry.relative_path === "brief/brief.json")
+      .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at))[0];
+    if (!brief) {
+      throw new PictureError("picture_revision_brief_missing", "The original creative brief is unavailable for revision.", 409);
+    }
+    try {
+      const downloaded = await this.options.artifactClient.downloadArtifact(brief.artifact_id, signal);
+      return JSON.parse(new TextDecoder().decode(downloaded.bytes));
+    } catch (error) {
+      if (error instanceof PictureError) throw error;
+      throw new PictureError("picture_revision_brief_invalid", "The original creative brief cannot be restored.", 409, { cause: error });
+    }
+  }
+
+  private revisionReferenceIds(manifest: ManifestEntry[]) {
+    const newestByPath = new Map<string, ManifestEntry>();
+    for (const entry of manifest
+      .filter((candidate) => candidate.category === "reference" && candidate.lifecycle === "workspace")
+      .sort((left, right) => Date.parse(left.created_at) - Date.parse(right.created_at))) {
+      newestByPath.set(entry.relative_path, entry);
+    }
+    return [...newestByPath.values()].map((entry) => entry.artifact_id);
+  }
 
   async execute(job: PictureJob, signal?: AbortSignal) {
     const specification = job.specification as Record<string, any>;
     const ownerId = String(specification.owner_id || specification.user_id || "");
     const sessionId = specification.session_id ? String(specification.session_id) : undefined;
     if (!ownerId) throw new PictureError("picture_job_owner_missing", "Job owner is missing.", 500);
-    const manifest = await this.options.artifactClient.listWorkspaceArtifacts({
+    const manifest = this.normalizeManifest(await this.options.artifactClient.listWorkspaceArtifacts({
       ownerId,
       workspaceId: job.workspace_id,
       signal,
-    });
+    }), job.workspace_id);
+    const creativeBrief = specification.creative_brief
+      ?? (job.kind === "revise" ? await this.restoreRevisionBrief(manifest, signal) : undefined);
+    const requestedReferences = Array.isArray(specification.reference_artifact_ids)
+      ? specification.reference_artifact_ids
+      : [];
+    const referenceArtifactIds = job.kind === "revise" && requestedReferences.length === 0
+      ? this.revisionReferenceIds(manifest)
+      : requestedReferences;
     const built = await this.options.packageBuilder.build({
       workspaceId: job.workspace_id,
       jobId: job.id,
-      creativeBrief: specification.creative_brief,
+      creativeBrief,
       compositionPlan: specification.composition_plan,
-      referenceArtifactIds: specification.reference_artifact_ids || [],
+      referenceArtifactIds,
       manifest,
       signal,
     });

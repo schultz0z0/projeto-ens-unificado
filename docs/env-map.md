@@ -50,7 +50,6 @@ A env central usa `NEXUS_*`. O código dos serviços ainda recebe os nomes antig
 | Central | Legado exportado |
 |---|---|
 | `NEXUS_PUBLIC_CHATBOT_PROXY_URL` | `VITE_CHATBOT_PROXY_URL`, `NEXT_PUBLIC_CHATBOT_PROXY_URL` |
-| `NEXUS_PUBLIC_DESIGNER_API_URL` | `VITE_IMAGE_GENERATOR_API_URL`, `VITE_API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL` |
 | `NEXUS_PUBLIC_CHAT_STREAM_FILE_HOSTS` | `VITE_CHAT_STREAM_FILE_HOSTS` |
 | `NEXUS_CHAT_ALLOWED_ORIGINS` | `BRIDGE_ALLOWED_ORIGINS` |
 | `NEXUS_CHAT_BRIDGE_PORT` | `BRIDGE_PORT` em dev local |
@@ -71,24 +70,32 @@ A env central usa `NEXUS_*`. O código dos serviços ainda recebe os nomes antig
 | `NEXUS_ARTIFACT_ACCESS_TOKEN_TTL_SECONDS` | `ARTIFACT_ACCESS_TOKEN_TTL_SECONDS` |
 | `NEXUS_ARTIFACT_MAX_ACCESS_TOKEN_TTL_SECONDS` | `ARTIFACT_MAX_ACCESS_TOKEN_TTL_SECONDS` |
 
-## Designer API
+O browser não recebe URL nem chave do Picture. Toda operação passa pelos endpoints
+autenticados `/api/picture/*` da Bridge.
 
-| Central | Legado exportado |
+## Picture-Hermes
+
+| Central | Consumidor / nome interno |
 |---|---|
-| `NEXUS_DESIGNER_ALLOWED_ORIGINS` | `ALLOWED_ORIGINS` |
-| `NEXUS_DESIGNER_OUTPUTS_DIR` | `OUTPUTS_DIR` em dev local; `/app/outputs` no Docker |
-| `NEXUS_DESIGNER_TMP_DIR` | `TMP_DIR` em dev local; `/app/tmp` no Docker |
-| `NEXUS_GEMINI_API_KEY` | `GEMINI_API_KEY` |
-| `NEXUS_GOOGLE_API_KEY` | `GOOGLE_API_KEY` |
-| `NEXUS_OPENAI_API_KEY` | `OPENAI_API_KEY` |
-| `NEXUS_DESIGNER_OPENAI_MODEL` | `OPENAI_MODEL` |
-| `NEXUS_DESIGNER_IMAGEN_MODEL` | `IMAGEN_MODEL` |
-| `NEXUS_DESIGNER_GEMINI_MODEL` | `GEMINI_MODEL` |
-| `NEXUS_DESIGNER_GEMINI_PLANNER_MODEL` | `GEMINI_PLANNER_MODEL` |
-| `NEXUS_DESIGNER_ENABLE_STEP1_PLANNER` | `ENABLE_STEP1_PLANNER` |
-| `NEXUS_DESIGNER_ENABLE_STEP2_PLANNER` | `ENABLE_STEP2_PLANNER` |
-| `NEXUS_DESIGNER_ENABLE_STEP3_PLANNER` | `ENABLE_STEP3_PLANNER` |
-| `NEXUS_DESIGNER_EXECUTOR_SINGLE_IMAGE_MODE` | `EXECUTOR_SINGLE_IMAGE_MODE` |
+| `NEXUS_SUPABASE_DATABASE_URL` | Picture `DATABASE_URL`; usar Session Pooler IPv4 na VPS |
+| `NEXUS_PICTURE_INTERNAL_URL` | Bridge `PICTURE_INTERNAL_URL` |
+| `NEXUS_PICTURE_INTERNAL_KEY` | Bridge e Picture `PICTURE_INTERNAL_KEY` |
+| `NEXUS_PICTURE_FAL_KEY` | Picture `FAL_KEY`; nunca vai ao browser/Hermes |
+| `NEXUS_PICTURE_MCP_URL` | Hermes `NEXUS_PICTURE_MCP_URL` |
+| `NEXUS_PICTURE_MCP_TIMEOUT` | timeout total do MCP no Hermes |
+| `NEXUS_PICTURE_MCP_CONNECT_TIMEOUT` | timeout de conexão do MCP no Hermes |
+| `NEXUS_PICTURE_DELEGATION_ACTIVE_KID` | Bridge e Picture `PICTURE_DELEGATION_ACTIVE_KID` |
+| `NEXUS_PICTURE_DELEGATION_ACTIVE_KEY` | Bridge e Picture `PICTURE_DELEGATION_ACTIVE_KEY` |
+| `NEXUS_PICTURE_DELEGATION_PREVIOUS_KID/KEY` | janela de rotação aceita pelo Picture |
+| `NEXUS_PICTURE_DELEGATION_TTL_SECONDS` | TTL emitido pela Bridge |
+| `NEXUS_PICTURE_DELEGATION_MAX_TTL_SECONDS` | TTL máximo aceito pelo Picture |
+| `NEXUS_PICTURE_ARTIFACT_TIMEOUT_MS` | timeout do Picture para o Artifact Server |
+| `NEXUS_PICTURE_WORKER_CONCURRENCY` | quantidade de workers no processo Picture |
+| `NEXUS_PICTURE_WORKER_LEASE_SECONDS` | duração do lease recuperável |
+| `NEXUS_PICTURE_WORKER_MAX_ATTEMPTS` | limite de tentativas do job |
+| `NEXUS_PICTURE_WORKER_HEARTBEAT_MS` | renovação do lease |
+| `NEXUS_PICTURE_WORKER_POLL_MS` | intervalo de polling sem job |
+| `NEXUS_PICTURE_TEMP_MAX_BYTES` | limite do tmpfs `/tmp/picture-work` no Compose |
 
 ## Regra para próximos refactors
 

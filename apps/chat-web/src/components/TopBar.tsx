@@ -12,7 +12,7 @@ export const TopBar = () => {
       <div className="flex items-center gap-2">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden mr-2">
+            <Button variant="ghost" size="icon" className="md:hidden mr-2" aria-label="Abrir menu">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>

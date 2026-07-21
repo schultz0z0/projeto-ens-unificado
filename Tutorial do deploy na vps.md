@@ -6,7 +6,7 @@ Este projeto roda tudo pelo monorepo `/opt/projeto-ens`:
 - app-bridge
 - Hermes API e Kanban usando o fork local em `services/hermes-runtime/vendor/hermes-agent`
 - RAG MCP ENS
-- designer-api/gerador de imagem
+- Picture-Hermes interno para a página Geração de Imagem
 
 Use sempre os dois arquivos Compose em producao:
 
@@ -237,9 +237,9 @@ Esse cron executa a ingestao completa uma vez por semana:
 
 Se voce alterar arquivos locais em `services/rag-mcp/data`, faca rebuild do `rag-mcp`; esses arquivos entram na imagem Docker.
 
-## Supabase do frontend/app para imagens geradas pelo Hermes
+## Supabase do frontend/app para imagens geradas pelo Hermes no chat normal
 
-O modo `Criar imagem` do chatbot usa o `image_generate` do Hermes com OpenAI e entrega a imagem pelo Supabase Storage do frontend/app. A imagem gerada e enviada para o bucket privado `image-gen-outputs`, o Hermes devolve uma URL assinada para o usuario baixar, e o arquivo local do cache do Hermes e removido depois do upload.
+O modo `Criar imagem` do chat normal usa o `image_generate` do Hermes com OpenAI e entrega a imagem pelo Supabase Storage do frontend/app. A imagem gerada e enviada para o bucket privado `image-gen-outputs`, o Hermes devolve uma URL assinada para o usuario baixar, e o arquivo local do cache do Hermes e removido depois do upload. A página Geração de Imagem usa o Picture-Hermes e seu workspace separado.
 
 Antes de usar JPEG/WebP ou imagens maiores, aplique manualmente no SQL Editor do Supabase do app:
 
@@ -290,7 +290,7 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 Logs principais:
 
 ```bash
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 rag-mcp hermes-api app-bridge app-frontend designer-api hermes-kanban
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 rag-mcp picture-it artifact-server hermes-api app-bridge app-frontend hermes-kanban
 ```
 
 Health checks internos:
@@ -299,7 +299,7 @@ Health checks internos:
 curl -sf http://127.0.0.1:8000/health
 curl -sf http://127.0.0.1:8652/health
 curl -sf http://127.0.0.1:8081/health
-curl -sf http://127.0.0.1:8090/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T picture-it curl -fsS http://127.0.0.1:8090/ready
 ```
 
 Teste funcional da persistencia do chat:

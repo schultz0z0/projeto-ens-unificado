@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const baseURL = process.env.MARKETING_OPS_E2E_BASE_URL ?? 'http://127.0.0.1:8088';
+const pictureFake = process.env.PICTURE_HERMES_E2E_FAKE === 'true';
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,6 +12,20 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 15_000 },
   reporter: [['list']],
+  webServer: pictureFake ? {
+    command: 'npm run dev -- --host 127.0.0.1 --port 8088',
+    url: baseURL,
+    reuseExistingServer: false,
+    timeout: 120_000,
+    env: {
+      ...process.env,
+      VITE_SUPABASE_URL: 'http://127.0.0.1:55321',
+      VITE_SUPABASE_ANON_KEY: 'picture-e2e-anon-key',
+      VITE_CHATBOT_PROXY_URL: 'http://127.0.0.1:18081',
+      NEXT_PUBLIC_CHATBOT_PROXY_URL: 'http://127.0.0.1:18081',
+      VITE_CHAT_STREAM_FILE_HOSTS: '127.0.0.1,localhost',
+    },
+  } : undefined,
   use: {
     baseURL,
     trace: 'retain-on-failure',

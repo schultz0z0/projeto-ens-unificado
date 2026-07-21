@@ -179,3 +179,15 @@
 - Env: `.env.example` passou ao contrato Picture; o `.env` real ignorado foi limpo dos nomes Designer, recebeu 19 variáveis Picture, FAL real e duas chaves fortes novas sem exposição. A sincronização idempotente ficou em `scripts/env/sync-picture-env.ps1`.
 - GREEN: Bridge 83/83; Picture 45/45 + typecheck + build; frontend 199/199 + typecheck + build; Hermes 16 pass/1 skip POSIX; contratos estáticos de ambos os Compose passaram.
 - Limitação local: Docker e Bash não estão instalados, então `docker compose config/build` e smoke de container ficam como gate obrigatório na VPS (etapas 18/19 e runbook).
+
+### Etapa 18 — Integração, E2E e operação
+
+- Integração real sem custo: o teste sobe Artifact Server e Picture HTTP em portas temporárias, usa engine Sharp local e cobre ensure, enqueue, worker, manifest, aprovação, reset seletivo e preservação da final; 2/2 casos passaram.
+- Recuperação: o segundo caso simula um worker interrompido, vence o lease e prova retomada sem duplicar o job.
+- Correção revelada pelo teste: o executor passou a normalizar o `id` retornado pelo Artifact Server em `artifact_id` e revisões agora restauram o brief e as referências persistidas mais recentes. Cinco testes focais do worker passaram.
+- E2E fake: rotas Supabase/Bridge são interceptadas e nenhum provedor pago é chamado. Desktop validou chat/painel, geração, previews, reload persistente, aprovação, cancelamento/confirmação do popup, workspace novo e peça visual validada; mobile validou o drawer de arquivos. Resultado 2/2.
+- Depuração sistemática: o primeiro cenário mobile expôs que o botão hambúrguer não tinha nome acessível. `aria-label="Abrir menu"` foi adicionado e o seletor passou a representar a interação real; o rerun mobile e depois a dupla desktop/mobile passaram.
+- Gate de tipagem: os 49 testes Picture passaram, mas o typecheck detectou uma inferência circular apenas no harness integrado; o tipo foi tornado explícito e typecheck/build passaram no rerun.
+- Frontend: 199/199 testes, typecheck e build de produção passaram; permaneceram somente os warnings preexistentes de chunk grande/import misto e caniuse desatualizado.
+- Operação: mapa de env, guia Picture e deploy VPS agora cobrem internal-only, Session Pooler, migrations, health/readiness, fila/lease, rotação de delegação, smoke FAL somente opt-in, teste manual e rollback sem apagar dados.
+- FAL: nenhum teste ou smoke pago foi executado nesta etapa.
