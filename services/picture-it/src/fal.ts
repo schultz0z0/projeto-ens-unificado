@@ -22,12 +22,12 @@ export function configureFal(apiKey: string) {
 export async function uploadFile(filePath: string): Promise<string> {
   const buffer = fs.readFileSync(filePath);
   const filename = filePath.split("/").pop() || "image.png";
-  const file = new File([buffer], filename, { type: "image/png" });
+  const file = new File([Uint8Array.from(buffer)], filename, { type: "image/png" });
   return fal.storage.upload(file);
 }
 
 export async function uploadBuffer(buffer: Buffer, filename: string): Promise<string> {
-  const file = new File([buffer], filename, { type: "image/png" });
+  const file = new File([Uint8Array.from(buffer)], filename, { type: "image/png" });
   return fal.storage.upload(file);
 }
 

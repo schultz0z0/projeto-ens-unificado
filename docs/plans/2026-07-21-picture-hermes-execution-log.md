@@ -13,8 +13,8 @@
 | 1. Engine Picture | Concluída | 7ecdbff | 3 testes, tsc e build verdes |
 | 2. Contratos e paths | Concluída | 4caef2e | 14 testes totais e tsc verdes |
 | 3. Artifact Server | Concluída | eb061a7 | 13 testes verdes |
-| 4. Banco | Concluída e aplicada | a registrar | 27 pgTAP verdes no remoto |
-| 5. Artifact client | Em andamento | — | — |
+| 4. Banco | Concluída e aplicada | 2837702 | 27 pgTAP verdes no remoto |
+| 5. Artifact client | Concluída | a registrar | 20 testes, tsc e build verdes |
 | 6. Workspace lifecycle | Pendente | — | — |
 | 7. Package builder | Pendente | — | — |
 | 8. Jobs e worker | Pendente | — | — |
@@ -71,3 +71,7 @@
 ### Etapa 5 — Cliente de Artifact Server no Picture
 
 - Estado inicial: Picture ainda não publica ou consulta artefatos pelo serviço.
+- RED: bun test test/artifact-client.test.ts retornou 0 pass e 6 fail porque o módulo do cliente ainda não existia.
+- Implementação: cliente interno com upload e metadados completos de workspace, listagem owner-scoped, promoção, limpeza, download, metadata e URL temporária; timeout/AbortSignal e erros tipados sem vazamento da chave.
+- Ajuste de contrato: o tsconfig passou a carregar os tipos Fetch/DOM do runtime Bun; buffers enviados à FAL foram normalizados para Uint8Array compatível com File/Blob.
+- GREEN: bun test retornou 20 pass, 0 fail; bunx tsc --noEmit saiu com código 0; bun run build gerou dist/index.js.
