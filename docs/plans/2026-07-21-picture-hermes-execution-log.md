@@ -16,8 +16,8 @@
 | 4. Banco | Concluída e aplicada | 2837702 | 27 pgTAP verdes no remoto |
 | 5. Artifact client | Concluída | 53bc144 | 20 testes, tsc e build verdes |
 | 6. Workspace lifecycle | Concluída | 4885300 | 24 testes, tsc e build verdes |
-| 7. Package builder | Concluída | a registrar | 28 testes, tsc e build verdes |
-| 8. Jobs e worker | Pendente | — | — |
+| 7. Package builder | Concluída | eedaf15 | 28 testes, tsc e build verdes |
+| 8. Jobs e worker | Concluída | a registrar | 34 testes, tsc e build verdes |
 | 9. REST/MCP/auth | Pendente | — | — |
 | 10. Container Picture | Pendente | — | — |
 | 11. Hermes MCP/skill | Pendente | — | — |
@@ -91,3 +91,11 @@
 - Publicação: varredura sem symlinks, categorias auditáveis, MIME por extensão e reuso de artifact existente quando relative_path e SHA-256 coincidem, evitando duplicação em reruns do mesmo job.
 - Higiene: falhas do builder removem o diretório temporário; o executor recebe cleanup explícito para o finally da próxima etapa.
 - GREEN: bun test retornou 28 pass, 0 fail; typecheck e build saíram com código 0.
+
+### Etapa 8 — Fila recuperável e executor
+
+- RED: seis testes de job, lease, worker e adapter falharam porque os módulos ainda não existiam.
+- Implementação: enqueue idempotente e serializado por workspace, claim com FOR UPDATE SKIP LOCKED, lease/heartbeat, recuperação após expiração, max_attempts, retry seguro e conclusão transacional de job+candidate.
+- Executor: materializa package, chama a engine como biblioteca, publica artefatos e só então devolve a final; cleanup do temporário ocorre em finally. Revisões que falham preservam a candidata anterior e retornam o workspace a review.
+- Worker: polling cancelável por AbortSignal, heartbeat e pool limitado por concorrência configurada. Nenhum teste invocou FAL.
+- GREEN: bun test retornou 34 pass, 0 fail; bunx tsc --noEmit e build saíram com código 0.

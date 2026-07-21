@@ -13,7 +13,8 @@ import type { PipelineStep, Overlay } from "./types.ts";
 export async function executePipeline(
   steps: PipelineStep[],
   outputPath: string,
-  verbose = false
+  verbose = false,
+  options: { workingDirectory?: string } = {},
 ): Promise<string> {
   let buffer: Buffer | null = null;
   const falKey = ensureFalKey();
@@ -47,7 +48,7 @@ export async function executePipeline(
         }
         if (step.assets) {
           for (const asset of step.assets) {
-            urls.push(await uploadFile(path.resolve(asset)));
+            urls.push(await uploadFile(path.resolve(options.workingDirectory || process.cwd(), asset)));
           }
         }
         const size = step.size ? parseSize(step.size) : buffer ? await getBufferSize(buffer) : { width: 1200, height: 630 };
@@ -134,7 +135,7 @@ export async function executePipeline(
           overlays = step.overlays;
         }
         const size = await getBufferSize(buffer);
-        buffer = await composite(buffer, overlays, size.width, size.height, process.cwd(), verbose);
+        buffer = await composite(buffer, overlays, size.width, size.height, options.workingDirectory || process.cwd(), verbose);
         break;
       }
 
