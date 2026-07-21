@@ -17,8 +17,8 @@
 | 5. Artifact client | Concluída | 53bc144 | 20 testes, tsc e build verdes |
 | 6. Workspace lifecycle | Concluída | 4885300 | 24 testes, tsc e build verdes |
 | 7. Package builder | Concluída | eedaf15 | 28 testes, tsc e build verdes |
-| 8. Jobs e worker | Concluída | a registrar | 34 testes, tsc e build verdes |
-| 9. REST/MCP/auth | Pendente | — | — |
+| 8. Jobs e worker | Concluída | a504bb6 | 34 testes, tsc e build verdes |
+| 9. REST/MCP/auth | Concluída | a registrar | 43 testes, tsc e build verdes |
 | 10. Container Picture | Pendente | — | — |
 | 11. Hermes MCP/skill | Pendente | — | — |
 | 12. Bridge Picture | Pendente | — | — |
@@ -99,3 +99,12 @@
 - Executor: materializa package, chama a engine como biblioteca, publica artefatos e só então devolve a final; cleanup do temporário ocorre em finally. Revisões que falham preservam a candidata anterior e retornam o workspace a review.
 - Worker: polling cancelável por AbortSignal, heartbeat e pool limitado por concorrência configurada. Nenhum teste invocou FAL.
 - GREEN: bun test retornou 34 pass, 0 fail; bunx tsc --noEmit e build saíram com código 0.
+
+### Etapa 9 — REST, MCP e autenticação
+
+- RED: nove testes de delegação, HTTP e MCP falharam porque as interfaces ainda não existiam.
+- Delegação: HS256 com kid ativo/anterior, issuer/audience, TTL máximo, claims completos, workspace binding e scopes picture:read/write; erros não devolvem token nem chave.
+- REST: health/ready, ensure/get/manifest/references/approve/reset, autenticação interna constant-time, contexto explícito de tenant/user/session, Zod estrito, body limitado e CORS allowlist.
+- MCP: transporte Web Standard nativo do Bun e somente quatro tools de alto nível (get workspace, start, revise, get job); approve/reset permanecem exclusivamente humanos via REST.
+- Runtime: main.ts monta DB, Artifact client, serviços, MCP/HTTP e worker pool com shutdown coordenado.
+- GREEN: bun test retornou 43 pass, 0 fail; bunx tsc --noEmit e build saíram com código 0.

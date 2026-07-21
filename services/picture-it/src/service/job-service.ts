@@ -248,3 +248,23 @@ export class JobService {
     return this.options.repository.fail({ jobId, workerId, errorCode: code, errorMessage: message, retryable });
   }
 }
+
+export class PostgresPictureJobReader {
+  constructor(private readonly database: DatabaseExecutor) {}
+
+  async getOwnedJob(input: { tenantId: string; userId: string; workspaceId: string; jobId: string }) {
+    const job = first(await this.database.query<PictureJob>(
+      `select job.*
+         from public.picture_jobs job
+         join public.picture_workspaces workspace on workspace.id = job.workspace_id
+        where job.id = $1
+          and job.workspace_id = $2
+          and workspace.tenant_id = $3
+          and workspace.user_id = $4
+        limit 1`,
+      [input.jobId, input.workspaceId, input.tenantId, input.userId],
+    ));
+    if (!job) throw new PictureError("picture_job_not_found", "Picture job was not found.", 404);
+    return job;
+  }
+}

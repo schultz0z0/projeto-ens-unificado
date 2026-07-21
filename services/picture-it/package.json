@@ -17,6 +17,7 @@
     "build": "bun run scripts/build.ts",
     "start": "bun run index.ts",
     "dev": "bun run index.ts",
+    "start:service": "bun run src/service/main.ts",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
     "download-fonts": "bun run scripts/download-fonts.ts",
@@ -55,6 +56,7 @@
   },
   "dependencies": {
     "@fal-ai/client": "^1.9.5",
+    "@modelcontextprotocol/sdk": "1.29.0",
     "@resvg/resvg-js": "^2.6.2",
     "commander": "^14.0.3",
     "jose": "^6.2.3",
