@@ -4,14 +4,16 @@
 **Plano:** docs/plans/2026-07-21-picture-hermes-implementation.md
 **Regra:** execução sequencial, sem subagentes, com RED/GREEN e evidência antes de concluir cada etapa.
 
+**Operação autorizada:** migrations podem ser aplicadas no Supabase remoto após validação local e revisão de impacto/RLS. O .env real da raiz e o .env.example devem permanecer sincronizados; segredos não são registrados nem commitados.
+
 ## Estado
 
 | Etapa | Estado | Commit | Evidência principal |
 |---|---|---|---|
 | 1. Engine Picture | Concluída | 7ecdbff | 3 testes, tsc e build verdes |
-| 2. Contratos e paths | Concluída | a registrar | 14 testes totais e tsc verdes |
-| 3. Artifact Server | Em andamento | — | — |
-| 4. Banco | Pendente | — | — |
+| 2. Contratos e paths | Concluída | 4caef2e | 14 testes totais e tsc verdes |
+| 3. Artifact Server | Concluída | a registrar | 13 testes verdes |
+| 4. Banco | Em andamento | — | — |
 | 5. Artifact client | Pendente | — | — |
 | 6. Workspace lifecycle | Pendente | — | — |
 | 7. Package builder | Pendente | — | — |
@@ -50,3 +52,11 @@
 ### Etapa 3 — Evoluir Artifact Server para workspaces
 
 - Estado inicial: Artifact Server oferece upload, URL assinada e delete individual, mas não possui lifecycle/listagem por workspace.
+- RED: node --test test/artifact-workspaces.test.js retornou 0 pass e 5 fail por metadados e rotas ausentes.
+- Implementação: metadados de workspace, validação de paths/categorias/lifecycle, persistência atômica, listagem owner-scoped, promoção final idempotente e limpeza temporária em lote.
+- Compatibilidade: uploads legados continuam aceitos com campos de workspace nulos; deduplicação e acesso assinado foram preservados.
+- GREEN: npm test retornou 13 pass, 0 fail, incluindo os oito contratos preexistentes.
+
+### Etapa 4 — Criar esquema persistente Picture-Hermes
+
+- Estado inicial: chat_sessions não diferencia sessões; validated_works rejeita peças visuais; tabelas Picture ainda não existem.

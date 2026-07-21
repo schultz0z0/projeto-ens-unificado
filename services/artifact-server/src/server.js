@@ -1,9 +1,18 @@
 import { createReadStream, createWriteStream } from "node:fs";
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { basename, join } from "node:path";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { once } from "node:events";
+import {
+  deleteArtifactMetadataAndBytes,
+  deleteWorkspaceArtifacts,
+  listWorkspaceArtifacts,
+  loadArtifactMetadata,
+  parseWorkspaceUploadHeaders,
+  promoteWorkspaceArtifact,
+  saveArtifactMetadata,
+} from "./workspaces.js";
 
 const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024;
 const DEFAULT_ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
@@ -129,28 +138,24 @@ const getCorsHeaders = (req, allowedOrigins) => {
       "X-Nexus-Owner-Id",
       "X-Nexus-Session-Id",
       "X-Nexus-Source",
+      "X-Nexus-Workspace-Id",
+      "X-Nexus-Relative-Path",
+      "X-Nexus-Artifact-Category",
+      "X-Nexus-Artifact-Lifecycle",
     ].join(","),
     "Access-Control-Expose-Headers": "Accept-Ranges,Content-Disposition,Content-Length,Content-Range",
     "Access-Control-Max-Age": "86400",
   };
 };
 
-const metadataPathFor = (dataDir, id) => join(dataDir, "metadata", `${id}.json`);
-
 const objectPathFor = (dataDir, sha256) => join(dataDir, "objects", sha256.slice(0, 2), sha256);
 
 const loadMetadata = async (config, id) => {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) throw httpError(404, "artifact_not_found");
-  const raw = await readFile(metadataPathFor(config.dataDir, id), "utf8").catch((error) => {
-    if (error?.code === "ENOENT") throw httpError(404, "artifact_not_found");
-    throw error;
-  });
-  return JSON.parse(raw);
+  return loadArtifactMetadata(config.dataDir, id);
 };
 
 const saveMetadata = async (config, metadata) => {
-  await mkdir(join(config.dataDir, "metadata"), { recursive: true });
-  await writeFile(metadataPathFor(config.dataDir, metadata.id), `${JSON.stringify(metadata, null, 2)}\n`);
+  await saveArtifactMetadata(config.dataDir, metadata);
 };
 
 const ensureObjectFromTemp = async ({ config, tempPath, sha256 }) => {
@@ -251,6 +256,12 @@ const artifactPayload = (config, metadata) => ({
   sha256: metadata.sha256,
   created_at: metadata.created_at,
   source: metadata.source,
+  workspace_id: metadata.workspace_id ?? null,
+  relative_path: metadata.relative_path ?? null,
+  category: metadata.category ?? null,
+  lifecycle: metadata.lifecycle ?? null,
+  updated_at: metadata.updated_at ?? null,
+  promoted_at: metadata.promoted_at ?? null,
   content_url: `${config.publicBaseUrl}/v1/artifacts/${metadata.id}/content`,
 });
 
@@ -267,6 +278,7 @@ const handleUpload = async ({ req, res, config, corsHeaders }) => {
     .toLowerCase() || "application/octet-stream";
   const sessionId = String(req.headers["x-nexus-session-id"] ?? "").trim() || null;
   const source = String(req.headers["x-nexus-source"] ?? "").trim() || "bridge";
+  const workspace = parseWorkspaceUploadHeaders(req.headers);
 
   const upload = await receiveUpload({ req, config });
   await ensureObjectFromTemp({ config, tempPath: upload.tempPath, sha256: upload.sha256 });
@@ -280,7 +292,9 @@ const handleUpload = async ({ req, res, config, corsHeaders }) => {
     size: upload.size,
     sha256: upload.sha256,
     source,
+    ...workspace,
     created_at: config.now().toISOString(),
+    updated_at: config.now().toISOString(),
   };
   await saveMetadata(config, metadata);
 
@@ -422,26 +436,45 @@ const handleContent = async ({ req, res, config, id, url, corsHeaders }) => {
 
 const handleDelete = async ({ req, res, config, id, corsHeaders }) => {
   requireInternalAuth(req, config);
-  const metadata = await loadMetadata(config, id);
-  await rm(metadataPathFor(config.dataDir, id), { force: true });
-
-  const objectPath = objectPathFor(config.dataDir, metadata.sha256);
-  const metadataDir = join(config.dataDir, "metadata");
-  const files = await readdir(metadataDir).catch(() => []);
-  let maybeReferences = false;
-  for (const file of files) {
-    const raw = await readFile(join(metadataDir, file), "utf8").catch(() => "");
-    if (raw && JSON.parse(raw).sha256 === metadata.sha256) {
-      maybeReferences = true;
-      break;
-    }
-  }
-
-  if (!maybeReferences) {
-    await rm(objectPath, { force: true });
-  }
-
+  await deleteArtifactMetadataAndBytes({ dataDir: config.dataDir, artifactId: id });
   jsonResponse(res, 200, { ok: true }, corsHeaders);
+};
+
+const handleWorkspaceArtifacts = async ({ req, res, config, workspaceId, url, corsHeaders }) => {
+  requireInternalAuth(req, config);
+  const ownerId = String(url.searchParams.get("owner_id") ?? "").trim();
+  if (!ownerId) throw httpError(400, "missing_owner_id");
+  if (req.method === "GET") {
+    const artifacts = await listWorkspaceArtifacts({
+      dataDir: config.dataDir,
+      workspaceId,
+      ownerId,
+    });
+    jsonResponse(res, 200, { artifacts: artifacts.map((entry) => artifactPayload(config, entry)) }, corsHeaders);
+    return;
+  }
+  const result = await deleteWorkspaceArtifacts({
+    dataDir: config.dataDir,
+    workspaceId,
+    ownerId,
+  });
+  jsonResponse(res, 200, result, corsHeaders);
+};
+
+const handlePromote = async ({ req, res, config, id, corsHeaders }) => {
+  requireInternalAuth(req, config);
+  const body = await readJsonBody(req);
+  const ownerId = String(body.owner_id ?? "").trim();
+  const workspaceId = String(body.workspace_id ?? "").trim();
+  if (!ownerId) throw httpError(400, "missing_owner_id");
+  const metadata = await promoteWorkspaceArtifact({
+    dataDir: config.dataDir,
+    artifactId: id,
+    ownerId,
+    workspaceId,
+    now: config.now,
+  });
+  jsonResponse(res, 200, artifactPayload(config, metadata), corsHeaders);
 };
 
 export const createArtifactServer = (options = {}) => {
@@ -489,6 +522,19 @@ export const createArtifactServer = (options = {}) => {
         return;
       }
 
+      const workspaceArtifactsMatch = pathname.match(/^\/v1\/workspaces\/([0-9a-f-]{36})\/artifacts$/i);
+      if (workspaceArtifactsMatch && (req.method === "GET" || req.method === "DELETE")) {
+        await handleWorkspaceArtifacts({
+          req,
+          res,
+          config,
+          workspaceId: workspaceArtifactsMatch[1],
+          url,
+          corsHeaders,
+        });
+        return;
+      }
+
       const artifactMatch = pathname.match(/^\/v1\/artifacts\/([0-9a-f-]{36})(?:\/(.+))?$/i);
       if (artifactMatch) {
         const id = artifactMatch[1];
@@ -501,6 +547,11 @@ export const createArtifactServer = (options = {}) => {
 
         if (req.method === "POST" && action === "access-link") {
           await handleAccessLink({ req, res, config, id, corsHeaders });
+          return;
+        }
+
+        if (req.method === "POST" && action === "promote") {
+          await handlePromote({ req, res, config, id, corsHeaders });
           return;
         }
 
