@@ -1,0 +1,16 @@
+[
+  {
+    "op": "generate",
+    "prompt": "Premium square social media ad background for a Brazilian higher education campaign, 1080x1080. A smiling young professional woman with short dark hair, wearing a vivid orange blouse, holding a smartphone, standing in front of a modern corporate glass building. Clean institutional advertising aesthetic, polished commercial photography, warm orange brand atmosphere, subtle orange-red glow around the edges, soft abstract translucent circular shapes in the corners, realistic lighting, shallow depth of field, premium and trustworthy. Leave generous clean negative space in the lower center and bottom for headline, subtitle, badge and two CTA boxes. Do not render any text, logos or UI elements into the generated image.",
+    "model": "banana-pro",
+    "size": "1080x1080"
+  },
+  {
+    "op": "grade",
+    "name": "warm-editorial"
+  },
+  {
+    "op": "compose",
+    "overlays": "graduação-test/overlays.json"
+  }
+]

@@ -1,0 +1,257 @@
+[
+  {
+    "type": "satori-text",
+    "zone": {
+      "x": 50,
+      "y": 49
+    },
+    "width": 500,
+    "height": 44,
+    "anchor": "center",
+    "depth": "overlay",
+    "jsx": {
+      "tag": "div",
+      "props": {
+        "style": {
+          "display": "flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "width": "100%",
+          "height": "100%",
+          "color": "white",
+          "fontFamily": "Outfit",
+          "fontWeight": 600,
+          "fontSize": 30,
+          "letterSpacing": 1,
+          "textAlign": "center"
+        }
+      },
+      "children": [
+        "ens | GRADUACOES"
+      ]
+    }
+  },
+  {
+    "type": "satori-text",
+    "zone": {
+      "x": 50,
+      "y": 62
+    },
+    "width": 860,
+    "height": 210,
+    "anchor": "center",
+    "depth": "overlay",
+    "jsx": {
+      "tag": "div",
+      "props": {
+        "style": {
+          "display": "flex",
+          "flexDirection": "column",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "width": "100%",
+          "height": "100%",
+          "color": "white",
+          "fontFamily": "Outfit",
+          "textAlign": "center"
+        }
+      },
+      "children": [
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 78,
+              "fontWeight": 700,
+              "lineHeight": 0.98
+            }
+          },
+          "children": [
+            "Gestao de Seguros"
+          ]
+        },
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 78,
+              "fontWeight": 700,
+              "lineHeight": 0.98
+            }
+          },
+          "children": [
+            "e Gestao Financeira"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "satori-text",
+    "zone": {
+      "x": 50,
+      "y": 76
+    },
+    "width": 820,
+    "height": 118,
+    "anchor": "center",
+    "depth": "overlay",
+    "jsx": {
+      "tag": "div",
+      "props": {
+        "style": {
+          "display": "flex",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "width": "100%",
+          "height": "100%",
+          "color": "white",
+          "fontFamily": "Outfit",
+          "fontWeight": 500,
+          "fontSize": 33,
+          "lineHeight": 1.02,
+          "textAlign": "center"
+        }
+      },
+      "children": [
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "display": "flex",
+              "flexDirection": "column",
+              "alignItems": "center",
+              "justifyContent": "center",
+              "width": "100%",
+              "height": "100%"
+            }
+          },
+          "children": [
+            {
+              "tag": "div",
+              "children": [
+                "Escolha a formacao que combina com"
+              ]
+            },
+            {
+              "tag": "div",
+              "children": [
+                "seus objetivos e o mercado escolhe voce."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "satori-text",
+    "zone": {
+      "x": 27,
+      "y": 89
+    },
+    "width": 350,
+    "height": 78,
+    "anchor": "center",
+    "depth": "overlay",
+    "jsx": {
+      "tag": "div",
+      "props": {
+        "style": {
+          "display": "flex",
+          "flexDirection": "column",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "width": "100%",
+          "height": "100%",
+          "color": "white",
+          "fontFamily": "Outfit",
+          "textAlign": "center"
+        }
+      },
+      "children": [
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 28,
+              "fontWeight": 500,
+              "lineHeight": 1.0
+            }
+          },
+          "children": [
+            "ALTA TAXA DE"
+          ]
+        },
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 33,
+              "fontWeight": 700,
+              "lineHeight": 1.0
+            }
+          },
+          "children": [
+            "EMPREGABILIDADE"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "satori-text",
+    "zone": {
+      "x": 73,
+      "y": 89
+    },
+    "width": 350,
+    "height": 78,
+    "anchor": "center",
+    "depth": "overlay",
+    "jsx": {
+      "tag": "div",
+      "props": {
+        "style": {
+          "display": "flex",
+          "flexDirection": "column",
+          "alignItems": "center",
+          "justifyContent": "center",
+          "width": "100%",
+          "height": "100%",
+          "color": "white",
+          "fontFamily": "Outfit",
+          "textAlign": "center"
+        }
+      },
+      "children": [
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 28,
+              "fontWeight": 500,
+              "lineHeight": 1.0
+            }
+          },
+          "children": [
+            "DIPLOMA SUPERIOR"
+          ]
+        },
+        {
+          "tag": "div",
+          "props": {
+            "style": {
+              "fontSize": 33,
+              "fontWeight": 700,
+              "lineHeight": 1.0
+            }
+          },
+          "children": [
+            "EM 2 ANOS"
+          ]
+        }
+      ]
+    }
+  }
+]
