@@ -1,5 +1,5 @@
 import { CheckCircle2, File, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import type { PictureWorkspaceFile } from "@/lib/pictureWorkspace/types";
@@ -38,10 +38,10 @@ export const PictureFilesPanel = ({
   const [internalSelection, setInternalSelection] = useState<string | null>(null);
   const controlled = selectedFileId !== undefined;
   const effectiveSelection = controlled ? selectedFileId ?? null : internalSelection;
-  const selectFile = (fileId: string) => {
+  const selectFile = useCallback((fileId: string) => {
     if (!controlled) setInternalSelection(fileId);
     onSelectFile?.(fileId);
-  };
+  }, [controlled, onSelectFile]);
   const selected = files.find((entry) => entry.id === effectiveSelection) ?? null;
   const groups = useMemo(() => {
     const grouped = new Map<string, PictureWorkspaceFile[]>();
@@ -53,7 +53,7 @@ export const PictureFilesPanel = ({
     if (effectiveSelection || files.length === 0) return;
     const candidate = files.find((entry) => entry.id === candidateArtifactId || entry.artifact_id === candidateArtifactId);
     selectFile((candidate ?? files[0]).id);
-  }, [candidateArtifactId, effectiveSelection, files]);
+  }, [candidateArtifactId, effectiveSelection, files, selectFile]);
 
   if (isLoading) return <div className="flex h-full items-center justify-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Carregando arquivos...</div>;
   if (error && files.length === 0) return <div className="flex h-full items-center justify-center px-6 text-center text-sm text-red-600">Não foi possível carregar os arquivos da peça.</div>;

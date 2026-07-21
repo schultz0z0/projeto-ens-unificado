@@ -75,8 +75,13 @@ Com o Supabase CLI disponível e a mesma URL de banco do `.env`:
 
 ```bash
 cd apps/chat-web
-npx supabase migration list --db-url "$NEXUS_SUPABASE_DATABASE_URL"
-npx supabase db push --db-url "$NEXUS_SUPABASE_DATABASE_URL"
+DB_URL="$(grep -m1 '^NEXUS_SUPABASE_DATABASE_URL=' ../../.env | cut -d= -f2-)"
+DB_URL="${DB_URL%\"}"
+DB_URL="${DB_URL#\"}"
+test -n "$DB_URL"
+npx supabase migration list --db-url "$DB_URL"
+npx supabase db push --db-url "$DB_URL"
+unset DB_URL
 cd ../..
 ```
 
@@ -121,7 +126,8 @@ reverta migrations aditivas e não apague `data/artifacts`, `data/hermes` nem
 registros `picture_*`/`validated_works`.
 
 ```bash
-git switch --detach <tag-pre-picture-hermes>
+git tag --list 'pre-picture-hermes-*'
+git switch --detach <tag-pre-picture-hermes-YYYYMMDD-HHMMSS>
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 ```

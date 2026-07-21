@@ -191,3 +191,18 @@
 - Frontend: 199/199 testes, typecheck e build de produção passaram; permaneceram somente os warnings preexistentes de chunk grande/import misto e caniuse desatualizado.
 - Operação: mapa de env, guia Picture e deploy VPS agora cobrem internal-only, Session Pooler, migrations, health/readiness, fila/lease, rotação de delegação, smoke FAL somente opt-in, teste manual e rollback sem apagar dados.
 - FAL: nenhum teste ou smoke pago foi executado nesta etapa.
+
+### Etapa 19 — Verificação final e smoke controlado
+
+- Disciplina: a skill `verification-before-completion` foi aplicada e todos os gates abaixo foram executados novamente com o código final, sem confiar em resultados anteriores.
+- Artifact Server: 13/13 testes passaram.
+- Bridge: 83/83 testes passaram, incluindo fail-closed de produção, autenticação/isolamento Picture e preservação do gerador normal.
+- Picture: 49/49 testes passaram; typecheck e build passaram. A suíte inclui engine, contratos, autenticação, package, fila/lease, HTTP/MCP, lifecycle, Docker contract e dois testes integrados.
+- Frontend: 199/199 testes, typecheck e build passaram; E2E fake desktop/mobile 2/2 passou após a última correção. Lint terminou com zero erros e 10 warnings preexistentes.
+- Finding do lint: o novo painel tinha um warning de dependência do hook. `selectFile` passou a `useCallback`, o warning novo desapareceu e teste focal 2/2 + typecheck passaram antes do rerun completo.
+- Hermes: 16 testes passaram e 1 foi pulado por exigir POSIX/bash no host Windows.
+- Supabase remoto: migration `20260721190000` está alinhada local/remoto; dry-run informou banco atualizado; o mesmo pgTAP transacional retornou `ok 1` a `ok 27`. O runner oficial conectou, mas tentou Docker; o arquivo foi então executado diretamente pelo driver Bun SQL, preservando seu `begin/rollback`.
+- Env/segredos: 19/19 nomes Picture estão no `.env` real e no exemplo, sem extras/faltantes; banco/FAL estão configurados, chaves técnicas satisfazem o mínimo, nenhum nome Designer existe e o `.env` continua ignorado. Busca literal encontrou zero segredo real em arquivos rastreados.
+- Compose: YAML base/prod foi parseado; Picture está internal-only, sem porta/labels Traefik, com `/ready`, Artifact/Bridge/Hermes encadeados e zero serviço Designer. O Docker CLI continua ausente, portanto `docker compose config/build` e o health real de container permanecem gates explícitos do deploy VPS.
+- Isolamento: zero referência Designer executável após excluir migrations/relatórios históricos; `apps/designer-api` não existe; Roadmap.md permaneceu intacto; PRD e plano separados foram atualizados.
+- Smoke pago: não executado por falta de autorização específica de custo. O E2E e a integração usaram engine/rotas fake locais.

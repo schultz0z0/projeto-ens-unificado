@@ -144,7 +144,10 @@ não apague `data/artifacts`, `data/hermes`, `data/designer` nem registros
 Antes do deploy, marque o commit atual. Para voltar:
 
 ```bash
-git switch --detach picture-hermes-predeploy
+git tag "pre-picture-hermes-$(date +%Y%m%d-%H%M%S)" "$(git rev-parse HEAD)"
+# Em um rollback posterior, selecione a tag criada acima:
+git tag --list 'pre-picture-hermes-*'
+git switch --detach <tag-pre-picture-hermes-YYYYMMDD-HHMMSS>
 "${DC[@]}" build
 "${DC[@]}" up -d --remove-orphans
 ```
