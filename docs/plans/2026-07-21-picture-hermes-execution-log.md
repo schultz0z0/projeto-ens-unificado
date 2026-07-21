@@ -12,9 +12,9 @@
 |---|---|---|---|
 | 1. Engine Picture | Concluída | 7ecdbff | 3 testes, tsc e build verdes |
 | 2. Contratos e paths | Concluída | 4caef2e | 14 testes totais e tsc verdes |
-| 3. Artifact Server | Concluída | a registrar | 13 testes verdes |
-| 4. Banco | Em andamento | — | — |
-| 5. Artifact client | Pendente | — | — |
+| 3. Artifact Server | Concluída | eb061a7 | 13 testes verdes |
+| 4. Banco | Concluída e aplicada | a registrar | 27 pgTAP verdes no remoto |
+| 5. Artifact client | Em andamento | — | — |
 | 6. Workspace lifecycle | Pendente | — | — |
 | 7. Package builder | Pendente | — | — |
 | 8. Jobs e worker | Pendente | — | — |
@@ -60,3 +60,14 @@
 ### Etapa 4 — Criar esquema persistente Picture-Hermes
 
 - Estado inicial: chat_sessions não diferencia sessões; validated_works rejeita peças visuais; tabelas Picture ainda não existem.
+- Infra local: Supabase local não pôde iniciar porque Docker Desktop não está ativo. Isso foi tratado como limitação de infraestrutura, não como teste funcional.
+- RED remoto transacional: o teste falhou com relation public.picture_workspaces does not exist.
+- Implementação: session_kind protegido por privilégios de coluna; picture_workspaces e picture_jobs com constraints, índices, leases, triggers, RLS e grants; validated_works ampliado para peca_visual.
+- Validação pré-deploy: migration aplicada e revertida em transação no banco remoto; 27/27 assertions pgTAP passaram.
+- Dry-run oficial: supabase db push listou somente 20260721190000_picture_hermes_workspace.sql.
+- Deploy autorizado: migration aplicada no Supabase remoto. O cache pg-delta em Docker emitiu warning por Docker Desktop inativo, sem falha da migration.
+- GREEN pós-deploy: 27/27 assertions pgTAP passaram novamente diretamente no schema remoto.
+
+### Etapa 5 — Cliente de Artifact Server no Picture
+
+- Estado inicial: Picture ainda não publica ou consulta artefatos pelo serviço.
