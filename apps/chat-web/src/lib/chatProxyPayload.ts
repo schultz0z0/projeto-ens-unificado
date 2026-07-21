@@ -49,6 +49,8 @@ export type ChatProxyPayload = {
   attachments?: ChatProxyAttachmentPayload[];
   intent?: "image_generate";
   image_options?: ChatProxyImageOptionsPayload;
+  experience?: "picture";
+  picture_workspace_id?: string;
 };
 
 type BuildChatProxyPayloadParams = {
@@ -56,6 +58,8 @@ type BuildChatProxyPayloadParams = {
   messageText: string;
   attachments: ChatMessageFilePart[];
   imageGeneration?: ChatImageGenerationOptions | null;
+  experience?: "normal" | "picture";
+  pictureWorkspaceId?: string;
 };
 
 const mapAttachmentForProxy = (attachment: ChatMessageFilePart): ChatProxyAttachmentPayload => {
@@ -83,6 +87,8 @@ export const buildChatProxyPayload = ({
   messageText,
   attachments,
   imageGeneration,
+  experience = "normal",
+  pictureWorkspaceId,
 }: BuildChatProxyPayloadParams): ChatProxyPayload => {
   const trimmedMessage = messageText.trim();
   const normalizedSessionId = sessionId.trim();
@@ -108,6 +114,17 @@ export const buildChatProxyPayload = ({
       size: parsed.data.size,
       output_format: parsed.data.outputFormat,
     };
+  }
+
+  if (experience === "picture") {
+    const workspaceId = pictureWorkspaceId?.trim();
+    if (!workspaceId) {
+      throw new Error("Workspace Picture inválido.");
+    }
+    delete payload.intent;
+    delete payload.image_options;
+    payload.experience = "picture";
+    payload.picture_workspace_id = workspaceId;
   }
 
   return payload;

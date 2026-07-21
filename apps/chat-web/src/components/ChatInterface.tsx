@@ -57,8 +57,15 @@ interface Message {
   created_at: string;
 }
 
+export type ChatExperience = "normal" | "picture";
+
 interface ChatInterfaceProps {
   onRequestTabChange?: (tab: HomeTab) => void;
+  experience?: ChatExperience;
+  fixedSessionId?: string;
+  pictureWorkspaceId?: string;
+  hideHistory?: boolean;
+  onActivitySettled?: () => void;
 }
 
 type ChatMessagesPaneProps = {
@@ -214,7 +221,14 @@ const ChatMessagesPane = memo(function ChatMessagesPane({
   );
 });
 
-export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
+export const ChatInterface = ({
+  onRequestTabChange,
+  experience = "normal",
+  fixedSessionId,
+  pictureWorkspaceId,
+  hideHistory = false,
+  onActivitySettled,
+}: ChatInterfaceProps) => {
   const { user, session, signOut } = useAuth();
   const approvalBridgeBaseUrl = useMemo(() => chatService.resolveChatbotProxyBaseUrl() ?? "", []);
   const getApprovalAccessToken = useCallback(async () => session?.access_token ?? null, [session?.access_token]);
@@ -223,7 +237,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     getAccessToken: getApprovalAccessToken,
   });
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentSessionId = searchParams.get("chat");
+  const currentSessionId = fixedSessionId ?? searchParams.get("chat");
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -293,7 +307,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   ]), []);
 
   const composerMenuItems = useMemo<ComposerMenuItem[]>(
-    () => [
+    () => ([
       { key: "upload", label: "Adicionar fotos e arquivos", icon: Paperclip, kind: "upload", separatorAfter: true },
       {
         key: "image",
@@ -331,8 +345,8 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
         kind: "action",
         onSelect: () => setInput("Crie um planejamento semanal de conteúdo para: "),
       },
-    ],
-    [],
+    ].filter((item) => experience === "normal" || item.key !== "image")),
+    [experience],
   );
   const displayMessages = useMemo(() => {
     const result: Message[] = [];
@@ -405,7 +419,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
       shouldAutoScrollRef.current = true;
       loadMessages(currentSessionId);
       // Abre a sidebar automaticamente no desktop para dar feedback visual
-      if (window.innerWidth >= 1024) setIsHistoryOpen(true);
+      if (!hideHistory && !fixedSessionId && window.innerWidth >= 1024) setIsHistoryOpen(true);
       
     } else {
       // Se não tiver ID (home), limpa as mensagens
@@ -418,7 +432,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
     setContextStatus(null);
     setConfidenceScore(null);
     setReviewState(null);
-  }, [currentSessionId, loadMessages]);
+  }, [currentSessionId, fixedSessionId, hideHistory, loadMessages]);
 
   useEffect(() => {
     if (!currentSessionId || isTyping) return;
@@ -458,10 +472,12 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
   }, [currentSessionId, hasMoreHistory, isLoadingMore, messages]);
 
   const handleSelectSession = (sessionId: string) => {
+    if (fixedSessionId) return;
     setSearchParams({ chat: sessionId });
   };
 
   const createNewSession = async () => {
+    if (fixedSessionId) return;
     setSearchParams({}); // Remove o parâmetro chat da URL
     setMessages([]);
     setHasMoreHistory(false);
@@ -733,7 +749,7 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
             : "Nova conversa";
         const newSession = await chatService.createSession(user.id, titleBase.slice(0, 30) + "...");
         activeSessionId = newSession.id;
-        setSearchParams({ chat: activeSessionId });
+        if (!fixedSessionId) setSearchParams({ chat: activeSessionId });
       }
 
       if (!activeSessionId) {
@@ -753,6 +769,8 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
         messageText: currentInput.trim(),
         attachments: storedParts,
         imageGeneration: currentImageGenerationMode ? currentImageGenerationOptions : null,
+        experience,
+        pictureWorkspaceId,
       });
       if (!proxyPayload.message_text && !proxyPayload.attachments?.length && !messageForStorage) return;
 
@@ -890,24 +908,29 @@ export const ChatInterface = ({ onRequestTabChange }: ChatInterfaceProps) => {
       setIsTyping(false);
       setIsRetrievingContext(false);
       setLiveStatusText(null);
+      onActivitySettled?.();
     }
   };
 
   return (
     <div className="flex h-full min-h-0 relative">
       {/* Sidebar de Histórico */}
-      <ChatHistorySidebar 
-        isOpen={isHistoryOpen}
-        onToggle={() => setIsHistoryOpen(!isHistoryOpen)}
-        currentSessionId={currentSessionId}
-        onSelectSession={handleSelectSession}
-        onNewChat={createNewSession}
-      />
+      {!hideHistory && !fixedSessionId && (
+        <ChatHistorySidebar
+          isOpen={isHistoryOpen}
+          onToggle={() => setIsHistoryOpen(!isHistoryOpen)}
+          currentSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewChat={createNewSession}
+        />
+      )}
 
       <div
         className={cn(
           "flex-1 flex flex-col transition-all duration-300 ml-0 h-full min-h-0",
-          isHistoryOpen ? "md:ml-64" : "md:ml-12",
+          !hideHistory && !fixedSessionId
+            ? (isHistoryOpen ? "md:ml-64" : "md:ml-12")
+            : "",
           isEmpty ? "overflow-y-auto" : "overflow-hidden",
         )}
       >

@@ -21,8 +21,8 @@
 | 9. REST/MCP/auth | Concluída | e78200a | 43 testes, tsc e build verdes |
 | 10. Container Picture | Concluída com validação estática | e338f87 | 45 testes e tsc verdes; Docker CLI indisponível |
 | 11. Hermes MCP/skill | Concluída | 0c051d6 | 16 testes Hermes verdes; 1 POSIX skip |
-| 12. Bridge Picture | Concluída | a registrar | 81 testes verdes e syntax check |
-| 13. Sessões frontend | Pendente | — | — |
+| 12. Bridge Picture | Concluída | fe5a111 | 81 testes verdes e syntax check |
+| 13. Sessões frontend | Concluída | a registrar | 7 testes focais e typecheck verdes |
 | 14. Client/hook frontend | Pendente | — | — |
 | 15. UI Picture | Pendente | — | — |
 | 16. Trabalhos Validados | Pendente | — | — |
@@ -133,3 +133,11 @@
 - BFF: current/get/files/approve/new-piece autenticados; approval idempotente; nova peça só após validação e executa reset do Picture, limpeza da sessão Hermes/chat e criação convergente de um novo workspace.
 - Persistência segura: bytes e token técnico não entram no histórico da mensagem; o run guarda somente resumo do manifest, IDs e a entrada já redigida.
 - GREEN: `node --check` passou em server/payloads; `npm test` retornou 81 pass, 0 fail.
+
+### Etapa 13 — Isolar sessões normais e Picture no frontend
+
+- RED: listagem não aplicava `session_kind=normal` e o payload ignorava os campos explícitos do modo Picture; dois testes falharam como esperado.
+- Banco/segurança: criação normal continua usando o default protegido da tabela (clientes autenticados não recebem privilégio para forjar `session_kind`); a resposta tipada confirma `normal`.
+- Chat reutilizável: `fixedSessionId`, `experience`, `pictureWorkspaceId`, `hideHistory` e callback de refresh foram adicionados sem alterar defaults; sessão fixa carrega mensagens mas não cria/navega pela sidebar.
+- Isolamento visual: sidebar filtra defensivamente apenas sessões normais e a ação `image_generate` não aparece no composer Picture; o payload normal permaneceu estruturalmente igual.
+- GREEN: 7/7 testes focais passaram e `tsc --noEmit` saiu com código 0.

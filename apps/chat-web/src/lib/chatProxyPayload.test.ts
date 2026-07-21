@@ -104,4 +104,27 @@ describe("buildChatProxyPayload", () => {
       }),
     ).toThrow("Nao foi possivel preparar o anexo imagem.png para o Hermes.");
   });
+
+  it("adds Picture routing only when the Picture experience is explicit", () => {
+    const normal = buildChatProxyPayload({
+      sessionId: "session-1",
+      messageText: "gere uma peça",
+      attachments: [],
+    });
+    const picture = buildChatProxyPayload({
+      sessionId: "session-2",
+      messageText: "gere uma peça",
+      attachments: [],
+      experience: "picture",
+      pictureWorkspaceId: "workspace-1",
+    });
+
+    expect(normal).toEqual({ session_id: "session-1", message_text: "gere uma peça" });
+    expect(picture).toEqual({
+      session_id: "session-2",
+      message_text: "gere uma peça",
+      experience: "picture",
+      picture_workspace_id: "workspace-1",
+    });
+  });
 });

@@ -64,7 +64,7 @@ export const ChatHistorySidebar = ({
     try {
       setLoading(true);
       const data = await chatService.listSessions(user.id);
-      setSessions(data);
+      setSessions(data.filter((session) => session.session_kind === "normal"));
     } catch (error) {
       console.error("Erro ao carregar histórico:", error);
     } finally {

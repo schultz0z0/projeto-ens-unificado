@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 export interface ChatSession {
   id: string;
   title: string;
+  session_kind: "normal" | "picture";
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +75,7 @@ export const chatService = {
       .from("chat_sessions")
       .select("*")
       .eq("user_id", userId)
+      .eq("session_kind", "normal")
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
