@@ -63,6 +63,7 @@ export const usePictureWorkspace = ({ client, pollingMs = 2_000 }: UsePictureWor
 
   const refresh = async () => {
     const results = await Promise.allSettled([
+      currentQuery.refetch(),
       detailsQuery.refetch(),
       filesQuery.refetch(),
     ]);

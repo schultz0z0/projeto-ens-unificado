@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { ChatInterface } from "@/components/ChatInterface";
-import { ImageGenerator } from "@/components/ImageGenerator";
+import { PictureWorkspace } from "@/components/picture/PictureWorkspace";
 
 const Index = () => {
   const location = useLocation();
@@ -24,7 +24,7 @@ const Index = () => {
           </div>
         );
       case "image":
-        return <ImageGenerator />;
+        return <PictureWorkspace />;
       default:
         return (
           <div className="relative h-[calc(100dvh-6rem)] min-h-0">

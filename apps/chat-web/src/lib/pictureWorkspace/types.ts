@@ -45,4 +45,5 @@ export interface PictureWorkspaceClient {
   files(workspaceId: string, signal?: AbortSignal): Promise<PictureWorkspaceFile[]>;
   approve(workspaceId: string, signal?: AbortSignal): Promise<PictureWorkspace>;
   newPiece(workspaceId: string, signal?: AbortSignal): Promise<PictureWorkspace>;
+  accessFile(artifactId: string, signal?: AbortSignal): Promise<{ url: string; expiresAt: string }>;
 }

@@ -10,6 +10,7 @@ describe("Picture workspace client", () => {
     const fetchMock = vi.fn(async (url: string | URL | Request, init: RequestInit = {}) => {
       calls.push({ url: String(url), init });
       if (String(url).endsWith("/files")) return Response.json({ files: [{ id: "file-1" }] });
+      if (String(url).endsWith("/access-link")) return Response.json({ url: "https://files/file-1", expires_at: "2099-01-01T00:00:00Z" });
       return Response.json({ workspace });
     });
     const client = createPictureWorkspaceClient({
@@ -24,6 +25,7 @@ describe("Picture workspace client", () => {
     await client.files("workspace-1", signal);
     await client.approve("workspace-1", signal);
     await client.newPiece("workspace-1", signal);
+    await client.accessFile("file-1", signal);
 
     expect(calls.map(({ url, init }) => [init.method ?? "GET", url])).toEqual([
       ["POST", "https://bridge.example/api/picture/workspace/current"],
@@ -31,6 +33,7 @@ describe("Picture workspace client", () => {
       ["GET", "https://bridge.example/api/picture/workspaces/workspace-1/files"],
       ["POST", "https://bridge.example/api/picture/workspaces/workspace-1/approve"],
       ["POST", "https://bridge.example/api/picture/workspaces/workspace-1/new-piece"],
+      ["POST", "https://bridge.example/api/artifacts/file-1/access-link"],
     ]);
     expect(new Headers(calls[0].init.headers).get("authorization")).toBe("Bearer supabase-token");
     expect(calls.every(({ init }) => init.signal === signal)).toBe(true);

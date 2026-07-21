@@ -345,7 +345,7 @@ export const ChatInterface = ({
         kind: "action",
         onSelect: () => setInput("Crie um planejamento semanal de conteúdo para: "),
       },
-    ].filter((item) => experience === "normal" || item.key !== "image")),
+    ].filter((item) => experience === "normal" || item.key === "upload")),
     [experience],
   );
   const displayMessages = useMemo(() => {
@@ -940,7 +940,30 @@ export const ChatInterface = ({
             isEmpty ? "min-h-full" : "h-full min-h-0",
           )}
         >
-          {isEmpty ? (
+          {isEmpty && experience === "picture" ? (
+            <div className="flex min-h-full flex-col items-center justify-center gap-6 px-4 py-8">
+              <div className="max-w-lg text-center">
+                <h2 className="text-xl font-semibold text-slate-900">O que vamos criar?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Conte ao Hermes sobre a peça e anexe referências quando precisar. Ele organiza o briefing e conduz a geração no Picture.</p>
+              </div>
+              <div className="w-full max-w-3xl">
+                <ChatComposer
+                  value={input}
+                  onSubmit={handleSend}
+                  placeholder="Descreva a peça, objetivo, público e formato..."
+                  attachments={attachments}
+                  menuItems={composerMenuItems}
+                  imageGenerationMode={false}
+                  imageGenerationOptions={imageGenerationOptions}
+                  onImageGenerationOptionsChange={setImageGenerationOptions}
+                  onExitImageGenerationMode={() => setImageGenerationMode(false)}
+                  onPickFiles={handlePickFiles}
+                  onRemoveAttachment={handleRemoveAttachment}
+                  disabled={isTyping || isUploadingAttachments}
+                />
+              </div>
+            </div>
+          ) : isEmpty ? (
             <ChatEmptyState
               input={input}
               onInputChange={setInput}
@@ -979,7 +1002,7 @@ export const ChatInterface = ({
               <ChatComposer
                 value={input}
                 onSubmit={handleSend}
-                placeholder="Diga o que você quer criar hoje para sua marca..."
+                placeholder={experience === "picture" ? "Continue refinando a peça com o Hermes..." : "Diga o que você quer criar hoje para sua marca..."}
                 attachments={attachments}
                 menuItems={composerMenuItems}
                 imageGenerationMode={imageGenerationMode}

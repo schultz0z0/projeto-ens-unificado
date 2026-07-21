@@ -76,5 +76,12 @@ export const createPictureWorkspaceClient = (options: PictureWorkspaceClientOpti
     newPiece: async (workspaceId, signal) => (await request<{ workspace: PictureWorkspace }>(
       `${workspacePath(workspaceId)}/new-piece`, { method: "POST", body: "{}", signal },
     )).workspace,
+    accessFile: async (artifactId, signal) => {
+      const result = await request<{ url: string; expires_at: string }>(
+        `/api/artifacts/${encodeURIComponent(artifactId)}/access-link`,
+        { method: "POST", body: "{}", signal },
+      );
+      return { url: result.url, expiresAt: result.expires_at };
+    },
   };
 };

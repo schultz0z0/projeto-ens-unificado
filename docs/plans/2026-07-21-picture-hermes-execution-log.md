@@ -23,8 +23,8 @@
 | 11. Hermes MCP/skill | Concluída | 0c051d6 | 16 testes Hermes verdes; 1 POSIX skip |
 | 12. Bridge Picture | Concluída | fe5a111 | 81 testes verdes e syntax check |
 | 13. Sessões frontend | Concluída | a135527 | 7 testes focais e typecheck verdes |
-| 14. Client/hook frontend | Concluída | a registrar | 9 testes focais e typecheck verdes |
-| 15. UI Picture | Pendente | — | — |
+| 14. Client/hook frontend | Concluída | f73af68 | 9 testes focais e typecheck verdes |
+| 15. UI Picture | Concluída | a registrar | 197 testes, typecheck e build verdes |
 | 16. Trabalhos Validados | Pendente | — | — |
 | 17. Cutover Designer | Pendente | — | — |
 | 18. Integração/docs | Pendente | — | — |
@@ -150,3 +150,12 @@
 - Polling: somente `generating` refaz details/files; `drafting`, `review` e `validated` ficam estáveis. Refresh explícito atende ao fim de um turno do chat.
 - Mutações: approve atualiza caches; newPiece troca sessão/workspace, remove cache antigo de arquivos e limpa a seleção local; erro de refresh preserva os dados anteriores.
 - GREEN: 9/9 testes focais passaram e `tsc --noEmit` saiu com código 0.
+
+### Etapa 15 — Chat Picture e painel de arquivos
+
+- RED: as duas suítes de componentes falharam porque workspace, painel, preview e ações ainda não existiam.
+- Cutover visual: a aba Geração de Imagem agora monta `PictureWorkspace`; formulário, hook e service do Designer foram removidos do frontend.
+- Layout: grid desktop aproximadamente 55/45 com chat fixo e manifest; no mobile os arquivos abrem em Sheet. O chat vazio possui apenas orientação, composer e anexos, sem wizard nem controles do Designer.
+- Preview: categorias do pacote, destaque da candidata, JSON/text formatado, imagem, fallback para arquivo desconhecido, link assinado cacheado e renovação preventiva/por erro.
+- Ações humanas: aprovação somente em review; nova peça somente em validated; confirmação reproduz integralmente o aviso do PRD; pending bloqueia clique duplicado.
+- GREEN: suíte completa do frontend 197/197; `tsc --noEmit` e build Vite de produção passaram. Restaram somente warnings preexistentes de chunk e caniuse desatualizado.
