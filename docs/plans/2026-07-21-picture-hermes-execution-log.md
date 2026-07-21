@@ -18,8 +18,8 @@
 | 6. Workspace lifecycle | Concluída | 4885300 | 24 testes, tsc e build verdes |
 | 7. Package builder | Concluída | eedaf15 | 28 testes, tsc e build verdes |
 | 8. Jobs e worker | Concluída | a504bb6 | 34 testes, tsc e build verdes |
-| 9. REST/MCP/auth | Concluída | a registrar | 43 testes, tsc e build verdes |
-| 10. Container Picture | Pendente | — | — |
+| 9. REST/MCP/auth | Concluída | e78200a | 43 testes, tsc e build verdes |
+| 10. Container Picture | Concluída com validação estática | a registrar | 45 testes e tsc verdes; Docker CLI indisponível |
 | 11. Hermes MCP/skill | Pendente | — | — |
 | 12. Bridge Picture | Pendente | — | — |
 | 13. Sessões frontend | Pendente | — | — |
@@ -108,3 +108,11 @@
 - MCP: transporte Web Standard nativo do Bun e somente quatro tools de alto nível (get workspace, start, revise, get job); approve/reset permanecem exclusivamente humanos via REST.
 - Runtime: main.ts monta DB, Artifact client, serviços, MCP/HTTP e worker pool com shutdown coordenado.
 - GREEN: bun test retornou 43 pass, 0 fail; bunx tsc --noEmit e build saíram com código 0.
+
+### Etapa 10 — Container do Picture Service
+
+- RED: os dois testes de contrato falharam por Dockerfile, entrypoint e dockerignore ausentes.
+- Implementação: imagem multi-stage `oven/bun:1.3.14`, install frozen, fontes no build, curl+tini, usuário bun, temp root gravável, healthcheck e shutdown por sinais entregue ao main.
+- Contexto: .env, node_modules, dist, fixtures, outputs e imagens avulsas são excluídos; scripts shell preservam LF pela regra raiz de gitattributes.
+- GREEN local: contrato Docker 2/2 e suíte Picture 45/45; typecheck saiu com código 0.
+- Limitação de infraestrutura: o comando `docker` não está instalado/disponível no PATH desta máquina, portanto build/run da imagem não puderam ser executados aqui. O smoke ficou mantido para a verificação/deploy em host com Docker.
