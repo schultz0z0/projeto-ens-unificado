@@ -18,6 +18,14 @@ import {
   resolveTrustedTenantId,
 } from "./tenant-context.js";
 import { validateBridgeRuntimeConfig } from "./runtime-config.js";
+import { PictureClient } from "./picture-client.js";
+import { issuePictureDelegation, redactPictureDelegation } from "./picture-delegation.js";
+import {
+  buildPictureWorkspaceSummary,
+  createPictureModeService,
+  createSupabasePictureSessionRepository,
+  validateChatExperience,
+} from "./picture-mode.js";
 import {
   isExplicitMarketingOpsConfirmation,
   isValidDelegationRefreshKey,
@@ -101,6 +109,15 @@ const config = {
     refreshWindowSeconds: Number(process.env.MARKETING_OPS_DELEGATION_REFRESH_WINDOW_SECONDS || 900),
   },
   marketingOpsDelegationRefreshKey: process.env.MARKETING_OPS_DELEGATION_REFRESH_KEY || "",
+  pictureInternalUrl: runtimeConfig.pictureInternalUrl,
+  pictureInternalKey: runtimeConfig.pictureInternalKey,
+  pictureDelegation: {
+    activeKid: runtimeConfig.pictureDelegationActiveKid,
+    activeKey: runtimeConfig.pictureDelegationActiveKey,
+    issuer: process.env.PICTURE_DELEGATION_ISSUER || "nexus-chat-bridge",
+    audience: process.env.PICTURE_DELEGATION_AUDIENCE || "nexus-picture",
+    ttlSeconds: Number(process.env.PICTURE_DELEGATION_TTL_SECONDS || 90),
+  },
 };
 
 const terminalStatuses = new Set(["completed", "failed", "cancelled", "canceled", "expired", "interrupted"]);
@@ -761,6 +778,18 @@ const issueRunMarketingOpsDelegation = async (run) => {
   }, scopes, config.marketingOpsDelegation);
 };
 
+const issueRunPictureDelegation = async (run) => {
+  if (run.experience !== "picture") return "";
+  return issuePictureDelegation({
+    userId: run.user_id,
+    tenantId: run.tenant_id,
+    role: run.user_role || "member",
+    chatSessionId: run.chat_session_id,
+    workspaceId: run.picture_workspace_id,
+    runId: run.id,
+  }, ["picture:read", "picture:write"], config.pictureDelegation);
+};
+
 
 class HermesBridge {
   constructor({ store, hermesStateRepository }) {
@@ -769,7 +798,23 @@ class HermesBridge {
   }
 
   async createRun({ user, payload }) {
-    const validated = validateChatPayload(payload);
+    const validated = validateChatPayload(payload);
+    const pictureExperience = validateChatExperience(payload);
+    let pictureWorkspace = null;
+    if (pictureExperience.experience === "picture") {
+      await pictureSessions.assertPictureSession({ sessionId: validated.session_id, userId: user.id });
+      pictureWorkspace = await pictureClient.getWorkspace({
+        userId: user.id,
+        tenantId: user.tenant_id,
+        sessionId: validated.session_id,
+        workspaceId: pictureExperience.pictureWorkspaceId,
+      });
+      if (pictureWorkspace.chat_session_id !== validated.session_id) {
+        const error = new Error("picture_workspace_session_mismatch");
+        error.status = 409;
+        throw error;
+      }
+    }
     const preparedAttachments = await prepareHermesAttachments({
       attachments: validated.attachments,
       userId: user.id,
@@ -782,6 +827,26 @@ class HermesBridge {
       sharedImageBridgeDir: config.hermesImageInputsBridgeDir,
       sharedImageHermesDir: config.hermesImageInputsHermesDir,
     });
+    if (pictureExperience.experience === "picture" && preparedAttachments.length > 0) {
+      await pictureClient.importPreparedReferences({
+        userId: user.id,
+        tenantId: user.tenant_id,
+        sessionId: validated.session_id,
+        workspaceId: pictureExperience.pictureWorkspaceId,
+        attachments: preparedAttachments,
+      });
+    }
+    const pictureFiles = pictureExperience.experience === "picture"
+      ? await pictureClient.getFiles({
+          userId: user.id,
+          tenantId: user.tenant_id,
+          workspaceId: pictureExperience.pictureWorkspaceId,
+        })
+      : [];
+    const pictureWorkspaceSummary = pictureExperience.experience === "picture"
+      ? buildPictureWorkspaceSummary({ workspace: pictureWorkspace, files: pictureFiles })
+      : null;
+
     const mode = selectHermesBridgeMode(preparedAttachments);
     const replayContextMessages = mode === "session"
       ? []
@@ -803,12 +868,16 @@ class HermesBridge {
       hermes_response_id: null,
       hermes_conversation_id: null,
       mode,
-      status: "queued",
+      status: "queued",
+
+      experience: pictureExperience.experience,
+      picture_workspace_id: pictureExperience.pictureWorkspaceId,
+      picture_workspace_summary: pictureWorkspaceSummary,
       message_text: validated.message_text,
 
-      intent: validated.intent,
+      intent: pictureExperience.experience === "picture" ? null : validated.intent,
 
-      image_options: validated.image_options,
+      image_options: pictureExperience.experience === "picture" ? null : validated.image_options,
       input: "",
       attachments: preparedAttachments,
       replay_context_messages: replayContextMessages,
@@ -1204,7 +1273,8 @@ class HermesBridge {
 
     let state = initialState;
 
-    const hasImageAttachments = run.attachments.some((attachment) => isImageAttachment(attachment));
+    const hasImageAttachments = run.experience !== "picture"
+      && run.attachments.some((attachment) => isImageAttachment(attachment));
 
     let imageTransport = "inline";
 
@@ -1215,7 +1285,8 @@ class HermesBridge {
 
 
     while (!terminalStatuses.has(run.status)) {
-      const marketingOpsDelegation = await issueRunMarketingOpsDelegation(run);
+      const marketingOpsDelegation = run.experience === "picture" ? "" : await issueRunMarketingOpsDelegation(run);
+      const pictureDelegation = await issueRunPictureDelegation(run);
 
       const requestPayload = buildHermesSessionChatRequest({
 
@@ -1230,14 +1301,18 @@ class HermesBridge {
         imageOptions: run.image_options,
         nexusContext: buildRunNexusContext(run),
         marketingOpsDelegation,
+        experience: run.experience,
+        pictureWorkspaceId: run.picture_workspace_id,
+        pictureWorkspaceSummary: run.picture_workspace_summary,
+        pictureDelegation,
 
       });
 
-      run.input = redactMarketingOpsDelegation(typeof requestPayload.message === "string"
+      run.input = redactPictureDelegation(redactMarketingOpsDelegation(typeof requestPayload.message === "string"
 
         ? requestPayload.message
 
-        : JSON.stringify(requestPayload.message));
+        : JSON.stringify(requestPayload.message)));
 
 
 
@@ -1544,7 +1619,36 @@ const hermesStateRepository = config.supabaseUrl && config.supabaseServiceRoleKe
       supabaseServiceRoleKey: config.supabaseServiceRoleKey,
     })
   : createMemoryHermesStateRepository();
-const bridge = new HermesBridge({ store, hermesStateRepository });
+const pictureClient = new PictureClient({
+  baseUrl: config.pictureInternalUrl,
+  internalKey: config.pictureInternalKey,
+  artifactBaseUrl: config.artifactInternalUrl,
+  artifactInternalKey: config.artifactInternalKey,
+});
+const pictureSessions = createSupabasePictureSessionRepository({
+  supabaseUrl: config.supabaseUrl,
+  serviceRoleKey: config.supabaseServiceRoleKey,
+});
+const pictureModeService = createPictureModeService({
+  sessions: pictureSessions,
+  picture: pictureClient,
+  hermes: {
+    async deleteSession({ userId, sessionId }) {
+      const state = await hermesStateRepository.get(sessionId, userId).catch(() => null);
+      const hermesBaseUrl = normalizeBaseUrl(config.hermesBaseUrl);
+      if (state?.hermes_session_id && hermesBaseUrl) {
+        await deleteHermesSession({
+          hermesBaseUrl,
+          hermesApiKey: config.hermesApiKey,
+          hermesSessionId: state.hermes_session_id,
+        }).catch(() => false);
+      }
+      await hermesStateRepository.delete(sessionId, userId).catch(() => {});
+    },
+  },
+});
+
+const bridge = new HermesBridge({ store, hermesStateRepository });
 
 const writeSseHeaders = (req, res) => {
   res.writeHead(200, {
@@ -1674,6 +1778,44 @@ const handleRequest = async (req, res) => {
       url: access.url,
       expires_at: access.expires_at,
     }, corsHeaders);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/picture/workspace/current") {
+    const user = await verifyUser(req);
+    const workspace = await pictureModeService.current(user);
+    jsonResponse(res, 200, { workspace }, corsHeaders);
+    return;
+  }
+
+  const pictureWorkspaceMatch = url.pathname.match(/^\/api\/picture\/workspaces\/([^/]+)(?:\/(files|approve|new-piece))?$/);
+  if (pictureWorkspaceMatch) {
+    const user = await verifyUser(req);
+    const workspaceId = decodeURIComponent(pictureWorkspaceMatch[1]);
+    const action = pictureWorkspaceMatch[2] || "";
+    if (req.method === "GET" && action === "") {
+      const workspace = await pictureModeService.get(user, workspaceId);
+      jsonResponse(res, 200, { workspace }, corsHeaders);
+      return;
+    }
+    if (req.method === "GET" && action === "files") {
+      const files = await pictureModeService.files(user, workspaceId);
+      jsonResponse(res, 200, { files }, corsHeaders);
+      return;
+    }
+    if (req.method === "POST" && action === "approve") {
+      await readJsonBody(req);
+      const workspace = await pictureModeService.approve(user, workspaceId);
+      jsonResponse(res, 200, { workspace }, corsHeaders);
+      return;
+    }
+    if (req.method === "POST" && action === "new-piece") {
+      await readJsonBody(req);
+      const workspace = await pictureModeService.newPiece(user, workspaceId);
+      jsonResponse(res, 200, { workspace }, corsHeaders);
+      return;
+    }
+    jsonResponse(res, 405, { error: "method_not_allowed" }, corsHeaders);
     return;
   }
 
@@ -1874,7 +2016,7 @@ const server = createServer((req, res) => {
   handleRequest(req, res).catch((error) => {
     const status = Number.isInteger(error.status) ? error.status : 500;
     jsonResponse(res, status, {
-      error: error.message || "internal_error",
+      error: error.code || error.message || "internal_error",
     }, getCorsHeaders(req));
   });
 });

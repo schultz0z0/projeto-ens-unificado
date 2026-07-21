@@ -20,8 +20,8 @@
 | 8. Jobs e worker | Concluída | a504bb6 | 34 testes, tsc e build verdes |
 | 9. REST/MCP/auth | Concluída | e78200a | 43 testes, tsc e build verdes |
 | 10. Container Picture | Concluída com validação estática | e338f87 | 45 testes e tsc verdes; Docker CLI indisponível |
-| 11. Hermes MCP/skill | Concluída | a registrar | 16 testes Hermes verdes; 1 POSIX skip |
-| 12. Bridge Picture | Pendente | — | — |
+| 11. Hermes MCP/skill | Concluída | 0c051d6 | 16 testes Hermes verdes; 1 POSIX skip |
+| 12. Bridge Picture | Concluída | a registrar | 81 testes verdes e syntax check |
 | 13. Sessões frontend | Pendente | — | — |
 | 14. Client/hook frontend | Pendente | — | — |
 | 15. UI Picture | Pendente | — | — |
@@ -124,3 +124,12 @@
 - Implementação: `nexus_picture` no template e reparo de todos os perfis, sampling desabilitado, timeout 300s; skill gerenciado instalado no home principal e perfis existentes sem remover skills alheios.
 - Contrato do planner: somente sessão Picture-Hermes, CreativeBrief/CompositionPlan completos, textos/logos determinísticos, consulta antes de revisão, proibição de image_generate/approve/reset e status sem invenção.
 - GREEN: suíte focal 3 pass/1 skip; suíte docker Hermes completa 16 pass/1 skip. O skip é apenas a execução bash idempotente em Windows sem bash; contrato e wiring foram validados estaticamente.
+
+### Etapa 12 — Bridge Picture
+
+- RED: oito contratos novos começaram com módulos Picture ausentes e rotas BFF não conectadas; o fluxo normal foi congelado por teste de igualdade de payload.
+- Implementação: cliente server-to-server do Picture e Artifact Server, delegação JWT curta vinculada a tenant/user/session/workspace/run, redaction recursiva e serviço de lifecycle das sessões Picture.
+- Isolamento: `experience=picture` exige sessão e workspace do usuário, importa todas as referências antes de enfileirar o Hermes, nunca instrui `image_generate` e não recebe delegação de Marketing Ops.
+- BFF: current/get/files/approve/new-piece autenticados; approval idempotente; nova peça só após validação e executa reset do Picture, limpeza da sessão Hermes/chat e criação convergente de um novo workspace.
+- Persistência segura: bytes e token técnico não entram no histórico da mensagem; o run guarda somente resumo do manifest, IDs e a entrada já redigida.
+- GREEN: `node --check` passou em server/payloads; `npm test` retornou 81 pass, 0 fail.

@@ -384,7 +384,22 @@ const buildHermesSessionChatMessage = ({
 
   nexusContext = {},
 
+  experience = "normal",
+
 }) => {
+
+  if (experience === "picture") {
+    const referenceNames = attachments
+      .map((attachment) => String(attachment?.name ?? "").trim())
+      .filter(Boolean);
+    const pictureMessage = [
+      messageText,
+      referenceNames.length > 0
+        ? `[Referencias ja importadas no workspace Picture]\n${referenceNames.map((name) => `- ${name}`).join("\n")}`
+        : "",
+    ].filter(Boolean).join("\n\n");
+    return withNexusMemoryRoutingContract(pictureMessage, nexusContext);
+  }
 
   const imageAttachments = attachments.filter(isImageAttachment);
 
@@ -487,12 +502,32 @@ export const buildHermesSessionChatRequest = ({
 
   nexusContext = {},
   marketingOpsDelegation = "",
+  experience = "normal",
+  pictureWorkspaceId = "",
+  pictureWorkspaceSummary = null,
+  pictureDelegation = "",
 
 }) => {
   const delegationMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation);
+  const pictureSystemMessage = experience === "picture"
+    ? [
+        "[Modo Picture-Hermes]",
+        `workspace_id: ${pictureWorkspaceId}`,
+        "Nunca use image_generate neste modo.",
+        "Use somente as tools nexus_picture para ler o workspace, gerar, revisar e acompanhar a peça.",
+        "Atue como planner técnico do Picture: preserve o briefing, use as referências já importadas e mantenha os arquivos intermediários no workspace.",
+        "Aprovação e criação de nova peça pertencem à interface; não aprove nem resete o workspace pelas tools.",
+        `workspace_atual: ${JSON.stringify(pictureWorkspaceSummary ?? {})}`,
+      ].join("\n")
+    : "";
+  const pictureDelegationMessage = experience === "picture"
+    ? buildPictureDelegationSystemMessage(pictureDelegation)
+    : "";
   const systemMessage = [
-    isNexusMarketingOpsOperatorContractEnabled() ? NEXUS_MARKETING_OPS_OPERATOR_CONTRACT : "",
-    delegationMessage,
+    experience !== "picture" && isNexusMarketingOpsOperatorContractEnabled() ? NEXUS_MARKETING_OPS_OPERATOR_CONTRACT : "",
+    experience !== "picture" ? delegationMessage : "",
+    pictureSystemMessage,
+    pictureDelegationMessage,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -510,6 +545,8 @@ export const buildHermesSessionChatRequest = ({
       imageOptions,
 
       nexusContext,
+
+      experience,
 
     }),
     ...(systemMessage ? { system_message: systemMessage } : {}),
@@ -579,3 +616,4 @@ import {
   buildMarketingOpsDelegationSystemMessage,
   withMarketingOpsDelegation,
 } from "./marketing-ops-delegation.js";
+import { buildPictureDelegationSystemMessage } from "./picture-delegation.js";

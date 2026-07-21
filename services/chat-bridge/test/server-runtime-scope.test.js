@@ -112,3 +112,23 @@ test("run events update memory diagnostics from Hermes tool metadata", () => {
 
   assert.match(appendEventBlock, /applyMemoryDiagnosticEvent\(run\.memory_diagnostics, normalizedEvent\)/);
 });
+
+test("bridge exposes authenticated Picture BFF routes", () => {
+  const pictureBlock = extractBlock(
+    source,
+    'url.pathname === "/api/picture/workspace/current"',
+    'url.pathname === "/api/chat/session/delete"',
+  );
+  assert.match(pictureBlock, /const user = await verifyUser\(req\)/);
+  assert.match(pictureBlock, /pictureModeService\.current\(user\)/);
+  assert.match(pictureBlock, /pictureModeService\.approve/);
+  assert.match(pictureBlock, /pictureModeService\.newPiece/);
+});
+
+test("Picture chat validates session and imports references before queueing Hermes", () => {
+  const createRunBlock = extractBlock(source, "async createRun({ user, payload })", "applyArtifactUrlReplacements");
+  assert.match(createRunBlock, /validateChatExperience/);
+  assert.match(createRunBlock, /assertPictureSession/);
+  assert.match(createRunBlock, /importPreparedReferences/);
+  assert.match(createRunBlock, /picture_workspace_summary/);
+});

@@ -23,6 +23,10 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
   if (production && (!delegationRefreshKey || placeholder.test(delegationRefreshKey))) {
     throw new Error("MARKETING_OPS_DELEGATION_REFRESH_KEY is required in production");
   }
+  const pictureInternalUrl = value(env, ["PICTURE_INTERNAL_URL"]);
+  const pictureInternalKey = value(env, ["PICTURE_INTERNAL_KEY"]);
+  const pictureDelegationActiveKid = value(env, ["PICTURE_DELEGATION_ACTIVE_KID"]);
+  const pictureDelegationActiveKey = value(env, ["PICTURE_DELEGATION_ACTIVE_KEY"]);
   return {
     production,
     allowInsecureLocalAuth,
@@ -32,5 +36,9 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
     activeKid,
     activeKey,
     delegationRefreshKey,
+    pictureInternalUrl,
+    pictureInternalKey,
+    pictureDelegationActiveKid,
+    pictureDelegationActiveKey,
   };
 };

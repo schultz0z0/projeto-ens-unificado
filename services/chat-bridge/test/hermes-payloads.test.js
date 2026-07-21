@@ -202,6 +202,41 @@ test("buildHermesSessionChatRequest keeps delegation out of persisted user histo
   assert.match(request.system_message, new RegExp(delegation.replaceAll(".", "\\.")));
 });
 
+test("normal image generation payload remains identical when experience is omitted", () => {
+  const input = {
+    messageText: "gere um banner",
+    attachments: [],
+    intent: "image_generate",
+    imageOptions: { quality: "high", size: "1024x1024", output_format: "png" },
+  };
+  assert.deepEqual(
+    buildHermesSessionChatRequest(input),
+    buildHermesSessionChatRequest({ ...input, experience: "normal" }),
+  );
+  assert.match(buildHermesSessionChatRequest(input).message, /Use obrigatoriamente a ferramenta image_generate/);
+});
+
+test("Picture payload is system-only delegated and explicitly forbids image_generate", () => {
+  const delegation = "picture.header.payload.signature";
+  const request = buildHermesSessionChatRequest({
+    messageText: "crie uma peça para graduação",
+    attachments: [{ kind: "image", name: "logo.png", mime_type: "image/png", inline_data_url: "data:image/png;base64,AAAA" }],
+    intent: "image_generate",
+    imageOptions: { quality: "high", size: "1024x1024", output_format: "png" },
+    experience: "picture",
+    pictureWorkspaceId: "workspace-1",
+    pictureWorkspaceSummary: { status: "drafting", files: [{ relative_path: "references/logo.png" }] },
+    pictureDelegation: delegation,
+  });
+  assert.match(request.system_message, /Modo Picture-Hermes/);
+  assert.match(request.system_message, /Nunca use image_generate/);
+  assert.match(request.system_message, /workspace-1/);
+  assert.match(request.system_message, new RegExp(delegation.replaceAll(".", "\\.")));
+  assert.doesNotMatch(JSON.stringify(request.message), /image_generate/);
+  assert.doesNotMatch(JSON.stringify(request.message), new RegExp(delegation.replaceAll(".", "\\.")));
+  assert.doesNotMatch(JSON.stringify(request.message), /data:image\/png/);
+});
+
 test("buildHermesSessionChatRequest prepends native memory routing without disabling Hermes memory", () => {
 
   const request = buildHermesSessionChatRequest({
