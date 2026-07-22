@@ -85,7 +85,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
     }
   };
   server.registerTool('marketing_ops_capabilities_v1', {
-    title: 'Marketing Ops capabilities', description: 'Returns contract version and active feature flags.', inputSchema: {}
+    title: 'Marketing Ops capabilities', description: 'Returns contract version and active feature flags.', inputSchema: z.object({})
   }, async () => runTool('marketing_ops_capabilities_v1', async () => ({ value: {
     contractVersion: 1,
     features: deps.features,
@@ -95,7 +95,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
 
   server.registerTool('marketing_ops_list_campaigns_v1', {
     title: 'List campaigns', description: 'Lists campaigns visible to the delegated actor.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       status: z.enum(['draft', 'archived']).optional(),
       course_slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,127}$/).optional(),
@@ -104,7 +104,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       updated_to: z.iso.datetime({ offset: true }).optional(),
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
-    }
+    })
   }, async (input) => runTool('marketing_ops_list_campaigns_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['campaign:read'], deps);
@@ -126,7 +126,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
 
   server.registerTool('marketing_ops_get_campaign_v1', {
     title: 'Get campaign', description: 'Gets one campaign visible to the delegated actor.',
-    inputSchema: { delegation_token: delegationToken, campaign_id: uuid }
+    inputSchema: z.object({ delegation_token: delegationToken, campaign_id: uuid })
   }, async (input) => runTool('marketing_ops_get_campaign_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['campaign:read'], deps);
@@ -140,7 +140,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_list_campaign_items_v1', {
     title: 'List campaign production items',
     description: 'Lists the canonical production schedule visible to the delegated actor.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       from: z.iso.datetime({ offset: true }),
       to: z.iso.datetime({ offset: true }),
@@ -153,7 +153,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       time_zone: timeZone.optional(),
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
-    }
+    })
   }, async (input) => runTool('marketing_ops_list_campaign_items_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['item:read'], deps);
@@ -179,12 +179,12 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_get_campaign_timeline_v1', {
     title: 'Get campaign timeline',
     description: 'Lists safe campaign history visible to the delegated actor.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       campaign_id: uuid,
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
-    }
+    })
   }, async (input) => runTool('marketing_ops_get_campaign_timeline_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['timeline:read'], deps);
@@ -202,13 +202,13 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_get_content_v1', {
     title: 'Get campaign item content',
     description: 'Gets content assets, bounded version history and linked artifacts.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       item_id: uuid.optional(),
       asset_id: uuid.optional(),
       include_versions: z.boolean().default(false),
       version_limit: z.number().int().min(1).max(20).default(5)
-    }
+    })
   }, async (input) => runTool('marketing_ops_get_content_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       if (Boolean(input.item_id) === Boolean(input.asset_id)) {
@@ -241,11 +241,11 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_get_object_capabilities_v1', {
     title: 'Get object capabilities',
     description: 'Returns contextual actions allowed for one visible Marketing Ops object.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       resource_type: resourceType,
       resource_id: uuid
-    }
+    })
   }, async (input) => runTool('marketing_ops_get_object_capabilities_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const scope = input.resource_type === 'campaign'
@@ -268,10 +268,10 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_prepare_plan_v1', {
     title: 'Prepare Marketing Ops mutation plan',
     description: 'Validates and signs an exact mutation plan without writing domain data. Present every action naturally and ask the user for one explicit confirmation before execution.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       actions: marketingOpsPlanActionsSchema
-    }
+    })
   }, async (input) => runTool('marketing_ops_prepare_plan_v1', async (_toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
       const scopes = requiredScopesForPlan(input.actions);
@@ -295,10 +295,10 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
   server.registerTool('marketing_ops_execute_plan_v1', {
     title: 'Execute confirmed Marketing Ops plan',
     description: 'Executes only the exact signed plan from an earlier turn. Requires a fresh delegation proving one explicit user confirmation for the complete plan.',
-    inputSchema: {
+    inputSchema: z.object({
       delegation_token: delegationToken,
       plan_token: z.string().min(20)
-    }
+    })
   }, async (input) => runTool('marketing_ops_execute_plan_v1', async (toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
       const actor = await verifyDelegation(input.delegation_token, [], deps);
@@ -345,7 +345,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
 
   server.registerTool('marketing_ops_list_audit_events_v1', {
     title: 'List audit events', description: 'Lists tenant audit events for manager/admin actors.',
-    inputSchema: { delegation_token: delegationToken, limit: z.number().int().min(1).max(100).default(25) }
+    inputSchema: z.object({ delegation_token: delegationToken, limit: z.number().int().min(1).max(100).default(25) })
   }, async (input) => runTool('marketing_ops_list_audit_events_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['audit:read'], deps);

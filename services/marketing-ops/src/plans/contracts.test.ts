@@ -81,4 +81,35 @@ describe('phase 4 plan contracts', () => {
       }
     ])).toThrow(/due_at/);
   });
+
+  it('validates content.create_draft with email_html asset_kind and string/number version when wrapped in z.object schema', () => {
+    import('zod/v4').then(({ z }) => {
+      const inputSchema = z.object({
+        delegation_token: z.string(),
+        actions: marketingOpsPlanActionsSchema
+      });
+
+      const parsed = inputSchema.parse({
+        delegation_token: 'valid-test-token-at-least-20-chars',
+        actions: [
+          {
+            type: 'content.create_draft',
+            ref: 'hml-fase-4-email-inicial',
+            item_id: itemId,
+            expected_item_version: '1',
+            asset_kind: 'email_html',
+            title: 'Email inicial - versão 1'
+          }
+        ]
+      });
+
+      expect(parsed.actions[0]).toMatchObject({
+        type: 'content.create_draft',
+        ref: 'hml-fase-4-email-inicial',
+        expected_item_version: 1,
+        asset_kind: 'email_html',
+        title: 'Email inicial - versão 1'
+      });
+    });
+  });
 });
