@@ -206,3 +206,13 @@
 - Compose: YAML base/prod foi parseado; Picture está internal-only, sem porta/labels Traefik, com `/ready`, Artifact/Bridge/Hermes encadeados e zero serviço Designer. O Docker CLI continua ausente, portanto `docker compose config/build` e o health real de container permanecem gates explícitos do deploy VPS.
 - Isolamento: zero referência Designer executável após excluir migrations/relatórios históricos; `apps/designer-api` não existe; Roadmap.md permaneceu intacto; PRD e plano separados foram atualizados.
 - Smoke pago: não executado por falta de autorização específica de custo. O E2E e a integração usaram engine/rotas fake locais.
+
+### Hotfix pós-deploy — handshake MCP do Picture
+
+- Sintoma observado na VPS: o dashboard do Hermes mostrava `nexus_picture` configurado em `http://picture-it:8090/mcp`, mas o startup encerrava a conexão após o timeout e registrava somente 32 tools dos outros três MCPs. A sessão Picture conhecia a competência, porém não recebia nenhuma tool `picture_*`.
+- Reprodução local: um cliente oficial `StreamableHTTPClientTransport` contra o handler real travou no `initialize` e excedeu o limite de 5 segundos.
+- Causa: o handler stateless retornava uma resposta SSE e executava `transport.close()` no `finally` imediatamente após criar o `Response`, encerrando o stream antes de o cliente consumir a resposta JSON-RPC.
+- RED: o novo teste de regressão `mcp-http-transport.test.ts` falhou em `MCP initialize timed out` após 2 segundos.
+- Correção mínima: o transporte stateless passou a usar `enableJsonResponse: true`; assim `handleRequest()` só retorna quando a resposta JSON-RPC está pronta e o fechamento posterior é seguro.
+- GREEN focal: o handshake real completou `initialize` e `tools/list` em aproximadamente 60 ms, expondo exatamente `picture_get_workspace`, `picture_start_job`, `picture_revise` e `picture_get_job`.
+- GREEN completa: Picture 50/50, typecheck e build passaram. Não houve alteração de banco, Supabase, `.env`, frontend ou contrato de ferramentas.

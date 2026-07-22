@@ -44,7 +44,10 @@ const internalContext = (request: Request, internalKey: string) => {
 };
 
 export const createPictureMcpHttpHandler = (dependencies: PictureMcpDependencies) => async (request: Request) => {
-  const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
   const server = createPictureMcpServer(dependencies);
   await server.connect(transport);
   try { return await transport.handleRequest(request); }
