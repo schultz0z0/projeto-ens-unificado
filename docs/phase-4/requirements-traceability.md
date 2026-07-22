@@ -9,8 +9,8 @@
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
 | F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `implemented_unit_validated` |
-| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `planned` |
-| F4-RF-03 Uso do Graph | 5 | 5, 7 | `planned` |
+| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `runtime_policy_validated` |
+| F4-RF-03 Uso do Graph | 5 | 5, 7 | `runtime_policy_validated` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_implemented` |
 | F4-RF-05 Confirmação | 4.2, 7 | 3, 5 | `token_unit_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `planned` |
@@ -75,7 +75,7 @@
 | Deep links servidor → frontend | 9 | 4 | `component_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6 | `planned` |
-| Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `planned` |
+| Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `implemented_unit_validated` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `planned` |
 | Gate local | 13 | 8 | `planned` |
 | Gate VPS | 14 | 8 | `planned` |

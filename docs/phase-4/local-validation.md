@@ -20,14 +20,14 @@
   unitariamente;
 - [ ] migration aplicada em banco limpo e sobre baseline existente;
 - [x] testes unitários de domínio e executor do plano verdes;
-- [ ] testes do runtime Hermes verdes;
+- [x] testes dirigidos do runtime Hermes verdes;
 - [ ] build, lint e typecheck aplicáveis verdes (build/typecheck do
   `marketing-ops` verdes; lint/frontend ainda pendentes);
 - [ ] E2E `frontend -> bridge -> Hermes -> MCP -> marketing-ops -> frontend`
   verde;
 - [ ] retry idempotente sem duplicidade;
 - [ ] conflito de versão com nova consulta e nova confirmação;
-- [ ] mutações diretas bloqueadas no runtime;
+- [x] mutações diretas bloqueadas no runtime em teste;
 - [ ] tenant/papel forjados rejeitados;
 - [ ] delegação expirada/reutilizada rejeitada;
 - [ ] rate limit por ator e tool validado;
@@ -83,6 +83,14 @@
   parâmetro congelado `contentAssetId`;
 - os 4 testes de conteúdo dependentes do banco falharam somente por
   `ECONNREFUSED :55322` e permanecem pendentes.
+
+## Registro Task 5 — 2026-07-22
+
+- 13 testes do runtime, scrub de credenciais e configuração RAG/Graph passaram;
+- módulos Python operacionais passaram em `compileall`;
+- confirmação em turno posterior, binding de token atual e bloqueio das tools
+  diretas permanecem cobertos;
+- o teste conversacional golden com serviços reais continua reservado ao E2E.
 
 ## Decisão atual
 

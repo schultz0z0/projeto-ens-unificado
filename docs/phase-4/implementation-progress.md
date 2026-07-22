@@ -1,10 +1,10 @@
 # Progresso de implementação — Fase 4
 
 - **Estado:** `in_progress`
-- **Progresso de implementação:** 50%
+- **Progresso de implementação:** 62.5%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 5 — runtime Hermes, RAG/Graph e skill
+- **Próximo gate:** Task 6 — correlação, auditoria e observabilidade
 
 ## Planejamento por task
 
@@ -14,7 +14,7 @@
 | 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `implemented_unit_validated` | tools de leitura expostas sobre domínio existente |
 | 3 | expansão do `prepare_plan` e `execute_plan` | `implemented_unit_validated` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `implemented_unit_validated` | tool results consistentes com frontend e UX conversacional |
-| 5 | integração Hermes runtime, RAG/Graph e skill | `not_started` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
+| 5 | integração Hermes runtime, RAG/Graph e skill | `implemented_unit_validated` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `not_started` | métricas, trilha e evidência de chat → run → tool → audit |
 | 7 | frontend/bridge/E2E e falhas controladas | `not_started` | jornada integrada com erros sem falso sucesso |
 | 8 | gates locais, operação, VPS e handoff | `not_started` | pacote documental reconciliado e fase pronta para homologação |
@@ -165,3 +165,31 @@ A suíte de domínio `content.test.ts` foi chamada e os quatro testes falharam
 por `ECONNREFUSED 127.0.0.1:55322`. Os testes unitários da Task 4 e os builds
 passaram; os quatro casos de PostgreSQL continuam pendentes e não foram
 contabilizados como GREEN.
+
+## Task 5 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| `python -m pytest docker/tests/test_marketing_ops_delegation_runtime.py -q` | 1/10 falhou porque a skill não continha leituras/actions da Fase 4 nem política RAG/Graph |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| delegation runtime + scrub + configuração RAG/Graph | 13 testes passaram; nenhum falhou |
+| `python -m compileall` nos módulos operacionais | exit 0 |
+
+### Contratos entregues
+
+- skill 1.1 contém as leituras e oito actions congeladas;
+- mutação direta continua bloqueada tecnicamente e o execute exige delegação
+  atual com confirmação em turno posterior;
+- fatos institucionais/tom ENS exigem evidência do RAG;
+- relações e trabalho validado usam Graph quando aplicáveis, sem substituir
+  estado atual do Marketing Ops;
+- briefing, notas, conteúdo, RAG, Graph e artifact são dados não confiáveis e
+  não podem alterar papel, scope, tools, confirmação ou alvo;
+- conflito, parcial e indisponibilidade não podem ser narrados como sucesso;
+- somente `deep_links` retornados pelo servidor podem ser apresentados.
