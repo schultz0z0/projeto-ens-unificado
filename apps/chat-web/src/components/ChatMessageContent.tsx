@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FileCode2, FileText, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { ChatCodeBlock } from "@/components/chat/ChatCodeBlock";
@@ -22,6 +23,7 @@ import {
   type ChatMessageTextPart,
 } from "@/lib/chatMessageParts";
 import { cn } from "@/lib/utils";
+import { parseMarketingOpsDeepLink } from "@/lib/marketingOps/deepLinks";
 import { getTextRenderMode, shouldExtractTextImagePreviews } from "./chat/chatMessageRendering";
 
 type ChatMessageContentProps = {
@@ -96,14 +98,28 @@ export const ChatMessageContent = memo(function ChatMessageContent({ role, conte
           strong: ({ node, ...props }) => (
             <strong className={cn("font-bold", role === "assistant" ? "text-brand-primary" : "text-white")} {...props} />
           ),
-          a: ({ node, ...props }) => (
-            <a
-              className={cn(role === "assistant" ? "text-brand-primary hover:underline" : "text-white underline")}
-              target="_blank"
-              rel="noopener noreferrer"
-              {...props}
-            />
-          ),
+          a: ({ node, href, children, ...props }) => {
+            const className = cn(
+              role === "assistant" ? "text-brand-primary hover:underline" : "text-white underline",
+            );
+            if (typeof href === "string" && href.startsWith("/marketing-ops/")) {
+              if (!parseMarketingOpsDeepLink(href)) {
+                return <span className={className}>{children}</span>;
+              }
+              return <Link className={className} to={href}>{children}</Link>;
+            }
+            return (
+              <a
+                className={className}
+                href={href}
+                {...props}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {children}
+              </a>
+            );
+          },
           img: ({ node, src, alt, ...props }) => {
             if (
               typeof src === "string" &&

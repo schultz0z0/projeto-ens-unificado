@@ -23,12 +23,16 @@ const users = {
   admin: '33333333-3333-4333-8333-333333333333'
 } as const;
 
+type Role = keyof typeof users;
+type Action = Record<string, unknown> & { type: string };
+
 const server = createMarketingOpsMcpServer({
   pool, features: { read: true, write: true }, keyring
 });
-const client = new Client({ name: 'phase-1-production-gate', version: '1.0.0' });
+const client = new Client({ name: 'phase-4-production-gate', version: '1.0.0' });
 
 beforeAll(async () => {
+  await pool.query('select 1');
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
 });
@@ -40,7 +44,7 @@ afterAll(async () => {
 });
 
 async function delegation(
-  role: keyof typeof users,
+  role: Role,
   scopes: string[],
   tenantId = tenantEns,
   options: { chatSessionId?: string; jti?: string; confirmationIntent?: boolean } = {}
@@ -73,103 +77,165 @@ async function call(name: string, args: Record<string, unknown>) {
   if (content[0]?.type !== 'text' || typeof content[0].text !== 'string') {
     throw new Error(`Tool ${name} did not return text content`);
   }
-  const text = content[0].text;
-  return { result, payload: JSON.parse(text) };
+  return { result, payload: JSON.parse(content[0].text) };
 }
 
-describe('Phase 1 production manual tests 15-20', () => {
-  it('requires a later explicit confirmation for one conversational multi-action plan', async () => {
-    const chatSessionId = randomUUID();
-    const campaignName = `Plano conversacional local ${randomUUID()}`;
-    const preparation = await delegation(
+async function preparePlan(role: Role, scopes: string[], actions: Action[], chatSessionId = randomUUID()) {
+  const prepared = await call('marketing_ops_prepare_plan_v1', {
+    delegation_token: await delegation(role, scopes, tenantEns, { chatSessionId }),
+    actions
+  });
+  expect(prepared.result.isError).not.toBe(true);
+  expect(prepared.payload).toMatchObject({ persisted: false, confirmation_required: true });
+  return { prepared, chatSessionId, role, scopes };
+}
+
+async function executePrepared(preparation: Awaited<ReturnType<typeof preparePlan>>) {
+  return call('marketing_ops_execute_plan_v1', {
+    delegation_token: await delegation(preparation.role, preparation.scopes, tenantEns, {
+      chatSessionId: preparation.chatSessionId,
+      confirmationIntent: true
+    }),
+    plan_token: preparation.prepared.payload.plan_token
+  });
+}
+
+async function executePlan(role: Role, scopes: string[], actions: Action[]) {
+  const preparation = await preparePlan(role, scopes, actions);
+  return { preparation, executed: await executePrepared(preparation) };
+}
+
+describe('Phase 4 production gate', () => {
+  it('requires a later explicit confirmation for the exact multi-action plan', async () => {
+    const campaignName = `Plano conversacional ${randomUUID()}`;
+    const preparation = await preparePlan(
       'member',
-      ['campaign:read', 'campaign:write', 'item:write'],
-      tenantEns,
-      { chatSessionId, jti: randomUUID() }
-    );
-    const prepared = await call('marketing_ops_prepare_plan_v1', {
-      delegation_token: preparation,
-      actions: [
+      ['campaign:write', 'item:write'],
+      [
         { type: 'campaign.create_draft', ref: 'campaign-main', name: campaignName },
         {
-          type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
-          title: 'Email conversacional', content: { text: 'Conteudo confirmado' }
+          type: 'campaign_item.create', campaign_ref: 'campaign-main', kind: 'email',
+          title: 'Email conversacional'
         }
       ]
-    });
-    expect(prepared.payload).toMatchObject({ persisted: false, confirmation_required: true });
-    const before = await pool.query('select count(*)::int as count from marketing_ops.campaigns where name = $1', [campaignName]);
+    );
+    const before = await pool.query(
+      'select count(*)::int as count from marketing_ops.campaigns where name = $1',
+      [campaignName]
+    );
     expect(before.rows[0].count).toBe(0);
 
-    const confirmed = await delegation(
-      'member',
-      ['campaign:read', 'campaign:write', 'item:write'],
-      tenantEns,
-      { chatSessionId, jti: randomUUID(), confirmationIntent: true }
-    );
-    const executed = await call('marketing_ops_execute_plan_v1', {
-      delegation_token: confirmed,
-      plan_token: prepared.payload.plan_token
+    const withoutConfirmation = await call('marketing_ops_execute_plan_v1', {
+      delegation_token: await delegation('member', preparation.scopes, tenantEns, {
+        chatSessionId: preparation.chatSessionId
+      }),
+      plan_token: preparation.prepared.payload.plan_token
     });
-    expect(executed.payload.data).toMatchObject({ status: 'completed' });
+    expect(withoutConfirmation.payload.error).toMatchObject({ code: 'confirmation_required' });
+
+    const executed = await executePrepared(preparation);
+    expect(executed.payload.data).toMatchObject({ status: 'completed', failed: [], pending: [] });
     expect(executed.payload.data.completed).toHaveLength(2);
   });
 
-  it('15-16 creates an item and exposes its audit event to admin', async () => {
-    const campaign = await call('marketing_ops_create_campaign_draft_v1', {
-      delegation_token: await delegation('admin', ['campaign:write']),
-      idempotency_key: randomUUID(),
-      name: 'Local gate item campaign'
-    });
-    const campaignId = campaign.payload.data.id as string;
-
-    const item = await call('marketing_ops_create_campaign_item_draft_v1', {
-      delegation_token: await delegation('admin', ['item:write']),
-      idempotency_key: randomUUID(),
-      campaign_id: campaignId,
-      kind: 'email',
-      title: 'Email Teste Fase 1',
-      content: 'Validacao automatizada do Marketing Ops local'
-    });
-
-    expect(item.result.isError).not.toBe(true);
-    expect(item.payload.data).toMatchObject({ campaignId, kind: 'email', status: 'draft', version: 1 });
+  it('creates briefing checklist items and exposes correlated audit records to admin', async () => {
+    const campaignName = `Briefing Fase 4 ${randomUUID()}`;
+    const { executed } = await executePlan(
+      'member',
+      ['campaign:write', 'item:write'],
+      [
+        { type: 'campaign.create_draft', ref: 'briefing', name: campaignName },
+        {
+          type: 'campaign_item.create', campaign_ref: 'briefing', kind: 'task',
+          title: 'Validar briefing', due_at: '2026-08-03T15:00:00Z'
+        },
+        {
+          type: 'campaign_item.create', campaign_ref: 'briefing', kind: 'milestone',
+          title: 'Aprovar calendário', starts_at: '2026-08-04T12:00:00Z'
+        }
+      ]
+    );
+    expect(executed.payload.data).toMatchObject({ status: 'completed' });
+    expect(executed.payload.data.completed).toHaveLength(3);
+    const campaignId = executed.payload.data.completed[0].resource.id as string;
+    const itemIds = executed.payload.data.completed
+      .slice(1)
+      .map((entry: { resource: { id: string } }) => entry.resource.id);
+    expect(executed.payload.data.deep_links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ resource_type: 'campaign', resource_id: campaignId }),
+      ...itemIds.map((id: string) => expect.objectContaining({
+        resource_type: 'campaign_item', resource_id: id
+      }))
+    ]));
 
     const audit = await call('marketing_ops_list_audit_events_v1', {
       delegation_token: await delegation('admin', ['audit:read']),
       limit: 100
     });
     expect(audit.payload.data).toEqual(expect.arrayContaining([
-      expect.objectContaining({ entityId: campaignId, action: 'campaign.created' }),
-      expect.objectContaining({ entityId: item.payload.data.id, action: 'campaign_item.created' })
+      expect.objectContaining({ entityId: campaignId, action: 'campaign.created', origin: 'mcp' }),
+      ...itemIds.map((id: string) => expect.objectContaining({
+        entityId: id, action: 'campaign_item.created', origin: 'mcp'
+      }))
     ]));
   });
 
-  it('17 rejects a stale campaign version without applying the name', async () => {
-    const created = await call('marketing_ops_create_campaign_draft_v1', {
-      delegation_token: await delegation('admin', ['campaign:write']),
-      idempotency_key: randomUUID(),
-      name: 'Local gate version 1'
-    });
-    const campaignId = created.payload.data.id as string;
+  it('creates a chat-authored content version and reads the exact persisted body', async () => {
+    const base = await executePlan('member', ['campaign:write', 'item:write'], [
+      { type: 'campaign.create_draft', ref: 'campaign', name: `Conteudo ${randomUUID()}` },
+      {
+        type: 'campaign_item.create', campaign_ref: 'campaign', kind: 'email',
+        title: 'Email de boas-vindas'
+      }
+    ]);
+    const itemId = base.executed.payload.data.completed[1].resource.id as string;
+    const body = `Versao aprovada no chat ${randomUUID()}`;
+    const content = await executePlan('member', ['content:write'], [
+      {
+        type: 'content.create_draft', ref: 'email-copy', item_id: itemId,
+        expected_item_version: 1, asset_kind: 'copy', title: 'Copy principal'
+      },
+      {
+        type: 'content.version_create', asset_ref: 'email-copy', expected_asset_version: 1,
+        body, metadata: { source: 'chat' }, freeze: false
+      }
+    ]);
+    expect(content.executed.payload.data).toMatchObject({ status: 'completed' });
+    const assetId = content.executed.payload.data.completed[0].resource.id as string;
+    expect(content.executed.payload.data.deep_links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ resource_type: 'content_asset', resource_id: assetId })
+    ]));
 
-    const updated = await call('marketing_ops_update_campaign_draft_v1', {
-      delegation_token: await delegation('admin', ['campaign:write']),
-      idempotency_key: randomUUID(),
-      campaign_id: campaignId,
-      expected_version: 1,
-      name: 'Local gate version 2'
+    const read = await call('marketing_ops_get_content_v1', {
+      delegation_token: await delegation('member', ['content:read']),
+      asset_id: assetId,
+      include_versions: true,
+      version_limit: 5
     });
-    expect(updated.payload.data.version).toBe(2);
+    expect(read.payload.data.versions[assetId]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ body })
+    ]));
+  });
 
-    const stale = await call('marketing_ops_update_campaign_draft_v1', {
-      delegation_token: await delegation('admin', ['campaign:write']),
-      idempotency_key: randomUUID(),
-      campaign_id: campaignId,
-      expected_version: 1,
-      name: 'NAO DEVE SER APLICADO'
+  it('rejects a stale campaign version and preserves the latest committed state', async () => {
+    const created = await executePlan('admin', ['campaign:write'], [
+      { type: 'campaign.create_draft', ref: 'campaign', name: 'Local gate version 1' }
+    ]);
+    const campaignId = created.executed.payload.data.completed[0].resource.id as string;
+    const updated = await executePlan('admin', ['campaign:write'], [{
+      type: 'campaign.update', campaign_id: campaignId, expected_version: 1,
+      patch: { name: 'Local gate version 2' }
+    }]);
+    expect(updated.executed.payload.data.completed[0].resource.version).toBe(2);
+
+    const stale = await executePlan('admin', ['campaign:write'], [{
+      type: 'campaign.update', campaign_id: campaignId, expected_version: 1,
+      patch: { name: 'NAO DEVE SER APLICADO' }
+    }]);
+    expect(stale.executed.payload.data).toMatchObject({ status: 'failed', completed: [] });
+    expect(stale.executed.payload.data.failed[0].error).toMatchObject({
+      code: 'version_conflict', status: 409
     });
-    expect(stale.payload.error).toMatchObject({ code: 'version_conflict', status: 409 });
 
     const current = await call('marketing_ops_get_campaign_v1', {
       delegation_token: await delegation('admin', ['campaign:read']),
@@ -178,30 +244,31 @@ describe('Phase 1 production manual tests 15-20', () => {
     expect(current.payload.data).toMatchObject({ name: 'Local gate version 2', version: 2 });
   });
 
-  it('18 replays the same idempotent campaign result without duplication', async () => {
-    const idempotencyKey = randomUUID();
-    const args = {
-      idempotency_key: idempotencyKey,
-      name: `Teste Idempotencia Fase 1 local ${randomUUID()}`
-    };
-    const first = await call('marketing_ops_create_campaign_draft_v1', {
-      ...args,
-      delegation_token: await delegation('admin', ['campaign:write'])
-    });
-    const replay = await call('marketing_ops_create_campaign_draft_v1', {
-      ...args,
-      delegation_token: await delegation('admin', ['campaign:write'])
-    });
+  it('replays the same plan without duplicating the campaign or its item', async () => {
+    const campaignName = `Idempotencia Fase 4 ${randomUUID()}`;
+    const preparation = await preparePlan('admin', ['campaign:write', 'item:write'], [
+      { type: 'campaign.create_draft', ref: 'campaign', name: campaignName },
+      {
+        type: 'campaign_item.create', campaign_ref: 'campaign', kind: 'email',
+        title: 'Item idempotente'
+      }
+    ]);
+    const first = await executePrepared(preparation);
+    const replay = await executePrepared(preparation);
+    expect(replay.payload.data.completed.map((entry: { resource: { id: string } }) => entry.resource.id))
+      .toEqual(first.payload.data.completed.map((entry: { resource: { id: string } }) => entry.resource.id));
+    expect(replay.payload.data.completed.every((entry: { idempotency_hit: boolean }) => entry.idempotency_hit))
+      .toBe(true);
 
-    expect(replay.payload.data.id).toBe(first.payload.data.id);
-    const count = await pool.query(
-      'select count(*)::int as count from marketing_ops.campaigns where name = $1',
-      [args.name]
-    );
-    expect(count.rows[0].count).toBe(1);
+    const count = await pool.query(`
+      select
+        (select count(*)::int from marketing_ops.campaigns where name = $1) as campaigns,
+        (select count(*)::int from marketing_ops.campaign_items where campaign_id = $2) as items
+    `, [campaignName, first.payload.data.completed[0].resource.id]);
+    expect(count.rows[0]).toEqual({ campaigns: 1, items: 1 });
   });
 
-  it('19-20 enforces audit roles and rejects a forged tenant', async () => {
+  it('enforces audit roles and rejects a forged tenant', async () => {
     for (const role of ['admin', 'manager'] as const) {
       const allowed = await call('marketing_ops_list_audit_events_v1', {
         delegation_token: await delegation(role, ['audit:read']),

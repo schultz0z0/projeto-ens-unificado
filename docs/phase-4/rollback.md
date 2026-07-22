@@ -1,25 +1,26 @@
 # Rollback — Fase 4
 
-- **Estado:** `planned`
-- **Implementação:** `not_started`
+- **Estado:** `ready_for_use`
+- **Implementação:** `documented_pending_vps_drill`
 
 ## Estratégia
 
 Rollback da Fase 4 deve privilegiar desativação de superfície MCP/configuração,
 não reversão destrutiva do domínio.
 
-## Ordem de rollback planejada
+## Ordem de rollback recomendada
 
 1. desabilitar novas tools/actions da Fase 4 no runtime Hermes;
 2. restaurar skill/contrato anterior do operador;
 3. reverter configuração de endpoint MCP se necessário;
 4. manter objetos já persistidos e a auditoria intactos;
-5. reverter migration somente se houver schema novo e o dump tiver sido
-   validado antes.
+5. reverter migration somente se houver schema novo sem uso real e o dump tiver
+   sido validado antes.
 
-A migration de correlação é obrigatória. Depois de existir auditoria real com
-os campos novos, o rollback operacional mantém colunas e dados; sua remoção só
-é permitida antes do primeiro uso em VPS e com backup validado.
+A migration de correlação já foi aplicada no Supabase remoto conectado. Depois
+de existir auditoria real com os campos novos, o rollback operacional mantém
+colunas e dados; sua remoção só é permitida antes do primeiro uso em VPS e com
+backup validado.
 
 ## Invariantes
 

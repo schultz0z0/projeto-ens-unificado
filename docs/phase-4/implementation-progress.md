@@ -1,10 +1,10 @@
 # Progresso de implementação — Fase 4
 
-- **Estado:** `in_progress`
-- **Progresso de implementação:** 75%
-- **Snapshot:** 2026-07-22
+- **Estado:** `implemented_pending_vps_validation`
+- **Progresso de implementação:** 100%
+- **Snapshot reconciliado:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 7 — integração frontend/bridge e cenários E2E
+- **Próximo gate:** homologação VPS real e aceite final do usuário
 
 ## Planejamento por task
 
@@ -16,8 +16,8 @@
 | 4 | deep links, resultados estruturados e mensagens de operador | `implemented_unit_validated` | tool results consistentes com frontend e UX conversacional |
 | 5 | integração Hermes runtime, RAG/Graph e skill | `implemented_unit_validated` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `implemented_unit_validated` | métricas, trilha e evidência de chat → run → tool → audit |
-| 7 | frontend/bridge/E2E e falhas controladas | `not_started` | jornada integrada com erros sem falso sucesso |
-| 8 | gates locais, operação, VPS e handoff | `not_started` | pacote documental reconciliado e fase pronta para homologação |
+| 7 | frontend/bridge/E2E e falhas controladas | `implemented_local_e2e_validated` | jornada integrada controlada com erro sem falso sucesso |
+| 8 | gates locais, operação, VPS e handoff | `completed_pending_vps_gate` | pacote documental reconciliado e fase pronta para homologação |
 
 ## Estratégia de execução
 
@@ -32,16 +32,17 @@
 
 ## Critérios de progresso
 
-A fase não avança para `in_progress` apenas por existir documentação. Esse
-estado só deve ser usado quando a Task 1 começar com execução técnica real,
-testes RED e arquivos de produto alterados.
+A fase não avança para `implemented_pending_vps_validation` apenas por existir
+documentação. Este estado só é válido quando houver código real, testes locais
+aplicáveis, schema remoto reconciliado e pacote operacional pronto para
+homologação.
 
 ## Bloqueadores prévios conhecidos
 
-- nenhuma decisão de produto permanece aberta; os contratos estão congelados
-  em `design.md`;
-  - bloqueadores descobertos durante RED/GREEN devem ser registrados aqui e no
-  `risk-register.md` antes de qualquer mudança de escopo.
+- nenhuma decisão de produto permanece aberta; os contratos estão congelados em
+  `design.md`;
+- o bloqueador residual é apenas ambiental/operacional: falta executar a
+  homologação real na VPS com banco/serviços finais.
 
 ## Task 1 — evidência registrada em 2026-07-22
 
@@ -231,3 +232,63 @@ O pgTAP da Fase 4 foi ampliado de 12 para 14 asserts, mas não foi executado
 porque o daemon Docker/PostgreSQL continua indisponível. Migration estática,
 typecheck, build e testes unitários estão verdes; constraints reais continuam
 no gate de banco.
+
+## Task 7 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| Playwright dirigido do operador Hermes | o cenário inicial não conseguia abrir o deep link do Marketing Ops porque as rotas estavam desabilitadas pelas flags públicas e o assert usava um alvo de UI instável |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| Playwright E2E fake do operador Hermes | 2 cenários passaram: confirmação antes da execução e indisponibilidade sem falso sucesso |
+| testes dirigidos de `ChatMessageContent` e deep links | navegação SPA validada para deep link válido e rota malformada bloqueada |
+| `chat-web`: `npm run typecheck` + `npm run build` | exit 0 |
+| `chat-bridge`: `npm test` | contrato do operador Hermes verde |
+| `marketing-ops`: `npm run typecheck` + `npm run build` | exit 0 |
+
+### Contratos entregues
+
+- stack fake controlada para Supabase, Bridge e Marketing Ops em Playwright;
+- confirmação explícita em mensagem posterior antes de qualquer deep link de
+  conclusão;
+- deep link retornado pelo chat abre o item correto do workspace de produção
+  com `contentAssetId` selecionado;
+- indisponibilidade do Marketing Ops é comunicada sem falso sucesso e sem link
+  inventado;
+- flags públicas do Marketing Ops no Playwright foram alinhadas ao roteamento
+  real do app.
+
+## Task 8 — evidência registrada em 2026-07-22
+
+### Escopo concluído
+
+- README, progresso, rastreabilidade, riscos, gate local, runbook, rollback,
+  deploy Supabase, handoff e checklist VPS reconciliados com o estado real;
+- migration remota da Fase 4 aplicada no projeto Supabase conectado via MCP;
+- instruções operacionais da VPS alinhadas ao fluxo real do monorepo com
+  `docker compose` usando `docker-compose.yml` e `docker-compose.prod.yml`.
+
+### Evidência operacional
+
+| Evidência | Resultado |
+|---|---|
+| `supabase_apply_migration` na migration `20260722130000_phase_4_hermes_operator_audit.sql` | aplicado com sucesso no projeto remoto conectado |
+| verificação do schema remoto pelo MCP Supabase | colunas `operator_origin`, `chat_session_id`, `run_id`, `tool_name`, `tool_call_id`, `plan_id` e `plan_action_index` confirmadas |
+| pacote documental da fase | reconciliado para refletir implementação local e gate VPS pendente |
+
+### Limitação residual
+
+O MCP PostgreSQL read-only não refletiu as colunas novas do mesmo modo que o
+MCP integrado do Supabase. A verificação canônica deste snapshot ficou no
+`supabase_get_tables`, e a repetição do check em produção continua no gate VPS.
+
+## Decisão atual
+
+O escopo técnico e documental da Fase 4 está concluído. A promoção final depende
+de deploy/homologação real na VPS, com banco e serviços finais, sem novas
+mudanças funcionais previstas antes desse gate.

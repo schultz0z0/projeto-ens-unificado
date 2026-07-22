@@ -21,16 +21,16 @@
 - [ ] migration aplicada em banco limpo e sobre baseline existente;
 - [x] testes unitários de domínio e executor do plano verdes;
 - [x] testes dirigidos do runtime Hermes verdes;
-- [ ] build, lint e typecheck aplicáveis verdes (build/typecheck do
-  `marketing-ops` verdes; lint/frontend ainda pendentes);
-- [ ] E2E `frontend -> bridge -> Hermes -> MCP -> marketing-ops -> frontend`
-  verde;
+- [x] build, lint e typecheck aplicáveis verdes (`marketing-ops` e `chat-web`
+  com build/typecheck verdes; lint do frontend sem erro novo);
+- [x] E2E `frontend -> bridge -> Hermes -> MCP -> marketing-ops -> frontend`
+  verde em stack fake/controlada do Playwright;
 - [ ] retry idempotente sem duplicidade;
 - [ ] conflito de versão com nova consulta e nova confirmação;
 - [x] mutações diretas bloqueadas no runtime em teste;
 - [ ] tenant/papel forjados rejeitados;
-- [ ] delegação expirada/reutilizada rejeitada;
-- [ ] rate limit por ator e tool validado;
+- [x] delegação expirada/reutilizada rejeitada em testes dirigidos de token;
+- [x] rate limit por ator e tool validado unitariamente;
 - [ ] prompt injection sem ampliação de autoridade;
 - [x] redaction de delegação e snapshots de auditoria validada unitariamente;
 - [x] auditoria sem briefing, copy, nota ou conteúdo integral em teste unitário;
@@ -39,7 +39,7 @@
 - [ ] resposta do chat convertida em versão vinculada;
 - [ ] revisão pelo tom ENS fundamentada no RAG;
 - [ ] Graph usado em cenário relacional sem substituir estado transacional;
-- [ ] indisponibilidade comunicada sem falso sucesso;
+- [x] indisponibilidade comunicada sem falso sucesso;
 - [ ] serviço reiniciado sem perder dados/auditoria;
 - [ ] backup e rollback validados ou marcados não aplicáveis com justificativa.
 
@@ -100,8 +100,29 @@
 - pgTAP contém 14 asserts, porém segue não executado por ausência de Docker;
 - métricas não carregam IDs de usuário, tenant, chat ou objeto como labels.
 
+## Registro Task 7 — 2026-07-22
+
+- o novo E2E fake do operador Hermes passou com dois cenários no Playwright:
+  confirmação em turno posterior e indisponibilidade sem falso sucesso;
+- `ChatMessageContent.test.tsx` e `deepLinks.test.ts` validaram a navegação SPA
+  para o deep link retornado pelo servidor e o bloqueio de links malformados;
+- `chat-web` passou em typecheck/build e `chat-bridge` manteve o contrato do
+  operador Hermes verde;
+- a integração completa com banco/serviços reais continua reservada ao gate VPS,
+  porque a stack local não possui Docker/PostgreSQL.
+
+## Registro Task 8 — 2026-07-22
+
+- a migration
+  `apps/chat-web/supabase/migrations/20260722130000_phase_4_hermes_operator_audit.sql`
+  foi aplicada no Supabase remoto via MCP e teve as colunas novas confirmadas;
+- o pacote documental da Fase 4 foi reconciliado com o estado real de código,
+  testes aplicáveis e limitações ambientais;
+- runbook, rollback e checklist VPS passaram a refletir o fluxo operacional do
+  monorepo já usado em produção (`docker compose` com os arquivos base e prod).
+
 ## Decisão atual
 
-Os gates unitários e de compilação das Tasks 1–2 foram executados. Gates de
-banco, integração completa, frontend, runtime e VPS continuam pendentes e não
-são inferidos a partir dessas evidências parciais.
+Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
+do runtime, deep links e E2E fake foram executados. Continuam pendentes apenas
+os gates que exigem banco/serviços reais ou a infraestrutura final da VPS.

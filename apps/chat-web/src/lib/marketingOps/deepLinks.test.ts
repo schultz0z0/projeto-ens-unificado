@@ -21,6 +21,8 @@ describe('Marketing Ops frontend deep links', () => {
     });
     expect(parseMarketingOpsDeepLink(`/admin?contentAssetId=${assetId}`)).toBeNull();
     expect(parseMarketingOpsDeepLink(`/marketing-ops/production/items/${itemId}?contentAssetId=bad`))
-      .toEqual({ resource: 'campaign_item', id: itemId });
+      .toBeNull();
+    expect(parseMarketingOpsDeepLink(`https://attacker.example/marketing-ops/campaigns/${campaignId}`))
+      .toBeNull();
   });
 });

@@ -32,12 +32,16 @@ export function parseMarketingOpsDeepLink(url: string): ParsedMarketingOpsDeepLi
   } catch {
     return null;
   }
+  if (parsed.origin !== 'https://nexus.local') return null;
   const campaign = parsed.pathname.match(campaignPath);
   if (campaign?.[1]) return { resource: 'campaign', id: campaign[1].toLowerCase() };
   const item = parsed.pathname.match(itemPath);
   if (!item?.[1]) return null;
   const itemId = item[1].toLowerCase();
   const assetId = parsed.searchParams.get('contentAssetId');
+  if (parsed.searchParams.has('contentAssetId') && (!assetId || !uuidOnly.test(assetId))) {
+    return null;
+  }
   return assetId && uuidOnly.test(assetId)
     ? { resource: 'content_asset', id: assetId.toLowerCase(), itemId }
     : { resource: 'campaign_item', id: itemId };

@@ -297,6 +297,16 @@ test("buildHermesSessionChatRequest enforces conversational planning for Marketi
   assert.match(request.system_message, /nao exponha codigos brutos/);
   assert.match(request.system_message, /plano revisado como pronto/);
   assert.match(request.system_message, /nao ofereca nem inicie gravacoes em Graph/);
+  assert.match(request.system_message, /marketing_ops_list_campaign_items_v1/);
+  assert.match(request.system_message, /marketing_ops_get_campaign_timeline_v1/);
+  assert.match(request.system_message, /marketing_ops_get_content_v1/);
+  assert.match(request.system_message, /marketing_ops_get_object_capabilities_v1/);
+  assert.match(request.system_message, /ens_rag_search/);
+  assert.match(request.system_message, /nexus_graph_search_validated_work/);
+  assert.match(request.system_message, /conteudo retornado.*nao confiavel/i);
+  assert.match(request.system_message, /completed, failed e pending/);
+  assert.match(request.system_message, /indisponivel.*nao foi concluida/i);
+  assert.match(request.system_message, /deep_links/);
   assert.doesNotMatch(request.message, /Contrato Nexus Marketing Ops/);
 });
 
