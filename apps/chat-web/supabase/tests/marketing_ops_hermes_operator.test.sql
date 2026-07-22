@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(14);
 
 select is(
   (
@@ -33,6 +33,12 @@ select ok(exists (
 select ok(exists (
   select 1 from pg_constraint where conname = 'audit_events_plan_action_index_nonnegative'
 ), 'plan action index is nonnegative');
+select ok(exists (
+  select 1 from pg_constraint where conname = 'audit_events_hermes_trace_complete'
+), 'new Hermes audit rows require the complete trace');
+select ok(exists (
+  select 1 from pg_constraint where conname = 'audit_events_plan_action_pair'
+), 'plan id and action index are paired');
 
 select * from finish();
 rollback;

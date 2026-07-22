@@ -30,6 +30,7 @@ const router = createApiRouter({
     timeoutMs: config.rag.timeoutMs
   }),
   tenantTimeZone: config.tenantTimeZone,
+  metrics,
   keyring: config.delegation,
   refreshDelegation: createDelegationRefresher(config.delegationRefresh),
   verifyToken: (token) => verifySupabaseBearer(token, {

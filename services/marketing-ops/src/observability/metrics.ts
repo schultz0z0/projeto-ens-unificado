@@ -35,6 +35,21 @@ const productionItemKind = oneOf('task', 'email', 'whatsapp', 'post', 'creative'
 const batchAction = oneOf('reassign', 'priority', 'reschedule');
 const readinessResult = oneOf('ready', 'not_ready');
 const itemMutationOperation = oneOf('update', 'transition', 'dependency', 'content', 'artifact', 'batch');
+const mcpTool = oneOf(
+  'marketing_ops_capabilities_v1',
+  'marketing_ops_list_campaigns_v1',
+  'marketing_ops_get_campaign_v1',
+  'marketing_ops_list_campaign_items_v1',
+  'marketing_ops_get_campaign_timeline_v1',
+  'marketing_ops_get_content_v1',
+  'marketing_ops_get_object_capabilities_v1',
+  'marketing_ops_prepare_plan_v1',
+  'marketing_ops_execute_plan_v1',
+  'marketing_ops_list_audit_events_v1'
+);
+const mcpResult = oneOf('success', 'partial', 'failed', 'error');
+const mcpIdempotency = oneOf('hit', 'miss');
+const mcpResource = oneOf('campaign', 'campaign_item', 'content_asset');
 
 const metricDefinitions: Record<string, MetricDefinition> = {
   marketing_ops_requests_total: { labels: { route: staticRoute, status: httpStatus } },
@@ -91,7 +106,13 @@ const metricDefinitions: Record<string, MetricDefinition> = {
   marketing_ops_notifications_produced_total: { labels: {} },
   marketing_ops_readiness_total: { labels: { result: readinessResult } },
   marketing_ops_readiness_duration_seconds_count: { labels: { result: readinessResult } },
-  marketing_ops_readiness_duration_seconds_sum: { labels: { result: readinessResult } }
+  marketing_ops_readiness_duration_seconds_sum: { labels: { result: readinessResult } },
+  marketing_ops_mcp_calls_total: { labels: { tool: mcpTool, result: mcpResult } },
+  marketing_ops_mcp_errors_total: { labels: { tool: mcpTool, code: errorCode } },
+  marketing_ops_mcp_idempotency_total: { labels: { result: mcpIdempotency } },
+  marketing_ops_mcp_objects_mutated_total: { labels: { resource: mcpResource } },
+  marketing_ops_mcp_plan_latency_seconds_count: { labels: {} },
+  marketing_ops_mcp_plan_latency_seconds_sum: { labels: {} }
 };
 
 function normalizeLabels(name: string, labels: Record<string, string>): Record<string, string> {

@@ -18,6 +18,7 @@ import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
 import { createMcpRouter } from '../../mcp/http.js';
 import { DEFAULT_TENANT_TIME_ZONE } from '../../domain/scheduling.js';
+import type { MetricsRegistry } from '../../observability/metrics.js';
 
 export interface ApiRouterDependencies {
   pool: Pool;
@@ -29,6 +30,7 @@ export interface ApiRouterDependencies {
   keyring?: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
   tenantTimeZone?: string;
+  metrics?: Pick<MetricsRegistry, 'increment'>;
 }
 
 export function createApiRouter(deps: ApiRouterDependencies): Router {
@@ -56,6 +58,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
     features: deps.features,
     keyring: deps.keyring,
     artifactClient: deps.artifactClient,
+    ...(deps.metrics ? { metrics: deps.metrics } : {}),
     ...(deps.refreshDelegation ? { refreshDelegation: deps.refreshDelegation } : {})
   }));
   return router;

@@ -11,7 +11,17 @@ alter table marketing_ops.audit_events
   add constraint audit_events_tool_name_valid
     check (tool_name is null or btrim(tool_name) <> ''),
   add constraint audit_events_plan_action_index_nonnegative
-    check (plan_action_index is null or plan_action_index >= 0);
+    check (plan_action_index is null or plan_action_index >= 0),
+  add constraint audit_events_hermes_trace_complete
+    check (
+      operator_origin <> 'hermes'
+      or (
+        chat_session_id is not null and run_id is not null
+        and tool_name is not null and tool_call_id is not null
+      )
+    ) not valid,
+  add constraint audit_events_plan_action_pair
+    check ((plan_id is null) = (plan_action_index is null)) not valid;
 
 create index audit_events_chat_run_idx
   on marketing_ops.audit_events (tenant_id, chat_session_id, run_id)

@@ -14,7 +14,7 @@
 | F4-R-05 | retry duplica campanha, item, versão ou artifact link | alto | idempotência por plano/ação e testes de replay | Marketing Ops | `open` |
 | F4-R-06 | `campaign_note_add` vira overwrite disfarçado de append | médio | contrato append-only e revisão de UX antes da execução | Product/Marketing Ops | `open` |
 | F4-R-07 | `artifact_link` permita anexar artifact fora do contexto autorizado | alto | usar somente link de artifact existente e owned metadata validada | Marketing Ops | `open` |
-| F4-R-08 | a auditoria não consiga ligar chat, run e tool ao objeto | alto | decidir cedo a modelagem de correlação e testar trilha completa | Marketing Ops/Bridge | `open` |
+| F4-R-08 | a auditoria não consiga ligar chat, run e tool ao objeto | alto | decidir cedo a modelagem de correlação e testar trilha completa | Marketing Ops/Bridge | `backend_mitigated_e2e_pending` |
 | F4-R-09 | deep link apontar para rota inconsistente com o frontend real | médio | gerar links no `marketing-ops` com contrato revisado pelo frontend | Frontend | `open` |
 | F4-R-10 | descrição de tool grande ou ambígua induz uso incorreto pelo modelo | médio | ferramentas pequenas, nomenclatura estável e skill revisada | Hermes Runtime | `mitigated_skill_tested` |
 | F4-R-11 | indisponibilidade do `marketing-ops` aparecer como sucesso conversacional | alto | falha explícita, testes E2E e mensagens seguras de fallback | Bridge/Hermes Runtime | `open` |
@@ -24,7 +24,7 @@
 | F4-R-15 | instrução maliciosa em briefing/RAG/Graph ampliar autoridade | crítico | tratar conteúdo como dado, manter guardrails server-side e E2E de prompt injection | Hermes Runtime/Marketing Ops | `guardrails_implemented_e2e_pending` |
 | F4-R-16 | revisão ENS inventar fato ou não usar fonte oficial | alto | RAG obrigatório, referências mínimas e cenário golden | Hermes Runtime | `policy_implemented_golden_pending` |
 | F4-R-17 | falha parcial reexecutar/duplicar ações concluídas | alto | resultado por ação, dependências e replay idempotente | Marketing Ops | `open` |
-| F4-R-18 | logs/auditoria persistirem copy ou briefing integral | alto | fingerprint de texto, redaction e testes de ausência | Marketing Ops/Bridge | `open` |
+| F4-R-18 | logs/auditoria persistirem copy ou briefing integral | alto | fingerprint de texto, redaction e testes de ausência | Marketing Ops/Bridge | `mitigated_unit_validated` |
 | F4-R-19 | conteúdo receber deep link sem rota frontend canônica | médio | mapear asset para item + query `contentAssetId` | Frontend | `open` |
 
 ## Bloqueadores permanentes

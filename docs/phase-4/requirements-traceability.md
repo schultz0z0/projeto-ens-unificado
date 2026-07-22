@@ -18,7 +18,7 @@
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `executor_unit_validated` |
 | F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
 | F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
-| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7 | `planned` |
+| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7 | `implemented_unit_validated` |
 | F4-RF-12 Limites | 2, 4.2, 10 | 1, 5, 7 | `planned` |
 
 ## Matriz Roadmap → design → task
@@ -48,7 +48,7 @@
 | Conflito exige nova consulta/decisão | 7.3, 8.1 | 3, 5, 7 | `planned` |
 | Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `planned` |
 | Deep link abre objeto correto | 9 | 4, 7 | `component_validated` |
-| Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `planned` |
+| Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `implemented_unit_validated` |
 | Hermes não aprova/executa ação sensível | 2, 10 | 1, 5, 7 | `planned` |
 | Indisponibilidade não gera falso sucesso | 7.3, 12 | 4, 5, 7 | `planned` |
 
@@ -61,9 +61,9 @@
 | Rate limit por ator e ferramenta | 10 | 1, 2, 3 | `planned` |
 | Prompt injection não amplia autoridade | 10, 12 | 5, 7 | `planned` |
 | Logs sem texto integral/tokens | 10, 11 | 6, 7 | `planned` |
-| Métricas por tool/resultado | 11 | 6 | `planned` |
-| Idempotency hit e conflito observáveis | 11 | 3, 6 | `executor_report_implemented` |
-| Chat → run → tool → audit → objeto | 4.4, 11 | 1, 6, 7 | `planned` |
+| Métricas por tool/resultado | 11 | 6 | `implemented_unit_validated` |
+| Idempotency hit e conflito observáveis | 11 | 3, 6 | `implemented_unit_validated` |
+| Chat → run → tool → audit → objeto | 4.4, 11 | 1, 6, 7 | `backend_trace_implemented_e2e_pending` |
 
 ## Gates transversais
 
@@ -74,7 +74,7 @@
 | Executor das oito actions | 7, 8 | 3 | `implemented_unit_validated` |
 | Deep links servidor → frontend | 9 | 4 | `component_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
-| Auditoria/correlação | 11 | 1, 6 | `planned` |
+| Auditoria/correlação | 11 | 1, 6 | `implemented_unit_validated` |
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `implemented_unit_validated` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `planned` |
 | Gate local | 13 | 8 | `planned` |

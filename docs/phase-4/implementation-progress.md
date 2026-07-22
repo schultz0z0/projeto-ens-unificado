@@ -1,10 +1,10 @@
 # Progresso de implementação — Fase 4
 
 - **Estado:** `in_progress`
-- **Progresso de implementação:** 62.5%
+- **Progresso de implementação:** 75%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 6 — correlação, auditoria e observabilidade
+- **Próximo gate:** Task 7 — integração frontend/bridge e cenários E2E
 
 ## Planejamento por task
 
@@ -15,7 +15,7 @@
 | 3 | expansão do `prepare_plan` e `execute_plan` | `implemented_unit_validated` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `implemented_unit_validated` | tool results consistentes com frontend e UX conversacional |
 | 5 | integração Hermes runtime, RAG/Graph e skill | `implemented_unit_validated` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
-| 6 | observabilidade, auditoria e correlação ponta a ponta | `not_started` | métricas, trilha e evidência de chat → run → tool → audit |
+| 6 | observabilidade, auditoria e correlação ponta a ponta | `implemented_unit_validated` | métricas, trilha e evidência de chat → run → tool → audit |
 | 7 | frontend/bridge/E2E e falhas controladas | `not_started` | jornada integrada com erros sem falso sucesso |
 | 8 | gates locais, operação, VPS e handoff | `not_started` | pacote documental reconciliado e fase pronta para homologação |
 
@@ -193,3 +193,41 @@ contabilizados como GREEN.
   não podem alterar papel, scope, tools, confirmação ou alvo;
 - conflito, parcial e indisponibilidade não podem ser narrados como sucesso;
 - somente `deep_links` retornados pelo servidor podem ser apresentados.
+
+## Task 6 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| testes de contexto, métrica e leitura de auditoria | módulo de contexto ausente, métrica não allowlisted e query sem os sete campos da Fase 4 |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| contexto, métrica, audit write/read, tool result e migration | 6 testes passaram em 6 arquivos |
+| discovery/resposta MCP com trace | 1 teste passou; 7 não selecionados pelo filtro |
+| `npm run typecheck` + `npm run build` | exit 0 |
+
+### Contratos entregues
+
+- wrapper único gera UUID por invocação e propaga correlação da delegação;
+- resultado seguro contém `correlation_id`, `chat_session_id`, `run_id`,
+  `tool_name` e `tool_call_id` quando a delegação foi validada;
+- ações executadas herdam também `plan_id` e `plan_action_index` na auditoria;
+- listagem administrativa de auditoria retorna todos os campos novos;
+- migration exige trace completo para novos registros Hermes e par
+  `plan_id/action_index`, sem invalidar retroativamente dados legados;
+- métricas Prometheus allowlisted cobrem chamada/resultado, erro por código,
+  latência prepare→execute, hit/miss idempotente e tipo de recurso mutado,
+  sem IDs de usuário/tenant/chat;
+- snapshot de auditoria mantém IDs/códigos e transforma briefing, copy, nota e
+  conteúdo em comprimento/hash, além de redigir campos de segredo.
+
+### Limitação ambiental
+
+O pgTAP da Fase 4 foi ampliado de 12 para 14 asserts, mas não foi executado
+porque o daemon Docker/PostgreSQL continua indisponível. Migration estática,
+typecheck, build e testes unitários estão verdes; constraints reais continuam
+no gate de banco.

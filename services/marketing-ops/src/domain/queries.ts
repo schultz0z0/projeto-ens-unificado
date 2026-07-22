@@ -405,15 +405,22 @@ export async function listProductionSchedule(
   );
 }
 
+export const AUDIT_EVENTS_SELECT = `
+  select id, tenant_id as "tenantId", actor_user_id as "actorUserId",
+    actor_role::text as "actorRole", actor_type::text as "actorType", origin::text,
+    entity_type as "entityType", entity_id as "entityId", action,
+    before_state as "before", after_state as "after",
+    correlation_id as "correlationId", operator_origin as "operatorOrigin",
+    chat_session_id as "chatSessionId", run_id as "runId", tool_name as "toolName",
+    tool_call_id as "toolCallId", plan_id as "planId",
+    plan_action_index as "planActionIndex", created_at as "createdAt"
+  from marketing_ops.audit_events order by created_at desc, id limit $1
+`;
+
 export async function listAuditEvents(context: CommandContext, limit: number) {
   authorize(context.actor, 'audit.read');
   return withActorTransaction(context.pool, context.actor, context.correlationId, async (client) => {
-    const result = await client.query(`
-      select id, tenant_id as "tenantId", actor_user_id as "actorUserId", actor_role::text as "actorRole",
-        actor_type::text as "actorType", origin::text, entity_type as "entityType", entity_id as "entityId",
-        action, before_state as "before", after_state as "after", correlation_id as "correlationId", created_at as "createdAt"
-      from marketing_ops.audit_events order by created_at desc, id limit $1
-    `, [limit]);
+    const result = await client.query(AUDIT_EVENTS_SELECT, [limit]);
     return result.rows;
   });
 }

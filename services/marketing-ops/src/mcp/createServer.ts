@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Pool } from 'pg';
 import { z } from 'zod/v4';
 import type { DelegationKeyring } from '../delegation/claims.js';
-import { appError } from '../errors.js';
+import { AppError, appError } from '../errors.js';
 import { consumeDelegationUse, verifyDelegation } from '../delegation/verifier.js';
+import type { DelegatedActor } from '../delegation/verifier.js';
 import { getCampaign, listAuditEvents, listCampaigns } from '../domain/queries.js';
 import { listProductionSchedule } from '../domain/queries.js';
 import { listCampaignTimeline } from '../domain/timeline.js';
@@ -14,18 +16,21 @@ import {
   type MarketingOpsResourceType
 } from '../domain/capabilities.js';
 import type { ArtifactClient } from '../integrations/artifactClient.js';
+import type { MetricsRegistry } from '../observability/metrics.js';
 import { marketingOpsPlanActionsSchema, requiredScopesForPlan } from '../plans/contracts.js';
 import { executeMarketingOpsPlan } from '../plans/executor.js';
 import { issueMarketingOpsPlan, verifyMarketingOpsPlan } from '../plans/token.js';
 import { delegationToken, uuid } from './contracts.js';
 import { createMcpRateLimiter } from './rateLimit.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
+import { createMcpCommandContext, createMcpTrace } from './context.js';
 
 export interface MarketingOpsMcpDependencies {
   pool: Pool; features: { read: boolean; write: boolean }; keyring: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
   rateLimiter?: ReturnType<typeof createMcpRateLimiter>;
   artifactClient?: ArtifactClient;
+  metrics?: Pick<MetricsRegistry, 'increment'>;
 }
 
 export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): McpServer {
@@ -47,14 +52,46 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       return false;
     }
   }, 'time_zone must be a valid IANA timezone');
+  type McpResult = 'success' | 'partial' | 'failed' | 'error';
+  const runTool = async (
+    toolName: string,
+    execute: (
+      toolCallId: string,
+      setActor: (actor: DelegatedActor) => void
+    ) => Promise<{ value: object; result?: Exclude<McpResult, 'error'> }>
+  ) => {
+    const toolCallId = randomUUID();
+    let currentActor: DelegatedActor | undefined;
+    try {
+      const output = await execute(toolCallId, (actor) => { currentActor = actor; });
+      deps.metrics?.increment('marketing_ops_mcp_calls_total', {
+        tool: toolName,
+        result: output.result ?? 'success'
+      });
+      const trace = currentActor
+        ? createMcpTrace(currentActor, toolName, toolCallId)
+        : { tool_name: toolName, tool_call_id: toolCallId };
+      return jsonToolResult({ ...output.value, trace });
+    } catch (error) {
+      deps.metrics?.increment('marketing_ops_mcp_calls_total', { tool: toolName, result: 'error' });
+      deps.metrics?.increment('marketing_ops_mcp_errors_total', {
+        tool: toolName,
+        code: error instanceof AppError ? error.code : 'internal_error'
+      });
+      const trace = currentActor
+        ? createMcpTrace(currentActor, toolName, toolCallId)
+        : { tool_name: toolName, tool_call_id: toolCallId };
+      return errorToolResult(error, trace);
+    }
+  };
   server.registerTool('marketing_ops_capabilities_v1', {
     title: 'Marketing Ops capabilities', description: 'Returns contract version and active feature flags.', inputSchema: {}
-  }, async () => jsonToolResult({
+  }, async () => runTool('marketing_ops_capabilities_v1', async () => ({ value: {
     contractVersion: 1,
     features: deps.features,
     delegationRequiredForDomain: true,
     conversationalConfirmationRequiredForWrites: true
-  }));
+  } })));
 
   server.registerTool('marketing_ops_list_campaigns_v1', {
     title: 'List campaigns', description: 'Lists campaigns visible to the delegated actor.',
@@ -68,12 +105,14 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_list_campaigns_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['campaign:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_list_campaigns_v1', 'read');
-      const result = await listCampaigns({ pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' }, {
+      const result = await listCampaigns(createMcpCommandContext(
+        deps.pool, actor, 'marketing_ops_list_campaigns_v1', toolCallId
+      ), {
         limit: input.limit,
         ...(input.status ? { status: input.status } : {}),
         ...(input.course_slug ? { courseSlug: input.course_slug } : {}),
@@ -82,21 +121,21 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         ...(input.updated_to ? { updatedTo: input.updated_to } : {}),
         ...(input.cursor ? { cursor: input.cursor } : {})
       });
-      return jsonToolResult(result);
-    } catch (error) { return errorToolResult(error); }
-  });
+      return { value: result };
+  }));
 
   server.registerTool('marketing_ops_get_campaign_v1', {
     title: 'Get campaign', description: 'Gets one campaign visible to the delegated actor.',
     inputSchema: { delegation_token: delegationToken, campaign_id: uuid }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_get_campaign_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['campaign:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_get_campaign_v1', 'read');
-      return jsonToolResult({ data: await getCampaign({ pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' }, input.campaign_id) });
-    } catch (error) { return errorToolResult(error); }
-  });
+      return { value: { data: await getCampaign(createMcpCommandContext(
+        deps.pool, actor, 'marketing_ops_get_campaign_v1', toolCallId
+      ), input.campaign_id) } };
+  }));
 
   server.registerTool('marketing_ops_list_campaign_items_v1', {
     title: 'List campaign production items',
@@ -115,13 +154,15 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_list_campaign_items_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['item:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_list_campaign_items_v1', 'read');
-      const context = { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' as const };
-      return jsonToolResult(await listProductionSchedule(context, {
+      const context = createMcpCommandContext(
+        deps.pool, actor, 'marketing_ops_list_campaign_items_v1', toolCallId
+      );
+      return { value: await listProductionSchedule(context, {
         from: input.from,
         to: input.to,
         limit: input.limit,
@@ -132,9 +173,8 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         ...(input.assignee_id ? { assigneeId: input.assignee_id } : {}),
         ...(input.channel ? { channel: input.channel } : {}),
         ...(input.cursor ? { cursor: input.cursor } : {})
-      }, input.time_zone));
-    } catch (error) { return errorToolResult(error); }
-  });
+      }, input.time_zone) };
+  }));
 
   server.registerTool('marketing_ops_get_campaign_timeline_v1', {
     title: 'Get campaign timeline',
@@ -145,18 +185,19 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       cursor: z.string().min(1).max(1024).optional(),
       limit: z.number().int().min(1).max(100).default(25)
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_get_campaign_timeline_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['timeline:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_get_campaign_timeline_v1', 'read');
-      return jsonToolResult(await listCampaignTimeline(
-        { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' },
+      return { value: await listCampaignTimeline(
+        createMcpCommandContext(
+          deps.pool, actor, 'marketing_ops_get_campaign_timeline_v1', toolCallId
+        ),
         input.campaign_id,
         { limit: input.limit, ...(input.cursor ? { cursor: input.cursor } : {}) }
-      ));
-    } catch (error) { return errorToolResult(error); }
-  });
+      ) };
+  }));
 
   server.registerTool('marketing_ops_get_content_v1', {
     title: 'Get campaign item content',
@@ -168,15 +209,17 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       include_versions: z.boolean().default(false),
       version_limit: z.number().int().min(1).max(20).default(5)
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_get_content_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       if (Boolean(input.item_id) === Boolean(input.asset_id)) {
         throw appError('validation_error', 400, 'Provide exactly one of item_id or asset_id');
       }
       const actor = await verifyDelegation(input.delegation_token, ['content:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_get_content_v1', 'read');
-      const context = { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' as const };
+      const context = createMcpCommandContext(
+        deps.pool, actor, 'marketing_ops_get_content_v1', toolCallId
+      );
       const assets = input.item_id
         ? await listContentAssets(context, input.item_id)
         : [await getContentAsset(context, input.asset_id!)];
@@ -187,16 +230,13 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         ])))
         : {};
       const itemId = input.item_id ?? assets[0]!.itemId;
-      return jsonToolResult({
-        data: {
+      return { value: { data: {
           itemId,
           assets,
           versions,
           artifacts: await listItemArtifacts(context, itemId)
-        }
-      });
-    } catch (error) { return errorToolResult(error); }
-  });
+      } } };
+  }));
 
   server.registerTool('marketing_ops_get_object_capabilities_v1', {
     title: 'Get object capabilities',
@@ -206,8 +246,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       resource_type: resourceType,
       resource_id: uuid
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_get_object_capabilities_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const scope = input.resource_type === 'campaign'
         ? 'campaign:read'
@@ -215,14 +254,16 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
           ? 'item:read'
           : 'content:read';
       const actor = await verifyDelegation(input.delegation_token, [scope], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_get_object_capabilities_v1', 'read');
-      return jsonToolResult({ data: await getObjectCapabilities(
-        { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' },
+      return { value: { data: await getObjectCapabilities(
+        createMcpCommandContext(
+          deps.pool, actor, 'marketing_ops_get_object_capabilities_v1', toolCallId
+        ),
         input.resource_type as MarketingOpsResourceType,
         input.resource_id
-      ) });
-    } catch (error) { return errorToolResult(error); }
-  });
+      ) } };
+  }));
 
   server.registerTool('marketing_ops_prepare_plan_v1', {
     title: 'Prepare Marketing Ops mutation plan',
@@ -231,14 +272,14 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       delegation_token: delegationToken,
       actions: marketingOpsPlanActionsSchema
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_prepare_plan_v1', async (_toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
       const scopes = requiredScopesForPlan(input.actions);
       const actor = await verifyDelegation(input.delegation_token, scopes, deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_prepare_plan_v1', 'prepare');
       const prepared = await issueMarketingOpsPlan(actor, input.actions, deps.keyring);
-      return jsonToolResult({
+      return { value: {
         plan_token: prepared.token,
         plan: {
           id: prepared.planId,
@@ -248,9 +289,8 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         },
         persisted: false,
         confirmation_required: true
-      });
-    } catch (error) { return errorToolResult(error); }
-  });
+      } };
+  }));
 
   server.registerTool('marketing_ops_execute_plan_v1', {
     title: 'Execute confirmed Marketing Ops plan',
@@ -259,12 +299,17 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       delegation_token: delegationToken,
       plan_token: z.string().min(20)
     }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_execute_plan_v1', async (toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
       const actor = await verifyDelegation(input.delegation_token, [], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_execute_plan_v1', 'execute');
       const plan = await verifyMarketingOpsPlan(input.plan_token, actor, deps.keyring);
+      const planLatencySeconds = Math.max(0, Math.floor(Date.now() / 1000) - plan.iat);
+      deps.metrics?.increment('marketing_ops_mcp_plan_latency_seconds_count');
+      deps.metrics?.increment(
+        'marketing_ops_mcp_plan_latency_seconds_sum', {}, planLatencySeconds
+      );
       const scopes = requiredScopesForPlan(plan.actions);
       if (!scopes.every((scope) => actor.scopes.includes(scope))) {
         throw appError('delegation_scope_denied', 403, 'Delegation does not grant the required plan scopes');
@@ -275,26 +320,40 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         requestHash: plan.plan_hash
       });
       const data = await executeMarketingOpsPlan({
-        pool: deps.pool,
-        actor,
-        correlationId: actor.correlationId,
-        origin: 'mcp',
+        ...createMcpCommandContext(
+          deps.pool, actor, 'marketing_ops_execute_plan_v1', toolCallId
+        ),
         ...(deps.artifactClient ? { artifacts: deps.artifactClient } : {})
       }, plan);
-      return jsonToolResult({ data });
-    } catch (error) { return errorToolResult(error); }
-  });
+      for (const completed of data.completed) {
+        deps.metrics?.increment('marketing_ops_mcp_idempotency_total', {
+          result: completed.idempotency_hit ? 'hit' : 'miss'
+        });
+        const resource = completed.action_type.startsWith('campaign_item.')
+          || completed.action_type.startsWith('artifact.')
+          ? 'campaign_item'
+          : completed.action_type.startsWith('content.')
+            ? 'content_asset'
+            : 'campaign';
+        deps.metrics?.increment('marketing_ops_mcp_objects_mutated_total', { resource });
+      }
+      return {
+        value: { data },
+        result: data.status === 'completed' ? 'success' : data.status
+      };
+  }));
 
   server.registerTool('marketing_ops_list_audit_events_v1', {
     title: 'List audit events', description: 'Lists tenant audit events for manager/admin actors.',
     inputSchema: { delegation_token: delegationToken, limit: z.number().int().min(1).max(100).default(25) }
-  }, async (input) => {
-    try {
+  }, async (input) => runTool('marketing_ops_list_audit_events_v1', async (toolCallId, setActor) => {
       if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
       const actor = await verifyDelegation(input.delegation_token, ['audit:read'], deps);
+      setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_list_audit_events_v1', 'read');
-      return jsonToolResult({ data: await listAuditEvents({ pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' }, input.limit) });
-    } catch (error) { return errorToolResult(error); }
-  });
+      return { value: { data: await listAuditEvents(createMcpCommandContext(
+        deps.pool, actor, 'marketing_ops_list_audit_events_v1', toolCallId
+      ), input.limit) } };
+  }));
   return server;
 }

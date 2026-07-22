@@ -32,8 +32,8 @@
 - [ ] delegação expirada/reutilizada rejeitada;
 - [ ] rate limit por ator e tool validado;
 - [ ] prompt injection sem ampliação de autoridade;
-- [ ] logs redigidos, sem `delegation_token` nem `plan_token`;
-- [ ] logs/auditoria sem briefing, copy, nota ou conteúdo integral;
+- [x] redaction de delegação e snapshots de auditoria validada unitariamente;
+- [x] auditoria sem briefing, copy, nota ou conteúdo integral em teste unitário;
 - [x] deep links validados em unit/component test para campanha, item e asset;
 - [ ] briefing convertido em calendário/checklist após confirmação;
 - [ ] resposta do chat convertida em versão vinculada;
@@ -91,6 +91,14 @@
 - confirmação em turno posterior, binding de token atual e bloqueio das tools
   diretas permanecem cobertos;
 - o teste conversacional golden com serviços reais continua reservado ao E2E.
+
+## Registro Task 6 — 2026-07-22
+
+- 7 testes dirigidos de contexto, métricas, auditoria, migration e resposta MCP
+  passaram;
+- build/typecheck do `marketing-ops` passaram;
+- pgTAP contém 14 asserts, porém segue não executado por ausência de Docker;
+- métricas não carregam IDs de usuário, tenant, chat ou objeto como labels.
 
 ## Decisão atual
 

@@ -85,7 +85,10 @@ describe('delegation and MCP', () => {
   });
 
   it('registers versioned tools and serves public capabilities', async () => {
-    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const metrics = { increment: vi.fn() };
+    const server = createMarketingOpsMcpServer({
+      pool, features: { read: true, write: true }, keyring, metrics
+    });
     const client = new Client({ name: 'test-client', version: '1.0.0' });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
@@ -109,6 +112,14 @@ describe('delegation and MCP', () => {
     ]));
     const result = await client.callTool({ name: 'marketing_ops_capabilities_v1', arguments: {} });
     expect(result.isError).not.toBe(true);
+    const text = (result.content as Array<{ type: string; text?: string }>)[0]?.text ?? '{}';
+    expect(JSON.parse(text).trace).toMatchObject({
+      tool_name: 'marketing_ops_capabilities_v1',
+      tool_call_id: expect.stringMatching(/^[0-9a-f-]{36}$/i)
+    });
+    expect(metrics.increment).toHaveBeenCalledWith('marketing_ops_mcp_calls_total', {
+      tool: 'marketing_ops_capabilities_v1', result: 'success'
+    });
     await client.close();
     await server.close();
   });
