@@ -43,6 +43,10 @@ $delegationKey = [string]$current['NEXUS_PICTURE_DELEGATION_ACTIVE_KEY']
 if ($delegationKey.Length -lt 32 -or $delegationKey -match 'CHANGE_ME|PLACEHOLDER|EXAMPLE') {
   $delegationKey = New-StrongSecret
 }
+$delegationRefreshKey = [string]$current['NEXUS_PICTURE_DELEGATION_REFRESH_KEY']
+if ($delegationRefreshKey.Length -lt 32 -or $delegationRefreshKey -match 'CHANGE_ME|PLACEHOLDER|EXAMPLE') {
+  $delegationRefreshKey = New-StrongSecret
+}
 
 $filtered = New-Object Collections.Generic.List[string]
 $insideManagedBlock = $false
@@ -74,6 +78,9 @@ $filtered.Add('NEXUS_PICTURE_DELEGATION_PREVIOUS_KID=')
 $filtered.Add('NEXUS_PICTURE_DELEGATION_PREVIOUS_KEY=')
 $filtered.Add('NEXUS_PICTURE_DELEGATION_TTL_SECONDS=90')
 $filtered.Add('NEXUS_PICTURE_DELEGATION_MAX_TTL_SECONDS=120')
+$filtered.Add("NEXUS_PICTURE_DELEGATION_REFRESH_KEY=$delegationRefreshKey")
+$filtered.Add('NEXUS_PICTURE_DELEGATION_REFRESH_WINDOW_SECONDS=900')
+$filtered.Add('NEXUS_PICTURE_DELEGATION_REFRESH_TIMEOUT_MS=3000')
 $filtered.Add('NEXUS_PICTURE_ARTIFACT_TIMEOUT_MS=30000')
 $filtered.Add('NEXUS_PICTURE_WORKER_CONCURRENCY=1')
 $filtered.Add('NEXUS_PICTURE_WORKER_LEASE_SECONDS=120')

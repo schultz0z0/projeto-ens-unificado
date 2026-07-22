@@ -47,6 +47,9 @@ NEXUS_PICTURE_DELEGATION_ACTIVE_KID=v1
 NEXUS_PICTURE_DELEGATION_ACTIVE_KEY=<segredo-aleatorio-com-32-ou-mais-caracteres>
 NEXUS_PICTURE_DELEGATION_PREVIOUS_KID=
 NEXUS_PICTURE_DELEGATION_PREVIOUS_KEY=
+NEXUS_PICTURE_DELEGATION_REFRESH_KEY=<segredo-aleatorio-dedicado-com-32-ou-mais-caracteres>
+NEXUS_PICTURE_DELEGATION_REFRESH_WINDOW_SECONDS=900
+NEXUS_PICTURE_DELEGATION_REFRESH_TIMEOUT_MS=3000
 ```
 
 Use a URL do Session Pooler IPv4 do Supabase na porta 5432. Não exponha a
@@ -102,6 +105,11 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 ```
 
+O build de `hermes-api` incorpora `services/hermes-runtime/skills`. Ao recriar o
+container, o entrypoint sincroniza a versão gerenciada de `picture-hermes` em
+`/opt/data/skills` e em cada perfil existente, preservando as demais skills.
+Abra uma nova sessão Picture após o deploy para garantir prompt e tools novos.
+
 O `--remove-orphans` remove o container antigo do Designer API, se ainda existir;
 ele não apaga volumes ou diretórios de dados.
 
@@ -112,7 +120,15 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 picture-it artifact-server hermes-api app-bridge app-frontend
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T picture-it curl -fsS http://127.0.0.1:8090/health
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T picture-it curl -fsS http://127.0.0.1:8090/ready
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api sh -lc 'test -f /opt/data/skills/picture-hermes/templates/picture-start-job.json && grep -q "arrays JSON nativos" /opt/data/skills/picture-hermes/SKILL.md'
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api sh -lc 'test -f /opt/data/skills/nexusai-ens-design-system/SKILL.md'
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=10m hermes-api picture-it app-bridge | grep -E 'nexus_picture|picture_start_job|expected array|delegation'
 ```
+
+Se a terceira checagem falhar, restaure a skill oficial
+`nexusai-ens-design-system` no volume persistente `/opt/data/skills` antes de
+abrir a sessão Picture. Ela é uma skill do ambiente do usuário e não é
+sobrescrita nem inventada pelo build deste repositório.
 
 Valide depois o fluxo manual completo em
 [`docs/picture-hermes-operations.md`](picture-hermes-operations.md), incluindo

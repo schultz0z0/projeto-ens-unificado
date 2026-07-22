@@ -1,4 +1,4 @@
-import { decodeProtectedHeader, jwtVerify, type JWTPayload } from "jose";
+import { decodeProtectedHeader, errors as joseErrors, jwtVerify, type JWTPayload } from "jose";
 import { z } from "zod";
 import { PictureError } from "../errors.ts";
 
@@ -49,7 +49,11 @@ const invalid = (cause?: unknown) => new PictureError(
 export const verifyPictureDelegation = async (
   token: string,
   requiredScopes: string[],
-  options: { keyring: PictureDelegationKeyring; workspaceId?: string },
+  options: {
+    keyring: PictureDelegationKeyring;
+    workspaceId?: string;
+    refreshDelegation?: (token: string) => Promise<string>;
+  },
 ): Promise<PictureActor> => {
   try {
     const header = decodeProtectedHeader(token);
@@ -88,6 +92,11 @@ export const verifyPictureDelegation = async (
     };
   } catch (error) {
     if (error instanceof PictureError) throw error;
+    if (error instanceof joseErrors.JWTExpired && options.refreshDelegation) {
+      const refreshed = await options.refreshDelegation(token);
+      const { refreshDelegation: _refreshDelegation, ...singleAttemptOptions } = options;
+      return verifyPictureDelegation(refreshed, requiredScopes, singleAttemptOptions);
+    }
     throw invalid(error);
   }
 };

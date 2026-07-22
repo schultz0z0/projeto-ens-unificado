@@ -35,6 +35,7 @@ from agent.marketing_ops_delegation import (
     marketing_ops_direct_mutation_block_message,
     marketing_ops_plan_execution_block_message,
 )
+from agent.picture_delegation import bind_current_picture_delegation
 from agent.tool_dispatch_helpers import (
     _is_destructive_command,
     _is_multimodal_tool_result,
@@ -239,6 +240,11 @@ def _run_agent_tool_execution_middleware(
             candidate_args,
             getattr(agent, "ephemeral_system_prompt", None),
         )
+        observed_args = bind_current_picture_delegation(
+            function_name,
+            observed_args,
+            getattr(agent, "ephemeral_system_prompt", None),
+        )
         return execute(observed_args)
 
     from hermes_cli.middleware import run_tool_execution_middleware
@@ -338,6 +344,11 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
             tool_call_id=getattr(tool_call, "id", "") or "",
         )
         function_args = bind_current_marketing_ops_delegation(
+            function_name,
+            function_args,
+            getattr(agent, "ephemeral_system_prompt", None),
+        )
+        function_args = bind_current_picture_delegation(
             function_name,
             function_args,
             getattr(agent, "ephemeral_system_prompt", None),
@@ -878,6 +889,11 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             tool_call_id=getattr(tool_call, "id", "") or "",
         )
         function_args = bind_current_marketing_ops_delegation(
+            function_name,
+            function_args,
+            getattr(agent, "ephemeral_system_prompt", None),
+        )
+        function_args = bind_current_picture_delegation(
             function_name,
             function_args,
             getattr(agent, "ephemeral_system_prompt", None),

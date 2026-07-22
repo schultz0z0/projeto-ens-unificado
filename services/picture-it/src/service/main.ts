@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PictureError } from "../errors.ts";
 import { PictureArtifactClient } from "./artifact-client.ts";
 import { PictureDatabase } from "./database.ts";
+import { createPictureDelegationRefresher } from "./delegation-refresher.ts";
 import { PictureEngineAdapter } from "./engine-adapter.ts";
 import {
   JobService,
@@ -73,7 +74,17 @@ export const startPictureService = () => {
     audience: process.env.PICTURE_DELEGATION_AUDIENCE || "nexus-picture",
     maxTtlSeconds: positiveInt("PICTURE_DELEGATION_MAX_TTL_SECONDS", 120, 300),
   };
-  const mcpDependencies = { keyring, workspaceService, jobService, jobReader };
+  const refreshUrl = required("PICTURE_DELEGATION_REFRESH_URL");
+  const refreshKey = required("PICTURE_DELEGATION_REFRESH_KEY");
+  if (refreshKey.length < 32) {
+    throw new PictureError("picture_runtime_config_invalid", "PICTURE_DELEGATION_REFRESH_KEY must contain at least 32 characters.", 500);
+  }
+  const refreshDelegation = createPictureDelegationRefresher({
+    url: refreshUrl,
+    internalKey: refreshKey,
+    timeoutMs: positiveInt("PICTURE_DELEGATION_REFRESH_TIMEOUT_MS", 3_000, 10_000),
+  });
+  const mcpDependencies = { keyring, refreshDelegation, workspaceService, jobService, jobReader };
   const handleMcp = createPictureMcpHttpHandler(mcpDependencies);
   const referenceService = new PictureReferenceService(artifactClient);
   const allowedOrigins = String(process.env.PICTURE_ALLOWED_ORIGINS || "")

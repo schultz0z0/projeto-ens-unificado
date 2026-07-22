@@ -39,6 +39,7 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
   const pictureDelegationActiveKey = value(env, ["PICTURE_DELEGATION_ACTIVE_KEY"]);
   const pictureDelegationIssuer = value(env, ["PICTURE_DELEGATION_ISSUER"]) || "nexus-chat-bridge";
   const pictureDelegationAudience = value(env, ["PICTURE_DELEGATION_AUDIENCE"]) || "nexus-picture";
+  const pictureDelegationRefreshKey = value(env, ["PICTURE_DELEGATION_REFRESH_KEY"]);
   if (production && !isHttpUrl(pictureInternalUrl)) {
     throw new Error("PICTURE_INTERNAL_URL must be a valid http(s) URL in production");
   }
@@ -53,6 +54,9 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
   }
   if (production && pictureDelegationAudience !== "nexus-picture") {
     throw new Error("PICTURE_DELEGATION_AUDIENCE must be nexus-picture in production");
+  }
+  if (production && !isStrongSecret(pictureDelegationRefreshKey)) {
+    throw new Error("PICTURE_DELEGATION_REFRESH_KEY must contain at least 32 non-placeholder characters in production");
   }
   return {
     production,
@@ -69,5 +73,6 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
     pictureDelegationActiveKey,
     pictureDelegationIssuer,
     pictureDelegationAudience,
+    pictureDelegationRefreshKey,
   };
 };

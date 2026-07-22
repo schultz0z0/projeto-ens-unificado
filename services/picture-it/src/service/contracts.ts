@@ -168,7 +168,9 @@ const pipelineStep = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("compose"),
     overlays_file: workspacePath.optional(),
-    overlays: z.array(OverlaySchema).max(200).optional(),
+    overlays: z.array(OverlaySchema).max(200).optional().describe(
+      "Use a native JSON array of overlay objects. Never send an XML object, an item wrapper, or stringified JSON.",
+    ),
   }).strict().refine((value) => Boolean(value.overlays_file || value.overlays), {
     message: "Compose requires overlays_file or overlays",
   }),
@@ -196,7 +198,9 @@ export const CreativeBriefSchema = z.object({
 export const CompositionPlanSchema = z.object({
   version: z.literal(1),
   base_prompt: z.string().trim().min(1).max(20_000),
-  pipeline: z.array(pipelineStep).min(1).max(50),
+  pipeline: z.array(pipelineStep).min(1).max(50).describe(
+    "Use a native JSON array of ordered image operations. Each compose.overlays value is also a native JSON array.",
+  ),
   final_path: finalPath,
 }).strict();
 

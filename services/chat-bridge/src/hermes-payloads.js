@@ -515,6 +515,11 @@ export const buildHermesSessionChatRequest = ({
         `workspace_id: ${pictureWorkspaceId}`,
         "Nunca use image_generate neste modo.",
         "Use somente as tools nexus_picture para ler o workspace, gerar, revisar e acompanhar a peça.",
+        "A entrega continua sendo uma imagem raster criada pelo Picture. Competências de copy ajudam somente na hierarquia verbal e no CTA; competências de layout ajudam somente na composição visual.",
+        "O skill nexusai-ens-design-system fornece tokens de marca (paleta, tipografia, espaçamento e identidade), mas não muda o tipo de entrega.",
+        "Não crie PPTX, slides, decks, páginas ou outros artefatos no lugar da imagem.",
+        "Não inclua emoji na peça e não invente ícones decorativos, salvo quando o usuário pedir ou aprovar explicitamente.",
+        "Ao chamar picture_start_job, envie objetos e arrays JSON nativos. Nunca serialize arrays como XML, tags <item> ou strings JSON.",
         "Atue como planner técnico do Picture: preserve o briefing, use as referências já importadas e mantenha os arquivos intermediários no workspace.",
         "Aprovação e criação de nova peça pertencem à interface; não aprove nem resete o workspace pelas tools.",
         `workspace_atual: ${JSON.stringify(pictureWorkspaceSummary ?? {})}`,
@@ -550,6 +555,9 @@ export const buildHermesSessionChatRequest = ({
 
     }),
     ...(systemMessage ? { system_message: systemMessage } : {}),
+    ...(experience === "picture"
+      ? { skills: ["picture-hermes", "nexusai-ens-design-system"] }
+      : {}),
   };
 };
 

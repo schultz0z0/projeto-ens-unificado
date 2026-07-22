@@ -53,6 +53,24 @@ test("rejects expiry, wrong issuer and audience", async () => {
   await expect(verifyPictureDelegation(await token({}, { audience: "other" }), [], { keyring })).rejects.toMatchObject({ code: "picture_delegation_invalid" });
 });
 
+test("refreshes one expired delegation and verifies the renewed token", async () => {
+  const { verifyPictureDelegation } = await import("../src/service/delegation.ts");
+  const expired = await token({}, { issuedAt: Math.floor(Date.now() / 1000) - 300, ttl: 30 });
+  const renewed = await token();
+  let refreshCalls = 0;
+  const actor = await verifyPictureDelegation(expired, ["picture:write"], {
+    keyring,
+    workspaceId: WORKSPACE,
+    refreshDelegation: async (received) => {
+      refreshCalls += 1;
+      expect(received).toBe(expired);
+      return renewed;
+    },
+  });
+  expect(refreshCalls).toBe(1);
+  expect(actor.workspaceId).toBe(WORKSPACE);
+});
+
 test("rejects workspace substitution, insufficient scope and excessive lifetime", async () => {
   const { verifyPictureDelegation } = await import("../src/service/delegation.ts");
   await expect(verifyPictureDelegation(await token(), [], { keyring, workspaceId: randomUUID() })).rejects.toMatchObject({ code: "picture_delegation_workspace_denied" });

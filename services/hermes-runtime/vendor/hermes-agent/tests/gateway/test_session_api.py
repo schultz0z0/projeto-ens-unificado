@@ -124,6 +124,41 @@ async def test_run_agent_binds_api_session_context_for_tool_env(adapter, monkeyp
 
 
 @pytest.mark.asyncio
+async def test_run_agent_preloads_requested_skills_into_ephemeral_prompt(adapter, monkeypatch):
+    observed = {}
+
+    class FakeAgent:
+        session_prompt_tokens = 0
+        session_completion_tokens = 0
+
+        def run_conversation(self, **_kwargs):
+            return {"final_response": "ok"}
+
+    def fake_create_agent(**kwargs):
+        observed["system_prompt"] = kwargs["ephemeral_system_prompt"]
+        return FakeAgent()
+
+    monkeypatch.setattr(adapter, "_create_agent", fake_create_agent)
+    monkeypatch.setattr(
+        "agent.skill_commands.build_preloaded_skills_prompt",
+        lambda names, task_id=None: ("PICTURE SKILL CONTRACT", [names[0]], names[1:]),
+    )
+
+    await adapter._run_agent(
+        user_message="create",
+        conversation_history=[],
+        ephemeral_system_prompt="PICTURE MODE",
+        session_id="picture-session",
+        preloaded_skills=["picture-hermes", "missing-brand-skill"],
+    )
+
+    assert "PICTURE MODE" in observed["system_prompt"]
+    assert "PICTURE SKILL CONTRACT" in observed["system_prompt"]
+    assert "Missing requested skill(s): missing-brand-skill" in observed["system_prompt"]
+    assert "Do not silently substitute unrelated skills" in observed["system_prompt"]
+
+
+@pytest.mark.asyncio
 async def test_session_crud_and_message_history(adapter, session_db):
     app = _create_session_app(adapter)
     async with TestClient(TestServer(app)) as cli:
@@ -224,7 +259,7 @@ async def test_session_chat_loads_history_and_preserves_session_headers(auth_ada
         async with TestClient(TestServer(app)) as cli:
             resp = await cli.post(
                 f"/api/sessions/{session_id}/chat",
-                json={"message": "next", "system_message": "stay focused"},
+                json={"message": "next", "system_message": "stay focused", "skills": ["picture-hermes"]},
                 headers={"Authorization": "Bearer sk-test", "X-Hermes-Session-Key": "client-42"},
             )
             assert resp.status == 200
@@ -241,6 +276,7 @@ async def test_session_chat_loads_history_and_preserves_session_headers(auth_ada
     assert kwargs["session_id"] == session_id
     assert kwargs["gateway_session_key"] == "client-42"
     assert kwargs["ephemeral_system_prompt"] == "stay focused"
+    assert kwargs["preloaded_skills"] == ["picture-hermes"]
     assert kwargs["conversation_history"] == [
         {"role": "user", "content": "earlier"},
         {"role": "assistant", "content": "prior answer"},
@@ -297,7 +333,7 @@ async def test_session_chat_stream_accepts_multimodal_message(adapter, session_d
         async with TestClient(TestServer(app)) as cli:
             resp = await cli.post(
                 f"/api/sessions/{session_id}/chat/stream",
-                json={"message": image_payload},
+                json={"message": image_payload, "skills": ["picture-hermes", "nexusai-ens-design-system"]},
             )
             assert resp.status == 200, await resp.text()
             assert resp.headers["Content-Type"].startswith("text/event-stream")
@@ -305,6 +341,7 @@ async def test_session_chat_stream_accepts_multimodal_message(adapter, session_d
 
     assert "event: assistant.completed" in body
     assert captured_kwargs["user_message"] == expected_user_message
+    assert captured_kwargs["preloaded_skills"] == ["picture-hermes", "nexusai-ens-design-system"]
 
 
 @pytest.mark.asyncio

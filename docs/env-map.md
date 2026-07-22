@@ -89,6 +89,9 @@ autenticados `/api/picture/*` da Bridge.
 | `NEXUS_PICTURE_DELEGATION_PREVIOUS_KID/KEY` | janela de rotação aceita pelo Picture |
 | `NEXUS_PICTURE_DELEGATION_TTL_SECONDS` | TTL emitido pela Bridge |
 | `NEXUS_PICTURE_DELEGATION_MAX_TTL_SECONDS` | TTL máximo aceito pelo Picture |
+| `NEXUS_PICTURE_DELEGATION_REFRESH_KEY` | segredo interno compartilhado entre Picture e Bridge para renovar token expirado do mesmo run ativo |
+| `NEXUS_PICTURE_DELEGATION_REFRESH_WINDOW_SECONDS` | janela máxima, desde a criação do run, para renovação segura |
+| `NEXUS_PICTURE_DELEGATION_REFRESH_TIMEOUT_MS` | timeout da chamada interna Picture → Bridge |
 | `NEXUS_PICTURE_ARTIFACT_TIMEOUT_MS` | timeout do Picture para o Artifact Server |
 | `NEXUS_PICTURE_WORKER_CONCURRENCY` | quantidade de workers no processo Picture |
 | `NEXUS_PICTURE_WORKER_LEASE_SECONDS` | duração do lease recuperável |

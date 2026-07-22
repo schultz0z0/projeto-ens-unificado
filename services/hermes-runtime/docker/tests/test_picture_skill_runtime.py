@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -12,6 +13,7 @@ import yaml
 RUNTIME_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = RUNTIME_ROOT / "docker" / "ensure-nexus-skills.sh"
 SKILL = RUNTIME_ROOT / "skills" / "picture-hermes" / "SKILL.md"
+START_JOB_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-start-job.json"
 DOCKERFILE = RUNTIME_ROOT / "docker" / "hermes.Dockerfile"
 
 
@@ -29,8 +31,20 @@ def test_picture_skill_contract_and_runtime_wiring():
         "não aprove",
         "não resete",
         "não invente",
+        "arrays JSON nativos",
+        "nexusai-ens-design-system",
+        "emoji",
+        "PPTX",
+        "imagem",
     ):
         assert required in text
+
+    example = json.loads(START_JOB_TEMPLATE.read_text(encoding="utf-8"))
+    pipeline = example["composition_plan"]["pipeline"]
+    compose = next(step for step in pipeline if step["op"] == "compose")
+    assert isinstance(pipeline, list)
+    assert isinstance(compose["overlays"], list)
+    assert example["creative_brief"]["brand_profile"] == "ENS"
 
     script = SCRIPT.read_text(encoding="utf-8")
     assert "HERMES_HOME" in script

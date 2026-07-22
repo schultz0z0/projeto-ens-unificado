@@ -24,6 +24,7 @@ const toolError = (error: unknown) => {
 
 export interface PictureMcpDependencies {
   keyring: PictureDelegationKeyring;
+  refreshDelegation?: (token: string) => Promise<string>;
   workspaceService: {
     getOwnedWorkspace(input: { tenantId: string; userId: string; workspaceId: string }): Promise<unknown>;
   };
@@ -47,6 +48,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
       const actor = await verifyPictureDelegation(input.delegation_token, ["picture:read"], {
         keyring: dependencies.keyring,
         workspaceId: input.workspace_id,
+        refreshDelegation: dependencies.refreshDelegation,
       });
       return toolResult({ data: await dependencies.workspaceService.getOwnedWorkspace({
         tenantId: actor.tenantId,
@@ -72,6 +74,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
       const actor = await verifyPictureDelegation(input.delegation_token, ["picture:write"], {
         keyring: dependencies.keyring,
         workspaceId: input.workspace_id,
+        refreshDelegation: dependencies.refreshDelegation,
       });
       const job = await dependencies.jobService.enqueue({
         workspaceId: actor.workspaceId,
@@ -106,6 +109,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
       const actor = await verifyPictureDelegation(input.delegation_token, ["picture:write"], {
         keyring: dependencies.keyring,
         workspaceId: input.workspace_id,
+        refreshDelegation: dependencies.refreshDelegation,
       });
       const job = await dependencies.jobService.enqueue({
         workspaceId: actor.workspaceId,
@@ -134,6 +138,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
       const actor = await verifyPictureDelegation(input.delegation_token, ["picture:read"], {
         keyring: dependencies.keyring,
         workspaceId: input.workspace_id,
+        refreshDelegation: dependencies.refreshDelegation,
       });
       return toolResult({ data: await dependencies.jobReader.getOwnedJob({
         tenantId: actor.tenantId,

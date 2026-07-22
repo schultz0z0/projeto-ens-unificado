@@ -187,6 +187,21 @@ test("buildHermesSessionChatRequest leaves conversation continuity to Hermes Ses
 
 });
 
+test("Picture session preloads only the Picture planner and ENS brand contract", () => {
+  const request = buildHermesSessionChatRequest({
+    messageText: "Crie uma peça quadrada",
+    attachments: [],
+    experience: "picture",
+    pictureWorkspaceId: "11111111-1111-4111-8111-111111111111",
+    pictureDelegation: "header.payload.signature",
+  });
+
+  assert.deepEqual(request.skills, ["picture-hermes", "nexusai-ens-design-system"]);
+  assert.match(request.system_message, /entrega continua sendo uma imagem/i);
+  assert.match(request.system_message, /emoji/i);
+  assert.doesNotMatch(request.system_message, /use.*pptx/i);
+});
+
 test("buildHermesSessionChatRequest keeps delegation out of persisted user history", () => {
   const delegation = "header.payload.signature";
   const request = buildHermesSessionChatRequest({

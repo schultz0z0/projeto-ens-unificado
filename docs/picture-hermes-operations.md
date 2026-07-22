@@ -31,6 +31,8 @@ Use a raiz `.env.example` como contrato. Em produção são obrigatórios:
 - `NEXUS_PICTURE_INTERNAL_KEY` com pelo menos 32 caracteres;
 - `NEXUS_PICTURE_DELEGATION_ACTIVE_KID` e
   `NEXUS_PICTURE_DELEGATION_ACTIVE_KEY` com pelo menos 32 caracteres;
+- `NEXUS_PICTURE_DELEGATION_REFRESH_KEY` com pelo menos 32 caracteres,
+  compartilhada somente entre Bridge e Picture;
 - Artifact Server configurado com chave interna, segredo de acesso e URL pública;
 - Supabase URL, anon key e service role do app.
 
@@ -103,6 +105,11 @@ Não edite status/lease manualmente como primeira resposta. Guarde `job.id`,
 
 Nunca altere apenas um lado sem manter a chave anterior na janela de rotação.
 
+O refresh não amplia autoridade: ele só renova um token expirado quando o run
+da Bridge continua `running` e usuário, tenant, papel, sessão e workspace ainda
+coincidem. A janela padrão é 900 segundos. Um token copiado de outro run ou
+workspace é recusado.
+
 ## Smoke FAL pago, somente opt-in
 
 Os testes normais usam engine fake e não consomem FAL. Depois de autorização
@@ -122,17 +129,22 @@ Não rode esse comando em CI nem como healthcheck.
 2. Confirme chat à esquerda e Arquivos da peça à direita; no mobile abra
    Arquivos pelo drawer.
 3. Envie um briefing e, opcionalmente, referências.
-4. Durante geração, recarregue a página e confirme o mesmo workspace.
-5. Verifique `brief.json`, prompt, plano, steps, overlays, referências,
+4. Confirme nos logs que o Hermes carregou `picture-hermes` e
+   `nexusai-ens-design-system`, chamou `picture_get_workspace` e depois
+   `picture_start_job` sem `expected array, received object`.
+5. Confirme que a resposta e a candidata são uma imagem: nenhum PPTX/slide e
+   nenhum emoji ou ícone inventado sem pedido explícito.
+6. Durante geração, recarregue a página e confirme o mesmo workspace.
+7. Verifique `brief.json`, prompt, plano, steps, overlays, referências,
    intermediários e a candidata final conforme produzidos.
-6. Abra previews JSON/texto/imagem e faça download da final.
-7. Peça uma revisão; a candidata anterior deve continuar disponível se falhar.
-8. Em `review`, aprove a peça; confirme o toast e o status Aprovada.
-9. Clique Criar nova peça, leia o aviso completo e cancele; nada deve sumir.
-10. Abra novamente e confirme; o chat/pasta antigos somem e surge workspace vazio.
-11. Abra Trabalhos Validados, localize a peça visual, valide dimensões, preview e
+8. Abra previews JSON/texto/imagem e faça download da final.
+9. Peça uma revisão; a candidata anterior deve continuar disponível se falhar.
+10. Em `review`, aprove a peça; confirme o toast e o status Aprovada.
+11. Clique Criar nova peça, leia o aviso completo e cancele; nada deve sumir.
+12. Abra novamente e confirme; o chat/pasta antigos somem e surge workspace vazio.
+13. Abra Trabalhos Validados, localize a peça visual, valide dimensões, preview e
     download.
-12. Confirme que um chat normal ainda oferece o gerador padrão do Hermes e não
+14. Confirme que um chat normal ainda oferece o gerador padrão do Hermes e não
     usa o workspace Picture.
 
 ## Rollback sem apagar dados

@@ -109,9 +109,14 @@ test("production requires a complete and coherent Picture runtime", () => {
     PICTURE_DELEGATION_ISSUER: "nexus-chat-bridge",
     PICTURE_DELEGATION_AUDIENCE: "nexus-picture",
   };
-  assert.doesNotThrow(() => validateBridgeRuntimeConfig(complete));
-  assert.throws(() => validateBridgeRuntimeConfig({
+  assert.throws(() => validateBridgeRuntimeConfig(complete), /PICTURE_DELEGATION_REFRESH_KEY/);
+  const completeWithRefresh = {
     ...complete,
+    PICTURE_DELEGATION_REFRESH_KEY: "production-picture-refresh-key-at-least-32-bytes",
+  };
+  assert.doesNotThrow(() => validateBridgeRuntimeConfig(completeWithRefresh));
+  assert.throws(() => validateBridgeRuntimeConfig({
+    ...completeWithRefresh,
     PICTURE_DELEGATION_AUDIENCE: "another-service",
   }), /PICTURE_DELEGATION_AUDIENCE/);
 });

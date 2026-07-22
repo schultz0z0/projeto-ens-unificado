@@ -645,59 +645,153 @@ def coerce_tool_args(tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
     if not properties:
         return args
 
+    parameters = schema.get("parameters") or {}
     for key, value in list(args.items()):
         prop_schema = properties.get(key)
         if not prop_schema:
             continue
-        expected = prop_schema.get("type")
-
-        # Wrap bare non-list values when the schema declares ``array``.
-        # Strings still go through _coerce_value first so JSON-encoded
-        # arrays (``'["a","b"]'``) get parsed and nullable ``"null"``
-        # becomes ``None`` rather than ``["null"]``.
-        # ``None`` itself is preserved — we don't know whether the model
-        # meant "omit" or "empty list", and tools with sensible defaults
-        # (e.g. read_file's normalize_read_pagination) already handle it.
-        if expected == "array" and value is not None and not isinstance(value, (list, tuple)):
-            if isinstance(value, str):
-                coerced = _coerce_value(value, expected, schema=prop_schema)
-                if coerced is not value:
-                    # _coerce_value handled it (JSON-parsed list or
-                    # nullable "null" → None).
-                    args[key] = coerced
-                    continue
-                # If the string looks like a JSON array but _coerce_value
-                # failed to parse it, warn clearly instead of silently wrapping.
-                if value.strip().startswith("["):
-                    logger.warning(
-                        "coerce_tool_args: %s.%s looks like a JSON array string "
-                        "but could not be parsed — model may have emitted a "
-                        "JSON-encoded string instead of a native array. "
-                        "Falling back to single-element list.",
-                        tool_name, key,
-                    )
-                args[key] = [value]
-                logger.info(
-                    "coerce_tool_args: wrapped bare string in list for %s.%s",
-                    tool_name, key,
-                )
-                continue
-            args[key] = [value]
-            logger.info(
-                "coerce_tool_args: wrapped bare %s in list for %s.%s",
-                type(value).__name__, tool_name, key,
-            )
-            continue
-
-        if not isinstance(value, str):
-            continue
-        if not expected and not _schema_allows_null(prop_schema):
-            continue
-        coerced = _coerce_value(value, expected, schema=prop_schema)
-        if coerced is not value:
-            args[key] = coerced
+        args[key] = _coerce_schema_value(
+            value,
+            prop_schema,
+            root_schema=parameters,
+            path=f"{tool_name}.{key}",
+        )
 
     return args
+
+
+def _resolve_local_schema_ref(schema: dict, root_schema: dict) -> dict:
+    """Resolve a local JSON-Schema ref while preserving unresolved schemas."""
+    ref = schema.get("$ref") if isinstance(schema, dict) else None
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return schema
+    current: Any = root_schema
+    try:
+        for raw_part in ref[2:].split("/"):
+            part = raw_part.replace("~1", "/").replace("~0", "~")
+            current = current[part]
+        return current if isinstance(current, dict) else schema
+    except (KeyError, TypeError):
+        return schema
+
+
+def _select_schema_variant(schema: dict, value: Any, root_schema: dict) -> dict:
+    """Choose a oneOf/anyOf branch using object discriminator constants."""
+    resolved = _resolve_local_schema_ref(schema, root_schema)
+    for union_key in ("oneOf", "anyOf"):
+        variants = resolved.get(union_key)
+        if not isinstance(variants, list) or not variants:
+            continue
+        if isinstance(value, dict):
+            for variant in variants:
+                if not isinstance(variant, dict):
+                    continue
+                candidate = _resolve_local_schema_ref(variant, root_schema)
+                properties = candidate.get("properties") or {}
+                for discriminator in ("op", "type"):
+                    expected = (properties.get(discriminator) or {}).get("const")
+                    if expected is not None and value.get(discriminator) == expected:
+                        return candidate
+        value_type = (
+            "array" if isinstance(value, (list, tuple))
+            else "object" if isinstance(value, dict)
+            else "string" if isinstance(value, str)
+            else "boolean" if isinstance(value, bool)
+            else "number" if isinstance(value, (int, float))
+            else "null" if value is None
+            else ""
+        )
+        for variant in variants:
+            if isinstance(variant, dict):
+                candidate = _resolve_local_schema_ref(variant, root_schema)
+                if candidate.get("type") == value_type:
+                    return candidate
+    return resolved
+
+
+def _coerce_schema_value(
+    value: Any,
+    schema: dict,
+    *,
+    root_schema: dict,
+    path: str,
+) -> Any:
+    """Recursively coerce model arguments according to their JSON Schema.
+
+    MiniMax's XML-backed function-call serializer can represent a nested JSON
+    array as ``{"item": [...]}``.  Top-level coercion cannot see that drift,
+    so nested MCP payloads such as Picture ``compose.overlays`` reached Zod as
+    objects.  This walker follows object properties and discriminated unions,
+    then unwraps the XML ``item`` envelope only where the schema requires an
+    array.
+    """
+    if not isinstance(schema, dict):
+        return value
+    effective = _select_schema_variant(schema, value, root_schema)
+    expected = effective.get("type")
+
+    if value is None:
+        return value
+
+    if expected == "array":
+        if isinstance(value, str):
+            parsed = _coerce_value(value, "array", schema=effective)
+            if parsed is not value:
+                value = parsed
+                if value is None:
+                    return None
+            else:
+                if value.strip().startswith("["):
+                    logger.warning(
+                        "coerce_tool_args: %s looks like a JSON array string but could not be parsed",
+                        path,
+                    )
+                value = [value]
+        elif isinstance(value, dict) and set(value) == {"item"}:
+            nested = value["item"]
+            value = list(nested) if isinstance(nested, (list, tuple)) else [nested]
+            logger.info("coerce_tool_args: unwrapped XML item envelope for %s", path)
+        elif not isinstance(value, (list, tuple)):
+            value = [value]
+            logger.info(
+                "coerce_tool_args: wrapped bare %s in list for %s",
+                type(value[0]).__name__, path,
+            )
+        item_schema = effective.get("items")
+        if isinstance(item_schema, dict):
+            return [
+                _coerce_schema_value(
+                    item,
+                    item_schema,
+                    root_schema=root_schema,
+                    path=f"{path}[{index}]",
+                )
+                for index, item in enumerate(value)
+            ]
+        return list(value)
+
+    if expected == "object":
+        if isinstance(value, str):
+            parsed = _coerce_value(value, "object", schema=effective)
+            if parsed is value:
+                return value
+            value = parsed
+        if not isinstance(value, dict):
+            return value
+        properties = effective.get("properties") or {}
+        return {
+            key: _coerce_schema_value(
+                nested,
+                properties[key],
+                root_schema=root_schema,
+                path=f"{path}.{key}",
+            ) if key in properties else nested
+            for key, nested in value.items()
+        }
+
+    if isinstance(value, str) and (expected or _schema_allows_null(effective)):
+        return _coerce_value(value, expected, schema=effective)
+    return value
 
 
 def _coerce_value(value: str, expected_type, schema: dict | None = None):

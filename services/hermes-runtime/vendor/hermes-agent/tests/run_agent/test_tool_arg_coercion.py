@@ -390,6 +390,66 @@ class TestCoerceToolArgs:
             assert result["full"] is False
             assert result["path"] == "readme.md"
 
+    def test_recursively_unwraps_xml_item_objects_for_nested_arrays(self):
+        """MiniMax XML tool calls encode nested arrays as {"item": ...}."""
+        overlay_union = {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "const": "shape"},
+                        "shape": {"type": "string"},
+                    },
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "const": "gradient-overlay"},
+                        "gradient": {"type": "string"},
+                    },
+                },
+            ]
+        }
+        schema = self._mock_schema({
+            "composition_plan": {
+                "type": "object",
+                "properties": {
+                    "pipeline": {
+                        "type": "array",
+                        "items": {
+                            "oneOf": [{
+                                "type": "object",
+                                "properties": {
+                                    "op": {"type": "string", "const": "compose"},
+                                    "overlays": {"type": "array", "items": overlay_union},
+                                },
+                            }],
+                        },
+                    },
+                },
+            },
+        })
+        args = {
+            "composition_plan": {
+                "pipeline": [{
+                    "op": "compose",
+                    "overlays": {
+                        "item": [
+                            {"type": "shape", "shape": "rect"},
+                            {"type": "gradient-overlay", "gradient": "linear-gradient(...)"},
+                        ],
+                    },
+                }],
+            },
+        }
+        with patch("model_tools.registry.get_schema", return_value=schema):
+            result = coerce_tool_args("test_tool", args)
+        overlays = result["composition_plan"]["pipeline"][0]["overlays"]
+        assert overlays == [
+            {"type": "shape", "shape": "rect"},
+            {"type": "gradient-overlay", "gradient": "linear-gradient(...)"},
+        ]
+
     def test_failed_coercion_preserves_original(self):
         """A non-parseable string stays as string even if schema says integer."""
         schema = self._mock_schema({"limit": {"type": "integer"}})

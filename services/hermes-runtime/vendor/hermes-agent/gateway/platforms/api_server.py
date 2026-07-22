@@ -376,6 +376,28 @@ def _session_chat_user_message(body: Dict[str, Any], *, param: str = "message") 
         return None, _multimodal_validation_error(exc, param=param)
 
 
+def _session_chat_preloaded_skills(body: Dict[str, Any]) -> tuple[List[str], Optional["web.Response"]]:
+    """Validate an authenticated session request's explicit skill preload list."""
+    raw = body.get("skills")
+    if raw is None:
+        return [], None
+    if not isinstance(raw, list) or len(raw) > 8:
+        return [], web.json_response(
+            _openai_error("skills must be an array with at most 8 names", code="invalid_skills"),
+            status=400,
+        )
+    names: List[str] = []
+    for value in raw:
+        if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9:_-]{0,127}", value):
+            return [], web.json_response(
+                _openai_error("skills contains an invalid name", code="invalid_skills"),
+                status=400,
+            )
+        if value not in names:
+            names.append(value)
+    return names, None
+
+
 def check_api_server_requirements() -> bool:
     """Check if API server dependencies are available."""
     return AIOHTTP_AVAILABLE
@@ -1946,6 +1968,9 @@ class APIServerAdapter(BasePlatformAdapter):
         system_prompt = body.get("system_message") or body.get("instructions")
         if system_prompt is not None and not isinstance(system_prompt, str):
             return web.json_response(_openai_error("system_message must be a string", code="invalid_system_message"), status=400)
+        preloaded_skills, err = _session_chat_preloaded_skills(body)
+        if err is not None:
+            return err
         history = self._conversation_history_for_session(session_id)
         result, usage = await self._run_agent(
             user_message=user_message,
@@ -1953,6 +1978,7 @@ class APIServerAdapter(BasePlatformAdapter):
             ephemeral_system_prompt=system_prompt,
             session_id=session_id,
             gateway_session_key=gateway_session_key,
+            preloaded_skills=preloaded_skills,
         )
         effective_session_id = result.get("session_id") if isinstance(result, dict) else session_id
         final_response = result.get("final_response", "") if isinstance(result, dict) else ""
@@ -1990,6 +2016,9 @@ class APIServerAdapter(BasePlatformAdapter):
         system_prompt = body.get("system_message") or body.get("instructions")
         if system_prompt is not None and not isinstance(system_prompt, str):
             return web.json_response(_openai_error("system_message must be a string", code="invalid_system_message"), status=400)
+        preloaded_skills, err = _session_chat_preloaded_skills(body)
+        if err is not None:
+            return err
 
         loop = asyncio.get_running_loop()
         queue: "asyncio.Queue[Optional[tuple[str, Dict[str, Any]]]]" = asyncio.Queue()
@@ -2051,6 +2080,7 @@ class APIServerAdapter(BasePlatformAdapter):
                     stream_delta_callback=_delta,
                     tool_progress_callback=_tool_progress,
                     gateway_session_key=gateway_session_key,
+                    preloaded_skills=preloaded_skills,
                 )
                 final_response = result.get("final_response", "") if isinstance(result, dict) else ""
                 effective_session_id = result.get("session_id", session_id) if isinstance(result, dict) else session_id
@@ -3892,6 +3922,7 @@ class APIServerAdapter(BasePlatformAdapter):
         tool_complete_callback=None,
         agent_ref: Optional[list] = None,
         gateway_session_key: Optional[str] = None,
+        preloaded_skills: Optional[List[str]] = None,
     ) -> tuple:
         """
         Create an agent and run a conversation in a thread executor.
@@ -3916,8 +3947,24 @@ class APIServerAdapter(BasePlatformAdapter):
                 session_id=session_id or "",
             )
             try:
+                effective_system_prompt = ephemeral_system_prompt
+                if preloaded_skills:
+                    from agent.skill_commands import build_preloaded_skills_prompt
+
+                    skill_prompt, _loaded, missing = build_preloaded_skills_prompt(
+                        preloaded_skills,
+                        task_id=session_id,
+                    )
+                    prompt_parts = [part for part in (effective_system_prompt, skill_prompt) if part]
+                    if missing:
+                        prompt_parts.append(
+                            "[Skill preload warning] Missing requested skill(s): "
+                            + ", ".join(missing)
+                            + ". Do not silently substitute unrelated skills."
+                        )
+                    effective_system_prompt = "\n\n".join(prompt_parts)
                 agent = self._create_agent(
-                    ephemeral_system_prompt=ephemeral_system_prompt,
+                    ephemeral_system_prompt=effective_system_prompt,
                     session_id=session_id,
                     stream_delta_callback=stream_delta_callback,
                     tool_progress_callback=tool_progress_callback,

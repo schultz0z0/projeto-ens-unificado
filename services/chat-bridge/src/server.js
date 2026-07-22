@@ -19,7 +19,7 @@ import {
 } from "./tenant-context.js";
 import { validateBridgeRuntimeConfig } from "./runtime-config.js";
 import { PictureClient } from "./picture-client.js";
-import { issuePictureDelegation, redactPictureDelegation } from "./picture-delegation.js";
+import { issuePictureDelegation, redactPictureDelegation, refreshPictureDelegation } from "./picture-delegation.js";
 import {
   buildPictureWorkspaceSummary,
   createPictureModeService,
@@ -117,7 +117,10 @@ const config = {
     issuer: runtimeConfig.pictureDelegationIssuer,
     audience: runtimeConfig.pictureDelegationAudience,
     ttlSeconds: Number(process.env.PICTURE_DELEGATION_TTL_SECONDS || 90),
+    maxTtlSeconds: Number(process.env.PICTURE_DELEGATION_MAX_TTL_SECONDS || 120),
+    refreshWindowSeconds: Number(process.env.PICTURE_DELEGATION_REFRESH_WINDOW_SECONDS || 900),
   },
+  pictureDelegationRefreshKey: runtimeConfig.pictureDelegationRefreshKey,
 };
 
 const terminalStatuses = new Set(["completed", "failed", "cancelled", "canceled", "expired", "interrupted"]);
@@ -1723,6 +1726,32 @@ const handleRequest = async (req, res) => {
       const claims = decodeJwt(token);
       const run = typeof claims.run_id === "string" ? store.get(claims.run_id) : null;
       const refreshed = await refreshMarketingOpsDelegation(token, run, config.marketingOpsDelegation);
+      const refreshedClaims = decodeJwt(refreshed);
+      jsonResponse(res, 200, {
+        delegation_token: refreshed,
+        expires_at: new Date(refreshedClaims.exp * 1000).toISOString(),
+      });
+    } catch {
+      jsonResponse(res, 401, { error: "delegation_refresh_denied" });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/internal/picture/delegations/refresh") {
+    if (!config.pictureDelegationRefreshKey) {
+      jsonResponse(res, 503, { error: "delegation_refresh_not_configured" });
+      return;
+    }
+    if (!isValidDelegationRefreshKey(req.headers["x-internal-key"], config.pictureDelegationRefreshKey)) {
+      jsonResponse(res, 401, { error: "unauthorized" });
+      return;
+    }
+    const payload = await readJsonBody(req, 32_768);
+    const token = typeof payload.delegation_token === "string" ? payload.delegation_token : "";
+    try {
+      const claims = decodeJwt(token);
+      const run = typeof claims.run_id === "string" ? store.get(claims.run_id) : null;
+      const refreshed = await refreshPictureDelegation(token, run, config.pictureDelegation);
       const refreshedClaims = decodeJwt(refreshed);
       jsonResponse(res, 200, {
         delegation_token: refreshed,

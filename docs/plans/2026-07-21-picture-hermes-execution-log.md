@@ -216,3 +216,15 @@
 - Correção mínima: o transporte stateless passou a usar `enableJsonResponse: true`; assim `handleRequest()` só retorna quando a resposta JSON-RPC está pronta e o fechamento posterior é seguro.
 - GREEN focal: o handshake real completou `initialize` e `tools/list` em aproximadamente 60 ms, expondo exatamente `picture_get_workspace`, `picture_start_job`, `picture_revise` e `picture_get_job`.
 - GREEN completa: Picture 50/50, typecheck e build passaram. Não houve alteração de banco, Supabase, `.env`, frontend ou contrato de ferramentas.
+
+### Correção pós-deploy — arrays aninhados, skill efetiva e delegação longa
+
+- Evidência de produção: `picture_start_job` reconhecia `composition_plan.pipeline` como array, porém rejeitava `pipeline[0].overlays` com `expected array, received object`; o workspace existia em `drafting`, mas sem job aceito não havia pacote/manifest para o painel.
+- Prova isolada: uma chamada MCP oficial com o mesmo contrato e arrays JSON nativos enfileirou o job localmente. Isso eliminou Picture/Zod/briefing como causa e isolou o adaptador XML das tool calls do MiniMax.
+- Causa de serialização: o caminho XML representa listas aninhadas como `{ "item": [...] }`; a coerção do Hermes tratava somente argumentos de primeiro nível. O runtime agora percorre objetos, arrays, `$ref` e uniões discriminadas por `op`/`type`, desembrulhando `item` exclusivamente onde o schema exige array.
+- Causa operacional: a skill gerenciada não continha schema detalhado nem exemplo completo, e a implementação Picture original permanecia fora do diretório instalado no Hermes. `picture-hermes` ganhou operações/overlays, técnicas, fronteira imagem × slides/copy, integração com `nexusai-ens-design-system` e o template canônico `templates/picture-start-job.json`.
+- Ativação: o payload da Bridge passa a pré-carregar `picture-hermes` e `nexusai-ens-design-system` somente na experiência Picture. A API de sessão valida a lista e incorpora as skills no prompt efêmero; skills ausentes geram aviso explícito e nunca substituição silenciosa.
+- Identidade visual: o modo Picture usa copy apenas para hierarquia/CTA e o design system apenas para tokens ENS; proíbe PPTX/slides e emoji/ícone inventado. A entrega permanece imagem raster via Picture, sem alterar o gerador padrão do chat normal.
+- Delegação: além de substituir token truncado/redigido pelo token do turno imediatamente antes da tool, Picture agora renova uma delegação expirada somente para o mesmo run ativo e contexto completo. Isso cobre chamadas MiniMax observadas entre 93 e 167 segundos sem aumentar escopo.
+- Env: `.env` real, `.env.example`, Compose, sincronizador e mapa receberam chave dedicada de refresh, janela de 900 s e timeout de 3000 ms. Nenhum segredo foi exibido ou rastreado.
+- RED/GREEN: a regressão reproduziu o objeto `{item: [...]}` e falhou antes da correção; depois, 77 testes focais Hermes passaram. Bridge completa 85/85, Picture 53/53, skill 1/1 (1 skip POSIX) e typecheck passaram. O Docker CLI continua ausente no host Windows; `docker compose config/build` permanece gate obrigatório na VPS.
