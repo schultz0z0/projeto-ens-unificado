@@ -787,7 +787,16 @@ const buildRunNexusContext = (run) => ({
 
 const issueRunMarketingOpsDelegation = async (run) => {
   if (!config.marketingOpsDelegation.activeKey) return "";
-  const scopes = ["campaign:read", "campaign:write", "item:write"];
+  const scopes = [
+    "campaign:read",
+    "campaign:write",
+    "item:read",
+    "item:write",
+    "timeline:read",
+    "content:read",
+    "content:write",
+    "artifact:write",
+  ];
   if (run.user_role === "manager" || run.user_role === "admin") scopes.push("audit:read");
   return issueMarketingOpsDelegation({
     userId: run.user_id,
