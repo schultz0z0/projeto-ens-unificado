@@ -33,9 +33,11 @@ export async function executeIdempotentCommand<T>(
     if (record.status !== 'completed' || record.response_ref === null) {
       throw appError('idempotency_in_progress', 409, 'Idempotent command is still in progress');
     }
+    context.idempotencyTracker?.(true);
     return record.response_ref;
   }
 
+  context.idempotencyTracker?.(false);
   const response = await command();
   await client.query(`
     update marketing_ops.idempotency_records

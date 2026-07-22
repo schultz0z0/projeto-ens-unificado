@@ -13,5 +13,6 @@ export interface CommandContext {
   toolCallId?: string;
   planId?: string;
   planActionIndex?: number;
+  idempotencyTracker?: (hit: boolean) => void;
   faultInjector?: (point: string) => Promise<void>;
 }

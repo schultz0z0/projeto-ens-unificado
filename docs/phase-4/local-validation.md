@@ -19,7 +19,7 @@
 - [x] catálogo de leitura da Task 2 e capacidades contextuais validados
   unitariamente;
 - [ ] migration aplicada em banco limpo e sobre baseline existente;
-- [ ] testes de domínio e executor do plano verdes;
+- [x] testes unitários de domínio e executor do plano verdes;
 - [ ] testes do runtime Hermes verdes;
 - [ ] build, lint e typecheck aplicáveis verdes (build/typecheck do
   `marketing-ops` verdes; lint/frontend ainda pendentes);
@@ -65,6 +65,15 @@
 - consultas reutilizam os domínios das Fases 2–3 e suas transações com ator/RLS;
 - integração real com PostgreSQL continua pendente pelo mesmo bloqueio de
   Docker registrado na Task 1.
+
+## Registro Task 3 — 2026-07-22
+
+- 12/12 testes passaram nas suítes de contratos, token, executor,
+  idempotência e append de notas;
+- build e typecheck do `marketing-ops` passaram após o GREEN;
+- atomicidade real, RLS e replay contra PostgreSQL permanecem no gate de banco
+  pendente; o comportamento de orquestração foi validado com dependências
+  controladas.
 
 ## Decisão atual
 

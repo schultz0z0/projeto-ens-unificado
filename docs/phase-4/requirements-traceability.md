@@ -11,13 +11,13 @@
 | F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `implemented_unit_validated` |
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `planned` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `planned` |
-| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `planned` |
-| F4-RF-05 Confirmação | 4.2, 7 | 3, 5 | `planned` |
+| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_implemented` |
+| F4-RF-05 Confirmação | 4.2, 7 | 3, 5 | `token_unit_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `planned` |
 | F4-RF-07 Deep link | 9 | 4, 7 | `planned` |
-| F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `planned` |
-| F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `planned` |
-| F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `planned` |
+| F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `executor_unit_validated` |
+| F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
+| F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
 | F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7 | `planned` |
 | F4-RF-12 Limites | 2, 4.2, 10 | 1, 5, 7 | `planned` |
 
@@ -56,13 +56,13 @@
 
 | Requisito | Design | Task/teste | Estado |
 |---|---|---|---|
-| Allowlist e autoridade server-side | 7.1, 10 | 1, 3 | `planned` |
+| Allowlist e autoridade server-side | 7.1, 10 | 1, 3 | `implemented_unit_validated` |
 | Sem tools MCP diretas de mutação | 4.6, 6.2 | 1, 5 | `planned` |
 | Rate limit por ator e ferramenta | 10 | 1, 2, 3 | `planned` |
 | Prompt injection não amplia autoridade | 10, 12 | 5, 7 | `planned` |
 | Logs sem texto integral/tokens | 10, 11 | 6, 7 | `planned` |
 | Métricas por tool/resultado | 11 | 6 | `planned` |
-| Idempotency hit e conflito observáveis | 11 | 3, 6 | `planned` |
+| Idempotency hit e conflito observáveis | 11 | 3, 6 | `executor_report_implemented` |
 | Chat → run → tool → audit → objeto | 4.4, 11 | 1, 6, 7 | `planned` |
 
 ## Gates transversais
@@ -71,6 +71,7 @@
 |---|---|---|---|
 | Catálogo MCP versionado | 6, 7 | 1 | `implemented_unit_validated` |
 | Leituras MCP da Fase 4 | 6.1 | 2 | `implemented_unit_validated` |
+| Executor das oito actions | 7, 8 | 3 | `implemented_unit_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6 | `planned` |
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `planned` |

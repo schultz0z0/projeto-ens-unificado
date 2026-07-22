@@ -531,6 +531,66 @@ export async function updateCampaign(
   });
 }
 
+export async function appendCampaignNote(
+  context: CampaignCommandContext,
+  id: string,
+  expectedVersion: number,
+  note: string,
+  idempotencyKey: string
+): Promise<Campaign> {
+  authorize(context.actor, 'campaign.update');
+  const parsedNote = z.string().trim().min(1).max(2_000).parse(note);
+  return withActorTransaction(context.pool, context.actor, context.correlationId, async (client) => {
+    const preflight = await visibleCampaign(client, id);
+    assertCurrentEditAuthority(context, preflight);
+    return executeIdempotentCommand(
+      client,
+      context,
+      `campaign.note_add:${id}`,
+      idempotencyKey,
+      { id, expectedVersion, note: parsedNote },
+      async () => {
+        const beforeRow = await lockCampaign(client, id);
+        assertExpectedVersion(beforeRow, expectedVersion);
+        const before = mapCampaign(beforeRow);
+        const notes = appendCampaignNoteText(before.notes, parsedNote);
+        const result = await client.query<CampaignRow>(`
+          update marketing_ops.campaigns
+          set notes = $2, version = version + 1, updated_by = $3
+          where id = $1 and version = $4
+          returning *
+        `, [id, notes, context.actor.userId, expectedVersion]);
+        if (!result.rows[0]) {
+          throw appError('version_conflict', 409, 'Campaign version is stale', {
+            currentVersion: before.version
+          });
+        }
+        const updated = mapCampaign(result.rows[0]);
+        await writeAudit(client, context, 'campaign', id, 'campaign.note_added',
+          { version: before.version }, { version: updated.version, noteAdded: true });
+        await writeDomainEvent(
+          client,
+          context,
+          'campaign',
+          id,
+          'marketing_ops.campaign.note_added.v1',
+          { campaignId: id, version: updated.version }
+        );
+        return updated;
+      }
+    );
+  });
+}
+
+export function appendCampaignNoteText(current: string | null, note: string): string {
+  const parsedNote = z.string().trim().min(1).max(2_000).parse(note);
+  const notes = current ? `${current}\n\n${parsedNote}` : parsedNote;
+  if (notes.length > 10_000) {
+    throw appError('validation_error', 400, 'Campaign notes cannot exceed 10000 characters');
+  }
+  return notes;
+}
+
 async function changeCampaignStatus(
   context: CommandContext,
   id: string,

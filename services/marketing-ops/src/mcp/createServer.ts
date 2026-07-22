@@ -278,7 +278,8 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         pool: deps.pool,
         actor,
         correlationId: actor.correlationId,
-        origin: 'mcp'
+        origin: 'mcp',
+        ...(deps.artifactClient ? { artifacts: deps.artifactClient } : {})
       }, plan);
       return jsonToolResult({ data });
     } catch (error) { return errorToolResult(error); }

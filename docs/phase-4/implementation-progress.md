@@ -1,10 +1,10 @@
 # Progresso de implementação — Fase 4
 
 - **Estado:** `in_progress`
-- **Progresso de implementação:** 25%
+- **Progresso de implementação:** 37.5%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 3 — execução transacional dos planos
+- **Próximo gate:** Task 4 — deep links e resultados estruturados
 
 ## Planejamento por task
 
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | contratos MCP, schema e baseline de auditoria | `implemented_unit_validated` | catálogo congelado, actions ampliadas, migration e segurança MCP |
 | 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `implemented_unit_validated` | tools de leitura expostas sobre domínio existente |
-| 3 | expansão do `prepare_plan` e `execute_plan` | `not_started` | novas ações de escrita seguras e idempotentes |
+| 3 | expansão do `prepare_plan` e `execute_plan` | `implemented_unit_validated` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `not_started` | tool results consistentes com frontend e UX conversacional |
 | 5 | integração Hermes runtime, RAG/Graph e skill | `not_started` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `not_started` | métricas, trilha e evidência de chat → run → tool → audit |
@@ -97,3 +97,34 @@ versionado, mas reset/lint/pgTAP permanecem pendentes para o gate local/VPS.
 - capacidades derivadas de papel, visibilidade RLS, estado terminal/arquivado e
   funções contextuais `can_edit_*` do banco;
 - rate limit de leitura aplicado por ator e tool.
+
+## Task 3 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| `npx vitest run src/plans/executor.test.ts` | 3/3 falharam: actions incompletas, executor interrompia após uma falha e resultado usava o shape legado |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| suítes integrais de executor, contratos, token, idempotência e notas | 12 testes passaram em 5 arquivos; nenhum skipped/falhou |
+| discovery MCP dirigido | executor/prepare permanecem publicados e mutações diretas ausentes |
+| `npm run typecheck` | exit 0 |
+| `npm run build` | exit 0 |
+
+### Contratos entregues
+
+- execução das oito actions congeladas, com mapeamento snake_case → domínio;
+- uma transação de domínio e chave `plan:{plan_id}:{action_index}` por action;
+- referências intra-plano para campanha e asset;
+- ações independentes continuam; dependentes de criação falha viram
+  `pending/dependency_failed`;
+- resultado normalizado com `completed[]`, `failed[]`, `pending[]`, erro seguro
+  e `idempotency_hit` real reportado pelo comando;
+- `campaign.note_add` append-only, delimitado e limitado a 10.000 caracteres,
+  sem texto integral no evento/auditoria específicos da operação;
+- Artifact Server é dependência obrigatória somente quando o plano contém
+  `artifact.link_existing`.
