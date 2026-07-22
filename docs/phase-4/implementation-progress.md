@@ -1,10 +1,10 @@
 # Progresso de implementação — Fase 4
 
 - **Estado:** `in_progress`
-- **Progresso de implementação:** 37.5%
+- **Progresso de implementação:** 50%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 4 — deep links e resultados estruturados
+- **Próximo gate:** Task 5 — runtime Hermes, RAG/Graph e skill
 
 ## Planejamento por task
 
@@ -13,7 +13,7 @@
 | 1 | contratos MCP, schema e baseline de auditoria | `implemented_unit_validated` | catálogo congelado, actions ampliadas, migration e segurança MCP |
 | 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `implemented_unit_validated` | tools de leitura expostas sobre domínio existente |
 | 3 | expansão do `prepare_plan` e `execute_plan` | `implemented_unit_validated` | novas ações de escrita seguras e idempotentes |
-| 4 | deep links, resultados estruturados e mensagens de operador | `not_started` | tool results consistentes com frontend e UX conversacional |
+| 4 | deep links, resultados estruturados e mensagens de operador | `implemented_unit_validated` | tool results consistentes com frontend e UX conversacional |
 | 5 | integração Hermes runtime, RAG/Graph e skill | `not_started` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `not_started` | métricas, trilha e evidência de chat → run → tool → audit |
 | 7 | frontend/bridge/E2E e falhas controladas | `not_started` | jornada integrada com erros sem falso sucesso |
@@ -128,3 +128,40 @@ versionado, mas reset/lint/pgTAP permanecem pendentes para o gate local/VPS.
   sem texto integral no evento/auditoria específicos da operação;
 - Artifact Server é dependência obrigatória somente quando o plano contém
   `artifact.link_existing`.
+
+## Task 4 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| testes de deep link backend/executor | módulo gerador inexistente e resultado sem `deep_links[]` |
+| teste de deep link frontend | helpers/parser não suportavam item nem content asset |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| deep links, executor e tool results do `marketing-ops` | 5 testes passaram em 3 arquivos |
+| deep links, client e página de produção do frontend | 17 testes passaram nas execuções dirigidas; nenhum falhou |
+| `marketing-ops`: typecheck + build | exit 0 |
+| `chat-web`: typecheck + build de produção | exit 0; warnings de browserslist/chunk já expostos pelo build |
+
+### Contratos entregues
+
+- deep links gerados no servidor apenas para UUIDs e nos três templates
+  congelados;
+- `deep_links[]` deduplicado e derivado exclusivamente de actions concluídas;
+- resultados MCP de sucesso e erro disponíveis como texto e
+  `structuredContent`, com erro desconhecido sanitizado;
+- frontend faz round-trip de campanha/item/asset, rejeita rota fora do
+  template e abre o item com o asset selecionado visível;
+- `content.version_create` retorna `itemId` mínimo para formar o deep link sem
+  consulta adicional nem estado inventado pelo Hermes.
+
+### Limitação ambiental repetida
+
+A suíte de domínio `content.test.ts` foi chamada e os quatro testes falharam
+por `ECONNREFUSED 127.0.0.1:55322`. Os testes unitários da Task 4 e os builds
+passaram; os quatro casos de PostgreSQL continuam pendentes e não foram
+contabilizados como GREEN.

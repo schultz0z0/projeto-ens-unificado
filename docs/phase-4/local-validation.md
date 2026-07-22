@@ -34,7 +34,7 @@
 - [ ] prompt injection sem ampliação de autoridade;
 - [ ] logs redigidos, sem `delegation_token` nem `plan_token`;
 - [ ] logs/auditoria sem briefing, copy, nota ou conteúdo integral;
-- [ ] deep links abrindo o objeto correto.
+- [x] deep links validados em unit/component test para campanha, item e asset;
 - [ ] briefing convertido em calendário/checklist após confirmação;
 - [ ] resposta do chat convertida em versão vinculada;
 - [ ] revisão pelo tom ENS fundamentada no RAG;
@@ -74,6 +74,15 @@
 - atomicidade real, RLS e replay contra PostgreSQL permanecem no gate de banco
   pendente; o comportamento de orquestração foi validado com dependências
   controladas.
+
+## Registro Task 4 — 2026-07-22
+
+- 5 testes backend e 17 testes frontend passaram nas execuções dirigidas;
+- typecheck/build de `marketing-ops` e `chat-web` passaram;
+- página de produção rejeita rota inválida e evidencia o content asset do
+  parâmetro congelado `contentAssetId`;
+- os 4 testes de conteúdo dependentes do banco falharam somente por
+  `ECONNREFUSED :55322` e permanecem pendentes.
 
 ## Decisão atual
 

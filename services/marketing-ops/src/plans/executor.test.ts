@@ -52,7 +52,9 @@ function dependencies(overrides: Partial<PlanExecutorDependencies> = {}): PlanEx
     createProductionItem: vi.fn().mockResolvedValue({ id: ids.item, campaignId: ids.campaign }),
     updateProductionItem: vi.fn().mockResolvedValue({ id: ids.item, version: 2 }),
     createContentAsset: vi.fn().mockResolvedValue({ id: ids.asset, itemId: ids.item }),
-    createContentVersion: vi.fn().mockResolvedValue({ assetId: ids.asset, versionNumber: 1 }),
+    createContentVersion: vi.fn().mockResolvedValue({
+      assetId: ids.asset, itemId: ids.item, versionNumber: 1
+    }),
     linkExistingItemArtifact: vi.fn().mockResolvedValue({ artifact: { id: ids.artifact } }),
     appendCampaignNote: vi.fn().mockResolvedValue({ id: ids.otherCampaign, version: 3 }),
     ...overrides
@@ -101,6 +103,11 @@ describe('Marketing Ops plan executor', () => {
       pending: []
     });
     expect(result.completed).toHaveLength(8);
+    expect(result.deep_links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ resource_type: 'campaign', resource_id: ids.campaign }),
+      expect.objectContaining({ resource_type: 'campaign_item', resource_id: ids.item }),
+      expect.objectContaining({ resource_type: 'content_asset', resource_id: ids.asset })
+    ]));
     expect(deps.createProductionItem).toHaveBeenCalledWith(
       expect.objectContaining({ planId: result.plan_id, planActionIndex: 1 }),
       ids.campaign,

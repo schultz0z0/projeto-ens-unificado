@@ -19,6 +19,7 @@ type Client = MarketingOpsClient;
 const actorId = '11111111-1111-4111-8111-111111111111';
 const campaignId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const itemId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const assetId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 
 const result = <T,>(data: T, nextCursor: string | null = null): MarketingOpsResult<T> => ({
   data,
@@ -105,7 +106,7 @@ function makeClient(overrides: Partial<Client> = {}): Client {
     markInAppNotificationsRead: vi.fn().mockResolvedValue(result([])),
     listParticipants: vi.fn().mockResolvedValue(result([])),
     listContentAssets: vi.fn().mockResolvedValue(result([{
-      id: 'asset-1',
+      id: assetId,
       itemId,
       campaignId,
       assetKind: 'copy',
@@ -292,6 +293,21 @@ describe('ProductionListPage', () => {
       'in_review',
       'idem-ui'
     ));
+  });
+
+  it('opens the exact content asset from a frozen deep link and rejects invalid routes', async () => {
+    const view = renderPage(
+      makeClient(),
+      `/marketing-ops/production/items/${itemId}?contentAssetId=${assetId}`
+    );
+    const dialog = await screen.findByRole('dialog', { name: /detalhes do item/i });
+    expect((await within(dialog).findByRole('region', { name: /conteúdo selecionado/i })).textContent)
+      .toContain('Draft copy');
+    view.unmount();
+
+    renderPage(makeClient(), '/marketing-ops/production/items/not-a-uuid');
+    expect((await screen.findByRole('alert')).textContent).toContain('Deep link inválido');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('distinguishes access, missing detail and optimistic conflict failures', async () => {

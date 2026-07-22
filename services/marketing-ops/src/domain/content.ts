@@ -82,6 +82,7 @@ export interface ContentVersion {
 
 export interface CreatedContentVersion extends ContentVersion {
   assetVersion: number;
+  itemId: string;
 }
 
 export interface CreateContentAssetInput {
@@ -464,7 +465,8 @@ export async function createContentVersion(
             }
             const created: CreatedContentVersion = {
               ...mapVersion(row),
-              assetVersion: Number(row.asset_version)
+              assetVersion: Number(row.asset_version),
+              itemId: asset.item_id
             };
             await writeAudit(
               client,

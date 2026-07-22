@@ -31,6 +31,7 @@ import type {
 interface ProductionItemDialogProps {
   open: boolean;
   itemId: string | null;
+  selectedContentAssetId?: string | null;
   campaigns: MarketingOpsCampaignSummary[];
   timeZone: string;
   canWrite: boolean;
@@ -151,6 +152,7 @@ const transitionOptions: Record<
 export function ProductionItemDialog({
   open,
   itemId,
+  selectedContentAssetId = null,
   campaigns,
   timeZone,
   canWrite,
@@ -181,6 +183,9 @@ export function ProductionItemDialog({
     queryFn: () => client.listContentAssets(itemId as string),
     enabled: open && itemId !== null
   });
+  const selectedContentAsset = selectedContentAssetId
+    ? contentAssetsQuery.data?.data.find((asset) => asset.id === selectedContentAssetId)
+    : null;
 
   useEffect(() => {
     if (!open) {
@@ -507,6 +512,28 @@ export function ProductionItemDialog({
                       <RefreshCw className="mr-2 h-4 w-4" /> Recarregar item
                     </Button>
                   ) : null}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {!isCreate && selectedContentAsset ? (
+              <section
+                aria-label="Conteúdo selecionado"
+                className="mb-4 rounded-[8px] border border-brand-primary/30 bg-brand-primary/5 p-3"
+              >
+                <p className="text-sm font-medium">{selectedContentAsset.title}</p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Conteúdo {selectedContentAsset.assetKind} · versão {selectedContentAsset.currentVersionNumber}
+                </p>
+              </section>
+            ) : null}
+
+            {!isCreate && selectedContentAssetId && contentAssetsQuery.isSuccess && !selectedContentAsset ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Conteúdo não encontrado</AlertTitle>
+                <AlertDescription>
+                  O conteúdo do deep link não pertence a este item ou saiu do seu escopo.
                 </AlertDescription>
               </Alert>
             ) : null}

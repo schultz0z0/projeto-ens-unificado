@@ -13,5 +13,10 @@ export function errorToolResult(error: unknown) {
         ...(error.details === undefined ? {} : { details: error.details })
       }
     : { code: 'internal_error', message: 'Internal server error', status: 500 };
-  return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify({ error: safe }) }] };
+  const value = { error: safe };
+  return {
+    isError: true,
+    content: [{ type: 'text' as const, text: JSON.stringify(value) }],
+    structuredContent: value
+  };
 }

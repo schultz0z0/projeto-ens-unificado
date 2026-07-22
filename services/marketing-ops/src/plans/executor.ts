@@ -14,6 +14,10 @@ import {
 import type { ArtifactClient } from '../integrations/artifactClient.js';
 import type { MarketingOpsPlanAction } from './contracts.js';
 import type { MarketingOpsPlan } from './token.js';
+import {
+  deepLinkForCompletedAction,
+  type MarketingOpsDeepLink
+} from './deepLinks.js';
 
 export interface PlanExecutorContext extends CommandContext {
   artifacts?: ArtifactClient;
@@ -62,6 +66,7 @@ export interface MarketingOpsPlanExecutionResult {
     action_type: ActionType;
     reason: 'dependency_failed';
   }>;
+  deep_links: MarketingOpsDeepLink[];
 }
 
 function mapCampaignPatch(action: Extract<MarketingOpsPlanAction, { type: 'campaign.update' }>) {
@@ -241,5 +246,17 @@ export async function executeMarketingOpsPlan(
     : completed.length === 0
       ? 'failed'
       : 'partial';
-  return { plan_id: plan.plan_id, status, completed, failed, pending };
+  const deepLinks = new Map<string, MarketingOpsDeepLink>();
+  for (const entry of completed) {
+    const link = deepLinkForCompletedAction(entry.action_type, entry.resource);
+    if (link) deepLinks.set(`${link.resource_type}:${link.resource_id}`, link);
+  }
+  return {
+    plan_id: plan.plan_id,
+    status,
+    completed,
+    failed,
+    pending,
+    deep_links: [...deepLinks.values()]
+  };
 }

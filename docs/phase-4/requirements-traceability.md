@@ -14,7 +14,7 @@
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_implemented` |
 | F4-RF-05 Confirmação | 4.2, 7 | 3, 5 | `token_unit_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `planned` |
-| F4-RF-07 Deep link | 9 | 4, 7 | `planned` |
+| F4-RF-07 Deep link | 9 | 4, 7 | `component_validated` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `executor_unit_validated` |
 | F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
 | F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
@@ -47,7 +47,7 @@
 | Delegação expirada/reutilizada falha | 10 | 1, 5, 7 | `planned` |
 | Conflito exige nova consulta/decisão | 7.3, 8.1 | 3, 5, 7 | `planned` |
 | Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `planned` |
-| Deep link abre objeto correto | 9 | 4, 7 | `planned` |
+| Deep link abre objeto correto | 9 | 4, 7 | `component_validated` |
 | Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `planned` |
 | Hermes não aprova/executa ação sensível | 2, 10 | 1, 5, 7 | `planned` |
 | Indisponibilidade não gera falso sucesso | 7.3, 12 | 4, 5, 7 | `planned` |
@@ -72,6 +72,7 @@
 | Catálogo MCP versionado | 6, 7 | 1 | `implemented_unit_validated` |
 | Leituras MCP da Fase 4 | 6.1 | 2 | `implemented_unit_validated` |
 | Executor das oito actions | 7, 8 | 3 | `implemented_unit_validated` |
+| Deep links servidor → frontend | 9 | 4 | `component_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6 | `planned` |
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `planned` |

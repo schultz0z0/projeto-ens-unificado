@@ -15,6 +15,7 @@ import type { MarketingOpsClient } from '@/lib/marketingOps/client';
 import { marketingOpsFlags } from '@/lib/marketingOps/flags';
 import { marketingOpsKeys } from '@/lib/marketingOps/queryKeys';
 import { marketingOpsClient } from '@/lib/marketingOps/runtime';
+import { parseMarketingOpsDeepLink } from '@/lib/marketingOps/deepLinks';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   hasProductionScheduleFilters,
@@ -62,6 +63,18 @@ export default function ProductionListPage({
   const [batchOpen, setBatchOpen] = useState(false);
   const filters = useMemo(() => productionScheduleFiltersFrom(searchParams), [searchParams]);
   const hasFilters = hasProductionScheduleFilters(searchParams);
+  const parsedDeepLink = itemId
+    ? parseMarketingOpsDeepLink(`${location.pathname}${location.search}`)
+    : null;
+  const linkedItemId = parsedDeepLink?.resource === 'campaign_item'
+    ? parsedDeepLink.id
+    : parsedDeepLink?.resource === 'content_asset'
+      ? parsedDeepLink.itemId
+      : null;
+  const selectedContentAssetId = parsedDeepLink?.resource === 'content_asset'
+    ? parsedDeepLink.id
+    : null;
+  const invalidItemLink = Boolean(itemId && !linkedItemId);
 
   useEffect(() => {
     setAssigneeValue(searchParams.get('assigneeId') ?? '');
@@ -106,12 +119,18 @@ export default function ProductionListPage({
     setSearchParams({}, { replace: true });
   };
   const search = location.search;
+  const scheduleSearch = (() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('contentAssetId');
+    const value = next.toString();
+    return value ? `?${value}` : '';
+  })();
   const openItem = (nextItemId: string) => {
-    navigate({ pathname: `/marketing-ops/production/items/${nextItemId}`, search });
+    navigate({ pathname: `/marketing-ops/production/items/${nextItemId}`, search: scheduleSearch });
   };
   const closeDialog = () => {
     setCreateOpen(false);
-    if (itemId) navigate({ pathname: '/marketing-ops/production', search }, { replace: true });
+    if (itemId) navigate({ pathname: '/marketing-ops/production', search: scheduleSearch }, { replace: true });
   };
 
   return (
@@ -286,9 +305,18 @@ export default function ProductionListPage({
         </div>
       </main>
 
+      {invalidItemLink ? (
+        <Alert variant="destructive" className="fixed bottom-6 right-6 z-50 max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Deep link inválido</AlertTitle>
+          <AlertDescription>A rota não corresponde a um item ou conteúdo do Marketing Ops.</AlertDescription>
+        </Alert>
+      ) : null}
+
       <ProductionItemDialog
-        open={createOpen || Boolean(itemId)}
-        itemId={itemId}
+        open={createOpen || Boolean(linkedItemId)}
+        itemId={linkedItemId}
+        selectedContentAssetId={selectedContentAssetId}
         campaigns={campaigns}
         timeZone={timeZone}
         canWrite={canWrite}
@@ -296,7 +324,7 @@ export default function ProductionListPage({
         createIdempotencyKey={createIdempotencyKey}
         onOpenChange={(next) => {
           if (!next) closeDialog();
-          else if (!itemId) setCreateOpen(true);
+          else if (!linkedItemId) setCreateOpen(true);
         }}
         onCreated={openItem}
       />
