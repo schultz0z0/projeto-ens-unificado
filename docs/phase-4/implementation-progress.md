@@ -1,16 +1,16 @@
 # Progresso de implementação — Fase 4
 
 - **Estado:** `planned`
-- **Progresso de implementação:** 0%
+- **Progresso de implementação:** 12.5%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** revisão técnica do pacote documental e início da Task 1
+- **Próximo gate:** Task 2 — leituras MCP
 
 ## Planejamento por task
 
 | Task | Escopo | Estado | Saída esperada |
 |---|---|---|---|
-| 1 | contratos MCP, schema e baseline de auditoria | `not_started` | catálogo congelado, actions ampliadas, migration e segurança MCP |
+| 1 | contratos MCP, schema e baseline de auditoria | `implemented_unit_validated` | catálogo congelado, actions ampliadas, migration e segurança MCP |
 | 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `not_started` | tools de leitura expostas sobre domínio existente |
 | 3 | expansão do `prepare_plan` e `execute_plan` | `not_started` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `not_started` | tool results consistentes com frontend e UX conversacional |
@@ -40,5 +40,33 @@ testes RED e arquivos de produto alterados.
 
 - nenhuma decisão de produto permanece aberta; os contratos estão congelados
   em `design.md`;
-- bloqueadores descobertos durante RED/GREEN devem ser registrados aqui e no
+  - bloqueadores descobertos durante RED/GREEN devem ser registrados aqui e no
   `risk-register.md` antes de qualquer mudança de escopo.
+
+## Task 1 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| `npx vitest run src/plans/contracts.test.ts` | 3/3 falharam porque as sete actions novas não existiam |
+| `npx vitest run src/mcp.test.ts -t "registers versioned tools"` | catálogo ainda publicava três tools diretas legadas |
+| `npx vitest run src/mcp/rateLimit.test.ts` | módulo de rate limit inexistente |
+| `npx vitest run src/domain/audit.test.ts` | SQL não continha `operator_origin`/contexto Hermes |
+| `npx vitest run src/migration-contract.test.ts` | migration da Fase 4 inexistente |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| suíte unitária dirigida da Task 1 | 10 testes passaram; nenhum falhou |
+| `npm run typecheck` | exit 0 |
+| `npm run build` | exit 0 |
+| validação documental | links, contratos fechados e `git diff --check` aprovados |
+
+### Limitação ambiental
+
+O baseline completo encontrou 71 falhas por `ECONNREFUSED 127.0.0.1:55322`.
+`npx supabase status` confirmou ausência do daemon Docker e o executável
+`docker` não está instalado. A migration possui teste estático GREEN e pgTAP
+versionado, mas reset/lint/pgTAP permanecem pendentes para o gate local/VPS.

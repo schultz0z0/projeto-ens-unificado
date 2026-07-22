@@ -39,8 +39,8 @@ describe('Marketing Ops plan executor', () => {
     const result = await executeMarketingOpsPlan(context, plan([
       { type: 'campaign.create_draft', ref: 'campaign-main', name: 'Volta as aulas' },
       {
-        type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
-        title: 'Boas-vindas', content: { text: 'Ola' }
+        type: 'campaign_item.create', campaign_ref: 'campaign-main', kind: 'email',
+        title: 'Boas-vindas'
       }
     ]), {
       createCampaignDraft: createCampaign,
@@ -55,7 +55,7 @@ describe('Marketing Ops plan executor', () => {
       idempotencyKey: 'plan:44444444-4444-4444-8444-444444444444:0'
     });
     expect(createItem).toHaveBeenCalledWith(context, '55555555-5555-4555-8555-555555555555', {
-      kind: 'email', title: 'Boas-vindas', content: { text: 'Ola' },
+      kind: 'email', title: 'Boas-vindas', content: {},
       idempotencyKey: 'plan:44444444-4444-4444-8444-444444444444:1'
     });
   });
@@ -64,12 +64,12 @@ describe('Marketing Ops plan executor', () => {
     const result = await executeMarketingOpsPlan(context, plan([
       { type: 'campaign.create_draft', ref: 'campaign-main', name: 'Campanha parcial' },
       {
-        type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
-        content: { text: 'Falha' }
+        type: 'campaign_item.create', campaign_ref: 'campaign-main', kind: 'email',
+        title: 'Falha'
       },
       {
-        type: 'campaign.update_draft', campaign_id: '77777777-7777-4777-8777-777777777777',
-        expected_version: 1, name: 'Nao executada'
+        type: 'campaign.update', campaign_id: '77777777-7777-4777-8777-777777777777',
+        expected_version: 1, patch: { name: 'Nao executada' }
       }
     ]), {
       createCampaignDraft: vi.fn().mockResolvedValue({ id: '55555555-5555-4555-8555-555555555555' }),

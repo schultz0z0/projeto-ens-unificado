@@ -90,16 +90,19 @@ describe('delegation and MCP', () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
     const tools = await client.listTools();
-    expect(tools.tools.map((tool) => tool.name)).toContain('marketing_ops_create_campaign_draft_v1');
-    const createCampaign = tools.tools.find((tool) => tool.name === 'marketing_ops_create_campaign_draft_v1') as {
-      description?: string;
-      inputSchema: { required?: string[]; properties?: Record<string, unknown> };
-    } | undefined;
-    expect(createCampaign?.description).toContain('course_slug is optional');
-    expect(createCampaign?.inputSchema.required ?? []).not.toContain('course_slug');
-    expect(createCampaign?.inputSchema.properties?.course_slug).toMatchObject({
-      description: expect.stringContaining('Optional')
-    });
+    const names = tools.tools.map((tool) => tool.name);
+    expect(names).toEqual(expect.arrayContaining([
+      'marketing_ops_capabilities_v1',
+      'marketing_ops_list_campaigns_v1',
+      'marketing_ops_get_campaign_v1',
+      'marketing_ops_prepare_plan_v1',
+      'marketing_ops_execute_plan_v1'
+    ]));
+    expect(names).not.toEqual(expect.arrayContaining([
+      'marketing_ops_create_campaign_draft_v1',
+      'marketing_ops_update_campaign_draft_v1',
+      'marketing_ops_create_campaign_item_draft_v1'
+    ]));
     const result = await client.callTool({ name: 'marketing_ops_capabilities_v1', arguments: {} });
     expect(result.isError).not.toBe(true);
     await client.close();
@@ -114,13 +117,13 @@ describe('delegation and MCP', () => {
 
     try {
       const actions = [{
-        type: 'campaign.update_draft' as const,
+        type: 'campaign.update' as const,
         campaign_id: randomUUID(),
         expected_version: '1',
-        name: 'Campanha revisada'
+        patch: { name: 'Campanha revisada' }
       }];
       const [normalizedAction] = marketingOpsPlanActionsSchema.parse(actions);
-      if (normalizedAction?.type !== 'campaign.update_draft') throw new Error('normalized_update_action_missing');
+      if (normalizedAction?.type !== 'campaign.update') throw new Error('normalized_update_action_missing');
       expect(normalizedAction.expected_version).toBe(1);
 
       const prepared = await client.callTool({
@@ -159,8 +162,8 @@ describe('delegation and MCP', () => {
     const actions = [
       { type: 'campaign.create_draft', ref: 'campaign-main', name: campaignName },
       {
-        type: 'campaign_item.create_draft', campaign_ref: 'campaign-main', kind: 'email',
-        title: 'Boas-vindas', content: { text: 'Ola' }
+        type: 'campaign_item.create', campaign_ref: 'campaign-main', kind: 'email',
+        title: 'Boas-vindas'
       }
     ];
     const prepared = await client.callTool({

@@ -19,8 +19,8 @@
 | F4-R-10 | descrição de tool grande ou ambígua induz uso incorreto pelo modelo | médio | ferramentas pequenas, nomenclatura estável e skill revisada | Hermes Runtime | `open` |
 | F4-R-11 | indisponibilidade do `marketing-ops` aparecer como sucesso conversacional | alto | falha explícita, testes E2E e mensagens seguras de fallback | Bridge/Hermes Runtime | `open` |
 | F4-R-12 | scope/papel forjados passarem pela delegação | crítico | revalidação backend de tenant, role, scopes, run e expiração | Marketing Ops | `open` |
-| F4-R-13 | tools diretas legadas contornarem o plano confirmado | crítico | retirar do catálogo MCP e testar chamada ausente/bloqueada | Marketing Ops/Hermes Runtime | `open` |
-| F4-R-14 | rate limit por IP permitir abuso de uma tool por ator | alto | limite adicional por ator + tool com `retry_after_seconds` | Marketing Ops | `open` |
+| F4-R-13 | tools diretas legadas contornarem o plano confirmado | crítico | retirar do catálogo MCP e testar chamada ausente/bloqueada | Marketing Ops/Hermes Runtime | `mitigated_catalog_runtime_pending` |
+| F4-R-14 | rate limit por IP permitir abuso de uma tool por ator | alto | limite adicional por ator + tool com `retry_after_seconds` | Marketing Ops | `implemented_unit_validated` |
 | F4-R-15 | instrução maliciosa em briefing/RAG/Graph ampliar autoridade | crítico | tratar conteúdo como dado, manter guardrails server-side e E2E de prompt injection | Hermes Runtime/Marketing Ops | `open` |
 | F4-R-16 | revisão ENS inventar fato ou não usar fonte oficial | alto | RAG obrigatório, referências mínimas e cenário golden | Hermes Runtime | `open` |
 | F4-R-17 | falha parcial reexecutar/duplicar ações concluídas | alto | resultado por ação, dependências e replay idempotente | Marketing Ops | `open` |

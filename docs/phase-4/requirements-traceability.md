@@ -69,8 +69,8 @@
 
 | Gate | Design | Task | Estado |
 |---|---|---|---|
-| Catálogo MCP versionado | 6, 7 | 1 | `planned` |
-| Sem mutação direta fora do plano | 4.2, 7 | 3, 5 | `planned` |
+| Catálogo MCP versionado | 6, 7 | 1 | `implemented_unit_validated` |
+| Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6 | `planned` |
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `planned` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `planned` |

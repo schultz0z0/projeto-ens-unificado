@@ -94,13 +94,24 @@ export async function writeAudit(
   const afterSnapshot = auditSnapshot(afterState);
   await client.query(`
     insert into marketing_ops.audit_events
-      (tenant_id, actor_user_id, actor_role, actor_type, origin, entity_type, entity_id, action, before_state, after_state, correlation_id)
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11)
+      (tenant_id, actor_user_id, actor_role, actor_type, origin, entity_type,
+       entity_id, action, before_state, after_state, correlation_id,
+       operator_origin, chat_session_id, run_id, tool_name, tool_call_id,
+       plan_id, plan_action_index)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11,
+      $12, $13, $14, $15, $16, $17, $18)
   `, [
     context.actor.tenantId, context.actor.userId, context.actor.role,
     context.origin === 'mcp' ? 'delegated_user' : 'user', context.origin,
     entityType, entityId, action,
     beforeSnapshot === null ? null : JSON.stringify(beforeSnapshot),
-    afterSnapshot === null ? null : JSON.stringify(afterSnapshot), context.correlationId
+    afterSnapshot === null ? null : JSON.stringify(afterSnapshot), context.correlationId,
+    context.operatorOrigin ?? null,
+    context.chatSessionId ?? null,
+    context.runId ?? null,
+    context.toolName ?? null,
+    context.toolCallId ?? null,
+    context.planId ?? null,
+    context.planActionIndex ?? null
   ]);
 }

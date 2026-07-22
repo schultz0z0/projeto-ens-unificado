@@ -6,5 +6,12 @@ export interface CommandContext {
   actor: Actor;
   correlationId: string;
   origin: 'rest' | 'mcp' | 'internal';
+  operatorOrigin?: 'hermes';
+  chatSessionId?: string;
+  runId?: string;
+  toolName?: string;
+  toolCallId?: string;
+  planId?: string;
+  planActionIndex?: number;
   faultInjector?: (point: string) => Promise<void>;
 }

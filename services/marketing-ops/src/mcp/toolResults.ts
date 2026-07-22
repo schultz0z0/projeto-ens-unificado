@@ -6,7 +6,12 @@ export function jsonToolResult(value: unknown) {
 
 export function errorToolResult(error: unknown) {
   const safe = error instanceof AppError
-    ? { code: error.code, message: error.message, status: error.status }
+    ? {
+        code: error.code,
+        message: error.message,
+        status: error.status,
+        ...(error.details === undefined ? {} : { details: error.details })
+      }
     : { code: 'internal_error', message: 'Internal server error', status: 500 };
   return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify({ error: safe }) }] };
 }

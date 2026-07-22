@@ -43,24 +43,28 @@ export async function executeMarketingOpsPlan(
           ...(action.course_slug ? { courseSlug: action.course_slug } : {})
         });
         campaignRefs.set(action.ref, (data as { id: string }).id);
-      } else if (action.type === 'campaign.update_draft') {
+      } else if (action.type === 'campaign.update') {
+        if (action.patch.name === undefined) {
+          throw new AppError('feature_not_implemented', 501, 'Campaign patch execution is pending');
+        }
         data = await dependencies.updateCampaignDraft(context, action.campaign_id, action.expected_version, {
-          name: action.name,
+          name: action.patch.name,
           idempotencyKey
         });
-      } else {
+      } else if (action.type === 'campaign_item.create') {
         const campaignId = action.campaign_id ?? campaignRefs.get(action.campaign_ref ?? '');
         if (!campaignId) throw new AppError('plan_invalid', 400, 'Campaign reference could not be resolved');
         data = await dependencies.createCampaignItemDraft(context, campaignId, {
           kind: action.kind,
-          content: action.content,
+          content: {},
           idempotencyKey,
-          ...(action.title ? { title: action.title } : {})
+          title: action.title
         });
+      } else {
+        throw new AppError('feature_not_implemented', 501, `Action ${action.type} execution is pending`);
       }
       completed.push({ index, type: action.type, data });
     } catch (error) {
-      console.error('[PLAN EXECUTOR ERROR]', error);
       const safe = error instanceof AppError
         ? { code: error.code, message: error.message, status: error.status }
         : { code: 'internal_error', message: 'Internal server error', status: 500 };

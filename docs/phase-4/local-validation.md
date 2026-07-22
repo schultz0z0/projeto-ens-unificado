@@ -14,12 +14,13 @@
 
 ## Checklist do gate local
 
-- [ ] contratos MCP validados e documentados;
-- [ ] catálogo sem tools diretas legadas de mutação;
+- [x] contratos MCP validados e documentados (Task 1, testes unitários);
+- [x] catálogo sem tools diretas legadas de mutação (Task 1, discovery unitário);
 - [ ] migration aplicada em banco limpo e sobre baseline existente;
 - [ ] testes de domínio e executor do plano verdes;
 - [ ] testes do runtime Hermes verdes;
-- [ ] build, lint e typecheck aplicáveis verdes;
+- [ ] build, lint e typecheck aplicáveis verdes (build/typecheck do
+  `marketing-ops` verdes; lint/frontend ainda pendentes);
 - [ ] E2E `frontend -> bridge -> Hermes -> MCP -> marketing-ops -> frontend`
   verde;
 - [ ] retry idempotente sem duplicidade;
@@ -46,6 +47,14 @@
 - arquivos de teste realmente executados;
 - falhas observadas e correções aplicadas;
 - outputs resumidos, nunca secrets ou tokens.
+
+## Registro Task 1 — 2026-07-22
+
+- RED/GREEN detalhado em `implementation-progress.md`;
+- 10 testes unitários dirigidos passaram;
+- build e typecheck do `marketing-ops` passaram;
+- pgTAP/reset/lint de banco bloqueados localmente porque Docker não está
+  instalado; nenhum desses gates foi marcado como executado.
 
 ## Decisão atual
 
