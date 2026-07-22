@@ -106,7 +106,7 @@ function mapArtifact(row: ItemArtifactRow): ItemArtifact {
 
 async function assertItemAuthority(
   client: PoolClient,
-  context: ItemArtifactCommandContext,
+  context: CommandContext,
   itemId: string,
   mutation: boolean
 ): Promise<ItemAuthorityRow> {
@@ -458,7 +458,7 @@ export async function linkExistingItemArtifact(
 }
 
 export async function listItemArtifacts(
-  context: ItemArtifactCommandContext,
+  context: CommandContext,
   itemId: string
 ): Promise<ItemArtifact[]> {
   authorize(context.actor, 'item_artifact.read');

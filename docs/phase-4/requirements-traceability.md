@@ -1,14 +1,14 @@
 # Rastreabilidade de requisitos — Fase 4
 
 - **Estado:** `planned`
-- **Implementação:** `not_started`
+- **Implementação:** `in_progress`
 - **Revisão:** 2026-07-22
 
 ## Matriz requisito → design → task
 
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
-| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `planned` |
+| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `implemented_unit_validated` |
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `planned` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `planned` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `planned` |
@@ -38,8 +38,8 @@
 
 | Critério | Design | Task/teste | Estado |
 |---|---|---|---|
-| Lista somente campanhas autorizadas | 6.1, 10 | 2, 7 | `planned` |
-| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `planned` |
+| Lista somente campanhas autorizadas | 6.1, 10 | 2, 7 | `domain_reused_integration_pending` |
+| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `mcp_reads_implemented` |
 | Cria rascunho após confirmação | 4.2, 7 | 3, 5, 7 | `planned` |
 | Objeto aparece no frontend sem reconciliação | 9 | 4, 7 | `planned` |
 | Retry não duplica objeto | 7.3 | 3, 7 | `planned` |
@@ -70,6 +70,7 @@
 | Gate | Design | Task | Estado |
 |---|---|---|---|
 | Catálogo MCP versionado | 6, 7 | 1 | `implemented_unit_validated` |
+| Leituras MCP da Fase 4 | 6.1 | 2 | `implemented_unit_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6 | `planned` |
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `planned` |

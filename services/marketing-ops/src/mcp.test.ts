@@ -95,6 +95,10 @@ describe('delegation and MCP', () => {
       'marketing_ops_capabilities_v1',
       'marketing_ops_list_campaigns_v1',
       'marketing_ops_get_campaign_v1',
+      'marketing_ops_list_campaign_items_v1',
+      'marketing_ops_get_campaign_timeline_v1',
+      'marketing_ops_get_content_v1',
+      'marketing_ops_get_object_capabilities_v1',
       'marketing_ops_prepare_plan_v1',
       'marketing_ops_execute_plan_v1'
     ]));

@@ -1,6 +1,6 @@
 # Validação local — Fase 4
 
-- **Estado:** `not_executed`
+- **Estado:** `partially_executed`
 - **Base:** 2026-07-22
 - **Branch:** `main`
 - **Política:** registrar apenas gates realmente executados
@@ -16,6 +16,8 @@
 
 - [x] contratos MCP validados e documentados (Task 1, testes unitários);
 - [x] catálogo sem tools diretas legadas de mutação (Task 1, discovery unitário);
+- [x] catálogo de leitura da Task 2 e capacidades contextuais validados
+  unitariamente;
 - [ ] migration aplicada em banco limpo e sobre baseline existente;
 - [ ] testes de domínio e executor do plano verdes;
 - [ ] testes do runtime Hermes verdes;
@@ -56,7 +58,16 @@
 - pgTAP/reset/lint de banco bloqueados localmente porque Docker não está
   instalado; nenhum desses gates foi marcado como executado.
 
+## Registro Task 2 — 2026-07-22
+
+- discovery MCP e derivação de capacidades: 2 testes verdes;
+- build e typecheck do `marketing-ops`: verdes após a implementação;
+- consultas reutilizam os domínios das Fases 2–3 e suas transações com ator/RLS;
+- integração real com PostgreSQL continua pendente pelo mesmo bloqueio de
+  Docker registrado na Task 1.
+
 ## Decisão atual
 
-Nenhum gate local da Fase 4 foi executado até este snapshot. Este documento é
-intencionalmente um placeholder operacional, não uma evidência de teste.
+Os gates unitários e de compilação das Tasks 1–2 foram executados. Gates de
+banco, integração completa, frontend, runtime e VPS continuam pendentes e não
+são inferidos a partir dessas evidências parciais.

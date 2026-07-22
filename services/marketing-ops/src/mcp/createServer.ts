@@ -5,6 +5,15 @@ import type { DelegationKeyring } from '../delegation/claims.js';
 import { appError } from '../errors.js';
 import { consumeDelegationUse, verifyDelegation } from '../delegation/verifier.js';
 import { getCampaign, listAuditEvents, listCampaigns } from '../domain/queries.js';
+import { listProductionSchedule } from '../domain/queries.js';
+import { listCampaignTimeline } from '../domain/timeline.js';
+import { getContentAsset, listContentAssets, listContentVersions } from '../domain/content.js';
+import { listItemArtifacts } from '../domain/itemArtifacts.js';
+import {
+  getObjectCapabilities,
+  type MarketingOpsResourceType
+} from '../domain/capabilities.js';
+import type { ArtifactClient } from '../integrations/artifactClient.js';
 import { marketingOpsPlanActionsSchema, requiredScopesForPlan } from '../plans/contracts.js';
 import { executeMarketingOpsPlan } from '../plans/executor.js';
 import { issueMarketingOpsPlan, verifyMarketingOpsPlan } from '../plans/token.js';
@@ -16,11 +25,28 @@ export interface MarketingOpsMcpDependencies {
   pool: Pool; features: { read: boolean; write: boolean }; keyring: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
   rateLimiter?: ReturnType<typeof createMcpRateLimiter>;
+  artifactClient?: ArtifactClient;
 }
 
 export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): McpServer {
   const server = new McpServer({ name: 'nexus-marketing-ops', version: '1.0.0' });
   const rateLimiter = deps.rateLimiter ?? createMcpRateLimiter();
+  const itemKind = z.enum(['task', 'email', 'whatsapp', 'post', 'creative', 'review', 'milestone']);
+  const itemStatus = z.enum(['draft', 'ready', 'in_review', 'completed', 'cancelled']);
+  const itemPriority = z.enum(['low', 'normal', 'high', 'urgent']);
+  const campaignChannel = z.enum([
+    'email', 'instagram', 'linkedin', 'facebook', 'whatsapp',
+    'website', 'paid_media', 'events', 'press', 'other'
+  ]);
+  const resourceType = z.enum(['campaign', 'campaign_item', 'content_asset']);
+  const timeZone = z.string().trim().min(1).max(100).refine((value) => {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date(0));
+      return true;
+    } catch {
+      return false;
+    }
+  }, 'time_zone must be a valid IANA timezone');
   server.registerTool('marketing_ops_capabilities_v1', {
     title: 'Marketing Ops capabilities', description: 'Returns contract version and active feature flags.', inputSchema: {}
   }, async () => jsonToolResult({
@@ -69,6 +95,132 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       const actor = await verifyDelegation(input.delegation_token, ['campaign:read'], deps);
       rateLimiter.consume(actor.userId, 'marketing_ops_get_campaign_v1', 'read');
       return jsonToolResult({ data: await getCampaign({ pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' }, input.campaign_id) });
+    } catch (error) { return errorToolResult(error); }
+  });
+
+  server.registerTool('marketing_ops_list_campaign_items_v1', {
+    title: 'List campaign production items',
+    description: 'Lists the canonical production schedule visible to the delegated actor.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      from: z.iso.datetime({ offset: true }),
+      to: z.iso.datetime({ offset: true }),
+      campaign_id: uuid.optional(),
+      kind: itemKind.optional(),
+      status: itemStatus.optional(),
+      priority: itemPriority.optional(),
+      assignee_id: uuid.optional(),
+      channel: campaignChannel.optional(),
+      time_zone: timeZone.optional(),
+      cursor: z.string().min(1).max(1024).optional(),
+      limit: z.number().int().min(1).max(100).default(25)
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
+      const actor = await verifyDelegation(input.delegation_token, ['item:read'], deps);
+      rateLimiter.consume(actor.userId, 'marketing_ops_list_campaign_items_v1', 'read');
+      const context = { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' as const };
+      return jsonToolResult(await listProductionSchedule(context, {
+        from: input.from,
+        to: input.to,
+        limit: input.limit,
+        ...(input.campaign_id ? { campaignId: input.campaign_id } : {}),
+        ...(input.kind ? { kind: input.kind } : {}),
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.priority ? { priority: input.priority } : {}),
+        ...(input.assignee_id ? { assigneeId: input.assignee_id } : {}),
+        ...(input.channel ? { channel: input.channel } : {}),
+        ...(input.cursor ? { cursor: input.cursor } : {})
+      }, input.time_zone));
+    } catch (error) { return errorToolResult(error); }
+  });
+
+  server.registerTool('marketing_ops_get_campaign_timeline_v1', {
+    title: 'Get campaign timeline',
+    description: 'Lists safe campaign history visible to the delegated actor.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      campaign_id: uuid,
+      cursor: z.string().min(1).max(1024).optional(),
+      limit: z.number().int().min(1).max(100).default(25)
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
+      const actor = await verifyDelegation(input.delegation_token, ['timeline:read'], deps);
+      rateLimiter.consume(actor.userId, 'marketing_ops_get_campaign_timeline_v1', 'read');
+      return jsonToolResult(await listCampaignTimeline(
+        { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' },
+        input.campaign_id,
+        { limit: input.limit, ...(input.cursor ? { cursor: input.cursor } : {}) }
+      ));
+    } catch (error) { return errorToolResult(error); }
+  });
+
+  server.registerTool('marketing_ops_get_content_v1', {
+    title: 'Get campaign item content',
+    description: 'Gets content assets, bounded version history and linked artifacts.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      item_id: uuid.optional(),
+      asset_id: uuid.optional(),
+      include_versions: z.boolean().default(false),
+      version_limit: z.number().int().min(1).max(20).default(5)
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
+      if (Boolean(input.item_id) === Boolean(input.asset_id)) {
+        throw appError('validation_error', 400, 'Provide exactly one of item_id or asset_id');
+      }
+      const actor = await verifyDelegation(input.delegation_token, ['content:read'], deps);
+      rateLimiter.consume(actor.userId, 'marketing_ops_get_content_v1', 'read');
+      const context = { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' as const };
+      const assets = input.item_id
+        ? await listContentAssets(context, input.item_id)
+        : [await getContentAsset(context, input.asset_id!)];
+      const versions = input.include_versions
+        ? Object.fromEntries(await Promise.all(assets.map(async (asset) => [
+          asset.id,
+          (await listContentVersions(context, asset.id)).slice(0, input.version_limit)
+        ])))
+        : {};
+      const itemId = input.item_id ?? assets[0]!.itemId;
+      return jsonToolResult({
+        data: {
+          itemId,
+          assets,
+          versions,
+          artifacts: await listItemArtifacts(context, itemId)
+        }
+      });
+    } catch (error) { return errorToolResult(error); }
+  });
+
+  server.registerTool('marketing_ops_get_object_capabilities_v1', {
+    title: 'Get object capabilities',
+    description: 'Returns contextual actions allowed for one visible Marketing Ops object.',
+    inputSchema: {
+      delegation_token: delegationToken,
+      resource_type: resourceType,
+      resource_id: uuid
+    }
+  }, async (input) => {
+    try {
+      if (!deps.features.read) throw appError('feature_disabled', 503, 'Feature read is disabled');
+      const scope = input.resource_type === 'campaign'
+        ? 'campaign:read'
+        : input.resource_type === 'campaign_item'
+          ? 'item:read'
+          : 'content:read';
+      const actor = await verifyDelegation(input.delegation_token, [scope], deps);
+      rateLimiter.consume(actor.userId, 'marketing_ops_get_object_capabilities_v1', 'read');
+      return jsonToolResult({ data: await getObjectCapabilities(
+        { pool: deps.pool, actor, correlationId: actor.correlationId, origin: 'mcp' },
+        input.resource_type as MarketingOpsResourceType,
+        input.resource_id
+      ) });
     } catch (error) { return errorToolResult(error); }
   });
 

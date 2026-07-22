@@ -157,6 +157,19 @@ function mapAsset(row: AssetRow): ContentAsset {
   };
 }
 
+export async function getContentAsset(
+  context: CommandContext,
+  assetId: string
+): Promise<ContentAsset> {
+  authorize(context.actor, 'content.read');
+  return withActorTransaction(
+    context.pool,
+    context.actor,
+    context.correlationId,
+    async (client) => mapAsset(await visibleAsset(client, assetId))
+  );
+}
+
 function mapVersion(row: VersionRow): ContentVersion {
   return {
     assetId: row.asset_id,

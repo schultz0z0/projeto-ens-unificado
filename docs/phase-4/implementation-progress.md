@@ -1,17 +1,17 @@
 # Progresso de implementação — Fase 4
 
-- **Estado:** `planned`
-- **Progresso de implementação:** 12.5%
+- **Estado:** `in_progress`
+- **Progresso de implementação:** 25%
 - **Snapshot:** 2026-07-22
 - **Branch única:** `main`
-- **Próximo gate:** Task 2 — leituras MCP
+- **Próximo gate:** Task 3 — execução transacional dos planos
 
 ## Planejamento por task
 
 | Task | Escopo | Estado | Saída esperada |
 |---|---|---|---|
 | 1 | contratos MCP, schema e baseline de auditoria | `implemented_unit_validated` | catálogo congelado, actions ampliadas, migration e segurança MCP |
-| 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `not_started` | tools de leitura expostas sobre domínio existente |
+| 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `implemented_unit_validated` | tools de leitura expostas sobre domínio existente |
 | 3 | expansão do `prepare_plan` e `execute_plan` | `not_started` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `not_started` | tool results consistentes com frontend e UX conversacional |
 | 5 | integração Hermes runtime, RAG/Graph e skill | `not_started` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
@@ -70,3 +70,30 @@ O baseline completo encontrou 71 falhas por `ECONNREFUSED 127.0.0.1:55322`.
 `npx supabase status` confirmou ausência do daemon Docker e o executável
 `docker` não está instalado. A migration possui teste estático GREEN e pgTAP
 versionado, mas reset/lint/pgTAP permanecem pendentes para o gate local/VPS.
+
+## Task 2 — evidência registrada em 2026-07-22
+
+### RED
+
+| Comando | Falha esperada observada |
+|---|---|
+| `npx vitest run src/mcp.test.ts src/domain/capabilities.test.ts -t "registers versioned tools\|object capabilities"` | discovery não continha os quatro tools e `capabilities.ts` não existia |
+
+### GREEN/validação
+
+| Comando | Resultado |
+|---|---|
+| suíte dirigida de discovery e capacidades | 2 testes passaram; 7 testes não selecionados pelo filtro |
+| `npm run typecheck` | exit 0 |
+| `npm run build` | exit 0 |
+| `git diff --check` | exit 0; apenas avisos de normalização LF/CRLF |
+
+### Contratos entregues
+
+- agenda MCP sobre `listProductionSchedule()`, com intervalo obrigatório,
+  filtros, paginação e timezone;
+- timeline MCP sobre `listCampaignTimeline()`;
+- leitura agregada de assets, versões limitadas e artifacts por item/asset;
+- capacidades derivadas de papel, visibilidade RLS, estado terminal/arquivado e
+  funções contextuais `can_edit_*` do banco;
+- rate limit de leitura aplicado por ator e tool.

@@ -55,6 +55,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
     pool: deps.pool,
     features: deps.features,
     keyring: deps.keyring,
+    artifactClient: deps.artifactClient,
     ...(deps.refreshDelegation ? { refreshDelegation: deps.refreshDelegation } : {})
   }));
   return router;
