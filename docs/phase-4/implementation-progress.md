@@ -2,7 +2,7 @@
 
 - **Estado:** `planned`
 - **Progresso de implementação:** 0%
-- **Snapshot:** 2026-07-20
+- **Snapshot:** 2026-07-22
 - **Branch única:** `main`
 - **Próximo gate:** revisão técnica do pacote documental e início da Task 1
 
@@ -10,11 +10,11 @@
 
 | Task | Escopo | Estado | Saída esperada |
 |---|---|---|---|
-| 1 | contratos MCP, decisão de schema e baseline de auditoria | `not_started` | catálogo congelado, actions v2 do plano e decisão sobre migration |
+| 1 | contratos MCP, schema e baseline de auditoria | `not_started` | catálogo congelado, actions ampliadas, migration e segurança MCP |
 | 2 | leituras MCP de agenda, timeline, conteúdo e capacidades | `not_started` | tools de leitura expostas sobre domínio existente |
 | 3 | expansão do `prepare_plan` e `execute_plan` | `not_started` | novas ações de escrita seguras e idempotentes |
 | 4 | deep links, resultados estruturados e mensagens de operador | `not_started` | tool results consistentes com frontend e UX conversacional |
-| 5 | integração Hermes runtime e skill do operador | `not_started` | runtime bloqueando caminho errado e usando novas capacidades |
+| 5 | integração Hermes runtime, RAG/Graph e skill | `not_started` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `not_started` | métricas, trilha e evidência de chat → run → tool → audit |
 | 7 | frontend/bridge/E2E e falhas controladas | `not_started` | jornada integrada com erros sem falso sucesso |
 | 8 | gates locais, operação, VPS e handoff | `not_started` | pacote documental reconciliado e fase pronta para homologação |
@@ -38,9 +38,7 @@ testes RED e arquivos de produto alterados.
 
 ## Bloqueadores prévios conhecidos
 
-- congelar o catálogo final de tools de leitura;
-- decidir a modelagem final de rastreabilidade em auditoria;
-- validar se `campaign_note_add` fecha a necessidade do produto usando
-  `campaigns.notes` sem tabela nova;
-- confirmar que `artifact_link` da fase opera somente sobre artifact existente,
-  sem upload arbitrário pelo MCP.
+- nenhuma decisão de produto permanece aberta; os contratos estão congelados
+  em `design.md`;
+- bloqueadores descobertos durante RED/GREEN devem ser registrados aqui e no
+  `risk-register.md` antes de qualquer mudança de escopo.

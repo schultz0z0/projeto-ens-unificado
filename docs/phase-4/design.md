@@ -1,7 +1,7 @@
 # Design — Fase 4 Hermes Campaign Operator
 
-- **Data:** 2026-07-20
-- **Estado:** `planned`
+- **Data:** 2026-07-22
+- **Estado:** `approved_baseline`
 - **Dependência:** Fase 3 `production_validated`
 - **PRD base:** [phase-4-hermes-campaign-operator.md](../prds/phase-4-hermes-campaign-operator.md)
 
@@ -18,6 +18,9 @@ Inclui:
 - leitura MCP do estado operacional atual;
 - mutações planejadas e confirmadas para rascunhos, itens, conteúdo, artefatos
   e notas;
+- transformação de briefing em calendário/checklist e de resposta do chat em
+  conteúdo versionado;
+- revisão pelo tom de voz ENS, fundamentada no RAG;
 - deep link para frontend e retorno estruturado de sucesso/parcial/falha;
 - correlação ponta a ponta entre Hermes, MCP e auditoria.
 
@@ -56,6 +59,9 @@ Não inclui:
 - retorno com deep links e resultados mais ricos para o operador;
 - trilha de correlação mais explícita entre run do chat e auditoria do
   `marketing-ops`.
+- rate limit MCP por ator e ferramenta, além do limite HTTP por origem;
+- contratos E2E explícitos para RAG, Graph, tom ENS e conversão do chat em
+  objeto operacional.
 
 ## 4. Decisões técnicas
 
@@ -85,12 +91,42 @@ Essa decisão preserva:
 campo existente `campaigns.notes` com contrato estreito, append-only e
 concorrência otimista.
 
-### 4.4 Schema aditivo somente quando a rastreabilidade exigir
+### 4.4 Schema aditivo de rastreabilidade
 
-O domínio operacional da Fase 4 pode reutilizar quase todo o schema atual. A
-única evolução de banco planejada é um bloco aditivo e mínimo de metadados de
-correlação em auditoria/eventos caso a correlação atual por `correlation_id`
-não seja suficiente para fechar os critérios de aceite do PRD.
+A correlação atual somente por `correlation_id` não fecha F4-RF-11. A fase terá
+uma migration aditiva em `marketing_ops.audit_events` com campos opcionais para
+`operator_origin`, `chat_session_id`, `run_id`, `tool_name`, `tool_call_id`,
+`plan_id` e `plan_action_index`.
+
+Regras:
+
+- `origin='mcp'` identifica o transporte;
+- `operator_origin='hermes'` identifica o operador conversacional;
+- cada invocação MCP recebe `tool_call_id` UUID gerado pelo `marketing-ops`;
+- leituras registram tool/chat/run/correlação sem persistir conteúdo integral;
+- ações de plano registram também `plan_id` e `plan_action_index`;
+- chamadas REST existentes permanecem compatíveis com os campos nulos.
+
+### 4.5 RAG, Graph e tom de voz ENS
+
+- fatos institucionais, de curso, oferta e tom de voz são consultados no RAG
+  antes de o Hermes afirmar ou incorporar esses fatos;
+- o Graph é consultado quando a solicitação envolver relações ou trabalhos
+  validados; ausência de relação aplicável deve ser informada e não autoriza
+  usar o Graph como fonte transacional;
+- estado de campanha, agenda, item, conteúdo e versão sempre vem do MCP do
+  `marketing-ops`;
+- revisão pelo tom ENS produz primeiro uma proposta com referências mínimas;
+  salvar a revisão cria nova versão em rascunho somente após o fluxo de plano e
+  confirmação em turno posterior.
+
+### 4.6 Encerramento das mutações diretas legadas
+
+As tools legadas `marketing_ops_create_campaign_draft_v1`,
+`marketing_ops_update_campaign_draft_v1` e
+`marketing_ops_create_campaign_item_draft_v1` serão retiradas do catálogo MCP.
+O domínio REST continua intacto. Testes de contrato e runtime devem provar que
+nenhuma mutação MCP é possível fora de `prepare_plan_v1` e `execute_plan_v1`.
 
 ## 5. Arquitetura
 
@@ -120,8 +156,8 @@ Regras arquiteturais:
 - o MCP reutiliza a mesma camada de domínio usada pelo REST;
 - o Hermes não chama REST do `marketing-ops` diretamente;
 - o RAG continua sendo usado para fatos institucionais;
-- o Graph continua opcional para relações/memória validada, nunca para estado
-  transacional;
+- o Graph é usado quando relações/memória validada forem necessárias, nunca
+  para estado transacional;
 - o frontend continua sendo a superfície oficial de navegação do objeto final.
 
 ## 6. Catálogo MCP da fase
@@ -210,6 +246,9 @@ ações de plano:
 Nenhuma dessas mutações será executável diretamente por uma tool MCP sem o
 fluxo `prepare_plan_v1` → confirmação → `execute_plan_v1`.
 
+O catálogo publicado não inclui as três tools diretas legadas descritas em
+4.6. Compatibilidade será mantida apenas na camada de domínio/REST.
+
 ## 7. Contrato de plano assinado
 
 ## 7.1 Expansão do schema
@@ -238,10 +277,21 @@ O resultado planejado continua sem persistência de domínio e passa a incluir:
 O resultado planejado será normalizado para:
 
 - `status`: `completed`, `partial` ou `failed`;
-- `completed[]` com recurso real criado/alterado;
-- `failed` com erro seguro e item afetado;
-- `pending[]` quando houver interrupção parcial;
+- `completed[]` com `action_index`, `action_type`, recurso real e
+  `idempotency_hit`;
+- `failed[]` com `action_index`, `action_type`, código e mensagem segura;
+- `pending[]` com ações não executadas e motivo `dependency_failed`;
 - `deep_links[]` por recurso confirmado.
+
+Semântica de execução:
+
+- cada ação é uma transação atômica no domínio;
+- ações independentes continuam após falha de outra ação;
+- ação que referencia recurso cuja criação falhou não executa e vira `pending`;
+- status final é `completed` sem falhas, `partial` com qualquer combinação de
+  sucesso e falha/pending, e `failed` quando nenhuma ação conclui;
+- retry do mesmo plano reexecuta a lista inteira com as mesmas chaves
+  idempotentes; ações concluídas retornam hit e não duplicam objetos.
 
 ## 8. Estratégia por capacidade
 
@@ -282,6 +332,25 @@ Escopo da fase: append-only em `campaigns.notes`, com delimitação clara do
 trecho adicionado pelo Hermes e sem sobrescrever notas existentes sem nova
 decisão explícita.
 
+O trecho anexado é limitado a 2.000 caracteres, separado por uma quebra de
+linha quando já houver nota e sujeito ao limite canônico de 10.000 caracteres.
+Exceder o limite falha sem alterar a nota.
+
+### 8.8 Briefing → calendário e checklist
+
+O Hermes lê a campanha e o período atuais, consulta o RAG quando houver fatos
+institucionais e propõe uma lista de `campaign_item.create`. A proposta deve
+exibir título, tipo, canal, responsável quando conhecido e datas. Nada é
+persistido antes da confirmação do plano completo.
+
+### 8.9 Resposta do chat, conteúdo e revisão ENS
+
+Salvar uma resposta/copy do chat exige item alvo explícito. O plano usa
+`content.create_draft` e `content.version_create`; a versão guarda somente
+referências mínimas de origem (`chat_session_id`, `run_id` e referências RAG),
+nunca tokens. Revisão de tom segue o mesmo fluxo e sempre cria nova versão,
+sem sobrescrever uma versão anterior.
+
 ## 9. Deep links
 
 Cada recurso criado/alterado deverá retornar:
@@ -296,15 +365,33 @@ Cada recurso criado/alterado deverá retornar:
 Os deep links serão gerados no `marketing-ops`, não no Hermes, para evitar
 divergência entre tool output e roteamento real da aplicação.
 
+Rotas congeladas:
+
+| Recurso | `href` | `open_in` |
+|---|---|---|
+| campanha | `/marketing-ops/campaigns/{campaign_id}` | `campaign_workspace` |
+| item | `/marketing-ops/production/items/{item_id}` | `campaign_item` |
+| conteúdo | `/marketing-ops/production/items/{item_id}?contentAssetId={asset_id}` | `content_asset` |
+
+IDs são UUIDs validados e o frontend deve rejeitar qualquer rota fora desses
+templates.
+
 ## 10. Segurança
 
 - delegação curta, escopada e validada server-side;
 - nenhum papel, tenant ou versão confiado ao modelo;
 - descrição de tool pequena e schema estrito;
 - conteúdo, URLs e artifacts tratados como dados não confiáveis;
+- instruções contidas em briefing, notas, conteúdo, RAG, Graph ou artifact não
+  alteram papel, scope, confirmação nem seleção de tools;
 - mutações administrativas continuam fora do escopo;
 - retry só com idempotência derivada de plano/ação;
 - nenhuma mutação direta liberada no runtime do Hermes.
+- o limite HTTP por IP continua ativo e cada tool MCP aplica também janela de
+  60 segundos por `actor_user_id + tool_name`: 60 leituras, 20 prepares e 10
+  executes; excesso retorna `rate_limited` e `retry_after_seconds`;
+- logs e auditoria guardam IDs, códigos, tamanho e hash quando necessário, sem
+  texto integral de briefing, copy, nota, conteúdo ou token.
 
 ## 11. Observabilidade e auditoria
 
@@ -322,11 +409,11 @@ Rastreabilidade planejada:
 
 - `correlation_id` continua obrigatório;
 - `chat_session_id` e `run_id` já vêm da delegação;
-- `tool_name`, `plan_id` e `plan_action_index` devem aparecer na trilha de
-  auditoria ou em metadados correlacionáveis;
-- `tool_call_id` fica condicionado ao que o MCP SDK expuser de forma estável;
-  se não houver superfície segura, a fase fecha com `tool_name` + `plan_id` +
-  `correlation_id` como identificadores canônicos.
+- `tool_call_id` é UUID gerado pelo `marketing-ops` em cada invocação;
+- `tool_name`, `operator_origin='hermes'`, `plan_id` e `plan_action_index`
+  aparecem na auditoria aplicável;
+- os mesmos identificadores aparecem no resultado seguro da tool e nos logs
+  estruturados, permitindo chat → run → tool → audit → objeto.
 
 ## 12. Testes
 
@@ -347,7 +434,15 @@ Casos obrigatórios:
 - tentativa de mutação direta bloqueada no runtime;
 - tenant/papel forjados rejeitados;
 - artifacts não autorizados rejeitados;
-- deep link apontando para o objeto correto.
+- deep link apontando para o objeto correto;
+- delegação expirada e replay rejeitados;
+- rate limit independente por ator e tool;
+- prompt injection em briefing/conteúdo incapaz de ampliar autoridade;
+- logs sem texto integral ou tokens;
+- briefing convertido em calendário/checklist após confirmação;
+- resposta do chat convertida em versão vinculada;
+- revisão pelo tom ENS fundamentada no RAG;
+- Graph consultado em cenário relacional e nunca usado como estado atual.
 
 ## 13. Gate local
 
@@ -370,10 +465,10 @@ Casos obrigatórios:
 
 ## 15. Critério de prontidão para execução
 
-A Fase 4 está pronta para começar quando:
+A Fase 4 está pronta para começar porque:
 
-- este design for aceito como baseline técnico;
-- o plano datado da fase estiver revisado;
-- a superfície inicial de tools e ações estiver congelada;
-- a estratégia de auditoria/correlação estiver decidida antes da primeira
-  migration ou do primeiro patch de runtime.
+- este design foi aceito como baseline técnico em 2026-07-22;
+- o plano datado da fase foi reconciliado com Roadmap e PRD;
+- a superfície de tools, ações, deep links e resultados está congelada;
+- a migration aditiva e a estratégia de correlação estão decididas;
+- segurança, jornadas e gates possuem critérios rastreáveis.

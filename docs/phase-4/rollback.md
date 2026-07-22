@@ -17,6 +17,10 @@ não reversão destrutiva do domínio.
 5. reverter migration somente se houver schema novo e o dump tiver sido
    validado antes.
 
+A migration de correlação é obrigatória. Depois de existir auditoria real com
+os campos novos, o rollback operacional mantém colunas e dados; sua remoção só
+é permitida antes do primeiro uso em VPS e com backup validado.
+
 ## Invariantes
 
 - não apagar auditoria nem domain events;

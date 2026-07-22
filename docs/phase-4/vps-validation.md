@@ -10,13 +10,23 @@
 - [ ] imagens e configuração publicadas;
 - [ ] `marketing-ops`, Bridge e runtime Hermes healthy;
 - [ ] descoberta do catálogo MCP em ambiente real;
+- [ ] catálogo sem tools diretas legadas de mutação;
+- [ ] migration e índices de correlação aplicados;
 - [ ] refresh de delegação funcionando;
 - [ ] smoke de leitura de campanhas e agenda;
 - [ ] plano preparado sem persistência prematura;
 - [ ] execução confirmada criando/alterando objeto real;
 - [ ] deep link abrindo objeto correto no frontend;
 - [ ] logs correlacionados sem segredo;
+- [ ] rate limit por ator/tool retorna 429 seguro;
+- [ ] jornada briefing → calendário/checklist aprovada;
+- [ ] jornada chat → conteúdo e revisão ENS aprovada;
+- [ ] Graph/RAG respeitam suas fontes;
 - [ ] retry idempotente em produção controlada;
+- [ ] conflito exige nova leitura/confirmação;
+- [ ] indisponibilidade não produz falso sucesso;
+- [ ] persistência validada após restart;
+- [ ] backup confirmado;
 - [ ] rollback verificável.
 
 ## Evidência mínima esperada
@@ -26,6 +36,7 @@
 - rota MCP e services healthy;
 - jornada manual por papel;
 - resultado do smoke de conflito e indisponibilidade;
+- evidência dos cenários RAG, Graph, tom ENS e prompt injection;
 - aceite funcional do usuário.
 
 ## Resultado esperado

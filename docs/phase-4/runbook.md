@@ -12,6 +12,9 @@ Este runbook cobre a parte operacional da Fase 4:
 - secrets e refresh de delegação;
 - validação de rede interna e health;
 - smoke da jornada conversacional em ambiente real;
+- migration aditiva de correlação;
+- build das imagens afetadas;
+- testes manuais de RAG, Graph, calendário, conteúdo e tom ENS;
 - rollback de configuração.
 
 ## Pré-deploy planejado
@@ -23,6 +26,8 @@ Antes do primeiro deploy da fase:
 - validar rotação e presença apenas dos secrets necessários;
 - confirmar que o runtime Hermes continua bloqueando mutações diretas;
 - revisar o plano de rollback.
+- executar backup do Supabase e dry-run da migration;
+- confirmar que `git status` e o commit implantado correspondem à evidência.
 
 ## Deploy planejado
 
@@ -32,6 +37,10 @@ Antes do primeiro deploy da fase:
 4. validar `/health`, `/ready` e descoberta do catálogo MCP;
 5. executar smoke de leitura antes de qualquer mutação.
 
+Os comandos exatos de build, deploy, migration e smoke serão registrados na
+Task 8 após serem executados localmente contra os arquivos finais. Não usar
+comandos presumidos antes dessa reconciliação.
+
 ## Smoke mínimo esperado
 
 - Hermes lista campanhas autorizadas;
@@ -39,6 +48,10 @@ Antes do primeiro deploy da fase:
 - Hermes prepara um plano sem persistir nada;
 - Hermes executa um plano confirmado e devolve deep link;
 - frontend abre o objeto retornado.
+- briefing vira itens somente após confirmação;
+- resposta do chat vira versão vinculada;
+- revisão ENS usa RAG e cenário relacional usa Graph;
+- conflito, rate limit e indisponibilidade não produzem falso sucesso.
 
 ## Logs e segurança
 

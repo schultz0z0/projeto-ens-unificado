@@ -1,7 +1,7 @@
 # Registro de riscos — Fase 4
 
 - **Estado:** `seeded`
-- **Revisão:** 2026-07-20
+- **Revisão:** 2026-07-22
 
 ## Riscos de implementação
 
@@ -19,6 +19,13 @@
 | F4-R-10 | descrição de tool grande ou ambígua induz uso incorreto pelo modelo | médio | ferramentas pequenas, nomenclatura estável e skill revisada | Hermes Runtime | `open` |
 | F4-R-11 | indisponibilidade do `marketing-ops` aparecer como sucesso conversacional | alto | falha explícita, testes E2E e mensagens seguras de fallback | Bridge/Hermes Runtime | `open` |
 | F4-R-12 | scope/papel forjados passarem pela delegação | crítico | revalidação backend de tenant, role, scopes, run e expiração | Marketing Ops | `open` |
+| F4-R-13 | tools diretas legadas contornarem o plano confirmado | crítico | retirar do catálogo MCP e testar chamada ausente/bloqueada | Marketing Ops/Hermes Runtime | `open` |
+| F4-R-14 | rate limit por IP permitir abuso de uma tool por ator | alto | limite adicional por ator + tool com `retry_after_seconds` | Marketing Ops | `open` |
+| F4-R-15 | instrução maliciosa em briefing/RAG/Graph ampliar autoridade | crítico | tratar conteúdo como dado, manter guardrails server-side e E2E de prompt injection | Hermes Runtime/Marketing Ops | `open` |
+| F4-R-16 | revisão ENS inventar fato ou não usar fonte oficial | alto | RAG obrigatório, referências mínimas e cenário golden | Hermes Runtime | `open` |
+| F4-R-17 | falha parcial reexecutar/duplicar ações concluídas | alto | resultado por ação, dependências e replay idempotente | Marketing Ops | `open` |
+| F4-R-18 | logs/auditoria persistirem copy ou briefing integral | alto | fingerprint de texto, redaction e testes de ausência | Marketing Ops/Bridge | `open` |
+| F4-R-19 | conteúdo receber deep link sem rota frontend canônica | médio | mapear asset para item + query `contentAssetId` | Frontend | `open` |
 
 ## Bloqueadores permanentes
 
@@ -35,6 +42,7 @@ Continuam bloqueando qualquer promoção da fase:
 1. F4-R-03, F4-R-08 e F4-R-12 antes da primeira implementação.
 2. F4-R-01, F4-R-04, F4-R-05 e F4-R-07 durante o núcleo do `marketing-ops`.
 3. F4-R-09, F4-R-10 e F4-R-11 no fechamento E2E.
+4. F4-R-13–F4-R-18 antes do gate local.
 
 ## Critério de fechamento
 
