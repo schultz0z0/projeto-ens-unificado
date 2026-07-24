@@ -4,8 +4,11 @@ import { isWorkspacePath } from "./workspace-paths.ts";
 
 const uuid = z.string().uuid();
 const shortText = z.string().trim().min(1).max(500);
-const workspacePath = z.string();
-const finalPath = z.string();
+const workspacePath = z.string().refine((value) => isWorkspacePath(value), "Unsafe workspace path");
+const finalPath = z.string().refine(
+  (value) => isWorkspacePath(value, { prefix: "final/" }),
+  "Final path must be a safe path under final/",
+);
 const size = z.string().regex(/^\d{2,5}x\d{2,5}$/);
 
 const falModel = z.enum([
@@ -50,7 +53,7 @@ const zone = z.union([
 const satoriNode: z.ZodType<unknown> = z.lazy(() =>
   z.union([
     z.string(),
-    z.number(),
+    z.number().transform(String),
     z.object({
       tag: z.string().min(1).max(80),
       props: z.record(z.string(), z.unknown()).optional(),
