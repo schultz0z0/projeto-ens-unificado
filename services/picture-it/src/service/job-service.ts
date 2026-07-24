@@ -71,11 +71,21 @@ export class PostgresPictureJobRepository implements JobRepository {
       if (active) {
         throw new PictureError("picture_job_active", "This workspace already has an active rendering job.", 409);
       }
+      // Ensure the specification is serialized as a JSON object for the jsonb column.
+      // The PostgreSQL check constraint requires jsonb_typeof(specification) = 'object'.
+      const specJson = JSON.stringify(input.specification);
+      if (!specJson || specJson[0] !== "{") {
+        throw new PictureError(
+          "picture_contract_invalid",
+          `Specification must serialize to a JSON object, got: ${specJson?.slice(0, 100)}`,
+          400,
+        );
+      }
       const job = first(await database.query<PictureJob>(
         `insert into public.picture_jobs (workspace_id, kind, idempotency_key, specification, max_attempts)
          values ($1, $2, $3, $4::jsonb, $5)
          returning *`,
-        [input.workspaceId, input.kind, input.idempotencyKey, JSON.stringify(input.specification), input.maxAttempts],
+        [input.workspaceId, input.kind, input.idempotencyKey, specJson, input.maxAttempts],
       ));
       if (!job) throw new Error("picture_job_insert_failed");
       await database.query<DatabaseRow>(
@@ -224,6 +234,19 @@ export class JobService {
       if (error instanceof PictureError) throw error;
       if ((error as { code?: string })?.code === "picture_job_active" || (error as { code?: string })?.code === "23505") {
         throw new PictureError("picture_job_active", "This workspace already has an active rendering job.", 409);
+      }
+      // PostgreSQL check constraint violation
+      if ((error as { code?: string })?.code === "23514") {
+        const constraint = (error as { constraint_name?: string })?.constraint_name
+          || (error as { constraint?: string })?.constraint
+          || String((error as { message?: string })?.message || "").match(/\"([^"]+)\"/)?.[1]
+          || "unknown";
+        const detail = (error as { detail?: string })?.detail || "";
+        throw new PictureError(
+          "picture_contract_invalid",
+          `Database constraint violated: ${constraint}. ${detail}`.trim(),
+          400,
+        );
       }
       throw error;
     }
