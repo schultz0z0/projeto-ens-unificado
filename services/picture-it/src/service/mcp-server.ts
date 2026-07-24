@@ -16,8 +16,22 @@ const toolError = (error: unknown) => {
   const pictureError = error instanceof PictureError
     ? error
     : new PictureError("picture_internal_error", "Picture request failed.", 500);
+  const detail: Record<string, unknown> = {
+    code: pictureError.code,
+    message: pictureError.message,
+  };
+  // Surface the real error message even for non-PictureError exceptions
+  if (!(error instanceof PictureError) && error instanceof Error) {
+    detail.detail = error.message;
+  }
+  // Include cause chain if available
+  if (pictureError.cause && pictureError.cause instanceof Error) {
+    detail.cause = pictureError.cause.message;
+  }
+  // Log for server telemetry
+  console.error("[picture-mcp] tool error:", detail.code, detail.message, detail.detail || "");
   return {
-    ...toolResult({ error: { code: pictureError.code, message: pictureError.message } }),
+    ...toolResult({ error: detail }),
     isError: true,
   };
 };

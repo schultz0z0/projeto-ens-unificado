@@ -1,4 +1,5 @@
 import sharp, { type OverlayOptions } from "sharp";
+import { existsSync } from "node:fs";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import path from "path";
@@ -6,6 +7,7 @@ import { resolvePosition, resolveDimension } from "./zones.ts";
 import { DEPTH_ORDER, AUTO_SHADOW } from "./presets.ts";
 import { loadFonts } from "./fonts.ts";
 import { jsxToReact } from "./satori-jsx.ts";
+import { PictureError } from "./errors.ts";
 import type {
   Overlay,
   ImageOverlay,
@@ -85,6 +87,9 @@ async function compositeImage(
   verbose: boolean
 ): Promise<Buffer> {
   const assetPath = path.resolve(assetDir, overlay.src);
+  if (!existsSync(assetPath)) {
+    throw new PictureError("picture_asset_missing", `Image asset not found: ${overlay.src} (resolved to ${assetPath})`, 400);
+  }
   let asset = sharp(assetPath);
   const meta = await asset.metadata();
   const origW = meta.width || 100;
@@ -372,6 +377,9 @@ async function compositeWatermark(
   verbose: boolean
 ): Promise<Buffer> {
   const assetPath = path.resolve(assetDir, overlay.src);
+  if (!existsSync(assetPath)) {
+    throw new PictureError("picture_asset_missing", `Watermark asset not found: ${overlay.src} (resolved to ${assetPath})`, 400);
+  }
   const size = overlay.size || 48;
   const margin = overlay.margin || 20;
   const opacity = overlay.opacity ?? 0.3;

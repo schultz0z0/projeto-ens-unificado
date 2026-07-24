@@ -127,12 +127,19 @@ export async function executePipeline(
       }
 
       case "compose": {
-        if (!buffer) throw new Error("compose requires input");
         let overlays: Overlay[];
         if (typeof step.overlays === "string") {
           overlays = JSON.parse(fs.readFileSync(path.resolve(step.overlays), "utf-8"));
         } else {
           overlays = step.overlays;
+        }
+        // If compose is the first step (no buffer yet), create a blank transparent canvas
+        const canvasW = 1080;
+        const canvasH = 1080;
+        if (!buffer) {
+          buffer = await sharp({
+            create: { width: canvasW, height: canvasH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+          }).png().toBuffer();
         }
         const size = await getBufferSize(buffer);
         buffer = await composite(buffer, overlays, size.width, size.height, options.workingDirectory || process.cwd(), verbose);

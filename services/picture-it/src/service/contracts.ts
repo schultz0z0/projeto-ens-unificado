@@ -49,13 +49,34 @@ const zone = z.union([
   z.object({ x: z.number().finite(), y: z.number().finite() }).strict(),
 ]);
 
+/**
+ * Normalizes a value that should be an array but may arrive as a single item
+ * or as an XML-parser wrapper object like `{ item: [...] }` or `{ item: {...} }`.
+ */
+const coerceArray = <T extends z.ZodTypeAny>(schema: T, maxItems?: number) => {
+  const inner = maxItems != null ? z.array(schema).max(maxItems) : z.array(schema);
+  return z.preprocess((value) => {
+    if (Array.isArray(value)) return value;
+    if (value != null && typeof value === "object" && !Array.isArray(value)) {
+      const keys = Object.keys(value as Record<string, unknown>);
+      if (keys.length === 1 && keys[0] === "item") {
+        const inner = (value as Record<string, unknown>).item;
+        return Array.isArray(inner) ? inner : [inner];
+      }
+    }
+    if (value === undefined || value === null) return undefined;
+    return [value];
+  }, inner);
+};
+
 const satoriNode: z.ZodType<unknown> = z.lazy(() =>
   z.union([
     z.string(),
+    z.number().transform(String),
     z.object({
       tag: z.string().min(1).max(80),
       props: z.record(z.string(), z.unknown()).optional(),
-      children: z.array(satoriNode).optional(),
+      children: coerceArray(satoriNode).optional(),
     }).strict(),
   ])
 );
@@ -168,8 +189,8 @@ const pipelineStep = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("compose"),
     overlays_file: workspacePath.optional(),
-    overlays: z.array(OverlaySchema).max(200).optional().describe(
-      "Use a native JSON array of overlay objects. Never send an XML object, an item wrapper, or stringified JSON.",
+    overlays: coerceArray(OverlaySchema, 200).optional().describe(
+      "Use a native JSON array of overlay objects. XML wrappers like {item: [...]} are auto-normalized.",
     ),
   }).strict().refine((value) => Boolean(value.overlays_file || value.overlays), {
     message: "Compose requires overlays_file or overlays",
