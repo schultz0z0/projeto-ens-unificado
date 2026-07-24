@@ -58,12 +58,6 @@ export const createPictureModeService = ({ sessions, picture, hermes }) => {
     },
     async newPiece(user, workspaceId) {
       const workspace = await get(user, workspaceId);
-      if (workspace.status !== "validated") {
-        const error = new Error("A peça precisa ser aprovada antes de criar uma nova.");
-        error.code = "picture_approval_required";
-        error.status = 409;
-        throw error;
-      }
       await picture.reset(scope(user, workspaceId));
       await hermes.deleteSession({ userId: user.id, sessionId: workspace.chat_session_id });
       await sessions.deletePictureSession({ userId: user.id, sessionId: workspace.chat_session_id });
