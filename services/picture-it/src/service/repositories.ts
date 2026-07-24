@@ -175,11 +175,10 @@ export class PostgresPictureWorkspaceRepository implements PictureWorkspaceRepos
         [workspaceId, tenantId, userId],
       ));
       if (!workspace || workspace.status === "resetting" || workspace.status === "closed") return workspace;
-      if (workspace.status !== "validated" || !workspace.validated_artifact_id) return null;
       return first(await database.query<PictureWorkspace>(
         `update public.picture_workspaces
             set status = 'resetting'
-          where id = $1 and status = 'validated'
+          where id = $1
          returning *`,
         [workspaceId],
       ));
