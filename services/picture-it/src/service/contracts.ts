@@ -58,7 +58,7 @@ const satoriNode: z.ZodType<unknown> = z.lazy(() =>
       tag: z.string().min(1).max(80),
       props: z.record(z.string(), z.unknown()).optional(),
       children: z.union([z.array(satoriNode), satoriNode]).optional(),
-    }).strict(),
+    }).passthrough(),
   ])
 );
 
