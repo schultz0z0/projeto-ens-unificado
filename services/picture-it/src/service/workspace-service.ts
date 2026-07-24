@@ -146,9 +146,6 @@ export class WorkspaceService {
   async beginReset(input: Scope): Promise<PictureWorkspace> {
     const workspace = await this.getOwnedWorkspace(input);
     if (workspace.status === "closed" || workspace.status === "resetting") return workspace;
-    if (workspace.status !== "validated" || !workspace.validated_artifact_id) {
-      throw new PictureError("picture_approval_required", "Approve the final piece before creating a new one.", 409);
-    }
     const resetting = await this.repository.beginReset(workspace.id, input.tenantId, input.userId);
     if (!resetting) throw new PictureError("picture_reset_conflict", "Workspace changed before reset.", 409);
     return resetting;

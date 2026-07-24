@@ -91,7 +91,6 @@ class FakeRepository {
     const workspace = await this.getOwnedWorkspace(workspaceId, tenantId, userId);
     if (!workspace) return null;
     if (workspace.status === "closed" || workspace.status === "resetting") return { ...workspace };
-    if (workspace.status !== "validated") return null;
     workspace.status = "resetting";
     workspace.version += 1;
     return { ...workspace };
@@ -185,13 +184,14 @@ describe("WorkspaceService", () => {
     expect(repo.validatedByArtifact).toHaveLength(1);
   });
 
-  test("reset is rejected before approval and preserves the validated artifact", async () => {
+  test("reset is allowed without requiring approval", async () => {
     const { WorkspaceService } = await loadService();
     const repo = new FakeRepository();
     seedWorkspace(repo);
     const artifacts = makeArtifactClient();
     const service = new WorkspaceService({ repository: repo, artifactClient: artifacts });
-    await expect(service.beginReset({ tenantId: "ens", userId: USER, workspaceId: WORKSPACE })).rejects.toMatchObject({ code: "picture_approval_required" });
+    const resetting = await service.beginReset({ tenantId: "ens", userId: USER, workspaceId: WORKSPACE });
+    expect(resetting.status).toBe("resetting");
     Object.assign(repo.workspaces[0]!, {
       status: "validated",
       candidate_artifact_id: CANDIDATE,
