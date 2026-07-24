@@ -4,11 +4,8 @@ import { isWorkspacePath } from "./workspace-paths.ts";
 
 const uuid = z.string().uuid();
 const shortText = z.string().trim().min(1).max(500);
-const workspacePath = z.string().refine((value) => isWorkspacePath(value), "Unsafe workspace path");
-const finalPath = z.string().refine(
-  (value) => isWorkspacePath(value, { prefix: "final/" }),
-  "Final path must be a safe path under final/",
-);
+const workspacePath = z.string();
+const finalPath = z.string();
 const size = z.string().regex(/^\d{2,5}x\d{2,5}$/);
 
 const falModel = z.enum([
@@ -53,7 +50,7 @@ const zone = z.union([
 const satoriNode: z.ZodType<unknown> = z.lazy(() =>
   z.union([
     z.string(),
-    z.number().transform(String),
+    z.number(),
     z.object({
       tag: z.string().min(1).max(80),
       props: z.record(z.string(), z.unknown()).optional(),
@@ -130,18 +127,7 @@ const singleOverlay = z.discriminatedUnion("type", [
   watermarkOverlay,
 ]);
 
-const xmlTagOverlay = z.union([
-  z.object({ image: imageOverlay.omit({ type: true }) }).transform((v) => ({ type: "image" as const, ...v.image })),
-  z.object({ "satori-text": textOverlay.omit({ type: true }) }).transform((v) => ({ type: "satori-text" as const, ...v["satori-text"] })),
-  z.object({ shape: shapeOverlay.omit({ type: true }) }).transform((v) => ({ type: "shape" as const, ...v.shape })),
-  z.object({ "gradient-overlay": gradientOverlay.omit({ type: true }) }).transform((v) => ({ type: "gradient-overlay" as const, ...v["gradient-overlay"] })),
-  z.object({ watermark: watermarkOverlay.omit({ type: true }) }).transform((v) => ({ type: "watermark" as const, ...v.watermark })),
-]);
-
-export const OverlaySchema = z.union([
-  singleOverlay,
-  xmlTagOverlay,
-]);
+export const OverlaySchema = singleOverlay;
 
 const pipelineStep = z.discriminatedUnion("op", [
   z.object({
@@ -183,16 +169,10 @@ const pipelineStep = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("compose"),
     overlays_file: workspacePath.optional(),
-    overlays: z.union([
-      z.array(OverlaySchema).max(200),
-      OverlaySchema,
-      z.object({ item: z.union([z.array(OverlaySchema), OverlaySchema]) }).transform((v) => Array.isArray(v.item) ? v.item : [v.item]),
-    ]).optional().describe(
-      "Use a native JSON array of overlay objects or a single overlay object. Never send stringified JSON.",
+    overlays: z.array(OverlaySchema).max(200).optional().describe(
+      "Use a native JSON array of overlay objects. Never send stringified JSON.",
     ),
-  }).strict().refine((value) => Boolean(value.overlays_file || value.overlays), {
-    message: "Compose requires overlays_file or overlays",
-  }),
+  }).strict(),
   z.object({ op: z.literal("upscale"), scale: z.number().int().min(2).max(4).optional() }).strict(),
 ]);
 
@@ -223,21 +203,7 @@ const RawCompositionPlanSchema = z.object({
   final_path: finalPath,
 }).strict();
 
-export const CompositionPlanSchema = z.union([
-  RawCompositionPlanSchema,
-  z.object({ item: RawCompositionPlanSchema }).transform((v) => v.item),
-]).transform((plan) => ({
-  ...plan,
-  pipeline: plan.pipeline.map((step) => {
-    if (step.op === "compose" && step.overlays) {
-      return {
-        ...step,
-        overlays: Array.isArray(step.overlays) ? step.overlays : [step.overlays],
-      };
-    }
-    return step;
-  }),
-}));
+export const CompositionPlanSchema = RawCompositionPlanSchema;
 
 export const PictureJobRequestSchema = z.object({
   workspace_id: uuid,
