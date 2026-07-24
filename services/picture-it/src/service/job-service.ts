@@ -81,12 +81,16 @@ export class PostgresPictureJobRepository implements JobRepository {
       } else {
         specObj = {};
       }
-      const specJson = JSON.stringify(specObj);
+      
+      // IMPORTANT: Pass specObj directly to Bun SQL. 
+      // Bun SQL's native Postgres client automatically serializes JS objects to JSONB.
+      // Passing JSON.stringify(specObj) causes it to double-encode into a JSON string,
+      // which violates the picture_jobs_specification_object_check constraint.
       const job = first(await database.query<PictureJob>(
         `insert into public.picture_jobs (workspace_id, kind, idempotency_key, specification, max_attempts)
          values ($1, $2, $3, $4::jsonb, $5)
          returning *`,
-        [input.workspaceId, input.kind, input.idempotencyKey, specJson, input.maxAttempts],
+        [input.workspaceId, input.kind, input.idempotencyKey, specObj, input.maxAttempts],
       ));
       if (!job) throw new Error("picture_job_insert_failed");
       await database.query<DatabaseRow>(
