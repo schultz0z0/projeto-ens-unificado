@@ -57,7 +57,7 @@ const satoriNode: z.ZodType<unknown> = z.lazy(() =>
     z.object({
       tag: z.string().min(1).max(80),
       props: z.record(z.string(), z.unknown()).optional(),
-      children: z.array(satoriNode).optional(),
+      children: z.union([z.array(satoriNode), satoriNode]).optional(),
     }).strict(),
   ])
 );
@@ -170,8 +170,8 @@ const pipelineStep = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("compose"),
     overlays_file: workspacePath.optional(),
-    overlays: z.array(OverlaySchema).max(200).optional().describe(
-      "Use a native JSON array of overlay objects. Never send an XML object, an item wrapper, or stringified JSON.",
+    overlays: z.union([z.array(OverlaySchema).max(200), OverlaySchema]).optional().describe(
+      "Use a native JSON array of overlay objects or a single overlay object. Never send stringified JSON.",
     ),
   }).strict().refine((value) => Boolean(value.overlays_file || value.overlays), {
     message: "Compose requires overlays_file or overlays",
@@ -204,7 +204,18 @@ export const CompositionPlanSchema = z.object({
     "Use a native JSON array of ordered image operations. Each compose.overlays value is also a native JSON array.",
   ),
   final_path: finalPath,
-}).strict();
+}).strict().transform((plan) => ({
+  ...plan,
+  pipeline: plan.pipeline.map((step) => {
+    if (step.op === "compose" && step.overlays) {
+      return {
+        ...step,
+        overlays: Array.isArray(step.overlays) ? step.overlays : [step.overlays],
+      };
+    }
+    return step;
+  }),
+}));
 
 export const PictureJobRequestSchema = z.object({
   workspace_id: uuid,
