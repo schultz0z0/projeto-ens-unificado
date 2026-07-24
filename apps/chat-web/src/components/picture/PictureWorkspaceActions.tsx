@@ -20,7 +20,7 @@ export const PictureWorkspaceActions = ({ workspace, onApprove, onNewPiece, isAp
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const approveEnabled = workspace.status === "review" && !isApproving;
-  const newPieceEnabled = workspace.status === "validated" && !isCreatingNewPiece;
+  const newPieceEnabled = workspace.status !== "resetting" && !isCreatingNewPiece;
 
   const confirm = async () => {
     if (confirming || isCreatingNewPiece) return;
