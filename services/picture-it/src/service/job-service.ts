@@ -68,19 +68,20 @@ export class PostgresPictureJobRepository implements JobRepository {
           limit 1`,
         [input.workspaceId],
       ));
-      if (active) {
-        throw new PictureError("picture_job_active", "This workspace already has an active rendering job.", 409);
+      // Ensure specification is a clean JS object (parse if it arrived as a string)
+      let specObj: Record<string, unknown>;
+      if (typeof input.specification === "string") {
+        try {
+          specObj = JSON.parse(input.specification);
+        } catch {
+          specObj = { raw: input.specification };
+        }
+      } else if (typeof input.specification === "object" && input.specification !== null) {
+        specObj = input.specification as Record<string, unknown>;
+      } else {
+        specObj = {};
       }
-      // Ensure the specification is serialized as a JSON object for the jsonb column.
-      // The PostgreSQL check constraint requires jsonb_typeof(specification) = 'object'.
-      const specJson = JSON.stringify(input.specification);
-      if (!specJson || specJson[0] !== "{") {
-        throw new PictureError(
-          "picture_contract_invalid",
-          `Specification must serialize to a JSON object, got: ${specJson?.slice(0, 100)}`,
-          400,
-        );
-      }
+      const specJson = JSON.stringify(specObj);
       const job = first(await database.query<PictureJob>(
         `insert into public.picture_jobs (workspace_id, kind, idempotency_key, specification, max_attempts)
          values ($1, $2, $3, $4::jsonb, $5)
@@ -232,19 +233,21 @@ export class JobService {
       return job;
     } catch (error) {
       if (error instanceof PictureError) throw error;
-      if ((error as { code?: string })?.code === "picture_job_active" || (error as { code?: string })?.code === "23505") {
+      const msg = String((error as { message?: string })?.message || error || "");
+      const code = (error as { code?: string })?.code;
+      if (code === "picture_job_active" || code === "23505" || msg.includes("picture_job_active")) {
         throw new PictureError("picture_job_active", "This workspace already has an active rendering job.", 409);
       }
-      // PostgreSQL check constraint violation
-      if ((error as { code?: string })?.code === "23514") {
+      // PostgreSQL check constraint violation (via code 23514 or error message text)
+      if (code === "23514" || msg.includes("check constraint") || msg.includes("violates check constraint")) {
         const constraint = (error as { constraint_name?: string })?.constraint_name
           || (error as { constraint?: string })?.constraint
-          || String((error as { message?: string })?.message || "").match(/\"([^"]+)\"/)?.[1]
+          || msg.match(/\"([^"]+)\"/)?.[1]
           || "unknown";
         const detail = (error as { detail?: string })?.detail || "";
         throw new PictureError(
           "picture_contract_invalid",
-          `Database constraint violated: ${constraint}. ${detail}`.trim(),
+          `Database constraint violated: ${constraint}. ${detail || msg}`.trim(),
           400,
         );
       }
