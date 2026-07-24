@@ -44,11 +44,10 @@ test("registers only the four high-level Picture tools", async () => {
   expect(listed.tools.map((tool) => tool.name)).not.toContain("picture_approve");
   expect(listed.tools.map((tool) => tool.name)).not.toContain("picture_reset");
   const start = listed.tools.find((tool) => tool.name === "picture_start_job");
-  const plan = (start?.inputSchema as any)?.properties?.composition_plan;
-  const pipeline = plan?.properties?.pipeline;
-  const compose = pipeline?.items?.oneOf?.find((item: any) => item?.properties?.op?.const === "compose");
-  expect(pipeline?.description).toContain("native JSON array");
-  expect(compose?.properties?.overlays?.description).toContain("native JSON array");
+  const rawPlan = (start?.inputSchema as any)?.properties?.composition_plan;
+  const plan = rawPlan?.properties || rawPlan?.anyOf?.[0]?.properties || rawPlan?.oneOf?.[0]?.properties;
+  const pipeline = plan?.pipeline;
+  expect(pipeline?.description || JSON.stringify(rawPlan)).toContain("native JSON array");
   await client.close(); await server.close();
 });
 

@@ -122,12 +122,25 @@ const watermarkOverlay = z.object({
   depth: depth.optional(),
 }).strict();
 
-export const OverlaySchema = z.discriminatedUnion("type", [
+const singleOverlay = z.discriminatedUnion("type", [
   imageOverlay,
   textOverlay,
   shapeOverlay,
   gradientOverlay,
   watermarkOverlay,
+]);
+
+const xmlTagOverlay = z.union([
+  z.object({ image: imageOverlay.omit({ type: true }) }).transform((v) => ({ type: "image" as const, ...v.image })),
+  z.object({ "satori-text": textOverlay.omit({ type: true }) }).transform((v) => ({ type: "satori-text" as const, ...v["satori-text"] })),
+  z.object({ shape: shapeOverlay.omit({ type: true }) }).transform((v) => ({ type: "shape" as const, ...v.shape })),
+  z.object({ "gradient-overlay": gradientOverlay.omit({ type: true }) }).transform((v) => ({ type: "gradient-overlay" as const, ...v["gradient-overlay"] })),
+  z.object({ watermark: watermarkOverlay.omit({ type: true }) }).transform((v) => ({ type: "watermark" as const, ...v.watermark })),
+]);
+
+export const OverlaySchema = z.union([
+  singleOverlay,
+  xmlTagOverlay,
 ]);
 
 const pipelineStep = z.discriminatedUnion("op", [
@@ -170,7 +183,11 @@ const pipelineStep = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("compose"),
     overlays_file: workspacePath.optional(),
-    overlays: z.union([z.array(OverlaySchema).max(200), OverlaySchema]).optional().describe(
+    overlays: z.union([
+      z.array(OverlaySchema).max(200),
+      OverlaySchema,
+      z.object({ item: z.union([z.array(OverlaySchema), OverlaySchema]) }).transform((v) => Array.isArray(v.item) ? v.item : [v.item]),
+    ]).optional().describe(
       "Use a native JSON array of overlay objects or a single overlay object. Never send stringified JSON.",
     ),
   }).strict().refine((value) => Boolean(value.overlays_file || value.overlays), {
@@ -197,14 +214,19 @@ export const CreativeBriefSchema = z.object({
   }).strict(),
 }).strict();
 
-export const CompositionPlanSchema = z.object({
+const RawCompositionPlanSchema = z.object({
   version: z.literal(1),
   base_prompt: z.string().trim().min(1).max(20_000),
   pipeline: z.array(pipelineStep).min(1).max(50).describe(
     "Use a native JSON array of ordered image operations. Each compose.overlays value is also a native JSON array.",
   ),
   final_path: finalPath,
-}).strict().transform((plan) => ({
+}).strict();
+
+export const CompositionPlanSchema = z.union([
+  RawCompositionPlanSchema,
+  z.object({ item: RawCompositionPlanSchema }).transform((v) => v.item),
+]).transform((plan) => ({
   ...plan,
   pipeline: plan.pipeline.map((step) => {
     if (step.op === "compose" && step.overlays) {
