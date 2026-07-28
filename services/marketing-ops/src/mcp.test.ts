@@ -176,6 +176,48 @@ describe('delegation and MCP', () => {
     }
   });
 
+  it('normalizes a direct MiniMax action before validating a plan', async () => {
+    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const client = new Client({ name: 'plan-direct-action-test-client', version: '1.0.0' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const prepared = await client.callTool({
+        name: 'marketing_ops_prepare_plan_v1',
+        arguments: {
+          delegation_token: 'invalid-diagnostic-token',
+          actions: { type: 'campaign.create_draft', ref: 'campaign-main', name: 'MiniMax direct action' }
+        }
+      });
+      expect(toolPayload(prepared).error.code).toBe('delegation_invalid');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  it('normalizes a JSON-encoded MiniMax action before validating a plan', async () => {
+    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const client = new Client({ name: 'plan-json-action-test-client', version: '1.0.0' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const prepared = await client.callTool({
+        name: 'marketing_ops_prepare_plan_v1',
+        arguments: {
+          delegation_token: 'invalid-diagnostic-token',
+          actions: JSON.stringify({ type: 'campaign.create_draft', ref: 'campaign-main', name: 'MiniMax JSON action' })
+        }
+      });
+      expect(toolPayload(prepared).error.code).toBe('delegation_invalid');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
   it('prepares without writes and executes one exact multi-action plan after confirmation', async () => {
     const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
     const client = new Client({ name: 'plan-test-client', version: '1.0.0' });

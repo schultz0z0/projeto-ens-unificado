@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_contextual_confirmation_deploy_then_real_gate`
+- **Estado:** `pending_ninth_release_candidate_deploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -124,10 +124,32 @@ o `compileall`, `git diff --check` e os 86 testes da Bridge passaram. É
 obrigatório novo rebuild sem cache e recriação de **`hermes-api` e
 `app-bridge`** antes da repetição da matriz manual.
 
+### Incidente de nono release candidato — compatibilidade e agenda — 28/07/2026
+
+Antes de a confirmação contextual ser exercitada novamente, uma tentativa de
+preview mínima no app real falhou antes de qualquer persistência: o provedor
+enviou a única action como objeto tipado direto, e não como array. A análise
+anterior já havia comprovado o envelope `{ item: ... }` e a variante em string
+JSON; os quatro são formatos de serialização do mesmo campo `actions`, não
+novas actions nem permissão adicional.
+
+O `marketing-ops` agora normaliza somente array nativo, `{ item: action |
+action[] }`, objeto com `type` reconhecível, ou JSON que resulte em um desses
+formatos. Depois disso, o schema allowlisted, a delegação e a confirmação
+continuam idênticos. RED/GREEN de objeto direto e string JSON passaram. Em
+paralelo, o smoke de leitura mostrou tentativas de agenda com datas incompletas
+antes da autocorreção; a Bridge e a skill agora exigem `from`/`to` ISO 8601
+completos com offset e intervalo semiaberto.
+
+A skill foi reestruturada em `SKILL.md`, três referências e um template. Ela é
+embutida na imagem **`hermes-api`**, portanto o nono release candidato exige
+rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
+**`hermes-api`**. Nenhum schema Supabase muda neste release.
+
 ## Checklist planejado
 
-- [ ] imagens `hermes-api` e `app-bridge` com o classificador contextual
-  endurecido publicadas;
+- [ ] imagens `marketing-ops`, `app-bridge` e `hermes-api` do nono release
+  candidato publicadas; a skill estruturada deve estar carregável no runtime;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;

@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_contextual_classifier_hardening_redeploy`
+- **Estado:** `pending_ninth_release_candidate_redeploy`
 - **Snapshot:** 2026-07-28
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -16,9 +16,9 @@
 ## Ponto exato de continuação
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
-alinhado. Os três hotfixes de compatibilidade MCP foram publicados; a leitura
-real de campanhas/agenda concluiu no chat de produção, confirmando transporte,
-tool e resposta ponta a ponta sem mutação.
+alinhado. Os hotfixes já publicados validaram a leitura real de
+campanhas/agenda no chat de produção, confirmando transporte, tool e resposta
+ponta a ponta sem mutação.
 
 O preview seguinte revelou que o agente tentava misturar enriquecimento com
 `campaign.create_draft`, cujo schema é estrito. O Marketing Ops recusou antes
@@ -35,9 +35,17 @@ O oitavo hotfix isola o classificador da persona conversacional, exige a linha
 fechada `NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}` e registra somente
 o enum/aderência ao contrato. Pergunta, negação, ressalva, adiamento e alteração
 continuam fechados; alteração exige novo preview. Os gates locais do runtime
-(12/12) e os 86 testes da Bridge passaram. Publique `hermes-api` e `app-bridge`
-com o bloco pontual de `runbook.md`, repita preview e confirmação, consulte o
-log sanitizado se houver falha e só então retome os testes reais de escrita.
+(12/12) e os 86 testes da Bridge passaram. A varredura seguinte encontrou dois
+formatos adicionais do provedor para uma única action (objeto tipado direto e
+JSON codificado); eles foram normalizados antes da mesma validação estrita. O
+smoke publicado também mostrou que a tool de agenda precisa de instantes ISO
+8601 completos com offset. A skill agora possui referências e template
+carregáveis, embutidos no `hermes-api`.
+
+Publique **`marketing-ops`**, **`app-bridge`** e **`hermes-api`** com o bloco
+do nono release candidato em `runbook.md`. Depois, confirme a carga da skill,
+repita preview e confirmação contextual, consulte o log sanitizado se houver
+falha e só então retome os testes reais de escrita.
 
 ## Artefatos críticos já entregues
 
@@ -45,6 +53,8 @@ log sanitizado se houver falha e só então retome os testes reais de escrita.
 - deep links e navegação SPA do Marketing Ops validados no `chat-web`;
 - E2E fake do operador Hermes cobrindo confirmação e indisponibilidade;
 - migration remota da auditoria Hermes aplicada no Supabase conectado.
+- pacote da skill do Marketing Ops em
+  `services/hermes-runtime/vendor/hermes-agent/skills/marketing/marketing-ops-operator/`.
 
 ## Regras de retomada
 

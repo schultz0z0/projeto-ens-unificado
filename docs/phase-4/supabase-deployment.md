@@ -51,6 +51,18 @@ Ela foi desenhada para ser:
 - `supabase migration list --linked --workdir apps/chat-web` agora mostra
   `20260722130000` alinhada local/remoto; a listagem pelo MCP integrado mostra
   `phase_4_hermes_operator_audit` na mesma versão.
+- nova auditoria de 2026-07-28 confirmou RLS habilitado nas 16 tabelas do
+  schema `marketing_ops`, inclusive campanhas, itens, auditoria e histórico;
+  não há migration, política ou DDL novo neste release candidato.
+
+## Limite da auditoria de schema
+
+O Supabase remoto também possui achados de segurança e performance em objetos
+históricos fora do schema `marketing_ops` (por exemplo, tabelas públicas e
+funções legadas). Eles não foram alterados silenciosamente nesta Fase 4 porque
+não pertencem ao seu PRD nem à migration aditiva. Devem ser tratados em uma
+frente de hardening própria; não são evidência de falha da migration F4, mas
+impedem classificar o produto inteiro como livre de débito de segurança.
 
 ## Próximo uso na VPS
 

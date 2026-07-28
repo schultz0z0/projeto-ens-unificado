@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 
 
-VENDOR_ROOT = Path(__file__).resolve().parents[2] / "vendor" / "hermes-agent"
+RUNTIME_ROOT = Path(__file__).resolve().parents[2]
+VENDOR_ROOT = RUNTIME_ROOT / "vendor" / "hermes-agent"
 sys.path.insert(0, str(VENDOR_ROOT))
 
 from agent import marketing_ops_delegation as marketing_ops  # noqa: E402
@@ -269,6 +270,37 @@ def test_bundled_marketing_ops_operator_skill_teaches_casual_confirmed_planning(
     assert "do not expose raw error codes" in skill.lower()
     assert "revised plan has been successfully prepared" in skill.lower()
     assert "do not offer, start, or interpret a repeated confirmation" in skill.lower()
+
+
+def test_marketing_ops_operator_skill_has_loadable_contract_references() -> None:
+    skill_dir = VENDOR_ROOT / "skills" / "marketing" / "marketing-ops-operator"
+    skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    dockerfile = (RUNTIME_ROOT / "docker" / "hermes.Dockerfile").read_text(
+        encoding="utf-8"
+    )
+
+    # The production image copies the vendored skill tree, including references.
+    assert "COPY vendor/hermes-agent /opt/hermes-src" in dockerfile
+
+    for reference_name, required_text in {
+        "mcp-contract.md": "marketing_ops_prepare_plan_v1",
+        "conversation-safety.md": "NEXUS_MARKETING_OPS_DECISION",
+        "diagnostics.md": "-32602",
+    }.items():
+        reference = skill_dir / "references" / reference_name
+        assert reference.is_file()
+        assert required_text in reference.read_text(encoding="utf-8")
+        assert f'file_path="references/{reference_name}"' in skill
+
+    schedule_reference = (skill_dir / "references" / "mcp-contract.md").read_text(
+        encoding="utf-8"
+    )
+    assert "full iso 8601 instants with offsets" in " ".join(schedule_reference.lower().split())
+
+    template = skill_dir / "templates" / "plan-preview.md"
+    assert template.is_file()
+    assert "Nada foi salvo ainda." in template.read_text(encoding="utf-8")
+    assert 'file_path="templates/plan-preview.md"' in skill
 
 
 def test_marketing_ops_operator_skill_freezes_phase_4_sources_and_catalog() -> None:

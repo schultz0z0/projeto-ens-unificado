@@ -28,6 +28,7 @@
 | F4-R-19 | conteúdo receber deep link sem rota frontend canônica | médio | mapear asset para item + query `contentAssetId` | Frontend | `mitigated_component_and_e2e_fake` |
 | F4-R-20 | histórico remoto de migration divergir do arquivo versionado e bloquear futuro `db push` | alto | reparar apenas `schema_migrations`, listar local/remoto antes do deploy e nunca reaplicar DDL já presente | Supabase/Marketing Ops | `mitigated_history_aligned_2026-07-28` |
 | F4-R-21 | resposta coloquial aprovar plano errado ou pergunta/ressalva ser interpretada como execução | crítico | classificador contextual restrito ao plano pendente, sem tools/persistência, enum fechado, delegação emitida somente para `approve` e falha fechada; matriz VPS pendente | Hermes Runtime/Bridge | `local_validated_contextual_deploy_pending` |
+| F4-R-22 | provedor serializar `actions` fora do array nativo e bloquear preview seguro | alto | normalizar exclusivamente `{ item: ... }`, objeto tipado direto ou JSON desses formatos antes do mesmo schema allowlisted; contrato da skill e Bridge explícito; teste RED/GREEN e deploy VPS pendente | Marketing Ops/Bridge/Hermes Runtime | `release_candidate_deploy_pending` |
 
 ## Bloqueadores permanentes
 

@@ -26,10 +26,19 @@ import { errorToolResult, jsonToolResult } from './toolResults.js';
 import { createMcpCommandContext, createMcpTrace } from './context.js';
 
 function normalizeMiniMaxActionArray(value: unknown): unknown {
+  if (typeof value === 'string') {
+    try {
+      return normalizeMiniMaxActionArray(JSON.parse(value));
+    } catch {
+      return value;
+    }
+  }
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
   const record = value as Record<string, unknown>;
-  if (Object.keys(record).length !== 1 || !Object.hasOwn(record, 'item')) return value;
-  return Array.isArray(record.item) ? record.item : [record.item];
+  if (Object.keys(record).length === 1 && Object.hasOwn(record, 'item')) {
+    return Array.isArray(record.item) ? record.item : [record.item];
+  }
+  return typeof record.type === 'string' ? [record] : value;
 }
 
 export interface MarketingOpsMcpDependencies {

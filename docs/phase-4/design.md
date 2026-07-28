@@ -154,6 +154,26 @@ uma resposta natural da persona do Hermes seja confundida com autorização. O
 log registra apenas o enum resultante e se o contrato foi obedecido, nunca a
 mensagem humana, plano ou delegação.
 
+### 4.8 Skill operacional estruturada
+
+A skill `marketing-ops-operator` deixa de concentrar contrato, segurança e
+diagnóstico em um único `SKILL.md`. Ela passa a ser um pacote carregável pelo
+Hermes, com uma instrução principal curta e referências sob demanda:
+
+- `references/mcp-contract.md`: catálogo, limites de ações e formatos aceitos
+  pelo provedor;
+- `references/conversation-safety.md`: confirmação contextual e fronteira de
+  dados não confiáveis;
+- `references/diagnostics.md`: triagem segura, sem segredos ou detalhes de
+  transporte ao usuário;
+- `templates/plan-preview.md`: apresentação humana do plano sem persistência.
+
+O operador deve carregar apenas a referência necessária pela ferramenta
+`skill_view`. O contrato de agenda exige `from` e `to` como instantes ISO 8601
+com offset, em intervalo semiaberto; datas simples, relativas, vazias ou
+parciais não são payloads válidos para a tool. Esta regra evita retries de
+schema desnecessários sem alterar a validação server-side.
+
 ## 5. Arquitetura
 
 ```text
@@ -212,6 +232,8 @@ Contrato planejado:
 - filtros opcionais por `campaign_id`, `kind`, `status`, `priority`,
   `assignee_id`, `channel`;
 - intervalo obrigatório por `from`/`to`;
+- ambos os limites enviados como instantes ISO 8601 completos com offset; a
+  janela é semiaberta `[from, to)`;
 - `cursor` e `limit`;
 - timezone IANA opcional, com fallback do tenant;
 - resposta com itens, paginação, estados derivados e IDs necessários para

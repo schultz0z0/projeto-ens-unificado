@@ -184,7 +184,8 @@ contabilizados como GREEN.
 
 ### Contratos entregues
 
-- skill 1.1 contém as leituras e oito actions congeladas;
+- skill 1.2 contém as leituras e oito actions congeladas e separa contrato,
+  segurança conversacional, diagnóstico e preview em referências carregáveis;
 - mutação direta continua bloqueada tecnicamente e o execute exige delegação
   atual com confirmação em turno posterior;
 - fatos institucionais/tom ENS exigem evidência do RAG;
@@ -350,6 +351,53 @@ e a aderência ao contrato. RED reproduziu a recusa do contrato prefixado e a
 ausência de isolamento; GREEN: runtime dirigido **12/12**, `compileall`,
 `git diff --check` e Bridge **86/86**. Requer novo rebuild pontual de
 `hermes-api` e `app-bridge`; não altera schema, migration ou domínio.
+
+## Registro de varredura e nono release candidato — 2026-07-28
+
+### Correções incorporadas
+
+- o log de produção mostrou que o provedor pode serializar uma única action de
+  `prepare_plan` como objeto tipado direto ou como JSON codificado, além do
+  envelope `{ item: ... }` já conhecido. O normalizador do MCP agora aceita
+  somente esses três formatos do provedor e os converte para array antes da
+  mesma validação estrita de actions, delegação e confirmação;
+- o primeiro smoke publicado de agenda concluiu a leitura, mas registrou duas
+  recusas de schema antes da autocorreção porque `from` e `to` exigem instantes
+  ISO 8601 completos com offset. A instrução compartilhada da Bridge e a
+  referência da skill agora tornam esse contrato obrigatório;
+- a skill `marketing-ops-operator` foi promovida a pacote estruturado: fonte
+  principal curta, referências carregáveis de contrato MCP, segurança de
+  conversa e diagnóstico, mais template de preview humano. A imagem que a
+  contém é `hermes-api`.
+
+### RED → GREEN e validação
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| action MCP direta | objeto tipado retornou `-32602`/schema antes de qualquer assinatura | teste de normalização passa e o payload chega à rejeição esperada de delegação inválida, provando que ultrapassou o schema |
+| action MCP JSON | string JSON retornou `-32602`/schema antes de qualquer assinatura | teste de normalização passa sob a mesma validação estrita |
+| contrato da agenda | teste da Bridge falhou antes de exigir ISO 8601 com offset | `services/chat-bridge: npm test` **86/86** após a regra |
+| skill estruturada | teste estático falhou porque as referências não existiam | referências e template carregáveis; runtime **13/13** e `compileall` verdes |
+| Marketing Ops | typecheck + build | exit 0; três testes dirigidos de normalização passaram |
+| RAG MCP | testes + typecheck + build | **26/26**, exit 0, exit 0 |
+| Graph MCP | testes + typecheck + build | **18/18**, exit 0, exit 0 |
+| frontend | testes dirigidos, typecheck e build | **22/22**, exit 0, exit 0 |
+| segurança frontend | RLS app/RAG, scan, lint, build e audit | RLS anon de app e RAG passou; lint sem erro (10 avisos preexistentes); audit encontrou dependências preexistentes com vulnerabilidades, fora do código F4 |
+
+### Limite ambiental e de promoção
+
+`services/marketing-ops: npm test` foi executado integralmente. Os testes sem
+banco passaram, e os testes de integração falharam exclusivamente ao abrir o
+PostgreSQL local ausente em `127.0.0.1:55322`; seis gates de produção ficaram
+skipped por configuração. Docker também não existe nesta estação, portanto não
+há como iniciar um banco descartável local. A suite não foi redirecionada para
+o Supabase de produção porque ela cria, atualiza e limpa registros. Esses
+cenários permanecem no gate manual real pós-deploy.
+
+O próximo passo é publicar **`marketing-ops`**, **`app-bridge`** e
+**`hermes-api`** a partir deste release candidato, confirmar a carga da skill
+no runtime e repetir a matriz de escrita em produção. Nenhum estado acima
+autoriza promover a fase antes dessa evidência.
 
 ## Decisão atual
 

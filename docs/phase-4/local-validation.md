@@ -302,6 +302,52 @@ conversa nova e repetir primeiro o preview, depois `vamos nessa`/`pode ser` e
 a matriz negativa. Se houver nova recusa, consultar o log sanitizado do Hermes
 antes de qualquer mudança adicional.
 
+## Registro de compatibilidade, skill e varredura — 2026-07-28
+
+### RED real
+
+| Alteração | Falha reproduzida antes da correção |
+|---|---|
+| action única como objeto tipado | `marketing_ops_prepare_plan_v1` recusou o payload com `-32602`, pois o schema esperava array |
+| action única como string JSON | a string também foi recusada pelo schema antes de assinatura, execução ou persistência |
+| intervalo de agenda | o log do smoke publicado registrou `invalid_type`/`invalid_format` para datas incompletas antes da terceira chamada válida |
+| referências da skill | teste estático do runtime falhou porque `references/` e `templates/` não existiam |
+
+### GREEN/validação executada
+
+| Comando | Resultado |
+|---|---|
+| `services/marketing-ops: npm test -- src/mcp.test.ts -t "normalizes (the MiniMax item wrapper|a direct MiniMax action|a JSON-encoded MiniMax action) before validating a plan"` | **3 passed**, 8 não selecionados |
+| `services/marketing-ops: npm run typecheck && npm run build` | exit 0 |
+| `services/chat-bridge: npm test` | **86/86** |
+| `services/hermes-runtime: python -m pytest docker/tests/test_marketing_ops_delegation_runtime.py -q` | **13/13** |
+| `services/hermes-runtime: python -m compileall -q docker vendor/hermes-agent/agent` | exit 0 |
+| `services/rag-mcp: npm test && npm run typecheck && npm run build` | **26/26**, exit 0, exit 0 |
+| `services/graph-mcp: npm test && npm run typecheck && npm run build` | **18/18**, exit 0, exit 0 |
+| `apps/chat-web`: cinco arquivos de teste F4 dirigidos | **22/22** |
+| `apps/chat-web: npm run typecheck && npm run build` | exit 0; warnings preexistentes de Browserslist/chunk/import |
+| gate de segurança do frontend com as variáveis de leitura anônima do `.env` raiz | RLS de app e RAG passou; scan de segredos e build passaram; lint tem 10 avisos sem erro |
+
+### Resultado integral do Marketing Ops
+
+`npm test` integral foi chamado uma vez. Casos unitários e estáticos passaram;
+os casos de domínio/integração falharam todos pela mesma causa ambiental
+`ECONNREFUSED 127.0.0.1:55322`, e os seis testes de gate de produção ficaram
+skipped. O binário Docker não está instalado nesta estação, por isso não foi
+possível subir o PostgreSQL/Supabase local. A suite não foi apontada ao banco
+remoto, pois ela é mutável. Isso não é contabilizado como GREEN e será provado
+na jornada real pós-deploy.
+
+### Observação de segurança fora do escopo F4
+
+O `npm audit --audit-level=high` do frontend reportou 16 vulnerabilidades
+transitivas já presentes (14 altas, 2 moderadas), incluindo cadeias de
+`brace-expansion`/ESLint, PostCSS e React Router. Não houve alteração
+automática de dependências nesta fase, porque a correção sugerida inclui uma
+atualização maior de ESLint. Isso deve ser tratado como débito de segurança do
+produto, separado da validação funcional da Fase 4; não altera a superfície
+MCP, a delegação ou o schema desta entrega.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato

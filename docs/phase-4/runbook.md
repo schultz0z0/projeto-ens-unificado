@@ -113,6 +113,50 @@ curl -fsS http://127.0.0.1:8091/ready
 Não recrie Bridge ou Hermes nesse caso: o contrato conversacional e a skill já
 foram publicados; a mudança é limitada ao handler MCP do `marketing-ops`.
 
+### Nono release candidato: compatibilidade, agenda e skill estruturada
+
+O release atual deve ser publicado como uma unidade de três serviços:
+
+- `marketing-ops`: aceita a serialização real do provedor para action única
+  (array nativo, `{ item: ... }`, objeto tipado direto ou JSON desses formatos)
+  antes da mesma validação estrita;
+- `app-bridge`: instrui o Hermes a usar `from` e `to` como instantes ISO 8601
+  completos com offset para a agenda;
+- `hermes-api`: contém a skill `marketing-ops-operator` com referências e
+  template carregáveis.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache marketing-ops app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate marketing-ops app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps marketing-ops app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 marketing-ops app-bridge hermes-api
+curl -fsS http://127.0.0.1:8091/ready
+curl -fsS http://127.0.0.1:8081/health
+curl -fsS http://127.0.0.1:8652/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_marketing_ops
+```
+
+Não recrie `app-frontend` nem `hermes-kanban` para esse release candidato: não
+há mudança em seus artefatos. A mudança da skill só entra em execução ao
+reconstruir e recriar **`hermes-api`**; não basta atualizar o checkout ou
+recriar `marketing-ops`.
+
+Depois dos health checks, confirme a carga sem expor conteúdo interno:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api | grep -E "marketing-ops-operator|skill_view|Marketing Ops confirmation classified" || true
+```
+
+O `|| true` evita falhar apenas porque ainda não houve interação que produza
+uma linha de log; ele não substitui o smoke conversacional. Em seguida, o
+assistente deve executar a matriz real de preview, confirmação contextual,
+negação/revisão, agenda, deep link e auditoria descrita em
+`vps-validation.md`.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

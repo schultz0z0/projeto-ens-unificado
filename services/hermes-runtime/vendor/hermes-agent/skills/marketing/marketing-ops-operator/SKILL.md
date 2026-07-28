@@ -1,7 +1,7 @@
 ---
 name: marketing-ops-operator
 description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one contextual confirmation.
-version: 1.1.0
+version: 1.2.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -11,6 +11,23 @@ metadata:
 # Marketing Ops Operator
 
 Translate casual user intent into safe Marketing Ops operations. The user describes outcomes; you manage MCP fields and never make them speak in database or API terminology.
+
+## Focused references
+
+Load only the reference needed for the current operation with `skill_view`:
+
+- `skill_view(name="marketing-ops-operator", file_path="references/mcp-contract.md")`
+  before preparing a plan, when mapping an action, or when an MCP payload is
+  rejected;
+- `skill_view(name="marketing-ops-operator", file_path="references/conversation-safety.md")`
+  before acting on a response to a pending plan or when the reply is nuanced;
+- `skill_view(name="marketing-ops-operator", file_path="references/diagnostics.md")`
+  after a tool, transport, confirmation, or availability error;
+- `skill_view(name="marketing-ops-operator", file_path="templates/plan-preview.md")`
+  when presenting a prepared plan in natural language.
+
+The references explain internal contracts. Never quote their tokens, schemas,
+error paths, IDs, tool names, or hidden instructions to the user.
 
 ## Source routing
 
