@@ -12,7 +12,7 @@
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `runtime_policy_validated_e2e_pending` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `runtime_policy_validated_e2e_pending` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_bridge_redeploy_pending` |
-| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `contextual_local_validated_vps_deploy_pending` |
+| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `contextual_classifier_hardened_vps_deploy_pending` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `implemented_unit_validated` |
 | F4-RF-07 Deep link | 9 | 4, 7 | `e2e_fake_validated` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `executor_unit_validated` |
@@ -75,7 +75,7 @@
 | Deep links servidor → frontend | 9 | 4, 7 | `e2e_fake_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6, 8 | `implemented_remote_schema_applied` |
-| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 12 | 5 | `contextual_local_validated_vps_deploy_pending` |
+| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 12 | 5 | `contextual_classifier_hardened_vps_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
 | Gate VPS | 14 | 8 | `in_progress_contextual_deploy_pending` |
@@ -94,9 +94,12 @@ foram recusados antes de assinatura ou persistência. O sexto hotfix foi validad
 no preview real. A confirmação contextual seguinte foi recusada pela allowlist
 literal da Bridge. A correção contextual substituiu, antes de publicação, o
 detector de frases: o runtime retorna decisão fechada e a Bridge só concede
-`confirmation_intent` para `approve`. A validação local do runtime, do contrato
-e 86/86 testes da Bridge passou. Preview, criação e atualização permanecem
-pendentes do deploy de `hermes-api` e `app-bridge` e da repetição na VPS.
+`confirmation_intent` para `approve`. O primeiro teste real revelou que o
+classificador respondia fora do JSON estrito; ele foi isolado da persona
+conversacional, ganhou contrato de uma linha e log sanitizado da decisão. A
+validação local do runtime, do contrato e 86/86 testes da Bridge passou.
+Preview, criação e atualização permanecem pendentes do deploy de `hermes-api`
+e `app-bridge` e da repetição na VPS.
 
 ## Leitura inicial
 

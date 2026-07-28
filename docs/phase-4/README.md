@@ -3,16 +3,16 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso: a leitura de produção passou, e a correção
-contextual de confirmação precisa ser publicada em `hermes-api` e `app-bridge`
-antes das jornadas de escrita.
+A homologação real está em curso: a leitura de produção passou, e o
+endurecimento do classificador contextual de confirmação precisa ser publicado
+em `hermes-api` e `app-bridge` antes das jornadas de escrita.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-28
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `in_progress_pending_contextual_confirmation_deploy`
+- **Homologação VPS:** `in_progress_pending_contextual_classifier_hardening_deploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -33,7 +33,7 @@ antes das jornadas de escrita.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `read_smoke_validated_contextual_deploy_pending` | [checklist](vps-validation.md) |
+| Homologação VPS | `read_smoke_validated_classifier_hardening_deploy_pending` | [checklist](vps-validation.md) |
 | Handoff | `pending_hermes_api_and_app_bridge_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
@@ -59,8 +59,8 @@ antes das jornadas de escrita.
   delegação validados (86/86 testes locais);
 - `chat-web`: typecheck, build, 12 testes dirigidos de deep link/chat e E2E fake
   do operador Hermes aprovados;
-- runtime Hermes: decisão contextual, delegação/scrub/RAG-Graph e `compileall`
-  validados localmente;
+- runtime Hermes: decisão contextual isolada, contrato de saída fechado,
+  delegação/scrub/RAG-Graph e `compileall` validados localmente;
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
   conectado, com os sete campos novos confirmados em
@@ -81,10 +81,11 @@ antes das jornadas de escrita.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- o preview real passou, mas a confirmação contextual foi recusada pela
-  allowlist literal anterior. A correção revisada classifica a resposta no
-  contexto do plano pendente, libera somente `approve` e falha fechada. Ela
-  exige rebuild de `hermes-api` e `app-bridge` antes do teste de escrita.
+- o preview real passou, mas o primeiro teste da confirmação contextual foi
+  recusado com segurança: o classificador respondeu fora do JSON estrito e o
+  parser devolveu `clarify`. A correção agora isola o prompt desse
+  classificador, exige um contrato de uma linha e registra decisão sanitizada;
+  ela exige rebuild de `hermes-api` e `app-bridge` antes do teste de escrita.
 
 ## Decisão
 

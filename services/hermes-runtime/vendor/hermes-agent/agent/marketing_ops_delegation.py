@@ -19,6 +19,7 @@ _DIRECT_MUTATION_TOOLS = frozenset(
 _PREPARE_PLAN_TOOL = "marketing_ops_prepare_plan_v1"
 _EXECUTE_PLAN_TOOL = "marketing_ops_execute_plan_v1"
 _CONFIRMATION_DECISIONS = frozenset({"approve", "reject", "revise", "clarify", "none"})
+MARKETING_OPS_CONFIRMATION_DECISION_PREFIX = "NEXUS_MARKETING_OPS_DECISION:"
 
 _DELEGATION_BLOCK = re.compile(
     r"\[MARKETING_OPS_DELEGATION\][\s\S]*?"
@@ -100,8 +101,11 @@ def parse_marketing_ops_confirmation_decision(value: Any) -> str:
     """Accept only the internal classifier's closed JSON decision contract."""
     if not isinstance(value, str):
         return "clarify"
+    normalized = value.strip()
+    if normalized.startswith(MARKETING_OPS_CONFIRMATION_DECISION_PREFIX):
+        normalized = normalized[len(MARKETING_OPS_CONFIRMATION_DECISION_PREFIX):].strip()
     try:
-        payload = json.loads(value)
+        payload = json.loads(normalized)
     except (json.JSONDecodeError, TypeError):
         return "clarify"
     decision = payload.get("decision") if isinstance(payload, dict) else None

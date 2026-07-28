@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_app_bridge_redeploy`
+- **Estado:** `pending_contextual_classifier_hardening_redeploy`
 - **Snapshot:** 2026-07-28
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -27,14 +27,17 @@ de assinatura/persistência. Há um quarto hotfix local, testado com RED/GREEN e
 e `course_slug` opcional e exige um segundo ciclo para `campaign.update`.
 O sexto hotfix foi publicado e o preview passou no app real, sem persistência.
 A confirmação contextual em turno posterior foi recusada porque a Bridge só
-reconhecia frases literais. O sétimo hotfix de frases foi substituído antes de
-publicação pela correção contextual aprovada: `hermes-api` classifica a resposta
-contra o plano pendente, sem tools, e a Bridge assina confirmação somente para
-`approve`. Pergunta, negação, ressalva, adiamento e alteração falham fechados;
-alteração exige novo preview. Os gates locais do runtime e os 86 testes da
-Bridge passaram. Publique os dois serviços com o bloco pontual de `runbook.md`,
-repita preview e confirmação, e só então retome os testes reais de escrita para
-o objeto exato.
+reconhecia frases literais. A correção contextual substituiu esse detector:
+`hermes-api` classifica a resposta contra o plano pendente, sem tools, e a
+Bridge assina confirmação somente para `approve`. O primeiro teste publicado
+provou o fail-closed, mas revelou que o modelo respondia fora do JSON estrito.
+O oitavo hotfix isola o classificador da persona conversacional, exige a linha
+fechada `NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}` e registra somente
+o enum/aderência ao contrato. Pergunta, negação, ressalva, adiamento e alteração
+continuam fechados; alteração exige novo preview. Os gates locais do runtime
+(12/12) e os 86 testes da Bridge passaram. Publique `hermes-api` e `app-bridge`
+com o bloco pontual de `runbook.md`, repita preview e confirmação, consulte o
+log sanitizado se houver falha e só então retome os testes reais de escrita.
 
 ## Artefatos críticos já entregues
 

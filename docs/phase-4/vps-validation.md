@@ -101,9 +101,33 @@ ou timeout falham fechados. É obrigatório rebuild sem cache e recriação de
 **`hermes-api` e `app-bridge`**; depois, preparar novamente o plano e confirmar
 em turno posterior.
 
+### Incidente de oitavo deploy — endurecimento do classificador — 28/07/2026
+
+O deploy inicial da decisão contextual foi exercitado no app real com um plano
+de criação sem persistência e a resposta posterior `vamos nessa`. O endpoint
+interno de decisão respondeu `200`, o agente tentou `execute_plan_v1`, mas o
+runtime recusou com `confirmation_required`; nenhum objeto foi criado.
+
+Os logs mostraram que o classificador respondeu com texto de 91 caracteres,
+enquanto o parser aceitava somente JSON integral. A decisão caiu corretamente
+em `clarify`, e a Bridge emitiu uma delegação sem `confirmation_intent`. Uma
+consulta somente-leitura ao Hermes confirmou que esse log separa esse caso de
+perda na Bridge ou no transporte do token; a inspeção do código confirmou que
+a Bridge calcula a decisão antes de assinar a nova delegação.
+
+O oitavo hotfix isola o prompt do classificador da persona conversacional,
+mantém uma única iteração sem tools/sem persistência e exige a linha fechada
+`NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}`. O parser permanece
+fail-closed para conteúdo extra. O log do `hermes-api` passa a registrar somente
+`decision` e `output_contract`. Os testes dirigidos do runtime passaram 12/12,
+o `compileall`, `git diff --check` e os 86 testes da Bridge passaram. É
+obrigatório novo rebuild sem cache e recriação de **`hermes-api` e
+`app-bridge`** antes da repetição da matriz manual.
+
 ## Checklist planejado
 
-- [ ] imagens `hermes-api` e `app-bridge` com a decisão contextual publicadas;
+- [ ] imagens `hermes-api` e `app-bridge` com o classificador contextual
+  endurecido publicadas;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;

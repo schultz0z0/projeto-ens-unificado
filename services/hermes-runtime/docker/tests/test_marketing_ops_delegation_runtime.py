@@ -119,12 +119,25 @@ def test_execute_plan_requires_current_turn_confirmation() -> None:
 
 def test_contextual_confirmation_decision_is_closed_and_requires_a_pending_plan() -> None:
     assert parse_marketing_ops_confirmation_decision('{"decision":"approve"}') == "approve"
+    assert (
+        parse_marketing_ops_confirmation_decision(
+            'NEXUS_MARKETING_OPS_DECISION: {"decision":"approve"}'
+        )
+        == "approve"
+    )
     assert parse_marketing_ops_confirmation_decision('{"decision":"reject"}') == "reject"
     assert parse_marketing_ops_confirmation_decision('{"decision":"revise"}') == "revise"
     assert parse_marketing_ops_confirmation_decision('{"decision":"clarify"}') == "clarify"
     assert parse_marketing_ops_confirmation_decision('{"decision":"none"}') == "none"
     assert parse_marketing_ops_confirmation_decision('approve') == "clarify"
     assert parse_marketing_ops_confirmation_decision('{"decision":"execute"}') == "clarify"
+    assert (
+        parse_marketing_ops_confirmation_decision(
+            'NEXUS_MARKETING_OPS_DECISION: {"decision":"approve"}\nextra'
+        )
+        == "clarify"
+    )
+    assert parse_marketing_ops_confirmation_decision('text {"decision":"approve"}') == "clarify"
 
     prepared = prepared_plan_result("pending-plan-token-that-is-long-enough")
     executed = {
@@ -137,12 +150,14 @@ def test_contextual_confirmation_decision_is_closed_and_requires_a_pending_plan(
 
 
 def test_runtime_exposes_a_tool_free_contextual_confirmation_endpoint() -> None:
-    api = (VENDOR_ROOT / "gateway" / "platforms" / "api_server.py").read_text()
+    api = (VENDOR_ROOT / "gateway" / "platforms" / "api_server.py").read_text(encoding="utf-8")
 
     assert '"/v1/internal/marketing-ops-decision"' in api
     assert "enabled_toolsets=[]" in api
     assert "max_iterations=1" in api
     assert "persist_session=False" in api
+    assert "system_prompt_only=True" in api
+    assert "Marketing Ops confirmation classified: decision=%s" in api
 
 
 def test_tool_call_redaction_handles_nested_json_arguments() -> None:

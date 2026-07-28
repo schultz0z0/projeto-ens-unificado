@@ -339,6 +339,18 @@ de payload e a suíte completa da Bridge passaram com 86/86. O deploy exige
 rebuild sem cache e recriação de **`hermes-api` e `app-bridge`**, seguido da
 matriz manual contextual; nenhum dado novo foi persistido por essa correção.
 
+O primeiro deploy dessa correção confirmou que a rota foi chamada, mas uma
+resposta de confirmação natural foi recusada pelo parser JSON estrito. A
+evidência do log e a inspeção do fluxo mostram que a Bridge já calcula a
+decisão antes de assinar a delegação; o classificador é o ponto corrigido. O
+oitavo hotfix passa a executá-lo com prompt exclusivo, sem persona
+conversacional, tools ou persistência, exige a linha fechada
+`NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}` e registra somente o enum
+e a aderência ao contrato. RED reproduziu a recusa do contrato prefixado e a
+ausência de isolamento; GREEN: runtime dirigido **12/12**, `compileall`,
+`git diff --check` e Bridge **86/86**. Requer novo rebuild pontual de
+`hermes-api` e `app-bridge`; não altera schema, migration ou domínio.
+
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende

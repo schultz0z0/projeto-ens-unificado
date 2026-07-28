@@ -145,6 +145,15 @@ Sem plano pendente não há chamada de modelo (`none`). Timeout, erro ou saída
 fora do schema falham fechados como `clarify`, sem execução, token ou
 persistência de transcript pelo classificador.
 
+O classificador é um agente efêmero isolado do prompt conversacional principal:
+não recebe tools, não persiste sessão e usa somente a instrução curta desta
+decisão. A resposta deve obedecer a uma linha fechada
+`NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}`; o parser aceita somente
+esse contrato (ou o JSON fechado legado), sem texto adicional. Isso evita que
+uma resposta natural da persona do Hermes seja confundida com autorização. O
+log registra apenas o enum resultante e se o contrato foi obedecido, nunca a
+mensagem humana, plano ou delegação.
+
 ## 5. Arquitetura
 
 ```text

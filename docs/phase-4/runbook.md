@@ -65,11 +65,12 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 Não use `docker compose down`, nem `--remove-orphans`, neste deploy: a Fase 4
 não requer remover serviços fora do conjunto listado.
 
-### Rebuild pontual da decisão contextual
+### Rebuild pontual do classificador contextual
 
-Para a correção contextual da confirmação de 28/07/2026, reconstrua os dois
-serviços envolvidos: `hermes-api` expõe o classificador sem tools e a Bridge
-usa somente sua decisão fechada para assinar a delegação.
+Para o endurecimento da confirmação contextual de 28/07/2026, reconstrua os
+dois serviços envolvidos: `hermes-api` executa o classificador com prompt
+exclusivo, sem tools ou persistência, e a Bridge usa somente a decisão fechada
+para assinar a delegação.
 
 ```bash
 cd /opt/nexus-ens
@@ -89,6 +90,10 @@ que a Bridge já possui.
 Depois do rebuild, em conversas novas, valide que `vamos nessa` e `pode ser`
 executam somente o plano pendente exato; pergunta (`pode ser?`), negação,
 ressalva e alteração não executam. Uma alteração deve gerar novo preview.
+Se houver recusa, consulte `hermes-api` por
+`Marketing Ops confirmation classified`: o log contém somente `decision` e
+`output_contract`, suficientes para separar falha de classificação de uma
+falha posterior de propagação, sem revelar a mensagem, tokens ou delegação.
 
 ### Rebuild pontual do Marketing Ops
 
@@ -172,6 +177,9 @@ handler de `CallToolResult` e a delegação ponta a ponta.
 - nunca registrar `delegation_token` ou `plan_token`;
 - não copiar respostas integrais com conteúdo sensível para a documentação;
 - logs devem permitir correlação por `correlation_id`, ferramenta e run.
+- a decisão contextual pode registrar apenas `decision` e
+  `output_contract=true|false`; não registrar prompt, mensagem humana, plano
+  nem a delegação para diagnóstico.
 
 ## Critério de execução
 

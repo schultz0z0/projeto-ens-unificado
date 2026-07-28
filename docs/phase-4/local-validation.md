@@ -268,10 +268,44 @@
   repetir preview e a matriz de aprovação, pergunta, rejeição e revisão antes
   de continuar a criação do dado de teste.
 
+## Registro de endurecimento do classificador contextual — 2026-07-28
+
+- após o deploy inicial da decisão contextual, o teste real preparou um plano,
+  recebeu `vamos nessa` no turno posterior e não gravou dados: o runtime
+  recusou `execute_plan_v1` por `confirmation_required`, preservando o
+  fail-closed;
+- os logs confirmaram a chamada do endpoint interno de decisão e uma resposta
+  do modelo com 91 caracteres. Como o parser aceitava apenas um objeto JSON
+  inteiro, a saída fora desse formato virou `clarify`; a Bridge, portanto,
+  assinou corretamente sem `confirmation_intent`;
+- foi solicitada ao próprio Hermes uma análise somente-leitura. Ela confirmou
+  a matriz de diagnóstico: decisão `clarify`, perda na Bridge ou perda no
+  transporte da delegação são hipóteses separáveis; a inspeção do código prova
+  que a Bridge calcula a decisão antes de emitir a nova delegação, isolando o
+  problema observado no contrato da resposta do classificador;
+- RED: o teste do runtime falhou para a resposta prefixada de contrato e para
+  a ausência de isolamento do prompt;
+- GREEN: o classificador usa somente seu prompt efêmero, sem tools e sem
+  persistência; responde pela linha fechada
+  `NEXUS_MARKETING_OPS_DECISION: {"decision":"..."}`. O parser continua
+  fail-closed para texto adicional ou enum desconhecido;
+- observabilidade: o `hermes-api` agora registra apenas o enum da decisão e
+  `output_contract=true|false`; mensagens, tokens de plano e delegações não
+  entram no log;
+- validação local: `python -m pytest
+  services/hermes-runtime/docker/tests/test_marketing_ops_delegation_runtime.py
+  -q` (**12 passed**), `python -m compileall -q` dos dois módulos alterados,
+  `services/chat-bridge: npm test` (**86/86**) e `git diff --check` passaram.
+
+O próximo gate é publicar **somente** `hermes-api` e `app-bridge`, iniciar uma
+conversa nova e repetir primeiro o preview, depois `vamos nessa`/`pode ser` e
+a matriz negativa. Se houver nova recusa, consultar o log sanitizado do Hermes
+antes de qualquer mudança adicional.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
 do runtime, deep links, contrato conversacional e E2E fake foram executados.
 Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
 final da VPS, inclusive a publicação pontual de `hermes-api` e `app-bridge` e
-as jornadas de escrita com confirmação contextual.
+as jornadas de escrita com o classificador contextual endurecido.
