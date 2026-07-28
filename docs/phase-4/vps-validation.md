@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `ready_after_predeploy_reconciliation`
+- **Estado:** `pending_app_bridge_redeploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -43,17 +43,32 @@ aceita as duas convenções. Rebuild sem cache de `hermes-api` e
 necessária é uma leitura real de campanhas/agenda concluída no chat, sem
 mutação.
 
+### Incidente de quarto deploy — 28/07/2026
+
+O terceiro hotfix foi publicado e a leitura conversacional real concluiu: o
+Hermes listou campanhas e agenda via Marketing Ops, sem mutação. No preview de
+uma campanha com dados completos, porém, o agente tentou incluir campos de
+enriquecimento em `campaign.create_draft`. O schema estrito recusou o plano
+antes de assinatura ou persistência, portanto não houve objeto de teste criado.
+
+A correção é somente no contrato sistêmico da `app-bridge` e na skill do
+operador: criar primeiro com `type`, `ref`, `name` e `course_slug` opcional;
+depois de a campanha existir, ler id/versão e preparar uma atualização em um
+novo ciclo de confirmação. O teste RED/GREEN e os 85 testes da Bridge estão
+verdes. É obrigatório rebuild sem cache e recriação de **`app-bridge`** antes
+de continuar as jornadas de escrita.
+
 ## Checklist planejado
 
-- [ ] imagens e configuração publicadas;
-- [ ] `marketing-ops`, Bridge e runtime Hermes healthy;
-- [ ] descoberta do catálogo MCP em ambiente real;
+- [ ] imagem/configuração da Bridge com o quarto hotfix publicada;
+- [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
+- [x] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;
 - [x] migration e índices de correlação aplicados e histórico remoto alinhado
   em 2026-07-28;
 - [ ] VPS confirma que aponta para esse mesmo projeto Supabase;
 - [ ] refresh de delegação funcionando;
-- [ ] smoke de leitura de campanhas e agenda;
+- [x] smoke de leitura de campanhas e agenda;
 - [ ] plano preparado sem persistência prematura;
 - [ ] execução confirmada criando/alterando objeto real;
 - [ ] deep link abrindo objeto correto no frontend;
@@ -73,8 +88,7 @@ mutação.
 
 1. atualizar checkout e `.env` da VPS sem sobrescrever o arquivo real;
 2. validar `docker compose` com `docker-compose.yml` + `docker-compose.prod.yml`;
-3. rebuildar e subir `app-frontend`, `app-bridge`, `marketing-ops`,
-   `hermes-api` e `hermes-kanban`;
+3. para o quarto hotfix, rebuildar e recriar somente `app-bridge`;
 4. confirmar health/readiness e logs sem segredo;
 5. verificar se a migration da Fase 4 já está refletida no Supabase alvo;
 6. executar os smokes manuais do operador Hermes;
@@ -105,8 +119,21 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 Se a VPS usar outro diretório padrão do projeto, ajuste apenas o `cd`.
 
 Antes do build, execute também os `grep` de configuração em
-[runbook.md](runbook.md#conferência-segura-da-configuração-da-vps). Para este
-gate, use o build `--no-cache` dos cinco serviços indicado no runbook.
+[runbook.md](runbook.md#conferência-segura-da-configuração-da-vps). O bloco
+acima é o deploy completo da Fase 4. Para a correção atual, depois de o commit
+estar no checkout da VPS, use o deploy pontual abaixo; não é necessário
+reconstruir frontend, Marketing Ops ou Hermes:
+
+```bash
+cd /opt/nexus-ens
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 app-bridge
+curl -fsS http://127.0.0.1:8081/health
+```
 
 ## Smoke manual mínimo
 
@@ -133,8 +160,9 @@ teste.
 1. Como admin, peça uma leitura de campanhas e agenda. Esperado: o Hermes
    consulta o Marketing Ops, não pede confirmação e não afirma estado sem fonte
    operacional.
-2. Peça a criação da campanha de teste, mas não confirme. Esperado: preview
-   claro, nenhuma persistência e nenhum deep link final.
+2. Peça **somente** a criação da campanha de teste, sem objetivo, público,
+   canal, briefing ou datas, mas não confirme. Esperado: preview claro,
+   nenhuma persistência e nenhum deep link final.
 3. Responda somente `Aprovado`. Esperado: uma criação, auditoria correlacionada
    e deep link de campanha válido.
 4. Peça para preencher os campos suportados da campanha: objetivo, público,

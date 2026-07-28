@@ -2,16 +2,16 @@
 
 - **Estado:** `reconciled_pending_vps_gate`
 - **Implementação:** `implemented_pending_vps_validation`
-- **Revisão:** 2026-07-22
+- **Revisão:** 2026-07-28
 
 ## Matriz requisito → design → task
 
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
-| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `implemented_unit_validated` |
+| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_read_smoke_validated` |
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `runtime_policy_validated_e2e_pending` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `runtime_policy_validated_e2e_pending` |
-| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_implemented` |
+| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `plan_contract_bridge_redeploy_pending` |
 | F4-RF-05 Confirmação | 4.2, 7 | 3, 5, 7 | `token_and_e2e_fake_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `implemented_unit_validated` |
 | F4-RF-07 Deep link | 9 | 4, 7 | `e2e_fake_validated` |
@@ -26,8 +26,8 @@
 | Entrega do Roadmap | Design | Task | Estado |
 |---|---|---|---|
 | MCP de consulta e mutação controlada | 4.2, 6, 7 | 1–3 | `implemented_unit_validated` |
-| Criação de campanha em rascunho | 6.2, 7 | 1, 3, 5, 7 | `local_e2e_fake_validated` |
-| Atualização com confirmação | 4.2, 7, 8.1 | 3, 5, 7 | `local_e2e_fake_validated` |
+| Criação de campanha em rascunho | 6.2, 7 | 1, 3, 5, 7 | `local_e2e_fake_validated_bridge_redeploy_pending` |
+| Atualização com confirmação | 4.2, 7, 8.1 | 3, 5, 7 | `local_e2e_fake_validated_bridge_redeploy_pending` |
 | Geração de calendário e itens | 8.8 | 3, 5, 7 | `implementation_complete_vps_pending` |
 | Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `local_e2e_fake_validated` |
 | Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `policy_implemented_vps_pending` |
@@ -39,7 +39,7 @@
 | Critério | Design | Task/teste | Estado |
 |---|---|---|---|
 | Lista somente campanhas autorizadas | 6.1, 10 | 2, 7 | `domain_reused_integration_pending` |
-| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `mcp_reads_implemented` |
+| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `production_read_smoke_validated` |
 | Cria rascunho após confirmação | 4.2, 7 | 3, 5, 7 | `e2e_fake_validated` |
 | Objeto aparece no frontend sem reconciliação | 9 | 4, 7 | `e2e_fake_validated` |
 | Retry não duplica objeto | 7.3 | 3, 7 | `executor_unit_validated` |
@@ -78,11 +78,20 @@
 | Runtime Hermes alinhado | 3.1, 4.2, 12 | 5 | `implemented_unit_validated` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `ready_for_execution` |
+| Gate VPS | 14 | 8 | `in_progress_bridge_redeploy_pending` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
 silenciosamente removidos.
+
+## Registro da homologação parcial — 2026-07-28
+
+O smoke real de leitura confirmou a cadeia Hermes/MCP/Marketing Ops sem
+mutação. O preview posterior não foi contado como sucesso de criação: o schema
+rejeitou campos inválidos em `campaign.create_draft` antes de assinatura ou
+persistência. A correção de contrato da Bridge está coberta por RED/GREEN e
+85/85 testes, mas os requisitos de preview, criação e atualização permanecem
+pendentes de publicação da Bridge e repetição na VPS.
 
 ## Leitura inicial
 

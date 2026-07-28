@@ -181,8 +181,37 @@
   `hermes-api` e `hermes-kanban`, novo smoke de leitura que invoque uma tool
   MCP e as jornadas reais restantes.
 
+## Registro de validação real e correção do contrato de plano — 2026-07-28
+
+- após o terceiro hotfix ser publicado, a leitura real de campanhas e agenda
+  no chat de produção foi concluída: o Hermes listou 13 campanhas, consultou a
+  agenda de 03/08–09/08 e informou ausência de itens no período; nenhuma
+  mutação foi solicitada ou persistida nesse smoke;
+- essa evidência exercita `app -> bridge -> Hermes -> MCP Marketing Ops ->
+  app` e confirma, em produção, o tratamento de `CallToolResult.is_error`;
+- um pedido de preview contendo nome, objetivo, público, canal, briefing e
+  datas revelou uma falha distinta: o modelo montou um
+  `campaign.create_draft` com campos que o schema estrito não aceita. O
+  Marketing Ops recusou o prepare, não emitiu plano assinado e não criou
+  objeto;
+- RED: `services/chat-bridge/test/hermes-payloads.test.js` passou a exigir que
+  o contrato do operador declare a forma estrita de `campaign.create_draft` e
+  a separação entre criação e `campaign.update`; o teste falhou antes da
+  alteração pelo texto ausente;
+- GREEN: o contrato injetado pela Bridge e a skill `marketing-ops-operator`
+  agora instruem criação apenas com `type`, `ref`, `name` e `course_slug`
+  opcional; objetivo, público, canais, briefing, notas e datas exigem leitura,
+  novo plano de `campaign.update` e nova confirmação após a campanha existir;
+- validação: teste dirigido GREEN e `services/chat-bridge: npm test` com
+  **85/85** testes aprovados;
+- próximo gate: publicar somente a nova imagem `app-bridge`, repetir o preview
+  de criação estrita em produção e, antes de qualquer persistência, obter uma
+  confirmação explícita para o objeto de teste exato.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
-do runtime, deep links e E2E fake foram executados. Continuam pendentes apenas
-os gates que exigem banco/serviços reais ou a infraestrutura final da VPS.
+do runtime, deep links, contrato conversacional e E2E fake foram executados.
+Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
+final da VPS, inclusive a publicação pontual da Bridge e as jornadas de escrita
+com confirmação explícita.

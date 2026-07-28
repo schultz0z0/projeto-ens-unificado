@@ -74,6 +74,17 @@ never delegation/plan tokens or hidden prompts.
 
 ## Field mapping
 
+### New campaign versus enrichment
+
+`campaign.create_draft` is deliberately strict: it accepts only `type`,
+`ref`, `name`, and optional `course_slug`. Do not put objective, audience,
+channels, briefing, notes, or dates in this action.
+
+First prepare and confirm the draft. Only after it exists, read it to obtain
+its current identifier and version, then prepare a separate
+`campaign.update` plan for those fields and obtain a new confirmation. Do not
+attempt to target an update through `campaign_ref` in the creation plan.
+
 | User intent | Internal behavior |
 |---|---|
 | "Crie uma campanha de volta as aulas" | Prepare a draft with the supplied name. `course_slug` is optional; omit it. |

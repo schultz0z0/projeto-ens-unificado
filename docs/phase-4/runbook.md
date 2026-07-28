@@ -65,6 +65,25 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 Não use `docker compose down`, nem `--remove-orphans`, neste deploy: a Fase 4
 não requer remover serviços fora do conjunto listado.
 
+### Rebuild pontual da Bridge
+
+Quando a mudança estiver limitada ao contrato conversacional injetado pela
+Bridge (caso do quarto hotfix de 28/07/2026), reconstrua somente esse serviço:
+
+```bash
+cd /opt/nexus-ens
+git pull --ff-only origin main
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 app-bridge
+curl -fsS http://127.0.0.1:8081/health
+```
+
+Não recrie `hermes-api` nem `hermes-kanban` para essa alteração: a Bridge monta
+o `system_message` a cada requisição e a mudança não altera o MCP, o schema ou
+o frontend.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 
@@ -93,6 +112,9 @@ ambiente alvo for diferente ou comprovadamente estiver defasado.
 - Hermes lista campanhas autorizadas;
 - Hermes lê agenda real de uma campanha;
 - Hermes prepara um plano sem persistir nada;
+- uma campanha nova é preparada primeiro apenas como rascunho (`name` e
+  `course_slug` opcional); objetivo, público, canais, briefing, notas e datas
+  são uma segunda operação de atualização, após leitura e nova confirmação;
 - Hermes executa um plano confirmado e devolve deep link;
 - frontend abre o objeto retornado.
 - briefing vira itens somente após confirmação;

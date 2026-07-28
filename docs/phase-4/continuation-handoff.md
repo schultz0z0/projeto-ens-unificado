@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `ready_for_user_deploy`
+- **Estado:** `pending_app_bridge_redeploy`
 - **Snapshot:** 2026-07-28
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -16,11 +16,18 @@
 ## Ponto exato de continuação
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
-alinhado. Há um terceiro hotfix de compatibilidade do SDK MCP aguardando
-rebuild sem cache de `hermes-api` e `hermes-kanban`; os testes MCP HTTP já
-provaram transporte/discovery, mas o próximo gate é uma leitura real de
-campanhas/agenda no chat. Em seguida, o assistente valida o checklist real de
-homologação e registra o aceite final.
+alinhado. Os três hotfixes de compatibilidade MCP foram publicados; a leitura
+real de campanhas/agenda concluiu no chat de produção, confirmando transporte,
+tool e resposta ponta a ponta sem mutação.
+
+O preview seguinte revelou que o agente tentava misturar enriquecimento com
+`campaign.create_draft`, cujo schema é estrito. O Marketing Ops recusou antes
+de assinatura/persistência. Há um quarto hotfix local, testado com RED/GREEN e
+85/85 testes da Bridge: ele instrui criação somente com `type`, `ref`, `name`
+e `course_slug` opcional e exige um segundo ciclo para `campaign.update`.
+O próximo passo é publicar apenas `app-bridge` com o bloco pontual de
+`runbook.md`, repetir o preview de rascunho e só então retomar os testes reais
+de escrita mediante confirmação explícita para o objeto exato.
 
 ## Artefatos críticos já entregues
 
@@ -31,7 +38,8 @@ homologação e registra o aceite final.
 
 ## Regras de retomada
 
-- não alterar o escopo funcional antes de repetir a validação na VPS;
+- não alterar o schema nem afrouxar `campaign.create_draft` para contornar o
+  erro de composição; a correção está no contrato do operador;
 - não expor mutações novas como tools diretas do MCP;
 - não reabrir decisões da Fase 3 sem regressão comprovada;
 - não promover a fase por documentação ou E2E fake sozinhos;

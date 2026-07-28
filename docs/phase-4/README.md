@@ -2,15 +2,16 @@
 
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
-evidência de teste aplicável e o schema remoto do Supabase foram reconciliados;
-falta apenas o gate real de homologação na VPS para promover a fase.
+evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
+A homologação real está em curso: a leitura de produção passou, e uma correção
+pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-28
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `pending_user_deploy_then_assistant_validation`
+- **Homologação VPS:** `in_progress_pending_app_bridge_redeploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -30,8 +31,8 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `ready_for_execution` | [checklist](vps-validation.md) |
-| Handoff | `ready_for_continuation_or_deploy` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `read_smoke_validated_bridge_redeploy_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_app_bridge_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -53,7 +54,7 @@ falta apenas o gate real de homologação na VPS para promover a fase.
   métricas e migration estática verdes (12 testes dirigidos no último
   pré-deploy);
 - `chat-bridge`: contrato do operador Hermes e guardrails de delegação validados
-  (85 testes no último pré-deploy);
+  (85/85 testes após o quarto hotfix de contrato);
 - `chat-web`: typecheck, build, 12 testes dirigidos de deep link/chat e E2E fake
   do operador Hermes aprovados;
 - runtime Hermes: 13 testes de delegação/scrub/RAG-Graph e `compileall` verdes;
@@ -63,6 +64,9 @@ falta apenas o gate real de homologação na VPS para promover a fase.
   `marketing_ops.audit_events`;
 - histórico local/remoto da migration alinhado pela Supabase CLI em 2026-07-28,
   sem reaplicar DDL ou alterar dados de domínio;
+- smoke real de leitura concluído no app publicado: campanhas e agenda foram
+  obtidas por Hermes/MCP/Marketing Ops sem mutação; um preview completo foi
+  recusado pelo schema estrito antes de plano assinado ou persistência;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
@@ -74,10 +78,13 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
+- a Bridge ainda precisa receber o quarto hotfix que separa a criação estrita
+  de rascunho da atualização de seus campos de enriquecimento.
 
 ## Decisão
 
-**A Fase 4 está implementada e documentada, pronta para deploy controlado na
-VPS.** A promoção para `production_validated` depende do deploy real, dos
-smokes executados pelo assistente no ambiente publicado e do aceite final do
-usuário conforme [vps-validation.md](vps-validation.md).
+**A Fase 4 está implementada e documentada; sua homologação real está em
+andamento.** A promoção para `production_validated` depende do deploy pontual
+da Bridge, dos smokes de escrita executados pelo assistente no ambiente
+publicado e do aceite final do usuário conforme
+[vps-validation.md](vps-validation.md).

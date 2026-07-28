@@ -298,12 +298,21 @@ passou isoladamente. O bloqueio é ambiental e está rastreado em
 O primeiro deploy VPS revelou três incompatibilidades com a API HTTP atual do
 SDK MCP no Hermes: a detecção exigia o símbolo legado, o transporte podia
 retornar dois streams e o resultado da tool instalada expõe `is_error` em vez
-de `isError`. Todas tiveram RED/GREEN; a suíte dirigida atual passou com 19
-testes e `compileall`. A terceira correção ainda requer rebuild sem cache e um
-smoke MCP que execute uma tool real na VPS.
+de `isError`. Todas tiveram RED/GREEN; a suíte dirigida passou com 19 testes e
+`compileall`. O rebuild foi feito e uma leitura real de campanhas/agenda no
+chat concluiu com sucesso, exercitando a tool MCP em produção.
+
+Esse smoke revelou um quarto ponto de integração, agora na composição do plano
+pela Bridge: `campaign.create_draft` é estrita e não aceita os campos de
+enriquecimento de campanha. O erro foi corretamente recusado pelo Marketing
+Ops, sem plano assinado nem persistência. A Bridge e a skill do operador foram
+ajustadas por RED/GREEN para explicitar a criação estrita e o segundo ciclo de
+leitura/plano/confirmação para `campaign.update`; o teste dirigido e a suíte
+integral da Bridge passaram com 85/85. A correção aguarda apenas rebuild sem
+cache de `app-bridge` e repetição do preview real.
 
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende
-de deploy/homologação real na VPS, com banco e serviços finais, sem novas
-mudanças funcionais previstas antes desse gate.
+do deploy pontual da Bridge e da homologação real na VPS, com banco e serviços
+finais; nenhuma mudança de domínio foi introduzida por esta correção.
