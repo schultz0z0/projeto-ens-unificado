@@ -53,10 +53,13 @@ o checklist autoritativo para fechar a promoção da Fase 4 em produção.
 
 ```bash
 cd /opt/projeto-ens-unificado
+git fetch origin main
+git pull --ff-only origin main
+git status --short
 bash scripts/bootstrap.sh
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build app-frontend app-bridge marketing-ops hermes-api hermes-kanban
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-frontend app-bridge marketing-ops hermes-api hermes-kanban
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-frontend app-bridge marketing-ops hermes-api hermes-kanban
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 marketing-ops app-bridge hermes-api app-frontend
 ```

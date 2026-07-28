@@ -51,24 +51,19 @@ Também confirme, sem exibir valores, os segredos de delegação e as URLs
 internas esperadas pelo `marketing-ops`, Bridge, Hermes e Artifact Server.
 Pare o deploy se qualquer comando acima falhar.
 
-## Comandos base
+## Comandos de deploy da Fase 4
 
-Use sempre os dois arquivos Compose do monorepo em produção:
-
-```bash
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build app-frontend app-bridge marketing-ops hermes-api hermes-kanban
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
-```
-
-Para este deploy de fechamento, force a reconstrução das superfícies afetadas.
-Isso garante as flags públicas embutidas no frontend e a skill copiada para a
-imagem Hermes:
+Use sempre os dois arquivos Compose do monorepo em produção. A reconstrução sem
+cache atualiza as flags públicas embutidas no frontend e a skill copiada para a
+imagem Hermes; a recriação é limitada aos cinco serviços afetados.
 
 ```bash
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-frontend app-bridge marketing-ops hermes-api hermes-kanban
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-frontend app-bridge marketing-ops hermes-api hermes-kanban
 ```
+
+Não use `docker compose down`, nem `--remove-orphans`, neste deploy: a Fase 4
+não requer remover serviços fora do conjunto listado.
 
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
