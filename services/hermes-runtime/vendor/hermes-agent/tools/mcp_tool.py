@@ -1777,9 +1777,11 @@ class MCPServerTask:
             # Caller owns the client lifecycle — the SDK skips cleanup when
             # http_client is provided, so we wrap in async-with.
             async with httpx.AsyncClient(**client_kwargs) as http_client:
-                async with streamable_http_client(url, http_client=http_client) as (
-                    read_stream, write_stream, _get_session_id,
-                ):
+                # The current SDK has returned both a two-value transport and,
+                # in earlier releases, a three-value transport tuple.  Only the
+                # two streams are needed to open ClientSession.
+                async with streamable_http_client(url, http_client=http_client) as transport:
+                    read_stream, write_stream, *_ = transport
                     async with ClientSession(read_stream, write_stream, **sampling_kwargs) as session:
                         self.initialize_result = await session.initialize()
                         self.session = session

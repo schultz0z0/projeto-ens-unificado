@@ -106,6 +106,9 @@ ambiente alvo for diferente ou comprovadamente estiver defasado.
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 marketing-ops app-bridge hermes-api app-frontend
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_marketing_ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_rag
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_graph
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_picture
 curl -fsS http://127.0.0.1:8091/ready
 curl -fsS http://127.0.0.1:8081/health
 curl -fsS http://127.0.0.1:8652/health

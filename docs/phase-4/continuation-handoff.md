@@ -16,8 +16,10 @@
 ## Ponto exato de continuação
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
-alinhado. O próximo passo é o usuário executar o deploy na VPS; em seguida, o
-assistente valida o checklist real de homologação e registra o aceite final.
+alinhado. Há um segundo hotfix de compatibilidade do SDK MCP aguardando rebuild
+sem cache de `hermes-api` e `hermes-kanban`; execute os quatro testes MCP HTTP
+do `runbook.md` antes das jornadas de chat. Em seguida, o assistente valida o
+checklist real de homologação e registra o aceite final.
 
 ## Artefatos críticos já entregues
 

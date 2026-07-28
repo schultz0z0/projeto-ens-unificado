@@ -22,6 +22,16 @@ atual; a correção no repositório habilita HTTP também com
 `hermes-kanban` a partir do commit que contém essa correção e executar
 `hermes mcp test nexus_marketing_ops` antes dos smokes de chat.
 
+### Incidente de segundo deploy — 28/07/2026
+
+O primeiro hotfix eliminou a indisponibilidade do símbolo, mas o teste real
+`hermes mcp test nexus_marketing_ops` passou a revelar o contrato de retorno
+da API instalada: `not enough values to unpack (expected 3, got 2)`. A versão
+atual expõe os dois streams necessários à sessão; o runtime agora também aceita
+o terceiro valor que versões anteriores podiam retornar. Rebuild sem cache de
+`hermes-api` e `hermes-kanban` é obrigatório novamente, seguido dos quatro
+smokes MCP HTTP antes de qualquer jornada de chat.
+
 ## Checklist planejado
 
 - [ ] imagens e configuração publicadas;
@@ -72,6 +82,10 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-frontend app-bridge marketing-ops hermes-api hermes-kanban
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 marketing-ops app-bridge hermes-api app-frontend
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_marketing_ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_rag
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_graph
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_picture
 ```
 
 Se a VPS usar outro diretório padrão do projeto, ajuste apenas o `cd`.

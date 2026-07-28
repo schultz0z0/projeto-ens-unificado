@@ -162,9 +162,18 @@
 - RED: `docker/tests/test_mcp_http_sdk_compat.py` falhou, reproduzindo a
   detecção incorreta da API atual;
 - GREEN: a API atual agora também marca `_MCP_HTTP_AVAILABLE=true`;
-- validação: 14 testes de runtime/operador passaram e `compileall` passou.
-- o gate VPS permanece pendente até rebuild sem cache de `hermes-api` e
-  `hermes-kanban`, teste `hermes mcp test nexus_marketing_ops` e smoke real.
+- a primeira correção foi publicada, mas o teste real na VPS revelou a segunda
+  incompatibilidade: a API atual retornou dois streams e o runtime tentava
+  desempacotar três valores (`not enough values to unpack (expected 3, got 2)`);
+- RED: o novo teste de regressão para o retorno de dois streams falhou pelo
+  desempacotamento rígido;
+- GREEN: o caminho da API atual consome os dois streams necessários e tolera o
+  terceiro valor das versões anteriores;
+- validação: a suíte dirigida atualizada passou com 18 testes e `compileall`
+  passou;
+- o gate VPS permanece pendente até um segundo rebuild sem cache de
+  `hermes-api` e `hermes-kanban`, testes `hermes mcp test` para os quatro MCPs
+  HTTP e smoke real.
 
 ## Decisão atual
 

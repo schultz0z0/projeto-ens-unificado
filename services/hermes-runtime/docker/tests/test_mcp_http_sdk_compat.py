@@ -16,3 +16,13 @@ def test_current_streamable_http_client_enables_http_transport() -> None:
         r"\s+_MCP_HTTP_AVAILABLE = True",
         text,
     )
+
+
+def test_current_streamable_http_client_accepts_two_streams() -> None:
+    text = MCP_TOOL.read_text()
+
+    assert re.search(
+        r"async with streamable_http_client\(url, http_client=http_client\) as transport:\n"
+        r"\s+read_stream, write_stream, \*_ = transport",
+        text,
+    )
