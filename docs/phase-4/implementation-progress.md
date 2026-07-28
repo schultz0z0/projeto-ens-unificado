@@ -295,6 +295,10 @@ bloqueados por `ECONNREFUSED 127.0.0.1:55322`; a verificação JWT equivalente
 passou isoladamente. O bloqueio é ambiental e está rastreado em
 `local-validation.md`, sem promover os cenários ao estado verde.
 
+O primeiro deploy VPS também revelou uma incompatibilidade de detecção da API
+HTTP do SDK MCP no Hermes. A correção foi coberta por RED/GREEN e 14 testes de
+runtime/operador; ela ainda requer rebuild sem cache e teste MCP real na VPS.
+
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende

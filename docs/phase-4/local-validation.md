@@ -153,6 +153,19 @@
   Supabase local nem converter este bloqueio ambiental em um resultado verde
   artificial. Os cinco cenários seguem no gate VPS real.
 
+## Registro de correção do runtime MCP — 2026-07-28
+
+- o primeiro deploy VPS confirmou health dos serviços, mas Hermes não conectou
+  aos MCPs HTTP porque `tools/mcp_tool.py` exigia o símbolo legado
+  `streamablehttp_client`, mesmo quando a API atual `streamable_http_client`
+  estava instalada;
+- RED: `docker/tests/test_mcp_http_sdk_compat.py` falhou, reproduzindo a
+  detecção incorreta da API atual;
+- GREEN: a API atual agora também marca `_MCP_HTTP_AVAILABLE=true`;
+- validação: 14 testes de runtime/operador passaram e `compileall` passou.
+- o gate VPS permanece pendente até rebuild sem cache de `hermes-api` e
+  `hermes-kanban`, teste `hermes mcp test nexus_marketing_ops` e smoke real.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato

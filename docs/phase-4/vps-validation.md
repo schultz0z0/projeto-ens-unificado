@@ -12,6 +12,16 @@ O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
 
+### Incidente de primeiro deploy — 28/07/2026
+
+Os cinco serviços da Fase 4 ficaram `healthy`, mas a imagem Hermes recusou os
+MCPs HTTP porque detectava apenas o símbolo legado `streamablehttp_client`.
+A imagem em execução já possuía o módulo `mcp.client.streamable_http` e a API
+atual; a correção no repositório habilita HTTP também com
+`streamable_http_client`. É obrigatório rebuildar `hermes-api` e
+`hermes-kanban` a partir do commit que contém essa correção e executar
+`hermes mcp test nexus_marketing_ops` antes dos smokes de chat.
+
 ## Checklist planejado
 
 - [ ] imagens e configuração publicadas;
@@ -52,7 +62,7 @@ o checklist autoritativo para fechar a promoção da Fase 4 em produção.
 ## Comandos base
 
 ```bash
-cd /opt/projeto-ens-unificado
+cd /opt/nexus-ens
 git fetch origin main
 git pull --ff-only origin main
 git status --short

@@ -195,6 +195,7 @@ try:
     try:
         from mcp.client.streamable_http import streamable_http_client
         _MCP_NEW_HTTP = True
+        _MCP_HTTP_AVAILABLE = True
     except ImportError:
         _MCP_NEW_HTTP = False
     try:
