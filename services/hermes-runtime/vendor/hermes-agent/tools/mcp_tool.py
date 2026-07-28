@@ -2812,8 +2812,8 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
         async def _call():
             async with server._rpc_lock:
                 result = await server.session.call_tool(tool_name, arguments=args)
-            # MCP CallToolResult has .content (list of content blocks) and .isError
-            if result.isError:
+            # MCP SDK releases expose the error flag in camelCase or snake_case.
+            if getattr(result, "isError", getattr(result, "is_error", False)):
                 error_text = ""
                 for block in (result.content or []):
                     if hasattr(block, "text"):

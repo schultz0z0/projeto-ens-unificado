@@ -295,12 +295,12 @@ bloqueados por `ECONNREFUSED 127.0.0.1:55322`; a verificação JWT equivalente
 passou isoladamente. O bloqueio é ambiental e está rastreado em
 `local-validation.md`, sem promover os cenários ao estado verde.
 
-O primeiro deploy VPS também revelou duas incompatibilidades com a API HTTP
-atual do SDK MCP no Hermes: a detecção exigia o símbolo legado e, depois dessa
-correção, o código ainda desempacotava três valores quando a API retornava dois
-streams. Ambas tiveram RED/GREEN; a suíte dirigida atual passou com 18 testes e
-`compileall`. A segunda correção ainda requer rebuild sem cache e teste MCP
-real na VPS.
+O primeiro deploy VPS revelou três incompatibilidades com a API HTTP atual do
+SDK MCP no Hermes: a detecção exigia o símbolo legado, o transporte podia
+retornar dois streams e o resultado da tool instalada expõe `is_error` em vez
+de `isError`. Todas tiveram RED/GREEN; a suíte dirigida atual passou com 19
+testes e `compileall`. A terceira correção ainda requer rebuild sem cache e um
+smoke MCP que execute uma tool real na VPS.
 
 ## Decisão atual
 

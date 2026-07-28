@@ -117,6 +117,10 @@ curl -fsS http://127.0.0.1:8652/health
 Se o health HTTP não estiver publicado diretamente na VPS, execute os curls via
 `docker compose exec -T <service>`.
 
+Os quatro comandos `hermes mcp test` confirmam transporte e discovery. Execute
+também uma leitura real no chat antes de qualquer mutação, pois só ela valida o
+handler de `CallToolResult` e a delegação ponta a ponta.
+
 ## Logs e segurança
 
 - nunca registrar `delegation_token` ou `plan_token`;

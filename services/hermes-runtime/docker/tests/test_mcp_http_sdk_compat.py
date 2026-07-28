@@ -26,3 +26,9 @@ def test_current_streamable_http_client_accepts_two_streams() -> None:
         r"\s+read_stream, write_stream, \*_ = transport",
         text,
     )
+
+
+def test_current_mcp_result_accepts_snake_case_error_flag() -> None:
+    text = MCP_TOOL.read_text()
+
+    assert 'getattr(result, "isError", getattr(result, "is_error", False))' in text

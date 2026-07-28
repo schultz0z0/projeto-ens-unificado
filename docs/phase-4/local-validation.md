@@ -169,11 +169,17 @@
   desempacotamento rígido;
 - GREEN: o caminho da API atual consome os dois streams necessários e tolera o
   terceiro valor das versões anteriores;
-- validação: a suíte dirigida atualizada passou com 18 testes e `compileall`
+- o primeiro smoke conversacional em produção alcançou o Marketing Ops, mas a
+  execução da tool falhou porque o `CallToolResult` instalado expõe
+  `is_error`, enquanto o runtime acessava somente `isError`;
+- RED: o novo teste de regressão para a flag snake_case falhou pelo atributo
+  ausente observado no log real;
+- GREEN: o handler compartilhado aceita `isError` e `is_error`;
+- validação: a suíte dirigida atualizada passou com 19 testes e `compileall`
   passou;
-- o gate VPS permanece pendente até um segundo rebuild sem cache de
-  `hermes-api` e `hermes-kanban`, testes `hermes mcp test` para os quatro MCPs
-  HTTP e smoke real.
+- o gate VPS permanece pendente até um terceiro rebuild sem cache de
+  `hermes-api` e `hermes-kanban`, novo smoke de leitura que invoque uma tool
+  MCP e as jornadas reais restantes.
 
 ## Decisão atual
 

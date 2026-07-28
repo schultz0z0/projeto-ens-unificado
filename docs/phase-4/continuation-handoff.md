@@ -16,10 +16,11 @@
 ## Ponto exato de continuação
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
-alinhado. Há um segundo hotfix de compatibilidade do SDK MCP aguardando rebuild
-sem cache de `hermes-api` e `hermes-kanban`; execute os quatro testes MCP HTTP
-do `runbook.md` antes das jornadas de chat. Em seguida, o assistente valida o
-checklist real de homologação e registra o aceite final.
+alinhado. Há um terceiro hotfix de compatibilidade do SDK MCP aguardando
+rebuild sem cache de `hermes-api` e `hermes-kanban`; os testes MCP HTTP já
+provaram transporte/discovery, mas o próximo gate é uma leitura real de
+campanhas/agenda no chat. Em seguida, o assistente valida o checklist real de
+homologação e registra o aceite final.
 
 ## Artefatos críticos já entregues
 

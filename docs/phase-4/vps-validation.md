@@ -32,6 +32,17 @@ o terceiro valor que versões anteriores podiam retornar. Rebuild sem cache de
 `hermes-api` e `hermes-kanban` é obrigatório novamente, seguido dos quatro
 smokes MCP HTTP antes de qualquer jornada de chat.
 
+### Incidente de terceiro deploy — 28/07/2026
+
+Os quatro comandos `hermes mcp test` validaram transporte e descoberta, mas
+não executam uma tool. No primeiro smoke conversacional de leitura, o Hermes
+chegou ao Marketing Ops e falhou no handler compartilhado ao ler `isError` de
+um `CallToolResult` cuja API instalada fornece `is_error`. O runtime agora
+aceita as duas convenções. Rebuild sem cache de `hermes-api` e
+`hermes-kanban` é obrigatório novamente; depois dele, a primeira evidência
+necessária é uma leitura real de campanhas/agenda concluída no chat, sem
+mutação.
+
 ## Checklist planejado
 
 - [ ] imagens e configuração publicadas;
@@ -68,6 +79,9 @@ smokes MCP HTTP antes de qualquer jornada de chat.
 5. verificar se a migration da Fase 4 já está refletida no Supabase alvo;
 6. executar os smokes manuais do operador Hermes;
 7. registrar evidência e aceite final.
+
+`hermes mcp test` prova conexão e discovery, não execução. Portanto, não
+substitui o smoke conversacional de leitura previsto nesta fase.
 
 ## Comandos base
 
