@@ -17,34 +17,7 @@ const defaultConfig = () => ({
 });
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const explicitConfirmationPhrases = new Set([
-  "sim",
-  "sim confirmo",
-  "sim pode executar",
-  "sim pode executar o plano",
-  "confirmo",
-  "confirmo o plano",
-  "confirmo o plano acima",
-  "confirmo o plano revisado",
-  "confirmo execute esse plano novo agora",
-  "aprovo",
-  "aprovo o plano",
-  "aprovado",
-  "pode executar",
-  "pode executar o plano",
-  "pode prosseguir",
-]);
-
-export const isExplicitMarketingOpsConfirmation = (message) => {
-  if (typeof message !== "string") return false;
-  const normalized = message
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-  return explicitConfirmationPhrases.has(normalized);
-};
+export const confirmationIntentForMarketingOpsDecision = (decision) => decision === "approve";
 
 const validateDelegationClaims = (claims) => {
   const valid =

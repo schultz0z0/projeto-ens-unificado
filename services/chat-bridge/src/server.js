@@ -27,7 +27,7 @@ import {
   validateChatExperience,
 } from "./picture-mode.js";
 import {
-  isExplicitMarketingOpsConfirmation,
+  confirmationIntentForMarketingOpsDecision,
   isValidDelegationRefreshKey,
   issueMarketingOpsDelegation,
   redactMarketingOpsDelegation,
@@ -805,7 +805,7 @@ const issueRunMarketingOpsDelegation = async (run) => {
     chatSessionId: run.chat_session_id,
     runId: run.id,
     correlationId: run.id,
-    confirmationIntent: isExplicitMarketingOpsConfirmation(run.message_text),
+    confirmationIntent: confirmationIntentForMarketingOpsDecision(run.marketing_ops_decision),
   }, scopes, config.marketingOpsDelegation);
 };
 
@@ -1126,6 +1126,25 @@ class HermesBridge {
     };
   }
 
+  async resolveRunMarketingOpsDecision(run, hermesBaseUrl) {
+    if (run.experience === "picture") return "none";
+    try {
+      const response = await fetch(new URL("/v1/internal/marketing-ops-decision", hermesBaseUrl.origin), {
+        method: "POST",
+        headers: this.buildHermesHeaders("application/json", run),
+        body: JSON.stringify({ session_id: run.hermes_session_id, message: run.message_text }),
+        signal: AbortSignal.timeout(4_000),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return "clarify";
+      return ["approve", "reject", "revise", "clarify", "none"].includes(payload?.decision)
+        ? payload.decision
+        : "clarify";
+    } catch {
+      return "clarify";
+    }
+  }
+
   async createHermesRun(run, hermesBaseUrl) {
     const marketingOpsDelegation = await issueRunMarketingOpsDelegation(run);
     const requestPayload = buildHermesRunRequest({
@@ -1626,7 +1645,14 @@ class HermesBridge {
       createIfMissing: run.mode !== "responses",
     });
     run.hermes_session_id = state.hermes_session_id || buildHermesRunSessionId(run.chat_session_id);
-    run.hermes_conversation_id = state.hermes_conversation_id;
+    run.hermes_conversation_id = state.hermes_conversation_id;
+
+    run.marketing_ops_decision = await this.resolveRunMarketingOpsDecision(run, hermesBaseUrl);
+
+    this.appendEvent(run, {
+      event: "meta",
+      data: { provider: "hermes", event: "marketing_ops.decision", decision: run.marketing_ops_decision },
+    });
     run.status = "running";
     this.appendEvent(run, { event: "status", data: { text: "Hermes iniciou a tarefa.", tone: "info" } });
     await this.store.save(run);

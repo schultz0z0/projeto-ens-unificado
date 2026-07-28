@@ -4,6 +4,7 @@ import { decodeProtectedHeader, decodeJwt, jwtVerify, SignJWT } from "jose";
 
 import { validateBridgeRuntimeConfig } from "../src/runtime-config.js";
 import {
+  confirmationIntentForMarketingOpsDecision,
   issueMarketingOpsDelegation,
   redactMarketingOpsDelegation,
   withMarketingOpsDelegation,
@@ -147,27 +148,10 @@ test("delegation has exact short-lived claims and active kid", async () => {
   assert.equal(verified.payload.exp - verified.payload.iat, 90);
 });
 
-test("explicit conversational confirmation is conservative", () => {
-  assert.equal(typeof marketingOpsDelegation.isExplicitMarketingOpsConfirmation, "function");
-  for (const message of [
-    "Confirmo",
-    "Confirmo o plano revisado.",
-    "Confirmo. Execute esse plano novo agora.",
-    "Aprovo o plano",
-    "Pode executar",
-    "Sim, pode executar o plano",
-  ]) {
-    assert.equal(marketingOpsDelegation.isExplicitMarketingOpsConfirmation(message), true, message);
-  }
-  for (const message of [
-    "Sim, mas altere o titulo",
-    "Confirmo, mas troque o nome",
-    "Nao execute",
-    "Pode executar somente o email",
-    "Talvez",
-    "Crie a campanha",
-  ]) {
-    assert.equal(marketingOpsDelegation.isExplicitMarketingOpsConfirmation(message), false, message);
+test("only the internal approve decision grants confirmation intent", () => {
+  assert.equal(confirmationIntentForMarketingOpsDecision("approve"), true);
+  for (const decision of ["reject", "revise", "clarify", "none", "unknown", "", null]) {
+    assert.equal(confirmationIntentForMarketingOpsDecision(decision), false, String(decision));
   }
 });
 
