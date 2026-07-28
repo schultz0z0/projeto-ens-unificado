@@ -1,7 +1,7 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `ready_for_vps_validation`
-- **Snapshot:** 2026-07-22
+- **Estado:** `ready_for_user_deploy`
+- **Snapshot:** 2026-07-28
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
 
@@ -15,9 +15,9 @@
 
 ## Ponto exato de continuação
 
-O escopo local da Fase 4 está concluído. O próximo passo é executar o deploy na
-VPS, validar o checklist real de homologação e registrar o aceite final da
-fase.
+O escopo local da Fase 4 está concluído e o histórico de migration remoto está
+alinhado. O próximo passo é o usuário executar o deploy na VPS; em seguida, o
+assistente valida o checklist real de homologação e registra o aceite final.
 
 ## Artefatos críticos já entregues
 

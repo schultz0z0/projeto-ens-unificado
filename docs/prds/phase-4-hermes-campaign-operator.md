@@ -1,6 +1,6 @@
 # PRD — Fase 4: Hermes Campaign Operator
 
-- **Status:** draft
+- **Status:** approved_for_vps_validation
 - **Dependências:** Fases 1–3 concluídas
 - **Resultado:** Hermes consulta e opera campanhas reais com confirmação e auditoria
 

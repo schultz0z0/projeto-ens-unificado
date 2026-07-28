@@ -8,15 +8,16 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
-- **Snapshot reconciliado:** 2026-07-22
+- **Snapshot reconciliado:** 2026-07-28
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `pending_user_execution`
-- **Supabase remoto:** `migration_applied_remote`
+- **Homologação VPS:** `pending_user_deploy_then_assistant_validation`
+- **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
 - **PRD:** [phase-4-hermes-campaign-operator.md](../prds/phase-4-hermes-campaign-operator.md)
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-07-20-phase-4-hermes-campaign-operator-implementation.md](../plans/2026-07-20-phase-4-hermes-campaign-operator-implementation.md)
+- **Fechamento do gate:** [2026-07-28-phase-4-release-gate.md](../plans/2026-07-28-phase-4-release-gate.md)
 
 ## Pacote documental
 
@@ -26,7 +27,7 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 | Tasks 1–8 | `completed_pending_vps_gate` | [progresso](implementation-progress.md) |
 | Rastreabilidade F4-RF-01–12 | `reconciled_pending_vps_gate` | [rastreabilidade](requirements-traceability.md) |
 | Registro de riscos | `reconciled_with_residuals` | [risk-register.md](risk-register.md) |
-| Supabase remoto | `migration_applied_remote` | [deploy](supabase-deployment.md) |
+| Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
 | Homologação VPS | `ready_for_execution` | [checklist](vps-validation.md) |
@@ -49,14 +50,19 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 ## Evidência consolidada
 
 - `marketing-ops`: typecheck, build, contratos MCP, executor, auditoria,
-  métricas e migration estática verdes;
-- `chat-bridge`: contrato do operador Hermes e guardrails de delegação validados;
-- `chat-web`: typecheck, build, testes dirigidos de deep link/chat e E2E fake
+  métricas e migration estática verdes (12 testes dirigidos no último
+  pré-deploy);
+- `chat-bridge`: contrato do operador Hermes e guardrails de delegação validados
+  (85 testes no último pré-deploy);
+- `chat-web`: typecheck, build, 12 testes dirigidos de deep link/chat e E2E fake
   do operador Hermes aprovados;
+- runtime Hermes: 13 testes de delegação/scrub/RAG-Graph e `compileall` verdes;
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
   conectado, com os sete campos novos confirmados em
   `marketing_ops.audit_events`;
+- histórico local/remoto da migration alinhado pela Supabase CLI em 2026-07-28,
+  sem reaplicar DDL ou alterar dados de domínio;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
@@ -71,6 +77,7 @@ falta apenas o gate real de homologação na VPS para promover a fase.
 
 ## Decisão
 
-**A Fase 4 está implementada e documentada, pronta para homologação na VPS.** A
-promoção para `production_validated` depende apenas do deploy real, dos smokes
-manuais e do aceite final do usuário conforme [vps-validation.md](vps-validation.md).
+**A Fase 4 está implementada e documentada, pronta para deploy controlado na
+VPS.** A promoção para `production_validated` depende do deploy real, dos
+smokes executados pelo assistente no ambiente publicado e do aceite final do
+usuário conforme [vps-validation.md](vps-validation.md).

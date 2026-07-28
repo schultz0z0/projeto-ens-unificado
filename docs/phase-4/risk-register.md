@@ -1,7 +1,7 @@
 # Registro de riscos — Fase 4
 
 - **Estado:** `reconciled_with_residuals`
-- **Revisão:** 2026-07-22
+- **Revisão:** 2026-07-28
 
 ## Riscos de implementação
 
@@ -26,6 +26,7 @@
 | F4-R-17 | falha parcial reexecutar/duplicar ações concluídas | alto | resultado por ação, dependências e replay idempotente | Marketing Ops | `executor_unit_validated_vps_pending` |
 | F4-R-18 | logs/auditoria persistirem copy ou briefing integral | alto | fingerprint de texto, redaction e testes de ausência | Marketing Ops/Bridge | `mitigated_unit_validated` |
 | F4-R-19 | conteúdo receber deep link sem rota frontend canônica | médio | mapear asset para item + query `contentAssetId` | Frontend | `mitigated_component_and_e2e_fake` |
+| F4-R-20 | histórico remoto de migration divergir do arquivo versionado e bloquear futuro `db push` | alto | reparar apenas `schema_migrations`, listar local/remoto antes do deploy e nunca reaplicar DDL já presente | Supabase/Marketing Ops | `mitigated_history_aligned_2026-07-28` |
 
 ## Bloqueadores permanentes
 

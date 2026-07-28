@@ -29,6 +29,28 @@ Antes do deploy da fase:
 - executar backup do Supabase e checagem da migration remota já aplicada;
 - confirmar que `git status` e o commit implantado correspondem à evidência.
 
+## Conferência segura da configuração da VPS
+
+No diretório do checkout da VPS, valide a presença e o formato das variáveis
+sem imprimir secrets. As flags `VITE_*` são resolvidas durante o build do
+frontend, portanto uma alteração nelas exige rebuild de `app-frontend`.
+
+```bash
+cd /opt/projeto-ens-unificado
+chmod 600 .env
+grep -q '^NEXUS_PUBLIC_MARKETING_OPS_URL=https://.\+' .env
+grep -q '^NEXUS_MARKETING_OPS_FEATURE_READ=true$' .env
+grep -q '^NEXUS_MARKETING_OPS_FEATURE_WRITE=true$' .env
+grep -q '^NEXUS_MARKETING_OPS_FRONTEND_ENABLED=true$' .env
+grep -q '^NEXUS_MARKETING_OPS_FRONTEND_READ=true$' .env
+grep -q '^NEXUS_MARKETING_OPS_FRONTEND_WRITE=true$' .env
+grep -q '^NEXUS_MARKETING_OPS_FRONTEND_KILL_SWITCH=false$' .env
+```
+
+Também confirme, sem exibir valores, os segredos de delegação e as URLs
+internas esperadas pelo `marketing-ops`, Bridge, Hermes e Artifact Server.
+Pare o deploy se qualquer comando acima falhar.
+
 ## Comandos base
 
 Use sempre os dois arquivos Compose do monorepo em produção:
@@ -36,6 +58,15 @@ Use sempre os dois arquivos Compose do monorepo em produção:
 ```bash
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build app-frontend app-bridge marketing-ops hermes-api hermes-kanban
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+```
+
+Para este deploy de fechamento, force a reconstrução das superfícies afetadas.
+Isso garante as flags públicas embutidas no frontend e a skill copiada para a
+imagem Hermes:
+
+```bash
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-frontend app-bridge marketing-ops hermes-api hermes-kanban
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 ```
 
@@ -57,10 +88,10 @@ python -m compileall services/hermes-runtime/docker services/hermes-runtime/skil
 4. validar `/health`, `/ready` e descoberta do catálogo MCP;
 5. executar smoke de leitura antes de qualquer mutação.
 
-Se a VPS apontar para o mesmo projeto Supabase já conectado neste workspace, não
-reaplique cegamente a migration da Fase 4. Primeiro confirme que
-`20260722130000_phase_4_hermes_operator_audit.sql` já está refletida no schema
-remoto; só repita o push se o ambiente alvo for diferente ou estiver defasado.
+Se a VPS apontar para o mesmo projeto Supabase já conectado neste workspace, o
+histórico de `20260722130000_phase_4_hermes_operator_audit.sql` já está
+alinhado. Não execute `supabase db push` para esta fase; só aplique schema se o
+ambiente alvo for diferente ou comprovadamente estiver defasado.
 
 ## Smoke mínimo esperado
 

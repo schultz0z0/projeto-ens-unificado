@@ -2,7 +2,7 @@
 
 - **Estado:** `implemented_pending_vps_validation`
 - **Progresso de implementação:** 100%
-- **Snapshot reconciliado:** 2026-07-22
+- **Snapshot reconciliado:** 2026-07-28
 - **Branch única:** `main`
 - **Próximo gate:** homologação VPS real e aceite final do usuário
 
@@ -269,7 +269,8 @@ no gate de banco.
 
 - README, progresso, rastreabilidade, riscos, gate local, runbook, rollback,
   deploy Supabase, handoff e checklist VPS reconciliados com o estado real;
-- migration remota da Fase 4 aplicada no projeto Supabase conectado via MCP;
+- migration remota da Fase 4 aplicada no projeto Supabase conectado e histórico
+  reparado/alinhado pela CLI em 2026-07-28;
 - instruções operacionais da VPS alinhadas ao fluxo real do monorepo com
   `docker compose` usando `docker-compose.yml` e `docker-compose.prod.yml`.
 
@@ -279,6 +280,8 @@ no gate de banco.
 |---|---|
 | `supabase_apply_migration` na migration `20260722130000_phase_4_hermes_operator_audit.sql` | aplicado com sucesso no projeto remoto conectado |
 | verificação do schema remoto pelo MCP Supabase | colunas `operator_origin`, `chat_session_id`, `run_id`, `tool_name`, `tool_call_id`, `plan_id` e `plan_action_index` confirmadas |
+| `supabase migration repair` | entrada órfã `20260722183310` revertida e `20260722130000` marcada como aplicada; listagem local/remota alinhada |
+| regressões pré-deploy independentes de banco | 12 testes Marketing Ops, 85 Bridge, 12 frontend e 13 Hermes; typecheck/build aplicáveis verdes |
 | pacote documental da fase | reconciliado para refletir implementação local e gate VPS pendente |
 
 ### Limitação residual
@@ -286,6 +289,11 @@ no gate de banco.
 O MCP PostgreSQL read-only não refletiu as colunas novas do mesmo modo que o
 MCP integrado do Supabase. A verificação canônica deste snapshot ficou no
 `supabase_get_tables`, e a repetição do check em produção continua no gate VPS.
+
+Na regressão de 2026-07-28, os cinco casos MCP que exigem PostgreSQL ficaram
+bloqueados por `ECONNREFUSED 127.0.0.1:55322`; a verificação JWT equivalente
+passou isoladamente. O bloqueio é ambiental e está rastreado em
+`local-validation.md`, sem promover os cenários ao estado verde.
 
 ## Decisão atual
 

@@ -1,7 +1,7 @@
 # Design — Fase 4 Hermes Campaign Operator
 
 - **Data:** 2026-07-22
-- **Estado:** `approved_baseline`
+- **Estado:** `implemented_pending_vps_validation`
 - **Dependência:** Fase 3 `production_validated`
 - **PRD base:** [phase-4-hermes-campaign-operator.md](../prds/phase-4-hermes-campaign-operator.md)
 
@@ -34,7 +34,7 @@ Não inclui:
 
 ## 3. Baseline herdado
 
-### 3.1 O que já existe
+### 3.1 Baseline histórico e estado implementado
 
 - `marketing_ops_capabilities_v1`, `marketing_ops_list_campaigns_v1`,
   `marketing_ops_get_campaign_v1`, `marketing_ops_prepare_plan_v1`,
@@ -42,7 +42,9 @@ Não inclui:
   `marketing_ops_create_campaign_draft_v1`,
   `marketing_ops_update_campaign_draft_v1`,
   `marketing_ops_create_campaign_item_draft_v1` e `marketing_ops_list_audit_v1`
-  já existem no MCP atual.
+  existiam no baseline anterior à Fase 4. No estado implementado, as três
+  mutações diretas foram removidas do catálogo e as escritas passam somente por
+  `marketing_ops_prepare_plan_v1` e `marketing_ops_execute_plan_v1`.
 - A Fase 3 já entregou domínio e REST para agenda canônica, timeline,
   conteúdo versionado e artifacts.
 - O fork do Hermes já possui:
@@ -124,8 +126,8 @@ Regras:
 
 As tools legadas `marketing_ops_create_campaign_draft_v1`,
 `marketing_ops_update_campaign_draft_v1` e
-`marketing_ops_create_campaign_item_draft_v1` serão retiradas do catálogo MCP.
-O domínio REST continua intacto. Testes de contrato e runtime devem provar que
+`marketing_ops_create_campaign_item_draft_v1` foram retiradas do catálogo MCP.
+O domínio REST continua intacto. Testes de contrato e runtime provam que
 nenhuma mutação MCP é possível fora de `prepare_plan_v1` e `execute_plan_v1`.
 
 ## 5. Arquitetura
@@ -359,7 +361,7 @@ Cada recurso criado/alterado deverá retornar:
 - `resource_id`;
 - `label`;
 - `href` relativo ao frontend;
-- `open_in` com a tela prevista (`campaign_workspace`, `campaign_calendar`,
+- `open_in` com a tela prevista (`campaign_workspace`, `campaign_item`,
   `content_asset`).
 
 Os deep links serão gerados no `marketing-ops`, não no Hermes, para evitar
@@ -463,12 +465,16 @@ Casos obrigatórios:
 - logs correlacionados e rollback verificável;
 - aceite manual do usuário registrado.
 
-## 15. Critério de prontidão para execução
+## 15. Critério de prontidão para deploy e homologação
 
-A Fase 4 está pronta para começar porque:
+A Fase 4 está pronta para deploy controlado porque:
 
-- este design foi aceito como baseline técnico em 2026-07-22;
+- este design foi aceito como baseline técnico em 2026-07-22 e reconciliado
+  com o código em 2026-07-28;
 - o plano datado da fase foi reconciliado com Roadmap e PRD;
 - a superfície de tools, ações, deep links e resultados está congelada;
 - a migration aditiva e a estratégia de correlação estão decididas;
 - segurança, jornadas e gates possuem critérios rastreáveis.
+
+O gate de homologação real permanece pendente; este documento não autoriza
+promover a fase sem as evidências de `vps-validation.md`.

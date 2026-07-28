@@ -1,11 +1,12 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `ready_for_execution`
+- **Estado:** `ready_after_predeploy_reconciliation`
 - **Implementação local:** `implemented_pending_vps_validation`
-- **Responsável pelo deploy/testes manuais:** usuário
+- **Responsável pelo deploy:** usuário
+- **Responsável pelos testes manuais finais:** assistente, após o deploy
 - **Promoção final:** somente após evidência real e aceite
 
-## Nota de reconciliação — 22/07/2026
+## Nota de reconciliação — 28/07/2026
 
 O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
@@ -17,7 +18,9 @@ o checklist autoritativo para fechar a promoção da Fase 4 em produção.
 - [ ] `marketing-ops`, Bridge e runtime Hermes healthy;
 - [ ] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;
-- [ ] migration e índices de correlação aplicados;
+- [x] migration e índices de correlação aplicados e histórico remoto alinhado
+  em 2026-07-28;
+- [ ] VPS confirma que aponta para esse mesmo projeto Supabase;
 - [ ] refresh de delegação funcionando;
 - [ ] smoke de leitura de campanhas e agenda;
 - [ ] plano preparado sem persistência prematura;
@@ -60,6 +63,10 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 
 Se a VPS usar outro diretório padrão do projeto, ajuste apenas o `cd`.
 
+Antes do build, execute também os `grep` de configuração em
+[runbook.md](runbook.md#conferência-segura-da-configuração-da-vps). Para este
+gate, use o build `--no-cache` dos cinco serviços indicado no runbook.
+
 ## Smoke manual mínimo
 
 1. abrir o chat e pedir uma ação de Marketing Ops sem confirmar;
@@ -74,6 +81,43 @@ Se a VPS usar outro diretório padrão do projeto, ajuste apenas o `cd`.
 7. executar um cenário com conflito ou retry idempotente, se o ambiente de
    homologação permitir sem risco operacional;
 8. validar um cenário RAG/ENS e um cenário Graph relacional antes do aceite.
+
+## Roteiro manual final após o deploy
+
+Crie uma conversa nova para cada jornada de escrita; a delegação é emitida por
+sessão e não se deve reutilizar uma conversa anterior ao deploy. Use um nome
+único, por exemplo `HML F4 Gate AAAA-MM-DD`, e marque todos os objetos como
+teste.
+
+1. Como admin, peça uma leitura de campanhas e agenda. Esperado: o Hermes
+   consulta o Marketing Ops, não pede confirmação e não afirma estado sem fonte
+   operacional.
+2. Peça a criação da campanha de teste, mas não confirme. Esperado: preview
+   claro, nenhuma persistência e nenhum deep link final.
+3. Responda somente `Aprovado`. Esperado: uma criação, auditoria correlacionada
+   e deep link de campanha válido.
+4. Peça para preencher os campos suportados da campanha: objetivo, público,
+   briefing, notas, datas e canais. Esperado: novo preview e atualização apenas
+   após confirmação.
+5. Peça a conversão do briefing em pelo menos um item de e-mail agendado.
+   Depois do preview, confirme e abra o deep link do item.
+6. No item criado, peça exatamente um rascunho `email_html` e, em seguida, uma
+   versão inicial da copy. Esperado: não ocorrer `invalid_union` nem
+   `delegation_scope_denied`; o link de conteúdo abre o asset e sua versão.
+7. Peça uma revisão de tom ENS baseada em fato institucional e uma consulta que
+   exija relação/trabalho validado. Esperado: RAG e Graph são usados como fontes
+   adequadas, nunca como estado transacional.
+8. Como manager, valide a leitura e auditoria permitidas. Como member, valide
+   que apenas campanhas autorizadas são listadas. Não use a conta member para
+   mutações fora de sua autorização.
+9. Envie uma instrução maliciosa apenas como conteúdo de teste. Esperado: ela
+   não amplia papel, escopo, confirmação ou seleção de tool.
+
+Retry idêntico, conflito de versão, rate limit, indisponibilidade e restart não
+devem ser simulados por cliques repetidos no site público: exigem replay do
+mesmo plano ou intervenção em serviço. Execute-os apenas em janela controlada,
+com backup e autorização explícita, registrando correlation IDs e sem expor
+tokens.
 
 ## Evidência mínima esperada
 

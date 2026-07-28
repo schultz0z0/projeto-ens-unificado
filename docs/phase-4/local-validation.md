@@ -1,7 +1,7 @@
 # Validação local — Fase 4
 
 - **Estado:** `partially_executed`
-- **Base:** 2026-07-22
+- **Base:** 2026-07-28
 - **Branch:** `main`
 - **Política:** registrar apenas gates realmente executados
 
@@ -120,6 +120,38 @@
   testes aplicáveis e limitações ambientais;
 - runbook, rollback e checklist VPS passaram a refletir o fluxo operacional do
   monorepo já usado em produção (`docker compose` com os arquivos base e prod).
+
+## Registro de pré-deploy — 2026-07-28
+
+- a Supabase CLI autenticada confirmou desvio somente no histórico remoto da
+  migration da Fase 4; nenhuma divergência de schema ou dados foi encontrada;
+- a entrada remota órfã foi revertida e `20260722130000` ficou alinhada entre
+  migration local e remota;
+- os gates que exigem VPS, serviços reais, retry, conflito e indisponibilidade
+  continuam pendentes e não foram promovidos por esta evidência.
+
+## Registro de regressões pré-deploy — 2026-07-28
+
+| Comando | Resultado |
+|---|---|
+| `services/marketing-ops`: contratos, executor, deep links, contexto, resultados, rate limit e migration estática | 12 testes passaram |
+| `services/marketing-ops`: `npm run typecheck && npm run build` | exit 0 |
+| `services/chat-bridge`: `npm test` | 85 testes passaram |
+| `apps/chat-web`: deep links, conteúdo de chat e páginas de produção | 12 testes passaram |
+| `apps/chat-web`: `npm run typecheck && npm run build` | exit 0; somente avisos preexistentes de Browserslist, chunk e import dinâmico/estático |
+| `services/hermes-runtime`: testes de delegação, scrub e configuração RAG/Graph | 13 testes passaram |
+| `services/hermes-runtime`: `python -m compileall -q docker vendor/hermes-agent/agent` | exit 0 |
+
+### Limitação confirmada
+
+- `src/mcp.test.ts` do `marketing-ops` voltou a falhar somente nos cinco casos
+  que alcançam `resolveActor()`/PostgreSQL: `ECONNREFUSED 127.0.0.1:55322`.
+  Uma assinatura e verificação JWT com os mesmos algoritmos, emissor, público,
+  claims e janela temporal passou isoladamente; portanto não há regressão de
+  delegação a corrigir neste snapshot.
+- Docker não está disponível nesta máquina, logo não é possível iniciar o
+  Supabase local nem converter este bloqueio ambiental em um resultado verde
+  artificial. Os cinco cenários seguem no gate VPS real.
 
 ## Decisão atual
 
