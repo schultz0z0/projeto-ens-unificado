@@ -27,6 +27,7 @@
 | F4-R-18 | logs/auditoria persistirem copy ou briefing integral | alto | fingerprint de texto, redaction e testes de ausência | Marketing Ops/Bridge | `mitigated_unit_validated` |
 | F4-R-19 | conteúdo receber deep link sem rota frontend canônica | médio | mapear asset para item + query `contentAssetId` | Frontend | `mitigated_component_and_e2e_fake` |
 | F4-R-20 | histórico remoto de migration divergir do arquivo versionado e bloquear futuro `db push` | alto | reparar apenas `schema_migrations`, listar local/remoto antes do deploy e nunca reaplicar DDL já presente | Supabase/Marketing Ops | `mitigated_history_aligned_2026-07-28` |
+| F4-R-21 | resposta coloquial aprovar plano errado ou pergunta/ressalva ser interpretada como execução | crítico | classificador contextual restrito ao plano pendente, sem tools/persistência, enum fechado, delegação emitida somente para `approve` e falha fechada; matriz VPS pendente | Hermes Runtime/Bridge | `local_validated_contextual_deploy_pending` |
 
 ## Bloqueadores permanentes
 

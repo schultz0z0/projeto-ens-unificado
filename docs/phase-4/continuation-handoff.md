@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_marketing_ops_redeploy`
+- **Estado:** `pending_app_bridge_redeploy`
 - **Snapshot:** 2026-07-28
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -25,13 +25,16 @@ O preview seguinte revelou que o agente tentava misturar enriquecimento com
 de assinatura/persistência. Há um quarto hotfix local, testado com RED/GREEN e
 85/85 testes da Bridge: ele instrui criação somente com `type`, `ref`, `name`
 e `course_slug` opcional e exige um segundo ciclo para `campaign.update`.
-Esse hotfix foi publicado, mas o reteste real revelou que o MiniMax transforma
-o array em `actions: { item: {...} }` ou string JSON. O MCP recusou ambos sem
-persistência. O sexto hotfix é limitado ao schema MCP do `marketing-ops`:
-normaliza apenas o envelope `item` para um array e mantém o schema estrito das
-ações. O teste RED/GREEN, typecheck e build passaram. Publique-o com o bloco
-pontual de `runbook.md`, repita o preview e só então retome os testes reais de
-escrita mediante confirmação explícita para o objeto exato.
+O sexto hotfix foi publicado e o preview passou no app real, sem persistência.
+A confirmação contextual em turno posterior foi recusada porque a Bridge só
+reconhecia frases literais. O sétimo hotfix de frases foi substituído antes de
+publicação pela correção contextual aprovada: `hermes-api` classifica a resposta
+contra o plano pendente, sem tools, e a Bridge assina confirmação somente para
+`approve`. Pergunta, negação, ressalva, adiamento e alteração falham fechados;
+alteração exige novo preview. Os gates locais do runtime e os 86 testes da
+Bridge passaram. Publique os dois serviços com o bloco pontual de `runbook.md`,
+repita preview e confirmação, e só então retome os testes reais de escrita para
+o objeto exato.
 
 ## Artefatos críticos já entregues
 

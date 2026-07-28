@@ -9,7 +9,7 @@
 
 - `marketing-ops` com catálogo MCP atualizado e testes de contrato;
 - runtime Hermes com skill e guardrails alinhados ao novo catálogo;
-- Bridge configurando delegação curta e confirmação explícita;
+- Bridge configurando delegação curta e confirmação contextual em turno posterior;
 - frontend apto a abrir deep links e mostrar o objeto criado/alterado.
 
 ## Checklist do gate local
@@ -243,10 +243,35 @@
 - próximo gate: rebuild sem cache e recriação de `marketing-ops`, repetir o
   preview sem persistência e só então continuar para criação confirmada.
 
+## Registro de confirmação conversacional — 2026-07-28
+
+- após o rebuild do `marketing-ops`, o preview real passou: o plano de criação
+  estrita foi preparado, exibido no app e não persistiu dados;
+- a confirmação seguinte, em turno posterior, foi corretamente encaminhada ao
+  `execute_plan_v1`, mas o backend a recusou com `confirmation_required`; a
+  mensagem continha o nome do rascunho e `exatamente como apresentado`, portanto
+  era inequívoca e não alterava o plano;
+- a sessão Hermes confirmou que a Bridge havia assinado a delegação sem
+  `confirmation_intent`: o classificador aceitava apenas frases completas de
+  uma allowlist e rejeitava a confirmação contextual;
+- o detector literal planejado foi substituído antes de deploy pela decisão
+  contextual aprovada. O runtime recebe apenas sessão e mensagem, detecta plano
+  pendente, usa uma chamada sem tools/sem persistência e devolve enum fechado;
+  a Bridge só transforma `approve` em `confirmation_intent=true`. Sem plano,
+  não há chamada de modelo; timeout, erro ou saída inválida resultam em
+  `clarify` e nunca em execução;
+- RED: os testes do runtime e da Bridge falharam sem a rota/classificação;
+  GREEN: o teste dirigido do runtime e `compileall` passaram; o contrato de
+  payload passou com 20 testes e `services/chat-bridge: npm test` com **86/86**;
+  `git diff --check` passou;
+- próximo gate: rebuild sem cache e recriação de `hermes-api` e `app-bridge`,
+  repetir preview e a matriz de aprovação, pergunta, rejeição e revisão antes
+  de continuar a criação do dado de teste.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
 do runtime, deep links, contrato conversacional e E2E fake foram executados.
 Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
-final da VPS, inclusive a publicação pontual do `marketing-ops` e as jornadas de escrita
-com confirmação explícita.
+final da VPS, inclusive a publicação pontual de `hermes-api` e `app-bridge` e
+as jornadas de escrita com confirmação contextual.

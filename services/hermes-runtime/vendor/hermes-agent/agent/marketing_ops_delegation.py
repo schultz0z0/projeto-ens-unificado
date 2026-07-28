@@ -150,7 +150,7 @@ def marketing_ops_plan_execution_block_message(
 
     return (
         "confirmation_required: execution is allowed only in a later turn "
-        "that explicitly confirms the latest prepared plan. Do not retry "
+        "that confirms the latest prepared plan. Do not retry "
         "execute_plan in this turn; present the plan and ask for confirmation."
     )
 
@@ -162,7 +162,7 @@ def marketing_ops_direct_mutation_block_message(function_name: str) -> str | Non
         return (
             "confirmation_plan_required: direct Marketing Ops mutations are blocked. "
             "Use marketing_ops_prepare_plan_v1, present the complete plan to the user, "
-            "then use marketing_ops_execute_plan_v1 only after explicit confirmation."
+            "then use marketing_ops_execute_plan_v1 only after confirmation."
         )
     return None
 

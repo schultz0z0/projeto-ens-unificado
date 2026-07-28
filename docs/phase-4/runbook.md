@@ -65,25 +65,30 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 Não use `docker compose down`, nem `--remove-orphans`, neste deploy: a Fase 4
 não requer remover serviços fora do conjunto listado.
 
-### Rebuild pontual da Bridge
+### Rebuild pontual da decisão contextual
 
-Quando a mudança estiver limitada ao contrato conversacional injetado pela
-Bridge (casos dos quarto e quinto hotfixes de 28/07/2026), reconstrua somente
-esse serviço:
+Para a correção contextual da confirmação de 28/07/2026, reconstrua os dois
+serviços envolvidos: `hermes-api` expõe o classificador sem tools e a Bridge
+usa somente sua decisão fechada para assinar a delegação.
 
 ```bash
 cd /opt/nexus-ens
 git pull --ff-only origin main
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 hermes-api app-bridge
+curl -fsS http://127.0.0.1:8652/health
 curl -fsS http://127.0.0.1:8081/health
 ```
 
-Não recrie `hermes-api` nem `hermes-kanban` para essa alteração: a Bridge monta
-o `system_message` a cada requisição e a mudança não altera o MCP, o schema ou
-o frontend.
+Não recrie `hermes-kanban`, frontend ou Marketing Ops para essa alteração. A
+correção não altera MCP, schema, migration ou configuração; usa a chave Hermes
+que a Bridge já possui.
+
+Depois do rebuild, em conversas novas, valide que `vamos nessa` e `pode ser`
+executam somente o plano pendente exato; pergunta (`pode ser?`), negação,
+ressalva e alteração não executam. Uma alteração deve gerar novo preview.
 
 ### Rebuild pontual do Marketing Ops
 

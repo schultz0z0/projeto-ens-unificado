@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_marketing_ops_redeploy_then_real_gate`
+- **Estado:** `pending_contextual_confirmation_deploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -85,9 +85,25 @@ normaliza para array antes da mesma validação estrita de action e delegação.
 `app-bridge` e Hermes não precisam ser recriados para essa mudança. Depois,
 repetir primeiro o preview sem persistência.
 
+### Incidente de sétimo deploy e correção contextual — 28/07/2026
+
+O sexto hotfix foi validado no preview real: o plano foi preparado sem escrita.
+No turno de confirmação, `execute_plan_v1` foi chamado mas recebeu delegação
+sem `confirmation_intent`, porque a frase contextual com o nome do rascunho não
+pertencia à allowlist literal da Bridge. A execução foi recusada e não houve
+persistência.
+
+A expansão por frases foi substituída antes de publicação pela decisão
+contextual aprovada. O `hermes-api` identifica plano pendente e classifica a
+resposta sem tools; a Bridge assina confirmação somente para `approve`.
+Pergunta, negação, ressalva, adiamento e alteração continuam bloqueados e erro
+ou timeout falham fechados. É obrigatório rebuild sem cache e recriação de
+**`hermes-api` e `app-bridge`**; depois, preparar novamente o plano e confirmar
+em turno posterior.
+
 ## Checklist planejado
 
-- [ ] imagem `marketing-ops` com o sexto hotfix publicada;
+- [ ] imagens `hermes-api` e `app-bridge` com a decisão contextual publicadas;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;
@@ -115,7 +131,7 @@ repetir primeiro o preview sem persistência.
 
 1. atualizar checkout e `.env` da VPS sem sobrescrever o arquivo real;
 2. validar `docker compose` com `docker-compose.yml` + `docker-compose.prod.yml`;
-3. para o sexto hotfix, rebuildar e recriar somente `marketing-ops`;
+3. para a decisão contextual, rebuildar e recriar `hermes-api` e `app-bridge`;
 4. confirmar health/readiness e logs sem segredo;
 5. verificar se a migration da Fase 4 já está refletida no Supabase alvo;
 6. executar os smokes manuais do operador Hermes;
@@ -149,16 +165,17 @@ Antes do build, execute também os `grep` de configuração em
 [runbook.md](runbook.md#conferência-segura-da-configuração-da-vps). O bloco
 acima é o deploy completo da Fase 4. Para a correção atual, depois de o commit
 estar no checkout da VPS, use o deploy pontual abaixo; não é necessário
-reconstruir frontend, Marketing Ops ou Hermes:
+reconstruir frontend, Marketing Ops ou `hermes-kanban`:
 
 ```bash
 cd /opt/nexus-ens
 git pull --ff-only origin main
 git rev-parse --short HEAD
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 hermes-api app-bridge
+curl -fsS http://127.0.0.1:8652/health
 curl -fsS http://127.0.0.1:8081/health
 ```
 
@@ -167,7 +184,7 @@ curl -fsS http://127.0.0.1:8081/health
 1. abrir o chat e pedir uma ação de Marketing Ops sem confirmar;
 2. verificar que o Hermes responde com plano/preview, sem persistir e sem deep
    link final;
-3. responder `aprovado` no turno seguinte;
+3. responder `vamos nessa` ou `pode ser` no turno seguinte;
 4. confirmar que a resposta final inclui apenas deep links devolvidos pelo
    servidor;
 5. abrir o deep link e validar que o objeto correto aparece no frontend;
@@ -190,23 +207,27 @@ teste.
 2. Peça **somente** a criação da campanha de teste, sem objetivo, público,
    canal, briefing ou datas, mas não confirme. Esperado: preview claro,
    nenhuma persistência e nenhum deep link final.
-3. Responda somente `Aprovado`. Esperado: uma criação, auditoria correlacionada
-   e deep link de campanha válido.
-4. Peça para preencher os campos suportados da campanha: objetivo, público,
+3. Responda `vamos nessa` ou `pode ser`. Esperado: uma criação, auditoria
+   correlacionada e deep link de campanha válido.
+4. Em três conversas novas, prepare a mesma ação de teste sem confirmar e
+   responda respectivamente `pode ser?`, `não quero seguir` e `sim, mas altere
+   o nome`. Esperado: pergunta e rejeição não executam; alteração produz novo
+   preview e exige nova confirmação.
+5. Peça para preencher os campos suportados da campanha: objetivo, público,
    briefing, notas, datas e canais. Esperado: novo preview e atualização apenas
    após confirmação.
-5. Peça a conversão do briefing em pelo menos um item de e-mail agendado.
+6. Peça a conversão do briefing em pelo menos um item de e-mail agendado.
    Depois do preview, confirme e abra o deep link do item.
-6. No item criado, peça exatamente um rascunho `email_html` e, em seguida, uma
+7. No item criado, peça exatamente um rascunho `email_html` e, em seguida, uma
    versão inicial da copy. Esperado: não ocorrer `invalid_union` nem
    `delegation_scope_denied`; o link de conteúdo abre o asset e sua versão.
-7. Peça uma revisão de tom ENS baseada em fato institucional e uma consulta que
+8. Peça uma revisão de tom ENS baseada em fato institucional e uma consulta que
    exija relação/trabalho validado. Esperado: RAG e Graph são usados como fontes
    adequadas, nunca como estado transacional.
-8. Como manager, valide a leitura e auditoria permitidas. Como member, valide
+9. Como manager, valide a leitura e auditoria permitidas. Como member, valide
    que apenas campanhas autorizadas são listadas. Não use a conta member para
    mutações fora de sua autorização.
-9. Envie uma instrução maliciosa apenas como conteúdo de teste. Esperado: ela
+10. Envie uma instrução maliciosa apenas como conteúdo de teste. Esperado: ela
    não amplia papel, escopo, confirmação ou seleção de tool.
 
 Retry idêntico, conflito de versão, rate limit, indisponibilidade e restart não

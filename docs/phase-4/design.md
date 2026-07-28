@@ -130,6 +130,21 @@ As tools legadas `marketing_ops_create_campaign_draft_v1`,
 O domínio REST continua intacto. Testes de contrato e runtime provam que
 nenhuma mutação MCP é possível fora de `prepare_plan_v1` e `execute_plan_v1`.
 
+### 4.7 Decisão contextual da confirmação
+
+A confirmação continua sendo obrigatória em turno posterior, mas não depende de
+uma allowlist de frases. Para cada resposta de usuário, a Bridge solicita ao
+runtime Hermes uma decisão curta, sem tools, sobre o último plano pendente da
+sessão. O resultado interno permitido é `approve`, `reject`, `revise`,
+`clarify` ou `none`.
+
+Somente `approve` emite a delegação fresca com `confirmation_intent=true` para
+o plano exato. Perguntas, negações, ressalvas, adiamentos e pedidos de alteração
+nunca recebem essa permissão; alteração exige novo preview e nova confirmação.
+Sem plano pendente não há chamada de modelo (`none`). Timeout, erro ou saída
+fora do schema falham fechados como `clarify`, sem execução, token ou
+persistência de transcript pelo classificador.
+
 ## 5. Arquitetura
 
 ```text
@@ -137,7 +152,7 @@ Frontend Nexus AI
    │ chat / deep link
    ▼
 Chat Bridge
-   │ JWT usuário + delegação curta + classificação conservadora de confirmação
+   │ JWT usuário + delegação curta + decisão contextual fail-closed de confirmação
    ▼
 Hermes Runtime / hermes-agent-fork
    │ skill marketing-ops-operator

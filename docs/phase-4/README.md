@@ -3,15 +3,16 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso: a leitura de produção passou, e uma correção
-pontual da Bridge precisa ser publicada antes das jornadas de escrita.
+A homologação real está em curso: a leitura de produção passou, e a correção
+contextual de confirmação precisa ser publicada em `hermes-api` e `app-bridge`
+antes das jornadas de escrita.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-28
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `in_progress_pending_app_bridge_redeploy`
+- **Homologação VPS:** `in_progress_pending_contextual_confirmation_deploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -19,6 +20,7 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-07-20-phase-4-hermes-campaign-operator-implementation.md](../plans/2026-07-20-phase-4-hermes-campaign-operator-implementation.md)
 - **Fechamento do gate:** [2026-07-28-phase-4-release-gate.md](../plans/2026-07-28-phase-4-release-gate.md)
+- **Decisão contextual:** [design aprovado](../plans/2026-07-28-phase-4-contextual-confirmation-design.md) · [plano executado](../plans/2026-07-28-phase-4-contextual-confirmation-implementation.md)
 
 ## Pacote documental
 
@@ -31,8 +33,8 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `read_smoke_validated_bridge_redeploy_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_app_bridge_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `read_smoke_validated_contextual_deploy_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_hermes_api_and_app_bridge_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -53,11 +55,12 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 - `marketing-ops`: typecheck, build, contratos MCP, executor, auditoria,
   métricas e migration estática verdes (12 testes dirigidos no último
   pré-deploy);
-- `chat-bridge`: contrato do operador Hermes e guardrails de delegação validados
-  (85/85 testes após o quarto hotfix de contrato);
+- `chat-bridge`: contrato contextual do operador Hermes e guardrails de
+  delegação validados (86/86 testes locais);
 - `chat-web`: typecheck, build, 12 testes dirigidos de deep link/chat e E2E fake
   do operador Hermes aprovados;
-- runtime Hermes: 13 testes de delegação/scrub/RAG-Graph e `compileall` verdes;
+- runtime Hermes: decisão contextual, delegação/scrub/RAG-Graph e `compileall`
+  validados localmente;
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
   conectado, com os sete campos novos confirmados em
@@ -78,14 +81,15 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- o `marketing-ops` ainda precisa receber o sexto hotfix: o reteste real provou
-  que MiniMax serializa arrays de action no envelope `actions.item`; o MCP
-  normaliza somente essa forma antes da validação estrita.
+- o preview real passou, mas a confirmação contextual foi recusada pela
+  allowlist literal anterior. A correção revisada classifica a resposta no
+  contexto do plano pendente, libera somente `approve` e falha fechada. Ela
+  exige rebuild de `hermes-api` e `app-bridge` antes do teste de escrita.
 
 ## Decisão
 
 **A Fase 4 está implementada e documentada; sua homologação real está em
 andamento.** A promoção para `production_validated` depende do deploy pontual
-do `marketing-ops`, dos smokes de escrita executados pelo assistente no ambiente
-publicado e do aceite final do usuário conforme
+de `hermes-api` e `app-bridge`, dos smokes de escrita executados pelo assistente
+no ambiente publicado e do aceite final do usuário conforme
 [vps-validation.md](vps-validation.md).

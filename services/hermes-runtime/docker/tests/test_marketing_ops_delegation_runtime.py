@@ -142,6 +142,7 @@ def test_runtime_exposes_a_tool_free_contextual_confirmation_endpoint() -> None:
     assert '"/v1/internal/marketing-ops-decision"' in api
     assert "enabled_toolsets=[]" in api
     assert "max_iterations=1" in api
+    assert "persist_session=False" in api
 
 
 def test_tool_call_redaction_handles_nested_json_arguments() -> None:

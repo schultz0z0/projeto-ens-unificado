@@ -23,6 +23,7 @@ do último preview apresentado e da mensagem atual. A saída é estrita:
 | `reject` | Hermes não executa e confirma o cancelamento em linguagem natural |
 | `revise` | Hermes não executa; incorpora a alteração, prepara novo plano e pede nova confirmação |
 | `clarify` | Hermes não executa; faz uma pergunta objetiva |
+| `none` | resultado interno quando não há plano pendente; não chama o modelo e nunca concede confirmação |
 
 Exemplos aprovados quando respondem ao plano pendente sem qualificador:
 `vamos nessa`, `pode ser`, `pode seguir`, `manda ver` e `fechado`.

@@ -1,6 +1,6 @@
 ---
 name: marketing-ops-operator
-description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one explicit confirmation.
+description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one contextual confirmation.
 version: 1.1.0
 platforms: [linux, macos, windows]
 metadata:

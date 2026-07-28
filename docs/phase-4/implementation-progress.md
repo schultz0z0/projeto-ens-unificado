@@ -322,8 +322,26 @@ array, antes do mesmo schema estrito e da verificação de delegação. O RED fo
 reproduzido no teste MCP e o GREEN, typecheck e build passaram. Ele requer
 rebuild sem cache de `marketing-ops` antes da repetição real.
 
+O preview repetido passou no app real, sem persistência prematura. O execute
+posterior, porém, foi recusado porque a confirmação real incluía o nome do
+rascunho e o classificador da Bridge só aceitava frases exatamente iguais à sua
+allowlist. O sétimo hotfix de frases foi descartado antes de publicação em favor
+da decisão contextual aprovada: o `hermes-api` verifica se há plano pendente e,
+somente nesse caso, classifica a resposta em `approve`, `reject`, `revise` ou
+`clarify` sem tools, sem persistir sessão e com uma única iteração; sem plano,
+retorna `none` sem chamar modelo. A Bridge registra somente o enum e emite
+`confirmation_intent=true` exclusivamente para `approve`. Timeout, erro ou
+schema inválido viram `clarify`.
+
+RED: os testes estáticos do runtime e da Bridge falharam antes de existir a rota
+interna/classificação. GREEN: o teste dirigido do runtime, `compileall`, o teste
+de payload e a suíte completa da Bridge passaram com 86/86. O deploy exige
+rebuild sem cache e recriação de **`hermes-api` e `app-bridge`**, seguido da
+matriz manual contextual; nenhum dado novo foi persistido por essa correção.
+
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende
-do deploy pontual do `marketing-ops` e da homologação real na VPS, com banco e
-serviços finais; nenhuma mudança de domínio foi introduzida por esta correção.
+do deploy pontual de `hermes-api` e `app-bridge` e da homologação real na VPS,
+com banco e serviços finais; nenhuma mudança de domínio ou migration foi
+introduzida por esta correção.
