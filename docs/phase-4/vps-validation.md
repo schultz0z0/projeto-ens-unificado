@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_app_bridge_redeploy_then_real_gate`
+- **Estado:** `pending_marketing_ops_redeploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -71,9 +71,23 @@ não vazia, inclusive para uma única `campaign.create_draft`. O RED/GREEN e os
 85 testes da Bridge passaram. Rebuild sem cache e recriação de **`app-bridge`**
 são obrigatórios antes de repetir o preview.
 
+### Incidente de sexto deploy — 28/07/2026
+
+O quinto hotfix foi publicado e o preview foi repetido. A sessão Hermes revelou
+que o MiniMax serializa o array de actions como `actions: { item: {...} }` e,
+em outra tentativa, como string JSON. O schema do Marketing Ops rejeitou os
+dois formatos antes da assinatura, execução ou persistência. Não houve plano
+pendente nem objeto de teste criado.
+
+O sexto hotfix aceita exclusivamente o envelope `item` do provedor e o
+normaliza para array antes da mesma validação estrita de action e delegação.
+É obrigatório rebuild sem cache e recriação de **`marketing-ops`**;
+`app-bridge` e Hermes não precisam ser recriados para essa mudança. Depois,
+repetir primeiro o preview sem persistência.
+
 ## Checklist planejado
 
-- [ ] imagem/configuração da Bridge com o quarto hotfix publicada;
+- [ ] imagem `marketing-ops` com o sexto hotfix publicada;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
 - [ ] catálogo sem tools diretas legadas de mutação;
@@ -101,7 +115,7 @@ são obrigatórios antes de repetir o preview.
 
 1. atualizar checkout e `.env` da VPS sem sobrescrever o arquivo real;
 2. validar `docker compose` com `docker-compose.yml` + `docker-compose.prod.yml`;
-3. para o quarto hotfix, rebuildar e recriar somente `app-bridge`;
+3. para o sexto hotfix, rebuildar e recriar somente `marketing-ops`;
 4. confirmar health/readiness e logs sem segredo;
 5. verificar se a migration da Fase 4 já está refletida no Supabase alvo;
 6. executar os smokes manuais do operador Hermes;

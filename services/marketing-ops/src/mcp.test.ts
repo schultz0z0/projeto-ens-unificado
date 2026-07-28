@@ -155,6 +155,27 @@ describe('delegation and MCP', () => {
     }
   });
 
+  it('normalizes the MiniMax item wrapper before validating a plan', async () => {
+    const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
+    const client = new Client({ name: 'plan-array-wrapper-test-client', version: '1.0.0' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const prepared = await client.callTool({
+        name: 'marketing_ops_prepare_plan_v1',
+        arguments: {
+          delegation_token: 'invalid-diagnostic-token',
+          actions: { item: { type: 'campaign.create_draft', ref: 'campaign-main', name: 'MiniMax wrapper' } }
+        }
+      });
+      expect(toolPayload(prepared).error.code).toBe('delegation_invalid');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
   it('prepares without writes and executes one exact multi-action plan after confirmation', async () => {
     const server = createMarketingOpsMcpServer({ pool, features: { read: true, write: true }, keyring });
     const client = new Client({ name: 'plan-test-client', version: '1.0.0' });

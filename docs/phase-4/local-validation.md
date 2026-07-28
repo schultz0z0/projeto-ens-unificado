@@ -224,10 +224,29 @@
 - próximo gate: publicar o quinto hotfix, novamente limitado a `app-bridge`,
   e repetir o mesmo preview sem persistência.
 
+## Registro de compatibilidade MiniMax no schema MCP — 2026-07-28
+
+- o quinto hotfix foi publicado e o preview estrito foi repetido no app real;
+  a sessão Hermes confirmou que o MiniMax não enviou o array JSON esperado:
+  transformou `actions: [{...}]` em `actions: { item: {...} }` e, em novas
+  tentativas, em string JSON; nenhuma tentativa foi assinada, executada ou
+  persistida;
+- o MCP permaneceu fail-closed e retornou `expected array, received object` ou
+  `string`; a sessão foi encerrada sem plano pendente;
+- RED: o teste `normalizes the MiniMax item wrapper before validating a plan`
+  falhou no schema MCP, antes de verificar a delegação;
+- GREEN: somente o envelope exato `{ item: action | action[] }` agora é
+  normalizado para array. Arrays nativos e qualquer outro formato seguem para o
+  schema estrito das oito actions, sem afrouxar campos ou autorização;
+- validação local: teste dirigido passou; `npm run typecheck`, `npm run build`
+  e `git diff --check` passaram em `services/marketing-ops`;
+- próximo gate: rebuild sem cache e recriação de `marketing-ops`, repetir o
+  preview sem persistência e só então continuar para criação confirmada.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
 do runtime, deep links, contrato conversacional e E2E fake foram executados.
 Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
-final da VPS, inclusive a publicação pontual da Bridge e as jornadas de escrita
+final da VPS, inclusive a publicação pontual do `marketing-ops` e as jornadas de escrita
 com confirmação explícita.

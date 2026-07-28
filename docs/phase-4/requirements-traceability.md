@@ -87,14 +87,13 @@ silenciosamente removidos.
 ## Registro da homologação parcial — 2026-07-28
 
 O smoke real de leitura confirmou a cadeia Hermes/MCP/Marketing Ops sem
-mutação. O preview posterior não foi contado como sucesso de criação: o schema
-rejeitou campos inválidos em `campaign.create_draft` antes de assinatura ou
-persistência. O quarto hotfix separou esses campos, mas o reteste revelou um
-segundo payload inválido: `prepare_plan` sem o array obrigatório `actions`.
-Também foi recusado antes de assinatura ou persistência. A correção de contrato
-da Bridge está coberta por RED/GREEN e 85/85 testes, mas os requisitos de
-preview, criação e atualização permanecem pendentes de publicação do quinto
-hotfix e repetição na VPS.
+mutação. Os previews posteriores não foram contados como sucesso de criação:
+primeiro o schema recusou campos inválidos em `campaign.create_draft`; depois o
+MiniMax serializou `actions` como objeto `item` ou string JSON. Todos os casos
+foram recusados antes de assinatura ou persistência. O sexto hotfix normaliza
+somente o envelope `item` no MCP, com RED/GREEN, typecheck e build locais. Os
+requisitos de preview, criação e atualização permanecem pendentes de publicação
+do `marketing-ops` e repetição na VPS.
 
 ## Leitura inicial
 

@@ -85,6 +85,24 @@ Não recrie `hermes-api` nem `hermes-kanban` para essa alteração: a Bridge mon
 o `system_message` a cada requisição e a mudança não altera o MCP, o schema ou
 o frontend.
 
+### Rebuild pontual do Marketing Ops
+
+Para o sexto hotfix de 28/07/2026, que normaliza o envelope `actions.item` do
+MiniMax antes da validação estrita do plano, reconstrua apenas o serviço MCP:
+
+```bash
+cd /opt/nexus-ens
+git pull --ff-only origin main
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 marketing-ops
+curl -fsS http://127.0.0.1:8091/ready
+```
+
+Não recrie Bridge ou Hermes nesse caso: o contrato conversacional e a skill já
+foram publicados; a mudança é limitada ao handler MCP do `marketing-ops`.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

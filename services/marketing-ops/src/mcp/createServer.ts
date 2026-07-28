@@ -25,6 +25,13 @@ import { createMcpRateLimiter } from './rateLimit.js';
 import { errorToolResult, jsonToolResult } from './toolResults.js';
 import { createMcpCommandContext, createMcpTrace } from './context.js';
 
+function normalizeMiniMaxActionArray(value: unknown): unknown {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).length !== 1 || !Object.hasOwn(record, 'item')) return value;
+  return Array.isArray(record.item) ? record.item : [record.item];
+}
+
 export interface MarketingOpsMcpDependencies {
   pool: Pool; features: { read: boolean; write: boolean }; keyring: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
@@ -270,7 +277,7 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
     description: 'Validates and signs an exact mutation plan without writing domain data. Present every action naturally and ask the user for one explicit confirmation before execution.',
     inputSchema: z.object({
       delegation_token: delegationToken,
-      actions: marketingOpsPlanActionsSchema
+      actions: z.preprocess(normalizeMiniMaxActionArray, marketingOpsPlanActionsSchema)
     })
   }, async (input) => runTool('marketing_ops_prepare_plan_v1', async (_toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');

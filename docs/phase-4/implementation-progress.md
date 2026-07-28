@@ -313,13 +313,17 @@ real revelou um quinto ponto: o modelo chamou `prepare_plan` sem o campo
 obrigatório `actions`. O MCP recusou com `expected array, received undefined`,
 novamente sem plano assinado ou persistência.
 
-O quinto hotfix explicita, no contrato e na skill, que o payload de
-`marketing_ops_prepare_plan_v1` deve conter `actions` como lista, inclusive
-para um único rascunho. Teve RED/GREEN e a suíte integral da Bridge com 85/85;
-aguarda somente novo rebuild sem cache de `app-bridge` e repetição do preview.
+O quinto hotfix foi publicado, mas o novo preview provou uma incompatibilidade
+de serialização do MiniMax: em vez de `actions: [{...}]`, o provedor enviou o
+envelope `actions: { item: {...} }` e também tentou uma string JSON. O MCP
+recusou corretamente ambos os formatos e não houve plano ou persistência. O
+sexto hotfix fica no limite MCP: normaliza somente esse envelope `item` para
+array, antes do mesmo schema estrito e da verificação de delegação. O RED foi
+reproduzido no teste MCP e o GREEN, typecheck e build passaram. Ele requer
+rebuild sem cache de `marketing-ops` antes da repetição real.
 
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende
-do deploy pontual da Bridge e da homologação real na VPS, com banco e serviços
-finais; nenhuma mudança de domínio foi introduzida por esta correção.
+do deploy pontual do `marketing-ops` e da homologação real na VPS, com banco e
+serviços finais; nenhuma mudança de domínio foi introduzida por esta correção.

@@ -78,14 +78,14 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- a Bridge ainda precisa receber o quinto hotfix: depois de separar a criação
-  estrita do enriquecimento, o reteste real confirmou que o payload do prepare
-  também precisa declarar explicitamente o array obrigatório `actions`.
+- o `marketing-ops` ainda precisa receber o sexto hotfix: o reteste real provou
+  que MiniMax serializa arrays de action no envelope `actions.item`; o MCP
+  normaliza somente essa forma antes da validação estrita.
 
 ## Decisão
 
 **A Fase 4 está implementada e documentada; sua homologação real está em
 andamento.** A promoção para `production_validated` depende do deploy pontual
-da Bridge, dos smokes de escrita executados pelo assistente no ambiente
+do `marketing-ops`, dos smokes de escrita executados pelo assistente no ambiente
 publicado e do aceite final do usuário conforme
 [vps-validation.md](vps-validation.md).
