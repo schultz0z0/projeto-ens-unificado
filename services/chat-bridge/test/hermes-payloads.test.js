@@ -294,6 +294,7 @@ test("buildHermesSessionChatRequest enforces conversational planning for Marketi
   assert.match(request.system_message, /marketing_ops_execute_plan_v1/);
   assert.match(request.system_message, /Nada e persistido antes da confirmacao/);
   assert.match(request.system_message, /course_slug e opcional/);
+  assert.match(request.system_message, /marketing_ops_prepare_plan_v1.*campo actions como uma lista/is);
   assert.match(request.system_message, /campaign\.create_draft.*somente os campos type, ref e name/is);
   assert.match(request.system_message, /campaign\.update.*somente depois de a campanha existir/is);
   assert.match(request.system_message, /nao exponha codigos brutos/);

@@ -308,8 +308,15 @@ enriquecimento de campanha. O erro foi corretamente recusado pelo Marketing
 Ops, sem plano assinado nem persistência. A Bridge e a skill do operador foram
 ajustadas por RED/GREEN para explicitar a criação estrita e o segundo ciclo de
 leitura/plano/confirmação para `campaign.update`; o teste dirigido e a suíte
-integral da Bridge passaram com 85/85. A correção aguarda apenas rebuild sem
-cache de `app-bridge` e repetição do preview real.
+integral da Bridge passaram com 85/85. A correção foi publicada, mas a repetição
+real revelou um quinto ponto: o modelo chamou `prepare_plan` sem o campo
+obrigatório `actions`. O MCP recusou com `expected array, received undefined`,
+novamente sem plano assinado ou persistência.
+
+O quinto hotfix explicita, no contrato e na skill, que o payload de
+`marketing_ops_prepare_plan_v1` deve conter `actions` como lista, inclusive
+para um único rascunho. Teve RED/GREEN e a suíte integral da Bridge com 85/85;
+aguarda somente novo rebuild sem cache de `app-bridge` e repetição do preview.
 
 ## Decisão atual
 

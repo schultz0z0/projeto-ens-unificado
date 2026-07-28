@@ -25,9 +25,12 @@ O preview seguinte revelou que o agente tentava misturar enriquecimento com
 de assinatura/persistência. Há um quarto hotfix local, testado com RED/GREEN e
 85/85 testes da Bridge: ele instrui criação somente com `type`, `ref`, `name`
 e `course_slug` opcional e exige um segundo ciclo para `campaign.update`.
-O próximo passo é publicar apenas `app-bridge` com o bloco pontual de
-`runbook.md`, repetir o preview de rascunho e só então retomar os testes reais
-de escrita mediante confirmação explícita para o objeto exato.
+Esse hotfix foi publicado, mas o reteste real revelou que o modelo omitiu o
+array obrigatório `actions` ao chamar `prepare_plan`. O MCP recusou o payload
+sem persistência. O quinto hotfix, também limitado a `app-bridge`, exige esse
+array na instrução e está coberto por RED/GREEN e 85/85 testes. Publique-o com
+o bloco pontual de `runbook.md`, repita o preview de rascunho e só então retome
+os testes reais de escrita mediante confirmação explícita para o objeto exato.
 
 ## Artefatos críticos já entregues
 

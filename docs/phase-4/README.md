@@ -78,8 +78,9 @@ pontual da Bridge precisa ser publicada antes das jornadas de escrita.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- a Bridge ainda precisa receber o quarto hotfix que separa a criação estrita
-  de rascunho da atualização de seus campos de enriquecimento.
+- a Bridge ainda precisa receber o quinto hotfix: depois de separar a criação
+  estrita do enriquecimento, o reteste real confirmou que o payload do prepare
+  também precisa declarar explicitamente o array obrigatório `actions`.
 
 ## Decisão
 

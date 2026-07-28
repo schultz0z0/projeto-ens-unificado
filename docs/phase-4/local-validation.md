@@ -208,6 +208,22 @@
   de criação estrita em produção e, antes de qualquer persistência, obter uma
   confirmação explícita para o objeto de teste exato.
 
+## Registro de correção do payload de plano — 2026-07-28
+
+- o quarto hotfix da Bridge foi publicado e o preview estrito foi repetido no
+  app real; o comportamento continuou fail-closed, sem criação nem alteração;
+- a sessão Hermes e o log do serviço confirmaram a causa exata: a chamada de
+  `marketing_ops_prepare_plan_v1` omitiu `actions`, e o MCP devolveu
+  `expected array, received undefined` para esse campo;
+- RED: o contrato conversacional da Bridge passou a exigir, em teste, que o
+  prepare envie `actions` como uma lista; o teste falhou pelo texto ausente;
+- GREEN: a instrução compartilhada e a skill do operador agora exigem o array
+  `actions` e exemplificam o rascunho como o único elemento dessa lista;
+- validação: teste dirigido GREEN e `services/chat-bridge: npm test` com
+  **85/85** testes aprovados; `git diff --check` passou;
+- próximo gate: publicar o quinto hotfix, novamente limitado a `app-bridge`,
+  e repetir o mesmo preview sem persistência.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato

@@ -68,7 +68,8 @@ não requer remover serviços fora do conjunto listado.
 ### Rebuild pontual da Bridge
 
 Quando a mudança estiver limitada ao contrato conversacional injetado pela
-Bridge (caso do quarto hotfix de 28/07/2026), reconstrua somente esse serviço:
+Bridge (casos dos quarto e quinto hotfixes de 28/07/2026), reconstrua somente
+esse serviço:
 
 ```bash
 cd /opt/nexus-ens

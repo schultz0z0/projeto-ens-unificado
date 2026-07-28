@@ -52,6 +52,9 @@ direct mutation tool. The exact action allowlist is:
 - `artifact.link_existing`
 - `campaign.note_add`
 
+The `marketing_ops_prepare_plan_v1` input wraps one or more of those actions
+in its required `actions` array. Never omit that array or send a bare action.
+
 ## Conversation contract
 
 1. Use read tools freely to discover current campaign state.

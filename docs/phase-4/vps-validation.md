@@ -58,6 +58,19 @@ novo ciclo de confirmação. O teste RED/GREEN e os 85 testes da Bridge estão
 verdes. É obrigatório rebuild sem cache e recriação de **`app-bridge`** antes
 de continuar as jornadas de escrita.
 
+### Incidente de quinto deploy — 28/07/2026
+
+Após o quarto hotfix ser publicado, o preview estrito chegou ao
+`marketing_ops_prepare_plan_v1`, mas omitiu o campo obrigatório `actions`. O
+MCP devolveu `expected array, received undefined`; não assinou plano, não
+executou e não persistiu objeto. A sessão e o log do Hermes foram consultados
+para confirmar o payload recusado, sem registrar token ou conteúdo sensível.
+
+O quinto hotfix da Bridge e da skill declara que `actions` deve ser uma lista
+não vazia, inclusive para uma única `campaign.create_draft`. O RED/GREEN e os
+85 testes da Bridge passaram. Rebuild sem cache e recriação de **`app-bridge`**
+são obrigatórios antes de repetir o preview.
+
 ## Checklist planejado
 
 - [ ] imagem/configuração da Bridge com o quarto hotfix publicada;
