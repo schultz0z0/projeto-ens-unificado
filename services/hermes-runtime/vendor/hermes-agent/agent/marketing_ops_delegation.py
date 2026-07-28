@@ -18,6 +18,7 @@ _DIRECT_MUTATION_TOOLS = frozenset(
 )
 _PREPARE_PLAN_TOOL = "marketing_ops_prepare_plan_v1"
 _EXECUTE_PLAN_TOOL = "marketing_ops_execute_plan_v1"
+_CONFIRMATION_DECISIONS = frozenset({"approve", "reject", "revise", "clarify", "none"})
 
 _DELEGATION_BLOCK = re.compile(
     r"\[MARKETING_OPS_DELEGATION\][\s\S]*?"
@@ -80,6 +81,31 @@ def _plan_token_from_tool_result(content: Any) -> str:
             return ""
         value = value["result"]
     return ""
+
+
+def has_pending_marketing_ops_plan(messages: list[Any]) -> bool:
+    """Return whether the latest Marketing Ops plan was prepared but not executed."""
+    for message in reversed(messages):
+        if not isinstance(message, dict):
+            continue
+        tool_name = str(message.get("name") or message.get("tool_name") or "").lower()
+        if tool_name.endswith(_EXECUTE_PLAN_TOOL):
+            return False
+        if tool_name.endswith(_PREPARE_PLAN_TOOL):
+            return bool(_plan_token_from_tool_result(message.get("content")))
+    return False
+
+
+def parse_marketing_ops_confirmation_decision(value: Any) -> str:
+    """Accept only the internal classifier's closed JSON decision contract."""
+    if not isinstance(value, str):
+        return "clarify"
+    try:
+        payload = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return "clarify"
+    decision = payload.get("decision") if isinstance(payload, dict) else None
+    return decision if decision in _CONFIRMATION_DECISIONS else "clarify"
 
 
 def bind_latest_marketing_ops_plan_token(

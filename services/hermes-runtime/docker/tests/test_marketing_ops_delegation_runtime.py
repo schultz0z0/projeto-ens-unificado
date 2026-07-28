@@ -13,7 +13,9 @@ from agent import marketing_ops_delegation as marketing_ops  # noqa: E402
 from agent.marketing_ops_delegation import (  # noqa: E402
     REDACTED_DELEGATION,
     bind_current_marketing_ops_delegation,
+    has_pending_marketing_ops_plan,
     marketing_ops_direct_mutation_block_message,
+    parse_marketing_ops_confirmation_decision,
     redact_marketing_ops_delegations,
 )
 from hermes_state import SessionDB  # noqa: E402
@@ -113,6 +115,33 @@ def test_execute_plan_requires_current_turn_confirmation() -> None:
     assert "confirmation_required" in blocked
     assert "do not retry" in blocked.lower()
     assert allowed is None
+
+
+def test_contextual_confirmation_decision_is_closed_and_requires_a_pending_plan() -> None:
+    assert parse_marketing_ops_confirmation_decision('{"decision":"approve"}') == "approve"
+    assert parse_marketing_ops_confirmation_decision('{"decision":"reject"}') == "reject"
+    assert parse_marketing_ops_confirmation_decision('{"decision":"revise"}') == "revise"
+    assert parse_marketing_ops_confirmation_decision('{"decision":"clarify"}') == "clarify"
+    assert parse_marketing_ops_confirmation_decision('{"decision":"none"}') == "none"
+    assert parse_marketing_ops_confirmation_decision('approve') == "clarify"
+    assert parse_marketing_ops_confirmation_decision('{"decision":"execute"}') == "clarify"
+
+    prepared = prepared_plan_result("pending-plan-token-that-is-long-enough")
+    executed = {
+        "role": "tool",
+        "name": "mcp_nexus_marketing_ops_marketing_ops_execute_plan_v1",
+        "content": '{"status":"completed"}',
+    }
+    assert has_pending_marketing_ops_plan([prepared]) is True
+    assert has_pending_marketing_ops_plan([prepared, executed]) is False
+
+
+def test_runtime_exposes_a_tool_free_contextual_confirmation_endpoint() -> None:
+    api = (VENDOR_ROOT / "gateway" / "platforms" / "api_server.py").read_text()
+
+    assert '"/v1/internal/marketing-ops-decision"' in api
+    assert "enabled_toolsets=[]" in api
+    assert "max_iterations=1" in api
 
 
 def test_tool_call_redaction_handles_nested_json_arguments() -> None:
