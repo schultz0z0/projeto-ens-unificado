@@ -519,3 +519,20 @@ def test_marketing_ops_operator_contract_freezes_content_plan_wire_shape() -> No
     assert '"asset_kind": "email_html"' in contract
     assert '"type": "content.create_draft"' in contract
     assert '"type": "content.version_create"' in contract
+
+
+def test_marketing_ops_operator_contract_freezes_content_read_wire_shape() -> None:
+    contract = (
+        VENDOR_ROOT
+        / "skills"
+        / "marketing"
+        / "marketing-ops-operator"
+        / "references"
+        / "mcp-contract.md"
+    ).read_text(encoding="utf-8")
+
+    assert '"asset_id": "00000000-0000-4000-8000-000000000000"' in contract
+    assert '"include_versions": true' in contract
+    assert '"version_limit": 5' in contract
+    assert "exactly one of `item_id` or `asset_id`" in contract
+    assert "`campaign`, `campaign_item`, or `content_asset`" in contract

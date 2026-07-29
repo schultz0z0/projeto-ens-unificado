@@ -31,14 +31,14 @@
 - [ ] tenant/papel forjados rejeitados;
 - [x] delegação expirada/reutilizada rejeitada em testes dirigidos de token;
 - [x] rate limit por ator e tool validado unitariamente;
-- [ ] prompt injection sem ampliação de autoridade;
+- [x] prompt injection sem ampliação de autoridade, comprovada em produção;
 - [x] redaction de delegação e snapshots de auditoria validada unitariamente;
 - [x] auditoria sem briefing, copy, nota ou conteúdo integral em teste unitário;
 - [x] deep links validados em unit/component test para campanha, item e asset;
 - [ ] briefing convertido em calendário/checklist após confirmação;
 - [ ] resposta do chat convertida em versão vinculada;
-- [ ] revisão pelo tom ENS fundamentada no RAG;
-- [ ] Graph usado em cenário relacional sem substituir estado transacional;
+- [ ] revisão pelo tom ENS fundamentada no RAG; fonte consultada, versão final pendente;
+- [x] Graph usado em cenário relacional sem substituir estado transacional;
 - [x] indisponibilidade comunicada sem falso sucesso;
 - [ ] serviço reiniciado sem perder dados/auditoria;
 - [ ] backup e rollback validados ou marcados não aplicáveis com justificativa.
@@ -461,3 +461,20 @@ shape completo. O domínio não foi alterado.
 O pacote foi versionado como `1.2.1`. O skip continua sendo apenas o teste POSIX
 indisponível nesta estação Windows. A prova final exige redeploy do
 `hermes-api` e repetição do plano de conteúdo no ambiente publicado.
+
+## Registro da leitura de versões para revisão ENS — 2026-07-29
+
+| Verificação | Resultado |
+|---|---|
+| criação real do asset + versão 1 | passou |
+| RAG institucional | passou |
+| Graph de trabalho validado | passou; nenhum trabalho relacionado encontrado |
+| leitura do corpo atual | falhou por ausência de `include_versions=true` na instrução |
+| regressão antes da correção | **1 failed** |
+| regressão depois da correção | **1 passed** |
+| runtime dirigido completo | **18 passed, 1 skipped** |
+| RBAC admin/manager/member | passou no app e logs |
+| prompt injection/cross-tenant/sem confirmação | recusado; zero persistência |
+
+O pacote `1.2.2` aguarda redeploy pontual de `hermes-api`. Depois dele, somente
+a criação da versão 2 precisa ser repetida.

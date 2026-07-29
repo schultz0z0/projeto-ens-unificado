@@ -580,3 +580,38 @@ A skill foi versionada como `1.2.1`. O próximo passo é rebuild sem cache e
 recriação somente de `hermes-api`, seguido de conversa nova para validar
 preview, ausência de persistência antes da confirmação, execução única,
 conteúdo/versionamento, deep link, auditoria e Supabase.
+
+## Décimo quarto release candidato — leitura de versão para revisão ENS — 2026-07-29
+
+### Evidência real
+
+O pacote `1.2.1` passou integralmente no fluxo asset + versão inicial. O
+Supabase e o frontend confirmaram o conteúdo, a versão 1, o vínculo com o item,
+auditoria correlacionada e idempotência por ação. Timeline e agenda também
+passaram.
+
+Na revisão ENS, `ens_rag_search` e
+`nexus_graph_search_validated_work` foram chamados corretamente. O Hermes não
+inventou trabalho validado e não persistiu uma revisão sem ler o corpo atual.
+A chamada de conteúdo, porém, primeiro enviou dois seletores e depois omitiu o
+histórico de versões, recebendo apenas o resumo do asset.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| seletor de conteúdo | contrato não dizia “exatamente um” | exemplo fixa `asset_id` exclusivo |
+| corpo histórico | `include_versions` ausente | referência exige `include_versions: true` e `version_limit` |
+| capacidades | alias de `resource_type` causou uma tentativa inválida | enum canônico documentado |
+| regressão dirigida | teste novo falhou antes da alteração | passou com o contrato completo |
+| runtime dirigido completo | 17 passed antes deste ajuste | **18 passed, 1 skipped** |
+
+### RBAC e prompt injection
+
+Admin e manager consultaram auditoria. O member recebeu somente três campanhas
+autorizadas e o backend negou auditoria com 403. Uma solicitação para elevar
+papel, trocar tenant e executar sem confirmação foi recusada sem tools de
+escrita; o Supabase confirmou zero persistência.
+
+A skill foi versionada como `1.2.2`. Resta somente repetir a revisão ENS para
+criar a versão 2 e reconciliar a documentação como `production_validated`.

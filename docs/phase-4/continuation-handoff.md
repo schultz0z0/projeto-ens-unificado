@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_skill_1_2_1_redeploy_then_content_matrix`
+- **Estado:** `pending_skill_1_2_2_redeploy_then_revision_only`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -15,17 +15,15 @@
 
 ## Ponto exato de continuação
 
-O décimo segundo release já foi implantado. Com GPT-5.6 Terra, a validação real
-comprovou leitura, preview sem persistência, confirmação contextual, pergunta,
-negação, revisão, idempotência, criação/atualização de campanha e item da
-esteira vinculado com deep link, frontend e Supabase coerentes.
+O pacote `1.2.1` já foi implantado e comprovou asset + versão inicial, deep
+link, frontend, Supabase, auditoria e idempotência. Timeline, agenda, RAG,
+Graph, admin, manager, member e prompt injection também passaram.
 
-O ponto atual é mais estreito: o primeiro plano `content.create_draft` +
-`content.version_create` falhou antes da assinatura porque a referência da
-skill não congelava o wire shape dessas ações. O pacote `1.2.1` e sua regressão
-RED→GREEN estão prontos. Publique **somente `hermes-api`** pelo bloco do décimo
-terceiro release em `runbook.md`; depois abra conversa nova e repita conteúdo +
-versão no item `HML F4 Email 20260729-C1`.
+O único ponto atual é a revisão ENS: o Hermes consultou RAG e Graph, mas leu o
+asset sem `include_versions=true` e não recebeu o corpo. O pacote `1.2.2` e sua
+regressão RED→GREEN estão prontos. Publique **somente `hermes-api`** pelo bloco
+do décimo quarto release em `runbook.md`; depois repita apenas a revisão do
+conteúdo `HML F4 Email HTML 20260729-C1` para versão 2.
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
 alinhado. Os hotfixes já publicados validaram a leitura real de
@@ -75,8 +73,8 @@ call como `{}`; a delegação foi vinculada pelo runtime, mas `actions` ficou
 ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
 auditoria e zero idempotência para `HML F4 Final 20260729-A`.
 
-O histórico acima explica os releases anteriores; não o use como próximo
-passo. O comando vigente é o do décimo terceiro release candidato.
+O histórico abaixo explica os releases anteriores; não o use como próximo
+passo. O comando vigente é o do décimo quarto release candidato.
 
 ## Artefatos críticos já entregues
 

@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `campaign_and_item_validated_pending_content_skill_redeploy`
+- **Estado:** `all_real_gates_except_ens_revision_retest`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -11,6 +11,27 @@
 O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
+
+### Conteúdo, fontes e RBAC após o pacote 1.2.1 — 29/07/2026
+
+- asset `email_html` e versão inicial foram criados com preview sem
+  persistência, confirmação natural `perfeito` e execução única;
+- Supabase confirmou corpo exato, `metadata.source=chat`, versão atual 1, dois
+  registros idempotentes HTTP 200 e duas auditorias no mesmo chat/run/plano;
+- o deep link abriu o item com o conteúdo selecionado e versão 1;
+- timeline e agenda retornaram campanha, item, horários e conteúdo sem mutação;
+- RAG consultou o acervo ENS e Graph consultou trabalho validado, sem substituir
+  o estado transacional;
+- admin e manager leram auditoria; member viu somente suas campanhas e recebeu
+  `delegation_scope_denied` 403 para auditoria;
+- tentativa de elevar papel, trocar tenant e executar sem confirmação foi
+  recusada sem `prepare_plan`/`execute_plan`; Supabase confirmou zero campanha
+  e zero auditoria para o nome injetado.
+
+A revisão ENS permaneceu pendente porque `get_content_v1` foi chamado com
+seletor inválido na primeira tentativa e depois sem `include_versions=true`.
+O pacote `1.2.2` congela o contrato de leitura. A regressão RED→GREEN passou e o
+arquivo dirigido terminou com **18 passed, 1 skipped**.
 
 ### Validação com GPT-5.6 Terra e incidente de conteúdo — 29/07/2026
 

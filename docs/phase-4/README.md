@@ -3,19 +3,18 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso. Com GPT-5.6 Terra, leitura, criação e
-atualização de campanha, confirmação contextual e criação de item vinculado
-passaram no app publicado, nos logs e no Supabase. O primeiro plano de conteúdo
-revelou que a referência da skill não congelava os campos canônicos das duas
-ações de conteúdo. O pacote `1.2.1` corrige somente essa instrução e aguarda
-redeploy pontual do `hermes-api`.
+A homologação real está no último gate. Com GPT-5.6 Terra, campanha, item,
+conteúdo inicial, timeline, agenda, confirmação contextual, RAG, Graph, RBAC,
+prompt injection, deep links, auditoria e idempotência passaram no app, logs e
+Supabase. Resta repetir a revisão ENS depois do pacote `1.2.2`, que congela a
+leitura do corpo da versão atual.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `campaign_and_item_validated_pending_content_skill_redeploy`
+- **Homologação VPS:** `all_real_gates_except_ens_revision_retest`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -36,8 +35,8 @@ redeploy pontual do `hermes-api`.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `campaign_and_item_validated_content_redeploy_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_skill_1_2_1_redeploy_then_content_matrix` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `all_real_gates_except_ens_revision_retest` | [checklist](vps-validation.md) |
+| Handoff | `pending_skill_1_2_2_redeploy_then_revision_only` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -80,26 +79,26 @@ redeploy pontual do `hermes-api`.
   não determinística de `vamos nessa`, corrigidas no décimo primeiro release;
 - matriz real com GPT-5.6 Terra comprovou campanha, atualização, confirmação
   contextual, revisão, rejeição, idempotência e item da esteira vinculado;
-- tentativa de conteúdo permaneceu fail-closed e isolou uma lacuna documental
-  no wire shape da skill; a regressão RED→GREEN passou no pacote `1.2.1`;
+- asset + versão inicial, timeline, agenda, auditoria e deep link passaram no
+  pacote `1.2.1`;
+- RAG, Graph, RBAC por três papéis e prompt injection passaram; o pacote
+  `1.2.2` corrige somente a leitura do histórico para revisão ENS;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
 
 ## Resíduos conhecidos
 
-- conflitos, forged tenant/role, prompt injection, RAG/Graph
-  e restart/persistência ainda dependem de banco/serviços reais no gate VPS;
+- conflito controlado, rate limit e restart continuam cobertos por testes
+  automatizados e não serão provocados no site público sem janela operacional;
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- conteúdo e versionamento precisam ser repetidos depois do deploy da skill
-  `1.2.1`; campanha e item já foram comprovados no ambiente real.
+- somente a revisão ENS para versão 2 precisa ser repetida após a skill `1.2.2`.
 
 ## Decisão
 
-**A Fase 4 está implementada e sua homologação real avançou até o item da
-esteira.** A promoção para `production_validated` depende do deploy pontual da
-skill `1.2.1`, dos smokes restantes executados pelo assistente no ambiente
-publicado e do aceite final do usuário conforme
+**A Fase 4 está implementada e todos os gates reais passaram, exceto a revisão
+ENS para versão 2.** A promoção para `production_validated` depende do deploy
+pontual da skill `1.2.2`, desse único reteste e da reconciliação final conforme
 [vps-validation.md](vps-validation.md).

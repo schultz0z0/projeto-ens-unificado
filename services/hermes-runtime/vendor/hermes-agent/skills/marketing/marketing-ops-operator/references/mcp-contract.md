@@ -24,6 +24,39 @@ types inside `marketing_ops_prepare_plan_v1`:
 `campaign_item.reschedule`, `content.create_draft`,
 `content.version_create`, `artifact.link_existing`, `campaign.note_add`.
 
+## Content reads and contextual capabilities
+
+`marketing_ops_get_content_v1` requires exactly one of `item_id` or `asset_id`.
+Never send both selectors and never omit both. When the user asks to review,
+revise, compare, or continue existing content, request the immutable version
+history explicitly:
+
+```json
+{
+  "asset_id": "00000000-0000-4000-8000-000000000000",
+  "include_versions": true,
+  "version_limit": 5
+}
+```
+
+The current body is in the returned versions, not in the asset summary. Do not
+claim that the body is unavailable until a successful call with
+`include_versions: true` has returned no version body.
+
+`marketing_ops_get_object_capabilities_v1` accepts `resource_type` as exactly
+`campaign`, `campaign_item`, or `content_asset`, plus the matching
+`resource_id`. For content, use:
+
+```json
+{
+  "resource_type": "content_asset",
+  "resource_id": "00000000-0000-4000-8000-000000000000"
+}
+```
+
+Never substitute `item`, `production_item`, `asset`, or another alias for the
+canonical `resource_type`.
+
 ## Schedule range
 
 `marketing_ops_list_campaign_items_v1` requires both `from` and `to` as full

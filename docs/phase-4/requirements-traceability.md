@@ -1,7 +1,7 @@
 # Rastreabilidade de requisitos — Fase 4
 
 - **Estado:** `reconciled_pending_vps_gate`
-- **Implementação:** `campaign_and_item_validated_content_skill_redeploy_pending`
+- **Implementação:** `all_real_gates_except_ens_revision_retest`
 - **Revisão:** 2026-07-29
 
 ## Matriz requisito → design → task
@@ -9,16 +9,16 @@
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
 | F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_read_smoke_validated` |
-| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `runtime_policy_validated_e2e_pending` |
-| F4-RF-03 Uso do Graph | 5 | 5, 7 | `runtime_policy_validated_e2e_pending` |
+| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_source_call_validated_revision_pending` |
+| F4-RF-03 Uso do Graph | 5 | 5, 7 | `production_validated` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_preview_validated` |
 | F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `production_contextual_matrix_validated` |
-| F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `implemented_unit_validated` |
+| F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `production_three_roles_validated` |
 | F4-RF-07 Deep link | 9 | 4, 7 | `production_campaign_and_item_validated` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `production_campaign_retry_validated` |
 | F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
 | F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
-| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7, 8 | `implemented_remote_schema_applied` |
+| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7, 8 | `production_trace_and_rbac_validated` |
 | F4-RF-12 Limites | 2, 4.2, 10 | 1, 5, 7 | `runtime_guarded_rate_limit_unit_validated` |
 
 ## Matriz Roadmap → design → task
@@ -29,8 +29,8 @@
 | Criação de campanha em rascunho | 6.2, 7 | 1, 3, 5, 7 | `production_validated` |
 | Atualização com confirmação | 4.2, 4.7, 7, 8.1 | 3, 5, 7 | `production_validated` |
 | Geração de calendário e itens | 8.8 | 3, 5, 7 | `production_item_link_validated` |
-| Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `skill_1_2_1_redeploy_pending` |
-| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `policy_implemented_vps_pending` |
+| Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `production_validated` |
+| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `skill_1_2_2_redeploy_pending` |
 | Conversão de resposta do chat em objeto | 8.9 | 3, 5, 7 | `implementation_complete_vps_pending` |
 | Auditoria correlacionada com chat e run | 4.4, 11 | 1, 6, 7 | `implemented_remote_schema_applied` |
 
@@ -43,10 +43,10 @@
 | Cria rascunho após confirmação contextual | 4.2, 4.7, 7 | 3, 5, 7 | `production_validated` |
 | Objeto aparece no frontend sem reconciliação | 9 | 4, 7 | `production_campaign_and_item_validated` |
 | Retry não duplica objeto | 7.3 | 3, 7 | `production_campaign_retry_validated` |
-| Tenant/papel forjados são rejeitados | 10 | 1, 2, 3, 7 | `integration_pending` |
+| Tenant/papel forjados são rejeitados | 10 | 1, 2, 3, 7 | `production_validated` |
 | Delegação expirada/reutilizada falha | 10 | 1, 5, 7 | `token_unit_validated` |
 | Conflito exige nova consulta/decisão | 7.3, 8.1 | 3, 5, 7 | `domain_wired_integration_pending` |
-| Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `implementation_complete_vps_pending` |
+| Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `production_initial_version_validated_revision_pending` |
 | Deep link abre objeto correto | 9 | 4, 7 | `production_campaign_and_item_validated` |
 | Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `production_campaign_trace_validated` |
 | Hermes não aprova/executa ação sensível | 2, 10 | 1, 5, 7 | `runtime_policy_validated` |
@@ -59,11 +59,11 @@
 | Allowlist e autoridade server-side | 7.1, 10 | 1, 3 | `implemented_unit_validated` |
 | Sem tools MCP diretas de mutação | 4.6, 6.2 | 1, 5 | `catalog_verified` |
 | Rate limit por ator e ferramenta | 10 | 1, 2, 3 | `implemented_unit_validated` |
-| Prompt injection não amplia autoridade | 10, 12 | 5, 7 | `guardrails_implemented_e2e_pending` |
+| Prompt injection não amplia autoridade | 10, 12 | 5, 7 | `production_validated` |
 | Logs sem texto integral/tokens | 10, 11 | 6, 7 | `implemented_unit_validated` |
 | Métricas por tool/resultado | 11 | 6 | `implemented_unit_validated` |
 | Idempotency hit e conflito observáveis | 11 | 3, 6 | `implemented_unit_validated` |
-| Chat → run → tool → audit → objeto | 4.4, 11 | 1, 6, 7 | `backend_trace_implemented_e2e_pending` |
+| Chat → run → tool → audit → objeto | 4.4, 11 | 1, 6, 7 | `production_validated` |
 
 ## Gates transversais
 
@@ -78,7 +78,7 @@
 | Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `runtime_bound_schema_fix_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `campaign_and_item_validated_content_skill_redeploy_pending` |
+| Gate VPS | 14 | 8 | `all_real_gates_except_ens_revision_retest` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca

@@ -318,6 +318,48 @@ Depois do deploy, abra uma conversa nova e repita somente a criação de
 duas ações, nada deve existir antes da confirmação e a execução deve retornar o
 deep link do conteúdo vinculado ao item.
 
+### Décimo quarto release candidato: leitura de versões para revisão ENS
+
+O pacote `1.2.1` foi publicado e comprovou a criação do asset `email_html`, sua
+versão inicial, deep link, auditoria e idempotência. Na jornada seguinte, RAG e
+Graph foram consultados corretamente, mas a revisão não avançou porque o Hermes
+leu apenas o resumo do asset: a referência não exigia
+`include_versions: true` nem congelava o seletor exclusivo de
+`marketing_ops_get_content_v1`.
+
+O pacote `1.2.2` corrige somente essa referência, incluindo:
+
+- exatamente um de `item_id` ou `asset_id`;
+- `include_versions: true` e `version_limit` para revisão;
+- `resource_type` canônico para capacidades.
+
+Não há mudança de backend, schema, migration, Bridge ou frontend.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  sh -lc 'test ! -e /opt/data/skills/marketing-ops-operator &&
+    grep -q "^version: 1.2.2$" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "\"include_versions\": true" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md &&
+    grep -q "exactly one of.*item_id.*asset_id" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md'
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  hermes mcp test nexus_marketing_ops
+```
+
+Depois do deploy, repita apenas a revisão ENS do asset existente. O Hermes deve
+ler o corpo da versão 1, consultar RAG e Graph, preparar uma versão 2 sem
+persistência, aguardar confirmação e preservar a versão 1.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 
