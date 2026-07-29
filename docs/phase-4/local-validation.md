@@ -1,7 +1,7 @@
 # Validação local — Fase 4
 
 - **Estado:** `partially_executed`
-- **Base:** 2026-07-28
+- **Base:** 2026-07-29
 - **Branch:** `main`
 - **Política:** registrar apenas gates realmente executados
 
@@ -380,10 +380,40 @@ o teste executável do entrypoint Linux continuam no gate VPS. O teste estático
 prova o empacotamento/instalador, e o runbook exige validar `version: 1.2.0` e
 os quatro arquivos auxiliares dentro do volume após a recriação.
 
+## Registro pós-deploy do décimo release — 2026-07-29
+
+| Verificação | Resultado |
+|---|---|
+| health de `hermes-api` e `app-bridge` | passou |
+| timeout contextual | passou; classificação concluiu em ~8,6 s dentro dos 15 s |
+| descoberta da skill | falhou; duas candidatas com o mesmo nome |
+| preview | passou sem persistência |
+| confirmação `vamos nessa` | `clarify`; execução bloqueada |
+| Supabase pós-falha | zero campanha e zero auditoria para `HML F4 Gate 20260729-B` |
+
+### RED → GREEN do décimo primeiro release
+
+Os testes foram escritos e executados antes da implementação. Eles falharam
+pela ausência do gate determinístico, do detector correto de contrato e do
+destino categorizado do instalador.
+
+| Comando | Resultado |
+|---|---|
+| `python -m pytest services/hermes-runtime/docker/tests/test_marketing_ops_delegation_runtime.py -q -k "unambiguous_confirmation_fast_path or confirmation_output_contract or operator_skill_has_loadable"` antes da correção | **3 failed**, falhas esperadas |
+| mesmos contratos depois da correção | **4 passed**, 11 não selecionados |
+| runtime dirigido + contrato compartilhado do instalador | **15 passed, 1 skipped** |
+| `python -m compileall -q` dos dois módulos Hermes alterados | exit 0 |
+| `git diff --check` | exit 0 |
+
+O skip é exclusivamente o teste executável do shell POSIX, porque esta estação
+Windows não possui Bash, WSL ou Docker. O teste está incluído e será exercitado
+no ambiente Linux; o gate VPS também confere caminho canônico, ausência da
+cópia raiz e pacote completo antes dos smokes de escrita.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato
 do runtime, deep links, contrato conversacional e E2E fake foram executados.
 Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
-final da VPS, inclusive a publicação pontual de `hermes-api` e `app-bridge` e
+final da VPS, inclusive a publicação pontual de `hermes-api` e
 as jornadas de escrita com o classificador contextual endurecido.

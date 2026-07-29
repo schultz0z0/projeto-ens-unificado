@@ -12,7 +12,7 @@
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `runtime_policy_validated_e2e_pending` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `runtime_policy_validated_e2e_pending` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_preview_validated` |
-| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `timeout_and_persisted_skill_fix_deploy_pending` |
+| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `deterministic_short_reply_fix_deploy_pending` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `implemented_unit_validated` |
 | F4-RF-07 Deep link | 9 | 4, 7 | `e2e_fake_validated` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `executor_unit_validated` |
@@ -75,10 +75,10 @@
 | Deep links servidor → frontend | 9 | 4, 7 | `e2e_fake_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6, 8 | `implemented_remote_schema_applied` |
-| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `persisted_structured_skill_fix_deploy_pending` |
+| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `canonical_structured_skill_fix_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `in_progress_tenth_release_candidate_deploy_pending` |
+| Gate VPS | 14 | 8 | `in_progress_eleventh_release_candidate_deploy_pending` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
@@ -103,8 +103,12 @@ do provedor, a regra de agenda e a skill estruturada. Após seu deploy, leitura
 e preview passaram e o Supabase confirmou ausência de escrita prematura. A
 confirmação revelou um timeout de 4 segundos na Bridge diante de latência real
 de cerca de 6,4 segundos, além da cópia persistida `1.0.0` da skill. O décimo
-release candidato corrige os dois pontos. Criação e atualização permanecem
-pendentes do deploy de `app-bridge`/`hermes-api` e da repetição na VPS.
+release corrigiu o timeout, mas seu pós-deploy encontrou duas cópias da skill
+com o mesmo nome e uma decisão `clarify` do modelo para `vamos nessa`. O décimo
+primeiro release usa a categoria canônica, remove somente a cópia gerenciada
+obsoleta e resolve respostas completas inequívocas antes do modelo. Criação e
+atualização permanecem pendentes do redeploy de `hermes-api` e da repetição na
+VPS.
 
 ## Leitura inicial
 

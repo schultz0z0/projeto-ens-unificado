@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_tenth_release_candidate_deploy_then_real_gate`
+- **Estado:** `pending_eleventh_release_candidate_deploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -13,6 +13,26 @@ migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
 
 ### Incidente do gate de confirmação — 29/07/2026
+
+O décimo release foi implantado: `hermes-api` e `app-bridge` ficaram healthy,
+o timeout deixou de interromper a classificação e o pacote `1.2.0` chegou ao
+volume. O teste pós-deploy, porém, encontrou duas candidatas com o mesmo nome:
+`/opt/data/skills/marketing-ops-operator` e
+`/opt/data/skills/marketing/marketing-ops-operator`. O `skill_view` precisou
+do caminho categorizado explícito e ainda carregou a cópia antiga.
+
+No turno seguinte, `vamos nessa` terminou dentro do novo timeout, mas o modelo
+de decisão retornou `clarify`. A delegação permaneceu sem confirmação, três
+tentativas indevidas do agente foram bloqueadas por `confirmation_required` e
+nenhum dado foi salvo. A consulta direta ao Supabase confirmou
+`campaign_count=0` e `audit_count=0` para `HML F4 Gate 20260729-B`.
+
+O décimo primeiro release instala o pacote somente no caminho categorizado,
+remove a cópia gerenciada obsoleta da raiz e resolve respostas curtas,
+completas e sem ressalva antes de chamar o modelo. Perguntas e respostas
+qualificadas continuam no classificador contextual e permanecem fail-closed.
+
+#### Histórico que motivou o décimo release
 
 Leitura e preview passaram, e o Supabase confirmou ausência de persistência
 prematura. No turno `vamos nessa`, o endpoint interno classificou `approve`,
@@ -29,7 +49,9 @@ inicialização do `hermes-api`.
 
 Depois do deploy, este incidente só pode ser encerrado quando:
 
-- `/opt/data/skills/marketing-ops-operator/SKILL.md` declarar `version: 1.2.0`;
+- `/opt/data/skills/marketing/marketing-ops-operator/SKILL.md` declarar
+  `version: 1.2.0`;
+- `/opt/data/skills/marketing-ops-operator` não existir;
 - os três arquivos de `references/` e o template existirem no volume;
 - `vamos nessa` executar o plano pendente com uma única confirmação;
 - pergunta, negação e revisão continuarem sem executar;
@@ -171,7 +193,7 @@ rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
 
 ## Checklist planejado
 
-- [ ] imagens `marketing-ops`, `app-bridge` e `hermes-api` do nono release
+- [x] imagens `marketing-ops`, `app-bridge` e `hermes-api` do nono release
   candidato publicadas; a skill estruturada deve estar carregável no runtime;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
@@ -181,7 +203,7 @@ rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
 - [ ] VPS confirma que aponta para esse mesmo projeto Supabase;
 - [ ] refresh de delegação funcionando;
 - [x] smoke de leitura de campanhas e agenda;
-- [ ] plano preparado sem persistência prematura;
+- [x] plano preparado sem persistência prematura;
 - [ ] execução confirmada criando/alterando objeto real;
 - [ ] deep link abrindo objeto correto no frontend;
 - [ ] logs correlacionados sem segredo;
@@ -200,7 +222,7 @@ rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
 
 1. atualizar checkout e `.env` da VPS sem sobrescrever o arquivo real;
 2. validar `docker compose` com `docker-compose.yml` + `docker-compose.prod.yml`;
-3. para a decisão contextual, rebuildar e recriar `hermes-api` e `app-bridge`;
+3. para a correção atual, rebuildar e recriar somente `hermes-api`;
 4. confirmar health/readiness e logs sem segredo;
 5. verificar se a migration da Fase 4 já está refletida no Supabase alvo;
 6. executar os smokes manuais do operador Hermes;
@@ -239,10 +261,10 @@ reconstruir frontend, Marketing Ops ou `hermes-kanban`:
 cd /opt/nexus-ens
 git pull --ff-only origin main
 git rev-parse --short HEAD
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=200 hermes-api
 curl -fsS http://127.0.0.1:8652/health
 curl -fsS http://127.0.0.1:8081/health
 ```

@@ -4,7 +4,7 @@
 - **Progresso de implementação:** 100%
 - **Snapshot reconciliado:** 2026-07-29
 - **Branch única:** `main`
-- **Próximo gate:** deploy corretivo de `app-bridge`/`hermes-api`, homologação
+- **Próximo gate:** deploy corretivo de `hermes-api`, homologação
   VPS real e aceite final do usuário
 
 ## Planejamento por task
@@ -444,9 +444,60 @@ autoriza promover a fase antes dessa evidência.
 O gate real permanece aberto até reconstruir e recriar `app-bridge` e
 `hermes-api`, confirmar a skill `1.2.0` no volume e repetir a matriz completa.
 
+## Décimo primeiro release candidato — resolução canônica e gate estável — 2026-07-29
+
+### Evidência real depois do décimo release
+
+- `hermes-api` e `app-bridge` ficaram healthy e a classificação terminou em
+  aproximadamente 8,6 segundos, provando que o novo timeout de 15 segundos foi
+  propagado;
+- o loader registrou colisão entre
+  `/opt/data/skills/marketing-ops-operator/SKILL.md` e
+  `/opt/data/skills/marketing/marketing-ops-operator/SKILL.md`; ao receber o
+  caminho explícito, `skill_view` carregou a cópia categorizada histórica;
+- o preview de `HML F4 Gate 20260729-B` não persistiu dados;
+- `vamos nessa` foi classificado como `clarify`; a delegação permaneceu sem
+  autorização e o executor bloqueou as tentativas com
+  `confirmation_required`;
+- a consulta direta ao Supabase comprovou `campaign_count=0` e
+  `audit_count=0`, mantendo o fail-closed sem escrita nem auditoria falsa.
+
+### Causas e correções
+
+1. O instalador gerenciado ignorava a categoria original da skill e criava uma
+   segunda candidata na raiz. Ele agora atualiza atomicamente
+   `skills/marketing/marketing-ops-operator` e remove somente o caminho
+   gerenciado obsoleto `skills/marketing-ops-operator`, tanto no home padrão
+   quanto nos perfis.
+2. Respostas curtas, completas e inequivocamente afirmativas ou negativas eram
+   delegadas ao modelo classificador, introduzindo não determinância em um gate
+   de segurança. O runtime agora decide localmente apenas esse subconjunto
+   fechado. Perguntas, ressalvas, alterações e frases não reconhecidas
+   continuam usando histórico + modelo; erro ou contrato inválido continua
+   resultando em `clarify`.
+3. O campo sanitizado `output_contract` agora mede todas as formas JSON fechadas
+   aceitas pelo parser, e o log informa `source=deterministic|model` sem expor a
+   mensagem humana, plano ou tokens.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| resposta inequívoca | funções de decisão local ausentes | `vamos nessa`, `pode ser` e equivalentes completos aprovam; perguntas e ressalvas não entram no fast path |
+| contrato observável | log considerava somente a variante prefixada | JSON fechado prefixado ou puro é reconhecido; texto extra permanece inválido |
+| instalação canônica | teste estático encontrou destino achatado | mapping aponta para `marketing/marketing-ops-operator` e limpeza segura da raiz |
+| runtime dirigido | três testes falharam antes da implementação | **15 passed, 1 skipped**; skip é o entrypoint POSIX indisponível no Windows |
+| sintaxe Python | `compileall` | exit 0 |
+| higiene do diff | `git diff --check` | exit 0 |
+
+O próximo gate requer rebuild sem cache e recriação somente de `hermes-api`.
+Depois, o dashboard `/skills` e `/files`, o filesystem do container, o log
+sanitizado, o app real e o Supabase devem provar uma única skill, confirmação
+única, escrita correta, auditoria e deep link.
+
 ## Decisão atual
 
 O escopo técnico e documental da Fase 4 está concluído. A promoção final depende
-do deploy pontual de `hermes-api` e `app-bridge` e da homologação real na VPS,
+do deploy pontual de `hermes-api` e da homologação real na VPS,
 com banco e serviços finais; nenhuma mudança de domínio ou migration foi
 introduzida por esta correção.

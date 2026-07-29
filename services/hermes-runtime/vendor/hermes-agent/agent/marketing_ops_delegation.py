@@ -20,6 +20,40 @@ _PREPARE_PLAN_TOOL = "marketing_ops_prepare_plan_v1"
 _EXECUTE_PLAN_TOOL = "marketing_ops_execute_plan_v1"
 _CONFIRMATION_DECISIONS = frozenset({"approve", "reject", "revise", "clarify", "none"})
 MARKETING_OPS_CONFIRMATION_DECISION_PREFIX = "NEXUS_MARKETING_OPS_DECISION:"
+_UNAMBIGUOUS_CONFIRMATION_REPLIES = {
+    "approve": frozenset(
+        {
+            "sim",
+            "confirmo",
+            "confirmado",
+            "aprovo",
+            "aprovado",
+            "pode executar",
+            "pode fazer",
+            "pode prosseguir",
+            "pode seguir",
+            "vamos nessa",
+            "pode ser",
+            "de acordo",
+            "ok",
+            "okay",
+            "perfeito",
+            "fechado",
+        }
+    ),
+    "reject": frozenset(
+        {
+            "não",
+            "nao",
+            "rejeito",
+            "rejeitado",
+            "não execute",
+            "nao execute",
+            "cancele",
+            "cancelar",
+        }
+    ),
+}
 
 _DELEGATION_BLOCK = re.compile(
     r"\[MARKETING_OPS_DELEGATION\][\s\S]*?"
@@ -97,19 +131,41 @@ def has_pending_marketing_ops_plan(messages: list[Any]) -> bool:
     return False
 
 
-def parse_marketing_ops_confirmation_decision(value: Any) -> str:
-    """Accept only the internal classifier's closed JSON decision contract."""
+def _marketing_ops_confirmation_decision_payload(value: Any) -> dict[str, Any] | None:
     if not isinstance(value, str):
-        return "clarify"
+        return None
     normalized = value.strip()
     if normalized.startswith(MARKETING_OPS_CONFIRMATION_DECISION_PREFIX):
         normalized = normalized[len(MARKETING_OPS_CONFIRMATION_DECISION_PREFIX):].strip()
     try:
         payload = json.loads(normalized)
     except (json.JSONDecodeError, TypeError):
-        return "clarify"
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def has_marketing_ops_confirmation_decision_contract(value: Any) -> bool:
+    """Return whether a classifier response follows the closed JSON contract."""
+    payload = _marketing_ops_confirmation_decision_payload(value)
+    return bool(payload and payload.get("decision") in _CONFIRMATION_DECISIONS)
+
+
+def parse_marketing_ops_confirmation_decision(value: Any) -> str:
+    """Accept only the internal classifier's closed JSON decision contract."""
+    payload = _marketing_ops_confirmation_decision_payload(value)
     decision = payload.get("decision") if isinstance(payload, dict) else None
     return decision if decision in _CONFIRMATION_DECISIONS else "clarify"
+
+
+def unambiguous_marketing_ops_confirmation_decision(value: Any) -> str | None:
+    """Resolve only complete, short replies whose intent cannot carry qualifiers."""
+    if not isinstance(value, str):
+        return None
+    normalized = re.sub(r"[.!]+$", "", value.strip().casefold()).strip()
+    for decision, replies in _UNAMBIGUOUS_CONFIRMATION_REPLIES.items():
+        if normalized in replies:
+            return decision
+    return None
 
 
 def bind_latest_marketing_ops_plan_token(

@@ -159,6 +159,10 @@ negação/revisão, agenda, deep link e auditoria descrita em
 
 ### Décimo release candidato: timeout contextual e sincronização da skill
 
+> Registro histórico substituído pelo décimo primeiro release abaixo. Não use
+> este bloco para um novo deploy: a instalação na raiz de `skills/` provocou
+> colisão com a cópia categorizada já existente.
+
 O gate real de 29/07/2026 provou que `app-bridge` e `hermes-api` precisam ser
 publicados juntos. A Bridge passa a aguardar até 15 segundos pela decisão
 contextual, e o Hermes passa a substituir a cópia persistida antiga da skill
@@ -194,6 +198,55 @@ a propaga para `app-bridge`.
 Depois desses checks, abra uma conversa nova e repita primeiro o preview sem
 persistência e `vamos nessa`. Não aceite o workaround de pedir uma segunda
 confirmação: o contrato da Fase 4 exige uma única confirmação no turno seguinte.
+
+### Décimo primeiro release candidato: skill canônica e decisão inequívoca
+
+O pós-deploy do décimo release comprovou que o timeout de 15 segundos está
+ativo, porém revelou duas causas residuais no `hermes-api`:
+
+- a skill gerenciada foi instalada em `skills/marketing-ops-operator`, enquanto
+  a cópia categorizada histórica permaneceu em
+  `skills/marketing/marketing-ops-operator`; o loader recusou a resolução
+  simples por colisão;
+- `vamos nessa`, embora seja uma resposta completa e sem ressalva ao plano
+  pendente, foi enviado ao modelo classificador e retornou `clarify`.
+
+O décimo primeiro release instala e atualiza atomicamente somente o caminho
+categorizado, remove a cópia gerenciada obsoleta da raiz e resolve localmente
+respostas curtas inequívocas. Frases com pergunta, ressalva, alteração ou
+qualificador continuam no classificador contextual e qualquer falha continua
+fechada como `clarify`. Apenas `hermes-api` mudou.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  sh -lc 'test ! -e /opt/data/skills/marketing-ops-operator &&
+    grep -q "^version: 1.2.0$" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    test -f /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md &&
+    test -f /opt/data/skills/marketing/marketing-ops-operator/references/conversation-safety.md &&
+    test -f /opt/data/skills/marketing/marketing-ops-operator/references/diagnostics.md &&
+    test -f /opt/data/skills/marketing/marketing-ops-operator/templates/plan-preview.md'
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  hermes mcp test nexus_marketing_ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api \
+  | grep -E "Skill name collision|Marketing Ops confirmation classified" || true
+```
+
+O último `grep` não deve mostrar nova linha `Skill name collision` após a
+recriação. Durante os smokes, a decisão inequívoca deve aparecer como
+`decision=approve output_contract=True source=deterministic`, sem registrar a
+mensagem humana. Não é necessário rebuildar `app-bridge`, `marketing-ops`,
+frontend ou `hermes-kanban`.
 
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:

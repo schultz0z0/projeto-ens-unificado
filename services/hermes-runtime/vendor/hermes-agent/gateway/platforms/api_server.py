@@ -3954,9 +3954,10 @@ class APIServerAdapter(BasePlatformAdapter):
 
         from agent.marketing_ops_delegation import (
             has_pending_marketing_ops_plan,
-            MARKETING_OPS_CONFIRMATION_DECISION_PREFIX,
+            has_marketing_ops_confirmation_decision_contract,
             parse_marketing_ops_confirmation_decision,
             redact_marketing_ops_delegations,
+            unambiguous_marketing_ops_confirmation_decision,
         )
 
         db = self._ensure_session_db()
@@ -3971,6 +3972,16 @@ class APIServerAdapter(BasePlatformAdapter):
 
         if not has_pending_marketing_ops_plan(raw_messages):
             return web.json_response({"decision": "none"})
+
+        deterministic_decision = unambiguous_marketing_ops_confirmation_decision(message)
+        if deterministic_decision is not None:
+            logger.info(
+                "Marketing Ops confirmation classified: decision=%s output_contract=%s source=%s",
+                deterministic_decision,
+                True,
+                "deterministic",
+            )
+            return web.json_response({"decision": deterministic_decision})
 
         history: List[Dict[str, str]] = []
         total_chars = 0
@@ -4005,10 +4016,10 @@ class APIServerAdapter(BasePlatformAdapter):
             final_response = result.get("final_response", "") if isinstance(result, dict) else ""
             decision = parse_marketing_ops_confirmation_decision(final_response)
             logger.info(
-                "Marketing Ops confirmation classified: decision=%s output_contract=%s",
+                "Marketing Ops confirmation classified: decision=%s output_contract=%s source=%s",
                 decision,
-                isinstance(final_response, str)
-                and final_response.strip().startswith(MARKETING_OPS_CONFIRMATION_DECISION_PREFIX),
+                has_marketing_ops_confirmation_decision_contract(final_response),
+                "model",
             )
             return web.json_response({"decision": decision})
         except Exception:

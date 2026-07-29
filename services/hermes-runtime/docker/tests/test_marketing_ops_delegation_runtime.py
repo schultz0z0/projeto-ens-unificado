@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import base64
 import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 
 RUNTIME_ROOT = Path(__file__).resolve().parents[2]
@@ -150,6 +155,46 @@ def test_contextual_confirmation_decision_is_closed_and_requires_a_pending_plan(
     assert has_pending_marketing_ops_plan([prepared, executed]) is False
 
 
+def test_unambiguous_confirmation_fast_path_accepts_only_complete_short_replies() -> None:
+    assert hasattr(marketing_ops, "unambiguous_marketing_ops_confirmation_decision")
+    for reply in (
+        "vamos nessa",
+        "Vamos nessa!",
+        "pode ser",
+        "SIM.",
+        "confirmo",
+        "pode executar",
+        "perfeito!",
+    ):
+        assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(reply) == "approve"
+
+    for reply in ("não", "Nao.", "rejeito", "não execute"):
+        assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(reply) == "reject"
+
+    for reply in (
+        "vamos nessa, mas sem Instagram",
+        "pode ser amanhã?",
+        "sim, altere a data",
+        "não sei",
+        "o orçamento está correto?",
+    ):
+        assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(reply) is None
+
+
+def test_confirmation_output_contract_reports_every_accepted_closed_json_shape() -> None:
+    assert hasattr(marketing_ops, "has_marketing_ops_confirmation_decision_contract")
+    assert marketing_ops.has_marketing_ops_confirmation_decision_contract(
+        'NEXUS_MARKETING_OPS_DECISION: {"decision":"approve"}'
+    )
+    assert marketing_ops.has_marketing_ops_confirmation_decision_contract(
+        '{"decision":"clarify"}'
+    )
+    assert not marketing_ops.has_marketing_ops_confirmation_decision_contract(
+        'NEXUS_MARKETING_OPS_DECISION: {"decision":"approve"}\nextra'
+    )
+    assert not marketing_ops.has_marketing_ops_confirmation_decision_contract("approve")
+
+
 def test_runtime_exposes_a_tool_free_contextual_confirmation_endpoint() -> None:
     api = (VENDOR_ROOT / "gateway" / "platforms" / "api_server.py").read_text(encoding="utf-8")
 
@@ -158,6 +203,8 @@ def test_runtime_exposes_a_tool_free_contextual_confirmation_endpoint() -> None:
     assert "max_iterations=1" in api
     assert "persist_session=False" in api
     assert "system_prompt_only=True" in api
+    assert "unambiguous_marketing_ops_confirmation_decision(message)" in api
+    assert "has_marketing_ops_confirmation_decision_contract(final_response)" in api
     assert "Marketing Ops confirmation classified: decision=%s" in api
 
 
@@ -288,7 +335,8 @@ def test_marketing_ops_operator_skill_has_loadable_contract_references() -> None
         "COPY vendor/hermes-agent/skills/marketing/marketing-ops-operator "
         "/opt/nexus-skills/marketing-ops-operator"
     ) in dockerfile
-    assert "marketing-ops-operator" in installer
+    assert '"marketing-ops-operator:marketing/marketing-ops-operator"' in installer
+    assert "remove_stale_managed_skill" in installer
 
     for reference_name, required_text in {
         "mcp-contract.md": "marketing_ops_prepare_plan_v1",
@@ -309,6 +357,54 @@ def test_marketing_ops_operator_skill_has_loadable_contract_references() -> None
     assert template.is_file()
     assert "Nada foi salvo ainda." in template.read_text(encoding="utf-8")
     assert 'file_path="templates/plan-preview.md"' in skill
+
+
+@pytest.mark.skipif(
+    os.name == "nt" or shutil.which("bash") is None,
+    reason="POSIX entrypoint contract",
+)
+def test_managed_marketing_ops_skill_replaces_both_stale_locations(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    source = tmp_path / "managed"
+    script = RUNTIME_ROOT / "docker" / "ensure-nexus-skills.sh"
+
+    (source / "picture-hermes").mkdir(parents=True)
+    (source / "picture-hermes" / "SKILL.md").write_text(
+        "picture-managed\n", encoding="utf-8"
+    )
+    (source / "marketing-ops-operator").mkdir(parents=True)
+    (source / "marketing-ops-operator" / "SKILL.md").write_text(
+        "marketing-managed-v2\n", encoding="utf-8"
+    )
+    (home / "skills" / "marketing-ops-operator").mkdir(parents=True)
+    (home / "skills" / "marketing-ops-operator" / "SKILL.md").write_text(
+        "stale-root-copy\n", encoding="utf-8"
+    )
+    categorized = home / "skills" / "marketing" / "marketing-ops-operator"
+    categorized.mkdir(parents=True)
+    (categorized / "SKILL.md").write_text(
+        "stale-categorized-copy\n", encoding="utf-8"
+    )
+    (home / "skills" / "user-owned").mkdir(parents=True)
+    (home / "skills" / "user-owned" / "SKILL.md").write_text(
+        "preserve-me\n", encoding="utf-8"
+    )
+    env = {
+        **os.environ,
+        "HERMES_HOME": str(home),
+        "NEXUS_MANAGED_SKILLS_DIR": str(source),
+    }
+
+    subprocess.run(["bash", str(script)], env=env, check=True)
+    subprocess.run(["bash", str(script)], env=env, check=True)
+
+    assert not (home / "skills" / "marketing-ops-operator").exists()
+    assert (categorized / "SKILL.md").read_text(
+        encoding="utf-8"
+    ) == "marketing-managed-v2\n"
+    assert (home / "skills" / "user-owned" / "SKILL.md").read_text(
+        encoding="utf-8"
+    ) == "preserve-me\n"
 
 
 def test_marketing_ops_operator_skill_freezes_phase_4_sources_and_catalog() -> None:
