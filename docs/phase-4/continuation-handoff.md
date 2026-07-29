@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_twelfth_release_candidate_redeploy`
+- **Estado:** `pending_skill_1_2_1_redeploy_then_content_matrix`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -14,6 +14,18 @@
 5. [vps-validation.md](vps-validation.md)
 
 ## Ponto exato de continuação
+
+O décimo segundo release já foi implantado. Com GPT-5.6 Terra, a validação real
+comprovou leitura, preview sem persistência, confirmação contextual, pergunta,
+negação, revisão, idempotência, criação/atualização de campanha e item da
+esteira vinculado com deep link, frontend e Supabase coerentes.
+
+O ponto atual é mais estreito: o primeiro plano `content.create_draft` +
+`content.version_create` falhou antes da assinatura porque a referência da
+skill não congelava o wire shape dessas ações. O pacote `1.2.1` e sua regressão
+RED→GREEN estão prontos. Publique **somente `hermes-api`** pelo bloco do décimo
+terceiro release em `runbook.md`; depois abra conversa nova e repita conteúdo +
+versão no item `HML F4 Email 20260729-C1`.
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
 alinhado. Os hotfixes já publicados validaram a leitura real de
@@ -63,9 +75,8 @@ call como `{}`; a delegação foi vinculada pelo runtime, mas `actions` ficou
 ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
 auditoria e zero idempotência para `HML F4 Final 20260729-A`.
 
-Publique **somente `hermes-api`** com o bloco do décimo segundo release
-candidato em `runbook.md`. Depois, abra uma conversa nova e repita preview +
-`vamos nessa`. Uma segunda confirmação não é o comportamento esperado.
+O histórico acima explica os releases anteriores; não o use como próximo
+passo. O comando vigente é o do décimo terceiro release candidato.
 
 ## Artefatos críticos já entregues
 

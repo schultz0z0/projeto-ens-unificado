@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `read_validated_pending_twelfth_release_candidate_deploy`
+- **Estado:** `campaign_and_item_validated_pending_content_skill_redeploy`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -11,6 +11,35 @@
 O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
+
+### Validação com GPT-5.6 Terra e incidente de conteúdo — 29/07/2026
+
+Com o Hermes configurado em GPT-5.6 Terra, a matriz real avançou:
+
+- leitura de campanhas e agenda passou;
+- criação de campanha respeitou preview sem persistência e confirmação em
+  turno posterior;
+- `vamos nessa` e `pode ser` aprovaram; `pode ser?` pediu confirmação direta;
+  negação cancelou e ressalva produziu novo preview;
+- retry humano da confirmação não duplicou campanha, auditoria ou
+  idempotência;
+- atualização de objetivo, público, briefing, notas, datas e canais passou;
+- o item `HML F4 Email 20260729-C1` foi criado na esteira e vinculado à campanha
+  `HML F4 Final 20260729-C`; o deep link abriu o item real e o horário
+  `09:00–12:00 America/Sao_Paulo` foi confirmado no frontend e no Supabase.
+
+Na etapa seguinte, o plano para criar um `email_html` e sua versão inicial foi
+recusado pelo `marketing_ops_prepare_plan_v1` por campo com tipo incompatível.
+O Hermes encerrou a tentativa sem retry no mesmo turno e o serviço não assinou
+nem executou plano. O Supabase confirmou `matching_assets=0` para o título
+pedido e `assets_on_test_item=0` para o item de homologação. A comparação com o contrato executável mostrou que a
+referência da skill não documentava o wire shape canônico completo.
+
+O pacote `1.2.1` agora congela `expected_item_version`, `asset_kind`,
+`expected_asset_version`, `asset_ref`, `body`, `metadata` e `freeze`, com
+exemplo encadeado. A regressão falhou antes da alteração e passou depois; o
+arquivo dirigido completo terminou com **17 passed, 1 skipped**. O próximo gate
+é o redeploy pontual do `hermes-api` e a repetição desse fluxo em conversa nova.
 
 ### Incidente do schema visível do preview — 29/07/2026
 

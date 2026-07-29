@@ -93,6 +93,43 @@ version value to the user.
   item.
 - `campaign.note_add` appends a bounded note; it does not replace history.
 
+For a new content asset plus its initial version, first read the target item
+and use this exact wire shape in one plan:
+
+```json
+{
+  "actions": [
+    {
+      "type": "content.create_draft",
+      "ref": "content-main",
+      "item_id": "00000000-0000-4000-8000-000000000000",
+      "expected_item_version": 1,
+      "asset_kind": "email_html",
+      "title": "Email principal"
+    },
+    {
+      "type": "content.version_create",
+      "asset_ref": "content-main",
+      "expected_asset_version": 1,
+      "body": "<h1>Conteúdo</h1>",
+      "metadata": {
+        "source": "chat"
+      },
+      "freeze": false
+    }
+  ]
+}
+```
+
+`content.create_draft` accepts only `type`, `ref`, `item_id`,
+`expected_item_version`, `asset_kind`, and `title`.
+`content.version_create` selects exactly one `asset_id` or an earlier
+`asset_ref` and accepts `expected_asset_version`, `body`, `metadata`, and
+`freeze`. Use `expected_asset_version: 1` for the first version of an asset
+created earlier in the same plan. `freeze` must be a boolean. Never substitute
+`content_type`, `type_of_asset`, `name`, `item_version`, `version`, or nested
+content objects for these canonical fields.
+
 ## Result handling
 
 `prepare_plan` success is a preview, never a saved object. Present every

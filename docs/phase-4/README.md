@@ -3,20 +3,19 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso: o smoke de leitura passou, o pacote canônico
-`1.2.0` foi comprovado na VPS e a cópia obsoleta da raiz foi removida. No
-primeiro preview depois do décimo primeiro release, o modelo chamou
-`prepare_plan` com `{}` porque o schema visível ainda exigia credenciais
-efêmeras que são vinculadas pelo runtime. O décimo segundo release candidato
-remove somente esses campos internos do schema apresentado ao modelo e mantém
-`actions` como o único argumento obrigatório do preview.
+A homologação real está em curso. Com GPT-5.6 Terra, leitura, criação e
+atualização de campanha, confirmação contextual e criação de item vinculado
+passaram no app publicado, nos logs e no Supabase. O primeiro plano de conteúdo
+revelou que a referência da skill não congelava os campos canônicos das duas
+ações de conteúdo. O pacote `1.2.1` corrige somente essa instrução e aguarda
+redeploy pontual do `hermes-api`.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `read_validated_pending_twelfth_release_candidate_deploy`
+- **Homologação VPS:** `campaign_and_item_validated_pending_content_skill_redeploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -37,8 +36,8 @@ remove somente esses campos internos do schema apresentado ao modelo e mantém
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `read_validated_twelfth_release_candidate_deploy_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_hermes_api_redeploy_then_write_matrix` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `campaign_and_item_validated_content_redeploy_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_skill_1_2_1_redeploy_then_content_matrix` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -79,26 +78,28 @@ remove somente esses campos internos do schema apresentado ao modelo e mantém
 - preview real anterior concluído sem persistência; o pós-deploy do décimo release
   provou o novo timeout, mas expôs colisão de skill e classificação
   não determinística de `vamos nessa`, corrigidas no décimo primeiro release;
+- matriz real com GPT-5.6 Terra comprovou campanha, atualização, confirmação
+  contextual, revisão, rejeição, idempotência e item da esteira vinculado;
+- tentativa de conteúdo permaneceu fail-closed e isolou uma lacuna documental
+  no wire shape da skill; a regressão RED→GREEN passou no pacote `1.2.1`;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
 
 ## Resíduos conhecidos
 
-- conflitos, retry idempotente, forged tenant/role, prompt injection, RAG/Graph
+- conflitos, forged tenant/role, prompt injection, RAG/Graph
   e restart/persistência ainda dependem de banco/serviços reais no gate VPS;
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- a criação real ainda precisa ser repetida depois do décimo segundo release
-  candidato; o último turno permaneceu fail-closed e o Supabase confirmou zero
-  campanha, zero evento de auditoria e zero registro de idempotência para
-  `HML F4 Final 20260729-A`.
+- conteúdo e versionamento precisam ser repetidos depois do deploy da skill
+  `1.2.1`; campanha e item já foram comprovados no ambiente real.
 
 ## Decisão
 
-**A Fase 4 está implementada e documentada; sua homologação real está em
-andamento.** A promoção para `production_validated` depende do deploy pontual
-de `hermes-api`, dos smokes de escrita executados pelo
-assistente no ambiente publicado e do aceite final do usuário conforme
+**A Fase 4 está implementada e sua homologação real avançou até o item da
+esteira.** A promoção para `production_validated` depende do deploy pontual da
+skill `1.2.1`, dos smokes restantes executados pelo assistente no ambiente
+publicado e do aceite final do usuário conforme
 [vps-validation.md](vps-validation.md).

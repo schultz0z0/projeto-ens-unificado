@@ -543,3 +543,40 @@ a assinatura, a confirmação e a autorização não foram afrouxados.
 
 O próximo gate é rebuild sem cache e recriação somente de `hermes-api`, seguido
 de conversa nova e repetição integral da matriz de escrita.
+
+## Décimo terceiro release candidato — contrato de conteúdo da skill — 2026-07-29
+
+### Evidência real
+
+Com GPT-5.6 Terra, campanha, atualização e item vinculado foram executados com
+preview, confirmação contextual, deep links, auditoria e conferência direta no
+Supabase. O item `HML F4 Email 20260729-C1` ficou vinculado à campanha de
+homologação e apareceu corretamente na esteira.
+
+O pedido natural para criar um asset `email_html` e sua versão inicial chegou às
+duas ações corretas em intenção, mas o `prepare_plan_v1` recusou o payload por
+campo com tipo incompatível. Nenhum plano foi assinado e nenhum conteúdo foi
+persistido. O Supabase confirmou zero asset com o título pedido e zero asset
+vinculado ao item de homologação.
+
+### Causa
+
+O domínio e seus testes já aceitavam o fluxo completo. A referência
+`mcp-contract.md` citava as ações, porém não fornecia ao Hermes os nomes e tipos
+canônicos do plano encadeado. A lacuna permitiu que o modelo inferisse aliases
+não aceitos pela allowlist estrita.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| contrato da skill | referência não continha `expected_item_version` nem o wire shape de versão | exemplo completo de `content.create_draft` + `content.version_create` |
+| aliases inválidos | modelo inferiu nomes incompatíveis | referência proíbe aliases e fixa campos canônicos |
+| regressão dirigida | teste novo falhou no primeiro campo ausente | teste passou após a alteração |
+| runtime dirigido completo | não executado antes da correção | **17 passed, 1 skipped** |
+| persistência real na falha | nenhuma | fail-closed confirmado no app e nos logs |
+
+A skill foi versionada como `1.2.1`. O próximo passo é rebuild sem cache e
+recriação somente de `hermes-api`, seguido de conversa nova para validar
+preview, ausência de persistência antes da confirmação, execução única,
+conteúdo/versionamento, deep link, auditoria e Supabase.

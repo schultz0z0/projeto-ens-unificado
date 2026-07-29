@@ -280,6 +280,44 @@ real e manter zero persistência. No turno seguinte, `vamos nessa` deve executar
 uma única vez. Não reinicie nem reconstrua `marketing-ops`: a alteração está no
 schema que o Hermes apresenta ao modelo, não no schema que o servidor valida.
 
+### Décimo terceiro release candidato: wire shape de conteúdo na skill
+
+O décimo segundo release passou na criação/atualização de campanha, confirmação
+contextual e criação de item vinculado. O primeiro plano de conteúdo falhou
+antes da assinatura porque a referência da skill nomeava
+`content.create_draft` e `content.version_create`, mas não congelava os campos
+canônicos. O serviço permaneceu fail-closed e nenhum conteúdo foi persistido.
+
+O pacote `1.2.1` acrescenta à referência MCP o wire shape exato para criar um
+asset e sua versão inicial no mesmo plano. Não há mudança em schema, migration,
+`marketing-ops`, Bridge ou frontend.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  sh -lc 'test ! -e /opt/data/skills/marketing-ops-operator &&
+    grep -q "^version: 1.2.1$" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "\"expected_item_version\"" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md &&
+    grep -q "\"expected_asset_version\"" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md'
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  hermes mcp test nexus_marketing_ops
+```
+
+Depois do deploy, abra uma conversa nova e repita somente a criação de
+`email_html` + versão inicial no item já existente. O preview deve conter as
+duas ações, nada deve existir antes da confirmação e a execução deve retornar o
+deep link do conteúdo vinculado ao item.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

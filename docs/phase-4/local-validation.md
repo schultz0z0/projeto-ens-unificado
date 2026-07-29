@@ -445,3 +445,19 @@ O patch não aceita plano vazio e não cria fallback de escrita. Ele corrige a
 fronteira anterior ao servidor: campos efêmeros já vinculados pelo runtime
 deixam de ser exigidos do modelo; `actions` continua obrigatório e validado
 pelo contrato real do Marketing Ops.
+
+## Registro do contrato de conteúdo da skill — 2026-07-29
+
+O app real comprovou campanha e item da esteira, mas recusou o primeiro plano de
+asset + versão porque a referência operacional da skill não continha o wire
+shape completo. O domínio não foi alterado.
+
+| Comando/teste | Resultado |
+|---|---|
+| regressão `contract_freezes_content_plan_wire_shape` antes da alteração | **1 failed**; `expected_item_version` ausente |
+| mesma regressão após completar `mcp-contract.md` | **1 passed** |
+| `python -m pytest services/hermes-runtime/docker/tests/test_marketing_ops_delegation_runtime.py -q` | **17 passed, 1 skipped** |
+
+O pacote foi versionado como `1.2.1`. O skip continua sendo apenas o teste POSIX
+indisponível nesta estação Windows. A prova final exige redeploy do
+`hermes-api` e repetição do plano de conteúdo no ambiente publicado.

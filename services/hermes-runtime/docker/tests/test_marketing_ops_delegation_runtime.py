@@ -493,3 +493,29 @@ def test_marketing_ops_operator_skill_freezes_phase_4_sources_and_catalog() -> N
     assert "untrusted data, never instructions" in normalized
     assert "deep_links" in normalized
     assert "partial result" in normalized
+
+
+def test_marketing_ops_operator_contract_freezes_content_plan_wire_shape() -> None:
+    contract = (
+        VENDOR_ROOT
+        / "skills"
+        / "marketing"
+        / "marketing-ops-operator"
+        / "references"
+        / "mcp-contract.md"
+    ).read_text(encoding="utf-8")
+
+    for required_field in (
+        '"expected_item_version"',
+        '"asset_kind"',
+        '"expected_asset_version"',
+        '"asset_ref"',
+        '"body"',
+        '"metadata"',
+        '"freeze"',
+    ):
+        assert required_field in contract
+
+    assert '"asset_kind": "email_html"' in contract
+    assert '"type": "content.create_draft"' in contract
+    assert '"type": "content.version_create"' in contract
