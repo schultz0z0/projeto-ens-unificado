@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_skill_1_2_3_redeploy_then_exact_target_revision`
+- **Estado:** `pending_skill_1_2_4_redeploy_then_click_only`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -26,11 +26,14 @@ versão 2 no asset `Email inicial`. O asset solicitado
 `HML F4 Email HTML 20260729-C1` permaneceu na versão 1. O diagnóstico do chat,
 os logs e o Supabase concordam; a mutação incorreta não foi apagada.
 
-O pacote `1.2.3` e sua regressão RED→GREEN estão prontos. Publique **somente
-`hermes-api`** pelo bloco do décimo quinto release em `runbook.md`; depois
-repita a revisão nomeando campanha `HML F4 Final 20260729-C`, item
-`HML F4 Email 20260729-C1` e conteúdo
-`HML F4 Email HTML 20260729-C1`.
+O pacote `1.2.3` foi publicado e passou nos dois cenários: criou a versão 2 no
+asset correto e falhou fechado para o título inexistente. A rota retornada
+também abriu o item/asset corretos, mas apareceu no chat como texto simples.
+
+O pacote `1.2.4` e sua regressão RED→GREEN estão prontos. Publique **somente
+`hermes-api`** pelo bloco do décimo sexto release em `runbook.md`; depois
+execute uma mutação de homologação e clique no link Markdown retornado. Esse é
+o único gate restante.
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
 alinhado. Os hotfixes já publicados validaram a leitura real de
@@ -81,7 +84,7 @@ ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
 auditoria e zero idempotência para `HML F4 Final 20260729-A`.
 
 O histórico abaixo explica os releases anteriores; não o use como próximo
-passo. O comando vigente é o do décimo quinto release candidato.
+passo. O comando vigente é o do décimo sexto release candidato.
 
 ## Artefatos críticos já entregues
 

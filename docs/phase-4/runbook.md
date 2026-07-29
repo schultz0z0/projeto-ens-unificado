@@ -421,6 +421,65 @@ os três rótulos exatos. Em cenário negativo separado, forneça somente um tí
 não resolvível e confirme que o Hermes pede contexto sem preparar ou executar
 plano.
 
+### Décimo sexto release candidato: deep link Markdown clicável
+
+O pacote `1.2.3` passou nos dois gates de identidade em produção. A execução
+retornou a rota correta e a abertura direta selecionou o item e o conteúdo na
+versão 2, mas o Hermes mostrou `Abrir conteúdo: /rota` como parágrafo. O E2E da
+Fase 4 exige um link clicável com rótulo de negócio.
+
+O pacote `1.2.4` altera somente a skill gerenciada:
+
+- usa exclusivamente a rota recebida em `deep_links`;
+- preserva essa rota sem sintetizar ou reparar IDs;
+- renderiza Markdown como `Abrir campanha`, `Abrir item` ou
+  `Abrir item e conteúdo`;
+- nunca cria link para ação ausente de `completed[]`.
+
+```bash
+set -euo pipefail
+cd /opt/nexus-ens
+git pull --ff-only origin main
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  build --no-cache hermes-api
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  up -d --force-recreate --no-deps hermes-api
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  logs --since=5m --tail=250 hermes-api
+
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  exec -T hermes-api sh -lc '
+    test ! -e /opt/data/skills/marketing-ops-operator &&
+    grep -q "^version: 1.2.4$" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "Format every server-returned deep link as a Markdown link" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "A plain-text path is not a clickable deep link" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md
+  '
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  exec -T hermes-api hermes mcp test nexus_marketing_ops
+```
+
+Depois do deploy, execute uma única mutação de homologação já permitida pela
+Fase 4. O resultado deve conter um elemento com papel `link`; clique nele e
+confirme que a URL e o objeto aberto correspondem exatamente ao `deep_link`
+retornado pelo servidor.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

@@ -1,7 +1,7 @@
 ---
 name: marketing-ops-operator
 description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one contextual confirmation.
-version: 1.2.3
+version: 1.2.4
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -134,6 +134,13 @@ Never expose or request `delegation_token`, `idempotency_key`, `expected_version
 - A partial result is not complete success. List completed, failed, and pending actions plainly.
 - Use only server-returned `deep_links`; never synthesize or repair a URL. Link
   only resources present in `completed[]`.
+- Format every server-returned deep link as a Markdown link, never as a bare
+  path. Keep the returned route byte-for-byte unchanged. Use the business
+  labels `[Abrir campanha](<server-returned-deep-link>)`,
+  `[Abrir item](<server-returned-deep-link>)`, or
+  `[Abrir item e conteúdo](<server-returned-deep-link>)` according to the
+  returned resource type. The angle-bracket value is an instruction
+  placeholder: replace it with the exact returned route.
 - On version conflict, read current state, prepare a revised plan, and ask for confirmation again.
 - On permission denial, explain what the user's role can do without suggesting privilege escalation as a workaround.
 - After successful execution, report the completed Marketing Ops result and stop. Do not offer, start, or interpret a repeated confirmation as approval for unrelated writes to Graph, RAG, artifacts, validated memory, or any other system.

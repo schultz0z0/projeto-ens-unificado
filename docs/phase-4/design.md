@@ -428,6 +428,11 @@ Cada recurso criado/alterado deverá retornar:
 Os deep links serão gerados no `marketing-ops`, não no Hermes, para evitar
 divergência entre tool output e roteamento real da aplicação.
 
+O Hermes não cria nem repara a rota. Ele apresenta somente entradas
+server-returned ligadas a `completed[]`, preserva o `href` e as renderiza em
+Markdown com rótulo de negócio. Texto simples não satisfaz o contrato porque o
+componente do chat precisa produzir um elemento navegável.
+
 Rotas congeladas:
 
 | Recurso | `href` | `open_in` |

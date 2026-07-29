@@ -661,3 +661,33 @@ A skill foi versionada como `1.2.3`. O próximo gate é rebuild sem cache e
 recriação somente de `hermes-api`, seguido do reteste exato. A Fase 4 não será
 promovida enquanto o asset correto não receber a versão 2 e o asset incorreto
 permanecer sem novas alterações.
+
+## Décimo sexto release candidato — deep link clicável — 2026-07-29
+
+### Evidência real
+
+O pacote `1.2.3` passou em produção:
+
+- o asset correto avançou da versão 1 para 2;
+- o asset usado como evidência do incidente permaneceu na versão 2;
+- o corpo, hash e auditoria apontam para item/asset corretos;
+- a rota retornada abriu a esteira no item correto e selecionou o conteúdo na
+  versão 2;
+- um título inexistente gerou esclarecimento e zero plano/persistência.
+
+A mensagem final, porém, exibiu `Abrir conteúdo: /rota` como texto simples.
+O componente do chat só oferece navegação quando recebe Markdown válido; o
+E2E já verifica um elemento `link` chamado `Abrir item e conteúdo`.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| resposta pós-execução | rota server-returned em parágrafo | Markdown clicável com rótulo por tipo de recurso |
+| segurança | risco de o modelo “reparar” a rota | rota preservada byte a byte; somente `deep_links` de `completed[]` |
+| regressão dirigida | **1 failed** antes do ajuste | **1 passed** |
+| runtime dirigido completo | 19 passed antes deste ajuste | **20 passed, 1 skipped** |
+
+A skill foi versionada como `1.2.4`. Não há mudança de domínio, frontend,
+Bridge, schema ou migration. O único gate restante é publicar `hermes-api`,
+executar uma mutação de homologação e clicar no link retornado.

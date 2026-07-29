@@ -519,3 +519,30 @@ O pacote `1.2.3` exige:
 O próximo gate é publicar somente `hermes-api` e repetir a revisão com a cadeia
 de negócio explicitada. A promoção permanece bloqueada até o Supabase provar a
 versão 2 no asset correto e nenhuma nova versão no asset incorreto.
+
+## Registro do deep link clicável — 2026-07-29
+
+O reteste do pacote `1.2.3` passou integralmente no domínio:
+
+- o preview identificou campanha, item e asset corretos;
+- zero escrita antes de `pode ser`;
+- versão 2 criada somente no asset correto;
+- corpo, metadata, hash, item, chat, run, tool e plano reconciliados;
+- alvo inexistente encerrou com esclarecimento, zero plano, zero auditoria e
+  zero persistência;
+- a rota retornada abriu diretamente o item correto e selecionou o conteúdo na
+  versão 2.
+
+O último detalhe falhou na apresentação: a resposta mostrou a rota em um
+parágrafo, sem papel `link`. O E2E do frontend já exige Markdown clicável.
+
+| Comando/teste | Resultado |
+|---|---|
+| regressão `formats_server_deep_links_as_clickable_markdown` antes da correção | **1 failed**; formato Markdown ausente |
+| mesma regressão após completar skill e contrato | **1 passed** |
+| runtime dirigido completo | **20 passed, 1 skipped** |
+| `ChatMessageContent.test.tsx` | **2 passed**; Markdown permitido vira link e rota inválida permanece texto |
+
+O pacote `1.2.4` preserva a rota server-returned e exige um link Markdown com
+rótulo compatível com o recurso. Resta somente o redeploy de `hermes-api` e o
+clique real final.

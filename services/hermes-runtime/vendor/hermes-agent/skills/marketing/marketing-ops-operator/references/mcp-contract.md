@@ -196,3 +196,14 @@ action naturally and wait for the next message. On execution, report only
 server-returned `completed`, `failed`, `pending`, and `deep_links` fields.
 Never synthesize a URL, claim success after a failed tool call, or retry a
 write in the same turn after an error.
+
+A plain-text path is not a clickable deep link. Render each server-returned
+route as Markdown and preserve it exactly:
+
+- campaign: `[Abrir campanha](<server-returned-deep-link>)`;
+- campaign item: `[Abrir item](<server-returned-deep-link>)`;
+- content asset: `[Abrir item e conteúdo](<server-returned-deep-link>)`.
+
+Replace the placeholder only with the matching route returned by execution.
+Do not add a link when that resource is absent from `completed[]` or when the
+server returned no matching entry in `deep_links`.

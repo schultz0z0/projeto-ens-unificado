@@ -560,3 +560,18 @@ def test_marketing_ops_operator_fails_closed_on_inexact_existing_targets() -> No
     assert "campanha resolvida" in normalized_preview
     assert "item resolvido" in normalized_preview
     assert "conteúdo resolvido" in normalized_preview
+
+
+def test_marketing_ops_operator_formats_server_deep_links_as_clickable_markdown() -> None:
+    skill_dir = VENDOR_ROOT / "skills" / "marketing" / "marketing-ops-operator"
+    skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    contract = (skill_dir / "references" / "mcp-contract.md").read_text(
+        encoding="utf-8"
+    )
+
+    normalized_skill = " ".join(skill.lower().split())
+    normalized_contract = " ".join(contract.lower().split())
+
+    assert "format every server-returned deep link as a markdown link" in normalized_skill
+    assert "[Abrir item e conteúdo](<server-returned-deep-link>)" in skill
+    assert "a plain-text path is not a clickable deep link" in normalized_contract

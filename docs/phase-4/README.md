@@ -6,17 +6,18 @@ evidência de teste aplicável e o schema remoto do Supabase foram reconciliados
 A homologação real está no último gate. Com GPT-5.6 Terra, campanha, item,
 conteúdo inicial, timeline, agenda, confirmação contextual, RAG, Graph, RBAC,
 prompt injection, deep links, auditoria e idempotência passaram no app, logs e
-Supabase. O reteste de revisão após o pacote `1.2.2` leu o corpo corretamente,
-mas revelou seleção aproximada de identidade: o agente confundiu dois assets e
-criou a versão no conteúdo errado. O pacote local `1.2.3` corrige a resolução
-exata e o preview identificável; falta seu deploy e o reteste final.
+Supabase. O pacote `1.2.3` corrigiu e comprovou em produção a resolução exata:
+o asset correto recebeu a versão 2 e um alvo inexistente falhou fechado, sem
+plano ou persistência. O último reteste revelou apenas que o deep link correto
+foi emitido como texto simples. O pacote local `1.2.4` congela o formato
+Markdown clicável exigido pelo frontend; falta seu deploy e o clique final.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `blocked_wrong_target_pending_skill_1_2_3_retest`
+- **Homologação VPS:** `all_domain_gates_passed_clickable_link_retest_pending`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -37,8 +38,8 @@ exata e o preview identificável; falta seu deploy e o reteste final.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `blocked_wrong_target_pending_skill_1_2_3_retest` | [checklist](vps-validation.md) |
-| Handoff | `pending_skill_1_2_3_redeploy_then_exact_target_revision` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `all_domain_gates_passed_clickable_link_retest_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_skill_1_2_4_redeploy_then_click_only` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -65,7 +66,7 @@ exata e o preview identificável; falta seu deploy e o reteste final.
   do operador Hermes aprovados;
 - runtime Hermes: decisão contextual isolada, respostas curtas inequívocas
   resolvidas sem modelo, contrato de saída fechado, delegação/scrub/RAG-Graph
-  e instalação canônica da skill estruturada validados localmente (19 testes
+  e instalação canônica da skill estruturada validados localmente (20 testes
   passaram; 1 teste POSIX ficou indisponível no Windows);
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
@@ -92,6 +93,12 @@ exata e o preview identificável; falta seu deploy e o reteste final.
 - a regressão RED→GREEN do pacote `1.2.3` exige rótulo humano exato, falha
   fechada quando o alvo não é resolvido e preview explícito de
   campanha/item/conteúdo;
+- o reteste `1.2.3` passou: versão 2 no asset correto, asset-evidência sem nova
+  versão, corpo/hash/auditoria correlacionados e cenário inexistente com zero
+  plano/auditoria/persistência;
+- a rota de conteúdo retornada abriu o item e selecionou a versão 2, mas a
+  mensagem do Hermes a exibiu como parágrafo não clicável; o pacote `1.2.4`
+  exige Markdown com rótulo de negócio e rota server-returned inalterada;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
@@ -103,15 +110,14 @@ exata e o preview identificável; falta seu deploy e o reteste final.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- o pacote `1.2.3` ainda precisa ser publicado no `hermes-api`;
-- a revisão ENS deve ser repetida com campanha, item e conteúdo explícitos,
-  validando zero escrita antes da confirmação, versão 2 no asset correto e
-  ausência de nova escrita no asset incorreto.
+- o pacote `1.2.4` ainda precisa ser publicado no `hermes-api`;
+- o único reteste restante é executar uma operação de homologação confirmada e
+  clicar no link Markdown, comprovando navegação real sem sintetizar a rota.
 
 ## Decisão
 
-**A Fase 4 continua implementada, mas não está promovida: o reteste real
-encontrou seleção de alvo incorreta antes do fechamento.** A promoção para
-`production_validated` depende do deploy pontual da skill `1.2.3`, do reteste
-da revisão no asset exato e da reconciliação final conforme
+**A Fase 4 passou todos os gates de domínio e segurança, mas ainda não está
+promovida porque o deep link apareceu como texto simples no chat real.** A
+promoção para `production_validated` depende do deploy pontual da skill `1.2.4`,
+do clique final no link Markdown e da reconciliação conforme
 [vps-validation.md](vps-validation.md).

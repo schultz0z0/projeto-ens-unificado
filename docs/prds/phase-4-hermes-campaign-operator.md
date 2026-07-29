@@ -1,6 +1,6 @@
 # PRD — Fase 4: Hermes Campaign Operator
 
-- **Status:** implemented_pending_exact_target_vps_retest
+- **Status:** implemented_pending_clickable_link_vps_retest
 - **Dependências:** Fases 1–3 concluídas
 - **Resultado:** Hermes consulta e opera campanhas reais com confirmação e auditoria
 
@@ -121,7 +121,7 @@ O Hermes não chama ferramentas de aprovação técnica para simular autorizaç�
 
 ## Experiência
 
-O frontend deve apresentar feedback quando um objeto for criado/alterado e permitir abrir o deep link. A resposta do Hermes deve diferenciar proposta, confirmação pendente, sucesso, conflito e falha.
+O frontend deve apresentar feedback quando um objeto for criado/alterado e permitir abrir o deep link por um elemento clicável no chat. A resposta do Hermes deve diferenciar proposta, confirmação pendente, sucesso, conflito e falha.
 
 ## Segurança
 

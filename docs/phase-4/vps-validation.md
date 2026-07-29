@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `blocked_wrong_target_pending_skill_1_2_3_retest`
+- **Estado:** `all_domain_gates_passed_clickable_link_retest_pending`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -52,6 +52,24 @@ continua bloqueado pelo pacote `1.2.3`.
 
 A regressão do pacote `1.2.3` passou com **19 passed, 1 skipped** e exige
 correspondência exata, falha fechada e preview identificável.
+
+### Resultado do pacote 1.2.3 e deep link textual — 29/07/2026
+
+O redeploy passou em health, caminho canônico e discovery das 10 tools. Os dois
+cenários de identidade passaram:
+
+1. o Hermes resolveu exatamente campanha, item e conteúdo, mostrou os três
+   rótulos no preview, aguardou `pode ser` e criou a versão 2 somente no asset
+   correto;
+2. um título inexistente foi recusado como identidade exata, com pergunta de
+   esclarecimento, sem `prepare_plan`, `execute_plan`, auditoria ou persistência.
+
+O Supabase confirmou versão 2 no asset correto, versão 2 inalterada no
+asset-evidência e auditoria correlacionada à sessão positiva. A rota retornada
+abriu o item correto e exibiu `Conteúdo email_html · versão 2`.
+
+O gate ainda não fecha porque a resposta apresentou essa rota como parágrafo,
+não como link clicável. O pacote `1.2.4` corrige somente o formato de saída.
 
 ### Validação com GPT-5.6 Terra e incidente de conteúdo — 29/07/2026
 
@@ -447,6 +465,19 @@ O cenário só passa se:
    o item/asset corretos;
 6. em conversa separada, um pedido só com título não resolvível resultar em
    pergunta de contexto, sem `prepare_plan`, `execute_plan` ou persistência.
+
+Todos os seis itens acima passaram em 29/07/2026.
+
+## Gate final obrigatório do pacote 1.2.4
+
+1. confirme health, skill `1.2.4` e as 10 tools;
+2. execute uma mutação de homologação válida;
+3. localize no chat um elemento com papel `link` e rótulo apropriado:
+   `Abrir campanha`, `Abrir item` ou `Abrir item e conteúdo`;
+4. clique no link, sem copiar/colar a rota;
+5. confirme que item/asset abertos correspondem exatamente ao resultado
+   executado e que nenhuma rota foi sintetizada;
+6. reconcilie a escrita/auditoria no Supabase e promova somente então.
 
 ## Resultado esperado
 

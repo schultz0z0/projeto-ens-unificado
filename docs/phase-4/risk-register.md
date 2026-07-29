@@ -15,7 +15,7 @@
 | F4-R-06 | `campaign_note_add` vira overwrite disfarçado de append | médio | contrato append-only e revisão de UX antes da execução | Product/Marketing Ops | `open` |
 | F4-R-07 | `artifact_link` permita anexar artifact fora do contexto autorizado | alto | usar somente link de artifact existente e owned metadata validada | Marketing Ops | `open` |
 | F4-R-08 | a auditoria não consiga ligar chat, run e tool ao objeto | alto | decidir cedo a modelagem de correlação e testar trilha completa | Marketing Ops/Bridge | `mitigated_production_validated` |
-| F4-R-09 | deep link apontar para rota inconsistente com o frontend real | médio | gerar links no `marketing-ops` com contrato revisado pelo frontend | Frontend | `campaign_and_item_production_validated_content_pending` |
+| F4-R-09 | deep link apontar para rota inconsistente com o frontend real | médio | gerar links no `marketing-ops` com contrato revisado pelo frontend | Frontend | `route_production_validated_clickability_retest_pending` |
 | F4-R-10 | descrição de tool grande ou ambígua induz uso incorreto pelo modelo | médio | ferramentas pequenas, nomenclatura estável, skill e contrato sistêmico da Bridge revisados; retestes reais e regressões RED/GREEN orientam o wire shape | Hermes Runtime/Bridge | `content_identity_skill_1_2_3_retest_pending` |
 | F4-R-11 | indisponibilidade do `marketing-ops` aparecer como sucesso conversacional | alto | falha explícita, testes E2E e mensagens seguras de fallback | Bridge/Hermes Runtime | `mitigated_e2e_fake_validated` |
 | F4-R-12 | scope/papel forjados passarem pela delegação | crítico | revalidação backend de tenant, role, scopes, run e expiração | Marketing Ops | `mitigated_production_three_roles_validated` |
@@ -32,7 +32,8 @@
 | F4-R-23 | schema visível exigir credenciais efêmeras que o modelo não deve preencher e induzir tool call vazia | alto | remover somente `delegation_token` e o `plan_token` já vinculados pelo runtime do schema apresentado ao modelo; manter schema/validação reais intactos | Hermes Runtime | `production_validated_with_terra` |
 | F4-R-24 | referência da skill citar ações de conteúdo sem congelar seus campos canônicos | alto | documentar wire shape exato, proibir aliases e manter regressão do pacote gerenciado | Hermes Runtime | `mitigated_production_validated` |
 | F4-R-25 | revisão de conteúdo ler somente resumo do asset e perder o corpo versionado | alto | exigir seletor exclusivo, `include_versions=true`, limite e tipo canônico de capacidade | Hermes Runtime | `mitigated_production_validated` |
-| F4-R-26 | modelo aproximar nomes e assinar plano para objeto diferente do pedido | crítico | igualdade pelo rótulo retornado, cadeia exata campanha→item→conteúdo, falha fechada e preview com alvos resolvidos | Hermes Runtime | `skill_1_2_3_local_validated_vps_pending` |
+| F4-R-26 | modelo aproximar nomes e assinar plano para objeto diferente do pedido | crítico | igualdade pelo rótulo retornado, cadeia exata campanha→item→conteúdo, falha fechada e preview com alvos resolvidos | Hermes Runtime | `mitigated_production_validated` |
+| F4-R-27 | Hermes exibir `deep_link` correto como texto sem navegação clicável | médio | preservar rota server-returned e renderizar Markdown com rótulo por tipo de recurso | Hermes Runtime/Frontend | `skill_1_2_4_local_validated_vps_pending` |
 
 ## Bloqueadores permanentes
 
@@ -52,6 +53,7 @@ Continuam bloqueando qualquer promoção da fase:
 3. F4-R-09, F4-R-10 e F4-R-11 no fechamento E2E.
 4. F4-R-13–F4-R-18 antes do gate local.
 5. F4-R-26 antes de qualquer promoção após uma mutação conversacional.
+6. F4-R-27 antes do aceite final da jornada chat → frontend.
 
 ## Critério de fechamento
 

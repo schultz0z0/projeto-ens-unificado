@@ -1,7 +1,7 @@
 # Rastreabilidade de requisitos — Fase 4
 
 - **Estado:** `reconciled_pending_vps_gate`
-- **Implementação:** `blocked_wrong_target_pending_skill_1_2_3_retest`
+- **Implementação:** `all_domain_gates_passed_clickable_link_retest_pending`
 - **Revisão:** 2026-07-29
 
 ## Matriz requisito → design → task
@@ -11,10 +11,10 @@
 | F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_read_smoke_validated` |
 | F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_source_call_validated_exact_revision_pending` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `production_validated` |
-| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_general_validated_exact_target_retest_pending` |
+| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_validated` |
 | F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `production_contextual_matrix_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `production_three_roles_validated` |
-| F4-RF-07 Deep link | 9 | 4, 7 | `production_campaign_item_content_create_validated_revision_target_pending` |
+| F4-RF-07 Deep link | 9 | 4, 7 | `route_validated_clickability_retest_pending` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `production_campaign_retry_validated` |
 | F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
 | F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
@@ -30,7 +30,7 @@
 | Atualização com confirmação | 4.2, 4.7, 7, 8.1 | 3, 5, 7 | `production_validated` |
 | Geração de calendário e itens | 8.8 | 3, 5, 7 | `production_item_link_validated` |
 | Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `production_validated` |
-| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `skill_1_2_3_exact_target_redeploy_pending` |
+| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `production_validated` |
 | Conversão de resposta do chat em objeto | 8.9 | 3, 5, 7 | `implementation_complete_vps_pending` |
 | Auditoria correlacionada com chat e run | 4.4, 11 | 1, 6, 7 | `implemented_remote_schema_applied` |
 
@@ -78,7 +78,7 @@
 | Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `runtime_bound_schema_fix_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `blocked_wrong_target_pending_skill_1_2_3_retest` |
+| Gate VPS | 14 | 8 | `all_domain_gates_passed_clickable_link_retest_pending` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
@@ -141,6 +141,11 @@ exige duas provas reais:
    versão criada somente no asset correto;
 2. cenário negativo sem identidade resolvível, encerrado com pedido de contexto
    e zero plano/persistência.
+
+As duas provas passaram em produção. A rota retornada também correspondeu ao
+objeto certo, mas o chat não a renderizou como link. Portanto somente F4-RF-07
+permanece aberto para o pacote `1.2.4`: Markdown clicável, rota server-returned
+inalterada e clique real até o objeto correto.
 
 ## Critério de encerramento desta matriz
 
