@@ -3298,6 +3298,35 @@ def sanitize_mcp_name_component(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", str(value or ""))
 
 
+def _hide_runtime_bound_marketing_ops_fields(
+    server_name: str,
+    tool_name: str,
+    parameters: dict,
+) -> dict:
+    """Keep ephemeral Marketing Ops credentials out of model-visible schemas."""
+    if sanitize_mcp_name_component(server_name) != "nexus_marketing_ops":
+        return parameters
+
+    properties = dict(parameters.get("properties") or {})
+    properties.pop("delegation_token", None)
+    hidden_fields = {"delegation_token"}
+    if tool_name == "marketing_ops_execute_plan_v1":
+        properties.pop("plan_token", None)
+        hidden_fields.add("plan_token")
+
+    visible = {**parameters, "properties": properties}
+    required = [
+        field
+        for field in visible.get("required", [])
+        if field not in hidden_fields
+    ]
+    if required:
+        visible["required"] = required
+    else:
+        visible.pop("required", None)
+    return visible
+
+
 def _convert_mcp_schema(server_name: str, mcp_tool) -> dict:
     """Convert an MCP tool listing to the Hermes registry schema format.
 
@@ -3311,11 +3340,19 @@ def _convert_mcp_schema(server_name: str, mcp_tool) -> dict:
     """
     safe_tool_name = sanitize_mcp_name_component(mcp_tool.name)
     safe_server_name = sanitize_mcp_name_component(server_name)
+    parameters = _normalize_mcp_input_schema(
+        getattr(mcp_tool, "inputSchema", None)
+    )
+    parameters = _hide_runtime_bound_marketing_ops_fields(
+        server_name,
+        mcp_tool.name,
+        parameters,
+    )
     prefixed_name = f"mcp_{safe_server_name}_{safe_tool_name}"
     return {
         "name": prefixed_name,
         "description": mcp_tool.description or f"MCP tool {mcp_tool.name} from {server_name}",
-        "parameters": _normalize_mcp_input_schema(getattr(mcp_tool, "inputSchema", None)),
+        "parameters": parameters,
     }
 
 

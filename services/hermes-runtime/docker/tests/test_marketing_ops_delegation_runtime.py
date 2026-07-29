@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -84,6 +85,53 @@ def test_delegation_binding_does_not_touch_unrelated_tools() -> None:
     )
 
     assert bound == original
+
+
+def test_model_visible_marketing_ops_schema_hides_runtime_bound_credentials() -> None:
+    from tools.mcp_tool import _convert_mcp_schema
+
+    prepare_tool = SimpleNamespace(
+        name="marketing_ops_prepare_plan_v1",
+        description="Prepare a signed plan",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "delegation_token": {"type": "string"},
+                "actions": {
+                    "type": "array",
+                    "items": {"type": "object", "properties": {}},
+                },
+            },
+            "required": ["delegation_token", "actions"],
+        },
+    )
+    execute_tool = SimpleNamespace(
+        name="marketing_ops_execute_plan_v1",
+        description="Execute the latest confirmed plan",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "delegation_token": {"type": "string"},
+                "plan_token": {"type": "string"},
+            },
+            "required": ["delegation_token", "plan_token"],
+        },
+    )
+
+    prepare_schema = _convert_mcp_schema("nexus_marketing_ops", prepare_tool)
+    execute_schema = _convert_mcp_schema("nexus_marketing_ops", execute_tool)
+
+    assert prepare_schema["parameters"]["properties"] == {
+        "actions": {
+            "type": "array",
+            "items": {"type": "object", "properties": {}},
+        }
+    }
+    assert prepare_schema["parameters"]["required"] == ["actions"]
+    assert execute_schema["parameters"] == {
+        "type": "object",
+        "properties": {},
+    }
 
 
 def test_execute_plan_binds_latest_successfully_prepared_token() -> None:

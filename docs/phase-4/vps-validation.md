@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_eleventh_release_candidate_deploy_then_real_gate`
+- **Estado:** `read_validated_pending_twelfth_release_candidate_deploy`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -11,6 +11,26 @@
 O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
+
+### Incidente do schema visível do preview — 29/07/2026
+
+O décimo primeiro release foi implantado e seus checks passaram: uma única
+skill `1.2.0` no caminho categorizado, pacote completo, health dos serviços e
+discovery das 10 tools. O smoke conversacional somente-leitura também passou,
+listando 12 campanhas e agenda vazia; o tenant `ens` consultado diretamente no
+Supabase possui as mesmas 12 campanhas.
+
+No primeiro preview novo, o histórico detalhado do Hermes mostrou o argumento
+literal `{}`. O runtime adicionou a delegação efêmera, mas `actions` permaneceu
+ausente; o MCP recusou com `-32602`, `expected array`, antes de assinar ou
+persistir. O Supabase confirmou `campaign_count=0`, `audit_count=0` e
+`idempotency_count=0` para `HML F4 Final 20260729-A`.
+
+O décimo segundo release remove do schema apresentado ao modelo somente os
+campos que o runtime já vincula: `delegation_token` em todas as tools de
+Marketing Ops e `plan_token` no executor. O schema real do servidor e a
+validação de `actions` permanecem estritos. Apenas `hermes-api` precisa de
+rebuild e recriação.
 
 ### Incidente do gate de confirmação — 29/07/2026
 
@@ -197,10 +217,11 @@ rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
   candidato publicadas; a skill estruturada deve estar carregável no runtime;
 - [x] `marketing-ops`, Bridge e runtime Hermes healthy antes do quarto hotfix;
 - [x] descoberta do catálogo MCP em ambiente real;
-- [ ] catálogo sem tools diretas legadas de mutação;
+- [x] catálogo sem tools diretas legadas de mutação;
 - [x] migration e índices de correlação aplicados e histórico remoto alinhado
   em 2026-07-28;
-- [ ] VPS confirma que aponta para esse mesmo projeto Supabase;
+- [x] VPS confirma no nível de dados que aponta para o mesmo tenant/projeto:
+  leitura real e consulta direta retornaram 12 campanhas no tenant `ens`;
 - [ ] refresh de delegação funcionando;
 - [x] smoke de leitura de campanhas e agenda;
 - [x] plano preparado sem persistência prematura;

@@ -248,6 +248,38 @@ recriação. Durante os smokes, a decisão inequívoca deve aparecer como
 mensagem humana. Não é necessário rebuildar `app-bridge`, `marketing-ops`,
 frontend ou `hermes-kanban`.
 
+### Décimo segundo release candidato: schema visível sem credenciais efêmeras
+
+O décimo primeiro release já está implantado e validou skill, health, discovery
+e leitura real. O preview seguinte revelou que o modelo ainda recebia
+`delegation_token` como parâmetro obrigatório, apesar de o runtime sempre
+vincular esse segredo imediatamente antes da chamada. A sessão enviou `{}` e o
+MCP recusou `actions` ausente. O décimo segundo release corrige somente o
+conversor de schema do `hermes-api`; servidor Marketing Ops, Bridge, frontend,
+banco e migrations não mudam.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps hermes-api app-bridge marketing-ops
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 hermes-api
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  hermes mcp test nexus_marketing_ops
+```
+
+Depois do deploy, use conversa nova. O primeiro preview deve registrar
+`marketing_ops_prepare_plan_v1` com `actions` preenchido, retornar um plano
+real e manter zero persistência. No turno seguinte, `vamos nessa` deve executar
+uma única vez. Não reinicie nem reconstrua `marketing-ops`: a alteração está no
+schema que o Hermes apresenta ao modelo, não no schema que o servidor valida.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

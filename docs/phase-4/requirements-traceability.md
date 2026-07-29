@@ -1,7 +1,7 @@
 # Rastreabilidade de requisitos — Fase 4
 
 - **Estado:** `reconciled_pending_vps_gate`
-- **Implementação:** `corrective_fix_ready_for_vps_revalidation`
+- **Implementação:** `twelfth_release_candidate_ready_for_vps_revalidation`
 - **Revisão:** 2026-07-29
 
 ## Matriz requisito → design → task
@@ -75,10 +75,10 @@
 | Deep links servidor → frontend | 9 | 4, 7 | `e2e_fake_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
 | Auditoria/correlação | 11 | 1, 6, 8 | `implemented_remote_schema_applied` |
-| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `canonical_structured_skill_fix_deploy_pending` |
+| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `runtime_bound_schema_fix_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `in_progress_eleventh_release_candidate_deploy_pending` |
+| Gate VPS | 14 | 8 | `read_validated_twelfth_release_candidate_deploy_pending` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
@@ -106,9 +106,13 @@ de cerca de 6,4 segundos, além da cópia persistida `1.0.0` da skill. O décimo
 release corrigiu o timeout, mas seu pós-deploy encontrou duas cópias da skill
 com o mesmo nome e uma decisão `clarify` do modelo para `vamos nessa`. O décimo
 primeiro release usa a categoria canônica, remove somente a cópia gerenciada
-obsoleta e resolve respostas completas inequívocas antes do modelo. Criação e
-atualização permanecem pendentes do redeploy de `hermes-api` e da repetição na
-VPS.
+obsoleta e resolve respostas completas inequívocas antes do modelo. O
+pós-deploy confirmou esses dois contratos e repetiu a leitura real. O preview
+seguinte mostrou que o schema visível ainda exigia credenciais que o runtime
+já vincula; o modelo enviou `{}` e o servidor recusou `actions` ausente. O
+décimo segundo release esconde somente `delegation_token` e, no executor,
+`plan_token` do schema do modelo. Criação e atualização permanecem pendentes
+desse redeploy de `hermes-api` e da repetição na VPS.
 
 ## Leitura inicial
 

@@ -417,3 +417,31 @@ do runtime, deep links, contrato conversacional e E2E fake foram executados.
 Continuam pendentes os gates que exigem banco/serviços reais ou a infraestrutura
 final da VPS, inclusive a publicação pontual de `hermes-api` e
 as jornadas de escrita com o classificador contextual endurecido.
+
+## Registro pós-deploy do décimo primeiro release — 2026-07-29
+
+| Verificação real | Resultado |
+|---|---|
+| health de `hermes-api` e `app-bridge` | passou |
+| skill canônica | passou; uma cópia em `skills/marketing/marketing-ops-operator`, versão `1.2.0`, referências e template presentes |
+| catálogo MCP | passou; 10 tools de Marketing Ops, sem mutações diretas legadas |
+| leitura de campanhas/agenda | passou; 12 campanhas e agenda vazia na janela pedida |
+| correlação com Supabase | passou; tenant `ens` também possui 12 campanhas |
+| preview `HML F4 Final 20260729-A` | recusado com segurança; tool call registrada como `{}` e `actions` ausente |
+| persistência após a falha | zero campanha, zero auditoria e zero idempotência para o nome de teste |
+
+### RED → GREEN do décimo segundo release
+
+| Comando/teste | Resultado |
+|---|---|
+| teste novo do schema visível antes da implementação | **1 failed**; `delegation_token` ainda era exigido do modelo |
+| mesmo teste depois da implementação | **1 passed** |
+| runtime dirigido completo | **16 passed, 1 skipped** |
+| `python -m compileall -q` do runtime Hermes | exit 0 |
+| `git diff --check` | exit 0 |
+| `uv run --extra dev pytest tests/tools/test_mcp_tool.py::TestSchemaConversion -q` | **17 passed** no ambiente exato do `uv.lock` |
+
+O patch não aceita plano vazio e não cria fallback de escrita. Ele corrige a
+fronteira anterior ao servidor: campos efêmeros já vinculados pelo runtime
+deixam de ser exigidos do modelo; `actions` continua obrigatório e validado
+pelo contrato real do Marketing Ops.

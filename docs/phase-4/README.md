@@ -3,20 +3,20 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso: leitura e preview de produção passaram. O
-décimo release candidato corrigiu o timeout da Bridge e instalou o pacote
-`1.2.0`, mas o teste pós-deploy revelou uma colisão entre a cópia gerenciada na
-raiz e a cópia categorizada histórica, além da não determinância do modelo para
-uma resposta curta inequívoca. O décimo primeiro release candidato corrige a
-resolução canônica da skill e o gate de respostas sem ressalva; as jornadas
-reais de escrita devem ser repetidas somente depois desse deploy.
+A homologação real está em curso: o smoke de leitura passou, o pacote canônico
+`1.2.0` foi comprovado na VPS e a cópia obsoleta da raiz foi removida. No
+primeiro preview depois do décimo primeiro release, o modelo chamou
+`prepare_plan` com `{}` porque o schema visível ainda exigia credenciais
+efêmeras que são vinculadas pelo runtime. O décimo segundo release candidato
+remove somente esses campos internos do schema apresentado ao modelo e mantém
+`actions` como o único argumento obrigatório do preview.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `blocked_pending_eleventh_release_candidate_deploy`
+- **Homologação VPS:** `read_validated_pending_twelfth_release_candidate_deploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -37,8 +37,8 @@ reais de escrita devem ser repetidas somente depois desse deploy.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `read_and_preview_validated_eleventh_release_candidate_deploy_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_hermes_api_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `read_validated_twelfth_release_candidate_deploy_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_hermes_api_redeploy_then_write_matrix` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -76,7 +76,7 @@ reais de escrita devem ser repetidas somente depois desse deploy.
 - smoke real de leitura concluído no app publicado: campanhas e agenda foram
   obtidas por Hermes/MCP/Marketing Ops sem mutação; o log revelou duas
   tentativas inválidas de intervalo antes da correção do contrato de agenda;
-- preview real concluído sem persistência; o pós-deploy do décimo release
+- preview real anterior concluído sem persistência; o pós-deploy do décimo release
   provou o novo timeout, mas expôs colisão de skill e classificação
   não determinística de `vamos nessa`, corrigidas no décimo primeiro release;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
@@ -90,9 +90,10 @@ reais de escrita devem ser repetidas somente depois desse deploy.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- a criação real ainda precisa ser repetida depois do décimo primeiro release
+- a criação real ainda precisa ser repetida depois do décimo segundo release
   candidato; o último turno permaneceu fail-closed e o Supabase confirmou zero
-  campanha e zero evento de auditoria para o nome de homologação.
+  campanha, zero evento de auditoria e zero registro de idempotência para
+  `HML F4 Final 20260729-A`.
 
 ## Decisão
 

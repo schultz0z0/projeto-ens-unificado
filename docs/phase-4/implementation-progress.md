@@ -1,6 +1,6 @@
 # Progresso de implementação — Fase 4
 
-- **Estado:** `corrective_fix_ready_for_vps_revalidation`
+- **Estado:** `twelfth_release_candidate_ready_for_vps_revalidation`
 - **Progresso de implementação:** 100%
 - **Snapshot reconciliado:** 2026-07-29
 - **Branch única:** `main`
@@ -501,3 +501,45 @@ O escopo técnico e documental da Fase 4 está concluído. A promoção final de
 do deploy pontual de `hermes-api` e da homologação real na VPS,
 com banco e serviços finais; nenhuma mudança de domínio ou migration foi
 introduzida por esta correção.
+
+## Décimo segundo release candidato — schema visível sem credenciais — 2026-07-29
+
+### Evidência real depois do décimo primeiro release
+
+- os health checks de `hermes-api` e `app-bridge` passaram;
+- a VPS comprovou a skill `1.2.0` somente no caminho categorizado, com as três
+  referências e o template;
+- o discovery registrou exatamente as 10 tools esperadas de Marketing Ops;
+- o smoke somente-leitura listou 12 campanhas e agenda vazia na janela
+  solicitada; a mesma contagem foi confirmada no tenant `ens` do Supabase;
+- no primeiro preview, a sessão do Hermes registrou o argumento literal `{}`.
+  O runtime vinculou a delegação efêmera, mas `actions` permaneceu ausente e o
+  MCP recusou com `-32602`, `expected array`, sem assinatura ou persistência;
+- o Supabase comprovou `campaign_count=0`, `audit_count=0` e
+  `idempotency_count=0` para `HML F4 Final 20260729-A`.
+
+### Causa e correção
+
+O schema apresentado ao modelo ainda declarava `delegation_token` como
+obrigatório, embora esse segredo seja sempre substituído pelo runtime antes da
+execução. No executor, `plan_token` também era visível embora já seja vinculado
+ao último plano preparado. Esse contrato inconsistente induziu o provedor a
+emitir uma chamada vazia.
+
+O conversor MCP do Hermes agora remove do schema visível somente os campos
+vinculados pelo runtime: `delegation_token` em Marketing Ops e `plan_token` no
+`execute_plan`. O schema real do servidor, a validação allowlisted de actions,
+a assinatura, a confirmação e a autorização não foram afrouxados.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| schema visível | teste encontrou `delegation_token` e `plan_token` entre os argumentos exigidos do modelo | preview expõe somente `actions`; executor não pede campos já vinculados pelo runtime |
+| runtime dirigido | teste novo falhou antes da implementação | **16 passed, 1 skipped**; skip POSIX esperado no Windows |
+| sintaxe Python | `compileall` | exit 0 |
+| higiene do diff | `git diff --check` | exit 0 |
+| conversor MCP vendorizado no ambiente travado por `uv.lock` | pacote MCP global não possuía `CreateMessageResultWithTools` | **17 passed** com o extra `dev` exato do Hermes |
+
+O próximo gate é rebuild sem cache e recriação somente de `hermes-api`, seguido
+de conversa nova e repetição integral da matriz de escrita.

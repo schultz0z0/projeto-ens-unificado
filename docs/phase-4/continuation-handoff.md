@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_eleventh_release_candidate_redeploy`
+- **Estado:** `pending_twelfth_release_candidate_redeploy`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -57,10 +57,15 @@ confirmou ausência de escrita; `vamos nessa` chegou ao classificador dentro dos
 15 segundos, mas foi classificado como `clarify`, e a execução permaneceu
 corretamente bloqueada.
 
-Publique **somente `hermes-api`** com o bloco do décimo primeiro release
-candidato em `runbook.md`. Depois, confirme a skill exclusivamente no caminho
-categorizado, abra uma conversa nova e repita preview + `vamos nessa`. Uma
-segunda confirmação não é o comportamento esperado.
+O décimo primeiro release foi publicado: health, catálogo, caminho canônico da
+skill e leitura real passaram. No preview seguinte, a sessão registrou a tool
+call como `{}`; a delegação foi vinculada pelo runtime, mas `actions` ficou
+ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
+auditoria e zero idempotência para `HML F4 Final 20260729-A`.
+
+Publique **somente `hermes-api`** com o bloco do décimo segundo release
+candidato em `runbook.md`. Depois, abra uma conversa nova e repita preview +
+`vamos nessa`. Uma segunda confirmação não é o comportamento esperado.
 
 ## Artefatos críticos já entregues
 
