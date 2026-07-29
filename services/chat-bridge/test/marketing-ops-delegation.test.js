@@ -155,6 +155,19 @@ test("only the internal approve decision grants confirmation intent", () => {
   }
 });
 
+test("contextual decision timeout accommodates the real classifier latency", () => {
+  const defaultConfig = validateBridgeRuntimeConfig({
+    BRIDGE_ALLOW_INSECURE_LOCAL_AUTH: "true",
+  });
+  const overriddenConfig = validateBridgeRuntimeConfig({
+    BRIDGE_ALLOW_INSECURE_LOCAL_AUTH: "true",
+    MARKETING_OPS_DECISION_TIMEOUT_MS: "20000",
+  });
+
+  assert.equal(defaultConfig.marketingOpsDecisionTimeoutMs, 15_000);
+  assert.equal(overriddenConfig.marketingOpsDecisionTimeoutMs, 20_000);
+});
+
 test("delegation signs and refreshes the confirmation intent from the user turn", async () => {
   const issued = await issueMarketingOpsDelegation({
     userId: activeRun.user_id,

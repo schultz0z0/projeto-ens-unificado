@@ -348,6 +348,38 @@ atualização maior de ESLint. Isso deve ser tratado como débito de segurança 
 produto, separado da validação funcional da Fase 4; não altera a superfície
 MCP, a delegação ou o schema desta entrega.
 
+## Registro do gate real e correção local — 2026-07-29
+
+### Produção observada
+
+| Caso | Resultado |
+|---|---|
+| leitura de campanhas + agenda | passou; tools operacionais corretas e nenhuma mutação |
+| preview de campanha | passou; plano preparado e zero linhas com o nome de homologação no Supabase |
+| `vamos nessa` | classificador retornou `approve`, mas após ~6,4 s; timeout da Bridge em 4 s converteu o turno em fail-closed |
+| execução | bloqueada com `confirmation_required`; nenhuma persistência |
+| skill ativa | cópia persistida `1.0.0`, não o pacote estruturado `1.2.0` |
+
+O diagnóstico conversacional do Hermes sugeriu incorretamente uma confirmação
+dupla. A inspeção de código e a correlação temporal dos logs provaram que o
+contrato continua de confirmação única; a causa foi a expiração antecipada da
+Bridge, seguida da prevalência independente da skill antiga no volume.
+
+### RED → GREEN local
+
+| Comando/teste | Resultado |
+|---|---|
+| teste novo do timeout antes da implementação | falhou: valor `undefined`, esperado `15000` |
+| teste novo da skill persistida antes da implementação | falhou: Dockerfile não empacotava a cópia gerenciada |
+| `services/chat-bridge: npm test` | **87/87** |
+| runtime de delegação + instalação de skill | **14 passed, 1 skipped**; caso POSIX indisponível no Windows |
+| `git diff --check` | exit 0 |
+
+O binário Docker e o Bash não existem nesta estação, então o build da imagem e
+o teste executável do entrypoint Linux continuam no gate VPS. O teste estático
+prova o empacotamento/instalador, e o runbook exige validar `version: 1.2.0` e
+os quatro arquivos auxiliares dentro do volume após a recriação.
+
 ## Decisão atual
 
 Os gates locais aplicáveis de código, build, typecheck, lint dirigido, contrato

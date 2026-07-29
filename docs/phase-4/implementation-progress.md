@@ -1,10 +1,11 @@
 # Progresso de implementação — Fase 4
 
-- **Estado:** `implemented_pending_vps_validation`
+- **Estado:** `corrective_fix_ready_for_vps_revalidation`
 - **Progresso de implementação:** 100%
-- **Snapshot reconciliado:** 2026-07-28
+- **Snapshot reconciliado:** 2026-07-29
 - **Branch única:** `main`
-- **Próximo gate:** homologação VPS real e aceite final do usuário
+- **Próximo gate:** deploy corretivo de `app-bridge`/`hermes-api`, homologação
+  VPS real e aceite final do usuário
 
 ## Planejamento por task
 
@@ -398,6 +399,50 @@ O próximo passo é publicar **`marketing-ops`**, **`app-bridge`** e
 **`hermes-api`** a partir deste release candidato, confirmar a carga da skill
 no runtime e repetir a matriz de escrita em produção. Nenhum estado acima
 autoriza promover a fase antes dessa evidência.
+
+## Décimo release candidato — confirmação e skill persistida — 2026-07-29
+
+### Evidência real antes da correção
+
+- a consulta somente leitura no app real passou: o Hermes chamou a listagem de
+  campanhas e a agenda operacional e respondeu sem preparar plano;
+- o preview de `HML F4 Final 20260729-A` chamou `skill_view` e
+  `marketing_ops_prepare_plan_v1`; a consulta direta ao Supabase confirmou
+  zero campanhas com esse nome antes e depois do preview;
+- `vamos nessa` foi classificado como `approve` com contrato de saída válido,
+  mas a classificação levou cerca de 6,4 segundos e a Bridge encerrava a
+  espera em 4 segundos. Ela prosseguiu em fail-closed como `clarify`, assinou a
+  delegação sem `confirmation_intent` e o runtime bloqueou a execução com
+  `confirmation_required`;
+- nenhuma campanha foi persistida pelo fluxo recusado;
+- o catálogo de skills do Hermes mostrou `marketing-ops-operator` ativa, porém
+  o editor revelou a cópia persistida `1.0.0`, enquanto a imagem fonte contém
+  o pacote `1.2.0`. O instalador de skills gerenciadas não sincronizava a cópia
+  de Marketing Ops, que continuava prevalecendo.
+
+### Causas e correções
+
+1. `MARKETING_OPS_DECISION_TIMEOUT_MS` passa a ter default de 15 segundos,
+   limite configurável entre 1 e 60 segundos e propagação pelo Compose. A
+   confirmação continua sendo única; timeout, erro ou resposta inválida
+   permanecem fail-closed como `clarify`.
+2. A imagem `hermes-api` passa a copiar o pacote
+   `marketing-ops-operator` para `/opt/nexus-skills`, e o entrypoint substitui
+   atomicamente a cópia persistida em `/opt/data/skills` e nos perfis. Skills
+   do usuário fora da lista gerenciada continuam preservadas.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| timeout contextual | configuração não expunha timeout e o teste recebeu `undefined` | default `15000`, override validado e Bridge usa o valor |
+| skill persistida | teste não encontrou cópia/instalação gerenciada do pacote | Dockerfile e instalador incluem `marketing-ops-operator` |
+| Bridge integral | regressão após a correção | **87/87** testes passaram |
+| runtime dirigido | regressão da delegação e instalação | **14 passed, 1 skipped**; skip POSIX esperado no Windows |
+| higiene do diff | `git diff --check` | exit 0 |
+
+O gate real permanece aberto até reconstruir e recriar `app-bridge` e
+`hermes-api`, confirmar a skill `1.2.0` no volume e repetir a matriz completa.
 
 ## Decisão atual
 

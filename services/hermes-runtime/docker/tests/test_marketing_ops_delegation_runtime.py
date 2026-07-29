@@ -278,9 +278,17 @@ def test_marketing_ops_operator_skill_has_loadable_contract_references() -> None
     dockerfile = (RUNTIME_ROOT / "docker" / "hermes.Dockerfile").read_text(
         encoding="utf-8"
     )
+    installer = (RUNTIME_ROOT / "docker" / "ensure-nexus-skills.sh").read_text(
+        encoding="utf-8"
+    )
 
-    # The production image copies the vendored skill tree, including references.
-    assert "COPY vendor/hermes-agent /opt/hermes-src" in dockerfile
+    # The production entrypoint must replace stale persisted copies with the
+    # packaged skill tree, including references and templates.
+    assert (
+        "COPY vendor/hermes-agent/skills/marketing/marketing-ops-operator "
+        "/opt/nexus-skills/marketing-ops-operator"
+    ) in dockerfile
+    assert "marketing-ops-operator" in installer
 
     for reference_name, required_text in {
         "mcp-contract.md": "marketing_ops_prepare_plan_v1",

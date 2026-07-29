@@ -1,16 +1,39 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `pending_ninth_release_candidate_deploy_then_real_gate`
+- **Estado:** `pending_tenth_release_candidate_deploy_then_real_gate`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
 - **Promoção final:** somente após evidência real e aceite
 
-## Nota de reconciliação — 28/07/2026
+## Nota de reconciliação — 29/07/2026
 
 O código, os testes locais aplicáveis, o E2E fake do operador Hermes e a
 migration remota do Supabase já foram reconciliados. Este documento passa a ser
 o checklist autoritativo para fechar a promoção da Fase 4 em produção.
+
+### Incidente do gate de confirmação — 29/07/2026
+
+Leitura e preview passaram, e o Supabase confirmou ausência de persistência
+prematura. No turno `vamos nessa`, o endpoint interno classificou `approve`,
+mas terminou em cerca de 6,4 segundos; a Bridge já havia aplicado seu timeout
+de 4 segundos e seguiu de forma segura como `clarify`. A delegação do turno
+não carregou confirmação e o executor recusou a escrita. O comportamento
+seguro evitou persistência, mas impede concluir a jornada.
+
+Na mesma inspeção, a UI do Hermes mostrou que o volume persistente ainda
+priorizava a skill `marketing-ops-operator` `1.0.0`, sem referências e
+templates do pacote `1.2.0`. O décimo release candidato amplia a espera segura
+para 15 segundos e passa a sincronizar atomicamente a skill gerenciada na
+inicialização do `hermes-api`.
+
+Depois do deploy, este incidente só pode ser encerrado quando:
+
+- `/opt/data/skills/marketing-ops-operator/SKILL.md` declarar `version: 1.2.0`;
+- os três arquivos de `references/` e o template existirem no volume;
+- `vamos nessa` executar o plano pendente com uma única confirmação;
+- pergunta, negação e revisão continuarem sem executar;
+- campanha, auditoria e deep link forem comprovados no Supabase e no app.
 
 ### Incidente de primeiro deploy — 28/07/2026
 
@@ -202,7 +225,6 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_marketing_ops
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_rag
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_graph
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_picture
 ```
 
 Se a VPS usar outro diretório padrão do projeto, ajuste apenas o `cd`.

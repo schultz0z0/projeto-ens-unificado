@@ -1,7 +1,7 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_ninth_release_candidate_redeploy`
-- **Snapshot:** 2026-07-28
+- **Estado:** `pending_tenth_release_candidate_redeploy`
+- **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
 
@@ -42,10 +42,17 @@ smoke publicado também mostrou que a tool de agenda precisa de instantes ISO
 8601 completos com offset. A skill agora possui referências e template
 carregáveis, embutidos no `hermes-api`.
 
-Publique **`marketing-ops`**, **`app-bridge`** e **`hermes-api`** com o bloco
-do nono release candidato em `runbook.md`. Depois, confirme a carga da skill,
-repita preview e confirmação contextual, consulte o log sanitizado se houver
-falha e só então retome os testes reais de escrita.
+O nono release foi publicado. A leitura e o preview passaram no app real, mas
+`vamos nessa` revelou que o classificador levou cerca de 6,4 segundos enquanto
+a Bridge aguardava somente 4 segundos. O endpoint registrou `approve` tarde
+demais; a Bridge seguiu em fail-closed como `clarify` e o runtime bloqueou a
+escrita. A mesma inspeção mostrou a skill persistida `1.0.0`, que prevalecia
+sobre o pacote `1.2.0` da imagem.
+
+Publique **somente `app-bridge` e `hermes-api`** com o bloco do décimo release
+candidato em `runbook.md`. Depois, confirme `version: 1.2.0` e os arquivos de
+referência no volume, abra uma conversa nova e repita preview + `vamos nessa`.
+Uma segunda confirmação não é o comportamento esperado.
 
 ## Artefatos críticos já entregues
 

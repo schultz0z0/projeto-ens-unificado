@@ -79,6 +79,7 @@ const config = {
   supabaseAnonKey: runtimeConfig.supabaseAnonKey,
   supabaseServiceRoleKey: runtimeConfig.supabaseServiceRoleKey,
   allowInsecureLocalAuth: runtimeConfig.allowInsecureLocalAuth,
+  marketingOpsDecisionTimeoutMs: runtimeConfig.marketingOpsDecisionTimeoutMs,
   attachmentBucket: process.env.CHAT_ATTACHMENTS_BUCKET || process.env.VITE_CHAT_ATTACHMENTS_BUCKET || CHAT_ATTACHMENT_BUCKET,
   supabaseOutputsBucket: process.env.SUPABASE_OUTPUTS_BUCKET || "image-gen-outputs",
   supabaseGeneratedImagesPrefix: process.env.SUPABASE_GENERATED_IMAGES_PREFIX || "hermes-chat-images",
@@ -1133,7 +1134,7 @@ class HermesBridge {
         method: "POST",
         headers: this.buildHermesHeaders("application/json", run),
         body: JSON.stringify({ session_id: run.hermes_session_id, message: run.message_text }),
-        signal: AbortSignal.timeout(4_000),
+        signal: AbortSignal.timeout(config.marketingOpsDecisionTimeoutMs),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) return "clarify";

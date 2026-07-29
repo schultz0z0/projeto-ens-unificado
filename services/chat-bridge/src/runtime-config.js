@@ -15,6 +15,10 @@ const isHttpUrl = (candidate) => {
 export const validateBridgeRuntimeConfig = (env = process.env) => {
   const production = env.NODE_ENV === "production";
   const allowInsecureLocalAuth = !production && env.BRIDGE_ALLOW_INSECURE_LOCAL_AUTH === "true";
+  const configuredDecisionTimeoutMs = Number(env.MARKETING_OPS_DECISION_TIMEOUT_MS || 15_000);
+  const marketingOpsDecisionTimeoutMs = Number.isFinite(configuredDecisionTimeoutMs)
+    ? Math.max(1_000, Math.min(60_000, Math.trunc(configuredDecisionTimeoutMs)))
+    : 15_000;
   const supabaseUrl = value(env, ["SUPABASE_URL", "VITE_SUPABASE_URL"]);
   const supabaseAnonKey = value(env, ["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
   const supabaseServiceRoleKey = value(env, ["SUPABASE_SERVICE_ROLE_KEY"]);
@@ -67,6 +71,7 @@ export const validateBridgeRuntimeConfig = (env = process.env) => {
     activeKid,
     activeKey,
     delegationRefreshKey,
+    marketingOpsDecisionTimeoutMs,
     pictureInternalUrl,
     pictureInternalKey,
     pictureDelegationActiveKid,

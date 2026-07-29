@@ -3,14 +3,15 @@ set -euo pipefail
 
 HERMES_HOME="${HERMES_HOME:-/opt/data}"
 SOURCE_ROOT="${NEXUS_MANAGED_SKILLS_DIR:-/opt/nexus-skills}"
-MANAGED_SKILL="picture-hermes"
+MANAGED_SKILLS=("picture-hermes" "marketing-ops-operator")
 
 install_managed_skill() {
   local profile_home="$1"
+  local managed_skill="$2"
   local skills_root="${profile_home}/skills"
-  local source="${SOURCE_ROOT}/${MANAGED_SKILL}"
-  local target="${skills_root}/${MANAGED_SKILL}"
-  local temporary="${skills_root}/.${MANAGED_SKILL}.tmp.$$"
+  local source="${SOURCE_ROOT}/${managed_skill}"
+  local target="${skills_root}/${managed_skill}"
+  local temporary="${skills_root}/.${managed_skill}.tmp.$$"
 
   if [ ! -f "${source}/SKILL.md" ]; then
     echo "[hermes-skills] managed source missing: ${source}/SKILL.md" >&2
@@ -23,7 +24,7 @@ install_managed_skill() {
   fi
 
   case "$target" in
-    "$skills_root/$MANAGED_SKILL") ;;
+    "$skills_root/$managed_skill") ;;
     *) echo "[hermes-skills] refusing unsafe target: $target" >&2; return 1 ;;
   esac
 
@@ -31,14 +32,18 @@ install_managed_skill() {
   cp -R "$source" "$temporary"
   rm -rf -- "$target"
   mv "$temporary" "$target"
-  echo "[hermes-skills] installed ${MANAGED_SKILL} in ${profile_home}"
+  echo "[hermes-skills] installed ${managed_skill} in ${profile_home}"
 }
 
-install_managed_skill "$HERMES_HOME"
+for managed_skill in "${MANAGED_SKILLS[@]}"; do
+  install_managed_skill "$HERMES_HOME" "$managed_skill"
+done
 
 if [ -d "$HERMES_HOME/profiles" ]; then
   for profile_home in "$HERMES_HOME"/profiles/*; do
     [ -d "$profile_home" ] || continue
-    install_managed_skill "$profile_home"
+    for managed_skill in "${MANAGED_SKILLS[@]}"; do
+      install_managed_skill "$profile_home" "$managed_skill"
+    done
   done
 fi

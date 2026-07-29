@@ -157,6 +157,44 @@ assistente deve executar a matriz real de preview, confirmação contextual,
 negação/revisão, agenda, deep link e auditoria descrita em
 `vps-validation.md`.
 
+### Décimo release candidato: timeout contextual e sincronização da skill
+
+O gate real de 29/07/2026 provou que `app-bridge` e `hermes-api` precisam ser
+publicados juntos. A Bridge passa a aguardar até 15 segundos pela decisão
+contextual, e o Hermes passa a substituir a cópia persistida antiga da skill
+por seu pacote `1.2.0` a cada inicialização. Não há mudança de schema,
+migration, frontend ou serviço `marketing-ops`.
+
+```bash
+cd /opt/nexus-ens
+set -euo pipefail
+git pull --ff-only origin main
+git rev-parse --short HEAD
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml build --no-cache app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml ps app-bridge hermes-api
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml logs --since=5m --tail=250 app-bridge hermes-api
+curl -fsS http://127.0.0.1:8081/health
+curl -fsS http://127.0.0.1:8652/health
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api \
+  sh -lc 'grep -q "^version: 1.2.0$" /opt/data/skills/marketing-ops-operator/SKILL.md &&
+    test -f /opt/data/skills/marketing-ops-operator/references/mcp-contract.md &&
+    test -f /opt/data/skills/marketing-ops-operator/references/conversation-safety.md &&
+    test -f /opt/data/skills/marketing-ops-operator/references/diagnostics.md &&
+    test -f /opt/data/skills/marketing-ops-operator/templates/plan-preview.md'
+```
+
+O bloco final não imprime o conteúdo da skill nem qualquer segredo; exit 0
+confirma que a cópia gerenciada correta chegou ao volume persistente. A
+variável `NEXUS_MARKETING_OPS_DECISION_TIMEOUT_MS=15000` é opcional porque o
+mesmo valor já é o default da imagem. Se ela for declarada na `.env`, o Compose
+a propaga para `app-bridge`.
+
+Depois desses checks, abra uma conversa nova e repita primeiro o preview sem
+persistência e `vamos nessa`. Não aceite o workaround de pedir uma segunda
+confirmação: o contrato da Fase 4 exige uma única confirmação no turno seguinte.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 
@@ -203,7 +241,6 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_marketing_ops
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_rag
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_graph
-docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml exec -T hermes-api hermes mcp test nexus_picture
 curl -fsS http://127.0.0.1:8091/ready
 curl -fsS http://127.0.0.1:8081/health
 curl -fsS http://127.0.0.1:8652/health
@@ -212,7 +249,7 @@ curl -fsS http://127.0.0.1:8652/health
 Se o health HTTP não estiver publicado diretamente na VPS, execute os curls via
 `docker compose exec -T <service>`.
 
-Os quatro comandos `hermes mcp test` confirmam transporte e discovery. Execute
+Os três comandos `hermes mcp test` confirmam transporte e discovery. Execute
 também uma leitura real no chat antes de qualquer mutação, pois só ela valida o
 handler de `CallToolResult` e a delegação ponta a ponta.
 

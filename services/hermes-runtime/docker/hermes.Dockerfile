@@ -105,6 +105,7 @@ COPY docker/ensure-nexus-skills.sh /usr/local/bin/ensure-nexus-skills.sh
 COPY docker/scrub-marketing-ops-delegations.py /usr/local/bin/scrub-marketing-ops-delegations.py
 COPY templates/hermes/config.yaml /opt/hermes-defaults/config.yaml
 COPY skills /opt/nexus-skills
+COPY vendor/hermes-agent/skills/marketing/marketing-ops-operator /opt/nexus-skills/marketing-ops-operator
 
 RUN chmod +x \
       /usr/local/bin/hermes-init.sh \

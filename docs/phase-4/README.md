@@ -3,17 +3,19 @@
 Este diretório reúne o contrato, a implementação executada e a preparação
 operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
 evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está em curso: a leitura de produção passou. O próximo
-release candidato corrige a compatibilidade de serialização de ações do
-provedor, torna o contrato de agenda explícito e publica a skill estruturada
-no `hermes-api`; depois dele começam as jornadas reais de escrita.
+A homologação real está em curso: leitura e preview de produção passaram, mas
+o primeiro teste de confirmação revelou dois desvios de deploy. A Bridge
+expirava o classificador contextual antes da resposta real e o volume
+persistente do Hermes continuava carregando a skill monolítica `1.0.0`. O
+décimo release candidato corrige os dois pontos; as jornadas reais de escrita
+devem ser repetidas somente depois desse deploy.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
-- **Snapshot reconciliado:** 2026-07-28
+- **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `in_progress_pending_ninth_release_candidate_deploy`
+- **Homologação VPS:** `blocked_pending_tenth_release_candidate_deploy`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -34,8 +36,8 @@ no `hermes-api`; depois dele começam as jornadas reais de escrita.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `read_smoke_validated_ninth_release_candidate_deploy_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_marketing_ops_app_bridge_hermes_api_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `read_and_preview_validated_tenth_release_candidate_deploy_pending` | [checklist](vps-validation.md) |
+| Handoff | `pending_app_bridge_hermes_api_redeploy` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -57,12 +59,12 @@ no `hermes-api`; depois dele começam as jornadas reais de escrita.
   verdes; payload direto, envelope `item` e string JSON seguem para a mesma
   validação estrita;
 - `chat-bridge`: contrato contextual do operador Hermes e guardrails de
-  delegação validados (86/86 testes locais);
+  delegação validados (87/87 testes locais);
 - `chat-web`: typecheck, build, 22 testes dirigidos de deep link/chat e E2E fake
   do operador Hermes aprovados;
 - runtime Hermes: decisão contextual isolada, contrato de saída fechado,
-  delegação/scrub/RAG-Graph, skill estruturada e `compileall` validados
-  localmente;
+  delegação/scrub/RAG-Graph e instalação da skill estruturada validados
+  localmente (14 testes passaram; 1 teste POSIX ficou indisponível no Windows);
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
   conectado, com os sete campos novos confirmados em
@@ -72,6 +74,9 @@ no `hermes-api`; depois dele começam as jornadas reais de escrita.
 - smoke real de leitura concluído no app publicado: campanhas e agenda foram
   obtidas por Hermes/MCP/Marketing Ops sem mutação; o log revelou duas
   tentativas inválidas de intervalo antes da correção do contrato de agenda;
+- preview real concluído sem persistência; a confirmação expôs timeout da
+  Bridge e skill persistida antiga, ambos corrigidos no décimo release
+  candidato;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
@@ -83,15 +88,14 @@ no `hermes-api`; depois dele começam as jornadas reais de escrita.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- o preview real ainda precisa ser repetido depois do nono release candidato:
-  o provedor também pode serializar a action única como objeto tipado direto
-  ou string JSON. A compatibilidade foi adicionada antes da mesma validação
-  estrita, sem expandir campos, autorização ou confirmação.
+- a criação real ainda precisa ser repetida depois do décimo release
+  candidato: a confirmação única foi corretamente classificada, mas expirou na
+  Bridge antes da resposta e não chegou ao executor.
 
 ## Decisão
 
 **A Fase 4 está implementada e documentada; sua homologação real está em
 andamento.** A promoção para `production_validated` depende do deploy pontual
-de `marketing-ops`, `app-bridge` e `hermes-api`, dos smokes de escrita executados pelo assistente
-no ambiente publicado e do aceite final do usuário conforme
+de `app-bridge` e `hermes-api`, dos smokes de escrita executados pelo
+assistente no ambiente publicado e do aceite final do usuário conforme
 [vps-validation.md](vps-validation.md).
