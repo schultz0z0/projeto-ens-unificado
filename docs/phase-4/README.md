@@ -1,24 +1,22 @@
 # Fase 4 — Hermes Campaign Operator
 
-Este diretório reúne o contrato, a implementação executada e a preparação
-operacional da Fase 4 no padrão documental das Fases 0–3. O código local, a
-evidência de teste aplicável e o schema remoto do Supabase foram reconciliados.
-A homologação real está no último gate. Com GPT-5.6 Terra, campanha, item,
-conteúdo inicial, timeline, agenda, confirmação contextual, RAG, Graph, RBAC,
-prompt injection, deep links, auditoria e idempotência passaram no app, logs e
-Supabase. O pacote `1.2.3` corrigiu e comprovou em produção a resolução exata:
-o asset correto recebeu a versão 2 e um alvo inexistente falhou fechado, sem
-plano ou persistência. O último reteste revelou apenas que o deep link correto
-foi emitido como texto simples. O pacote local `1.2.4` congela o formato
-Markdown clicável exigido pelo frontend; falta seu deploy e o clique final.
+Este diretório reúne o contrato, a implementação executada e a operação
+validada da Fase 4 no padrão documental das Fases 0–3. Código, testes
+aplicáveis, schema remoto do Supabase e jornada real na VPS foram
+reconciliados. Com GPT-5.6 Terra, campanha, item, conteúdo inicial e revisado,
+timeline, agenda, confirmação contextual, RAG, Graph, RBAC, prompt injection,
+deep links, auditoria e idempotência passaram no app, logs e Supabase. O pacote
+`1.2.3` comprovou resolução exata e falha fechada; o pacote `1.2.4` fechou o
+último gate ao renderizar e navegar por um deep link Markdown real. Não há
+bloqueador conhecido dentro do escopo da Fase 4.
 
 ## Status
 
-- **Fase:** `implemented_pending_vps_validation`
+- **Fase:** `production_validated`
 - **Snapshot reconciliado:** 2026-07-29
-- **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `all_domain_gates_passed_clickable_link_retest_pending`
-- **Supabase remoto:** `migration_history_aligned_remote`
+- **Tasks:** 1–8 concluídas e homologadas no escopo aplicável
+- **Homologação VPS:** `production_validated`
+- **Supabase remoto:** `migration_history_aligned_remote_production_trace_validated`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
 - **PRD:** [phase-4-hermes-campaign-operator.md](../prds/phase-4-hermes-campaign-operator.md)
@@ -32,14 +30,14 @@ Markdown clicável exigido pelo frontend; falta seu deploy e o clique final.
 | Entregável/gate | Estado | Evidência |
 |---|---|---|
 | PRD/design/plano | `approved_as_built` | PRD, design e plano reconciliados com a implementação |
-| Tasks 1–8 | `completed_pending_vps_gate` | [progresso](implementation-progress.md) |
-| Rastreabilidade F4-RF-01–12 | `reconciled_pending_vps_gate` | [rastreabilidade](requirements-traceability.md) |
-| Registro de riscos | `reconciled_with_residuals` | [risk-register.md](risk-register.md) |
-| Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
-| Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
-| Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `all_domain_gates_passed_clickable_link_retest_pending` | [checklist](vps-validation.md) |
-| Handoff | `pending_skill_1_2_4_redeploy_then_click_only` | [continuation-handoff.md](continuation-handoff.md) |
+| Tasks 1–8 | `completed_production_validated` | [progresso](implementation-progress.md) |
+| Rastreabilidade F4-RF-01–12 | `closed` | [rastreabilidade](requirements-traceability.md) |
+| Registro de riscos | `closed_with_accepted_residuals` | [risk-register.md](risk-register.md) |
+| Supabase remoto | `migration_history_aligned_remote_production_trace_validated` | [deploy](supabase-deployment.md) |
+| Gate local | `completed_with_documented_environment_limits` | [local-validation.md](local-validation.md) |
+| Operação/rollback | `runbook_executed_rollback_documented_not_drilled` | [runbook](runbook.md), [rollback](rollback.md) |
+| Homologação VPS | `production_validated` | [checklist](vps-validation.md) |
+| Handoff | `phase_4_closed` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -96,28 +94,38 @@ Markdown clicável exigido pelo frontend; falta seu deploy e o clique final.
 - o reteste `1.2.3` passou: versão 2 no asset correto, asset-evidência sem nova
   versão, corpo/hash/auditoria correlacionados e cenário inexistente com zero
   plano/auditoria/persistência;
-- a rota de conteúdo retornada abriu o item e selecionou a versão 2, mas a
-  mensagem do Hermes a exibiu como parágrafo não clicável; o pacote `1.2.4`
-  exige Markdown com rótulo de negócio e rota server-returned inalterada;
+- o pacote `1.2.4` foi carregado no caminho canônico, com 10 tools MCP
+  descobertas; health de Hermes e Bridge permaneceu verde;
+- o gate final append-only alterou a campanha
+  `HML F4 Final 20260729-C` da versão 2 para 3 somente após `vamos nessa`,
+  preservando a nota existente;
+- a resposta expôs um elemento real `link` chamado `Abrir campanha`, com
+  `href=/marketing-ops/campaigns/6c09b64a-fe76-46ee-8edb-c2039d73fa2d`; o
+  clique abriu a campanha correta, sem copiar, colar ou sintetizar rota;
+- o evento de auditoria `c0c8a13e-f323-44a7-b576-1e854cf0ad8f` correlacionou
+  sessão `9407e388-c8b5-47f5-97d2-a35406845f19`, run
+  `88fb782f-bd94-4473-870b-57ff217554d5`, tool call
+  `eb95aae4-1869-47d3-afdb-768a438681a7` e plano
+  `4bd13e09-0b35-443d-ab23-d025186d7c2e`;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
-  disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
-  real continuam fora deste snapshot.
+  disponíveis nesta máquina, portanto pgTAP/reset/lint de banco local não
+  foram simulados; migration, comportamento persistido e RLS foram validados
+  no Supabase/VPS reais por gates seguros e rastreáveis.
 
 ## Resíduos conhecidos
 
-- conflito controlado, rate limit e restart continuam cobertos por testes
-  automatizados e não serão provocados no site público sem janela operacional;
-- a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
-  e a migration remota, porque a jornada completa ainda precisa ser repetida na
-  infraestrutura final.
-- o pacote `1.2.4` ainda precisa ser publicado no `hermes-api`;
-- o único reteste restante é executar uma operação de homologação confirmada e
-  clicar no link Markdown, comprovando navegação real sem sintetizar a rota.
+- conflito controlado, rate limit e indisponibilidade permanecem cobertos por
+  testes automatizados; não foram provocados destrutivamente no site público;
+- a primeira tentativa de `prepare_plan_v1` do gate final recebeu
+  `invalid_union`, foi recusada antes de assinatura/persistência e o Hermes
+  refez a chamada correta. O comportamento fail-closed funcionou e não deixou
+  impacto de dados; o evento permanece como telemetria operacional
+  não bloqueante para otimização futura de latência.
 
 ## Decisão
 
-**A Fase 4 passou todos os gates de domínio e segurança, mas ainda não está
-promovida porque o deep link apareceu como texto simples no chat real.** A
-promoção para `production_validated` depende do deploy pontual da skill `1.2.4`,
-do clique final no link Markdown e da reconciliação conforme
-[vps-validation.md](vps-validation.md).
+**A Fase 4 está `production_validated`.** O último gate foi executado no app
+real com a skill `1.2.4`: ausência de escrita antes da confirmação, decisão
+contextual positiva, append-only, auditoria completa, deep link Markdown
+clicável e navegação até o objeto correto foram comprovados. Os resíduos acima
+são limitações operacionais aceitas, não lacunas do escopo funcional.

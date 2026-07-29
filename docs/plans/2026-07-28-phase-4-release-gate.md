@@ -1,5 +1,7 @@
 # Fase 4 — Plano de fechamento do gate de release
 
+> **Estado final:** `completed_production_validated` em 2026-07-29.
+
 > **Para execução:** seguir em `main`, registrar evidência em `docs/phase-4`
 > antes de avançar para o próximo item. A validação conversacional real só
 > acontece após o deploy da VPS.
@@ -47,8 +49,8 @@ TypeScript, Python e os documentos da Fase 4.
    pendentes, sem promover a fase.
 
 **Resultado de 2026-07-28:** concluída; PRD, design, runbook, risco,
-rastreabilidade e handoff agora descrevem o estado
-`implemented_pending_vps_validation` e preservam o gate real como pendência.
+rastreabilidade e handoff passaram a descrever o estado intermediário e
+preservaram o gate real como pendência naquele snapshot.
 
 ### Task 3 — Executar regressões pré-deploy
 
@@ -84,3 +86,10 @@ Supabase local em `127.0.0.1:55322`; a confirmação JWT isolada passou.
 3. Executar retry, conflito e indisponibilidade apenas em janela controlada.
 4. Atualizar a rastreabilidade para `verified` somente com evidência real e
    promover a fase apenas após aceite.
+
+**Resultado de 2026-07-29:** concluída. Health, skill `1.2.4`, catálogo MCP,
+leituras, preview sem escrita, confirmação contextual, campanha/item/conteúdo,
+RAG, Graph, RBAC, prompt injection, resolução exata, append-only, auditoria,
+Supabase e deep link clicável passaram. Conflito, rate limit e indisponibilidade
+foram mantidos em testes automatizados para não degradar o site público. A Fase
+4 foi promovida para `production_validated`.

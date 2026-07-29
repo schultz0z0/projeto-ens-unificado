@@ -1,11 +1,10 @@
 # Progresso de implementação — Fase 4
 
-- **Estado:** `twelfth_release_candidate_ready_for_vps_revalidation`
+- **Estado:** `production_validated`
 - **Progresso de implementação:** 100%
 - **Snapshot reconciliado:** 2026-07-29
 - **Branch única:** `main`
-- **Próximo gate:** deploy corretivo de `hermes-api`, homologação
-  VPS real e aceite final do usuário
+- **Próximo gate:** nenhum na Fase 4; baseline liberada para a Fase 5
 
 ## Planejamento por task
 
@@ -18,7 +17,7 @@
 | 5 | integração Hermes runtime, RAG/Graph e skill | `implemented_unit_validated` | runtime bloqueando caminho errado, usando fontes corretas e revisando tom ENS |
 | 6 | observabilidade, auditoria e correlação ponta a ponta | `implemented_unit_validated` | métricas, trilha e evidência de chat → run → tool → audit |
 | 7 | frontend/bridge/E2E e falhas controladas | `implemented_local_e2e_validated` | jornada integrada controlada com erro sem falso sucesso |
-| 8 | gates locais, operação, VPS e handoff | `completed_pending_vps_gate` | pacote documental reconciliado e fase pronta para homologação |
+| 8 | gates locais, operação, VPS e handoff | `completed_production_validated` | pacote documental reconciliado e homologação aprovada |
 
 ## Estratégia de execução
 
@@ -33,8 +32,8 @@
 
 ## Critérios de progresso
 
-A fase não avança para `implemented_pending_vps_validation` apenas por existir
-documentação. Este estado só é válido quando houver código real, testes locais
+O antigo estado intermediário de implementação não era alcançado apenas por
+existir documentação. Ele só era válido com código real, testes locais
 aplicáveis, schema remoto reconciliado e pacote operacional pronto para
 homologação.
 
@@ -42,8 +41,10 @@ homologação.
 
 - nenhuma decisão de produto permanece aberta; os contratos estão congelados em
   `design.md`;
-- o bloqueador residual é apenas ambiental/operacional: falta executar a
-  homologação real na VPS com banco/serviços finais.
+- não há bloqueador residual de produto, implementação ou homologação no
+  escopo da Fase 4;
+- Docker/PostgreSQL locais continuam indisponíveis nesta estação, limitação
+  substituída por testes seguros no Supabase/VPS reais e explicitada no gate.
 
 ## Task 1 — evidência registrada em 2026-07-22
 
@@ -441,8 +442,9 @@ autoriza promover a fase antes dessa evidência.
 | runtime dirigido | regressão da delegação e instalação | **14 passed, 1 skipped**; skip POSIX esperado no Windows |
 | higiene do diff | `git diff --check` | exit 0 |
 
-O gate real permanece aberto até reconstruir e recriar `app-bridge` e
-`hermes-api`, confirmar a skill `1.2.0` no volume e repetir a matriz completa.
+Naquele snapshot, o gate real permanecia aberto até reconstruir e recriar
+`app-bridge` e `hermes-api`, confirmar a skill `1.2.0` no volume e repetir a
+matriz completa.
 
 ## Décimo primeiro release candidato — resolução canônica e gate estável — 2026-07-29
 
@@ -688,6 +690,36 @@ E2E já verifica um elemento `link` chamado `Abrir item e conteúdo`.
 | regressão dirigida | **1 failed** antes do ajuste | **1 passed** |
 | runtime dirigido completo | 19 passed antes deste ajuste | **20 passed, 1 skipped** |
 
-A skill foi versionada como `1.2.4`. Não há mudança de domínio, frontend,
-Bridge, schema ou migration. O único gate restante é publicar `hermes-api`,
-executar uma mutação de homologação e clicar no link retornado.
+A skill foi versionada como `1.2.4`. Não houve mudança de domínio, frontend,
+Bridge, schema ou migration. Naquele snapshot, o gate restante era publicar
+`hermes-api`, executar uma mutação de homologação e clicar no link retornado;
+o fechamento abaixo registra sua conclusão.
+
+## Fechamento de produção — pacote 1.2.4 — 2026-07-29
+
+O décimo sexto release foi implantado e o último gate foi executado em uma
+conversa nova:
+
+- health de Hermes e Bridge verde, skill canônica `1.2.4` e 10 tools MCP;
+- preview exato de `campaign.note_add`, sem alteração da campanha na versão 2;
+- `vamos nessa` classificado deterministicamente como `approve`;
+- execução única com append da nota
+  `HML F4 gate final deep link 1.2.4 — 2026-07-29`;
+- campanha `6c09b64a-fe76-46ee-8edb-c2039d73fa2d` avançou para a versão 3,
+  preservando integralmente a nota anterior;
+- resposta final renderizou `Abrir campanha` como elemento `link`; o clique
+  navegou para o `href` exato devolvido pelo Marketing Ops e a tela exibiu a
+  campanha e a nota esperadas;
+- auditoria `c0c8a13e-f323-44a7-b576-1e854cf0ad8f` correlacionou sessão
+  `9407e388-c8b5-47f5-97d2-a35406845f19`, run
+  `88fb782f-bd94-4473-870b-57ff217554d5`, tool call
+  `eb95aae4-1869-47d3-afdb-768a438681a7`, plano
+  `4bd13e09-0b35-443d-ab23-d025186d7c2e` e ação 0.
+
+A primeira composição de `prepare_plan_v1` recebeu `invalid_union`; o servidor
+recusou antes de plano/persistência, o Hermes consultou o diagnóstico e refez a
+chamada válida. A recuperação fail-closed é evidência positiva de segurança,
+embora a tentativa seja mantida como telemetria não bloqueante.
+
+Tasks 1–8 estão concluídas e a Fase 4 foi promovida a
+`production_validated`.

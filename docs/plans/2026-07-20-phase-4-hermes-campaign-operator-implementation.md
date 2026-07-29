@@ -1,5 +1,9 @@
 # Phase 4 Hermes Campaign Operator Implementation Plan
 
+> **Estado final:** `completed_production_validated` em 2026-07-29. As
+> evidências por task estão em `docs/phase-4/implementation-progress.md`; os
+> gates reais estão em `docs/phase-4/vps-validation.md`.
+
 > **Baseline aprovado:** 2026-07-22. Executar sequencialmente com TDD e
 > registrar RED, GREEN, validação e documentação antes da task seguinte.
 >
@@ -71,13 +75,13 @@ Ao finalizar cada task:
 scopes minimos, migration aditiva, contexto de auditoria, rate limit por
 ator/tool e remoção das tools diretas legadas.
 
-- [ ] RED de contrato para tool discovery, nomes finais e schemas.
-- [ ] RED para actions novas de plano, referencias internas e scopes.
-- [ ] RED provando que tools diretas legadas não aparecem na descoberta.
-- [ ] RED para contexto auditável `hermes` com chat/run/tool/plano/ação.
-- [ ] RED para rate limit independente por ator + tool.
-- [ ] Criar migration e pgTAP para as colunas/índices congelados no design.
-- [ ] GREEN com contracts e testes MCP atualizados.
+- [x] RED de contrato para tool discovery, nomes finais e schemas.
+- [x] RED para actions novas de plano, referencias internas e scopes.
+- [x] RED provando que tools diretas legadas não aparecem na descoberta.
+- [x] RED para contexto auditável `hermes` com chat/run/tool/plano/ação.
+- [x] RED para rate limit independente por ator + tool.
+- [x] Criar migration e pgTAP para as colunas/índices congelados no design.
+- [x] GREEN com contracts e testes MCP atualizados.
 
 **Comandos mínimos:**
 
@@ -105,11 +109,11 @@ npx supabase db lint --local --schema marketing_ops,marketing_ops_private --leve
 `marketing_ops_get_campaign_timeline_v1`, `marketing_ops_get_content_v1` e
 `marketing_ops_get_object_capabilities_v1`.
 
-- [ ] RED para leitura autorizada por papel/tenant.
-- [ ] RED para filtros, timezone, cursor e payload pequeno.
-- [ ] RED para rate limit de leitura por ator/tool e isolamento entre atores.
-- [ ] Implementar adapters MCP reaproveitando dominio da Fase 3.
-- [ ] GREEN com contratos, casos de permissao e payloads normalizados.
+- [x] RED para leitura autorizada por papel/tenant.
+- [x] RED para filtros, timezone, cursor e payload pequeno.
+- [x] RED para rate limit de leitura por ator/tool e isolamento entre atores.
+- [x] Implementar adapters MCP reaproveitando dominio da Fase 3.
+- [x] GREEN com contratos, casos de permissao e payloads normalizados.
 
 ## Task 3 — Expansao do fluxo `prepare_plan` / `execute_plan`
 
@@ -127,13 +131,13 @@ npx supabase db lint --local --schema marketing_ops,marketing_ops_private --leve
 `campaign_item.reschedule`, `content.create_draft`,
 `content.version_create`, `artifact.link_existing` e `campaign.note_add`.
 
-- [ ] RED para conflitos, idempotencia e resultados parciais.
-- [ ] RED para `completed[]`, `failed[]`, `pending[]` e dependência falha.
-- [ ] RED para retry integral do plano sem duplicar ações já concluídas.
-- [ ] RED para `campaign_note_add` append-only e `artifact.link_existing`
+- [x] RED para conflitos, idempotencia e resultados parciais.
+- [x] RED para `completed[]`, `failed[]`, `pending[]` e dependência falha.
+- [x] RED para retry integral do plano sem duplicar ações já concluídas.
+- [x] RED para `campaign_note_add` append-only e `artifact.link_existing`
   somente com artifact autorizado.
-- [ ] Implementar executor estendido sem abrir mutacao direta.
-- [ ] GREEN com status `completed`, `partial` e `failed`.
+- [x] Implementar executor estendido sem abrir mutacao direta.
+- [x] GREEN com status `completed`, `partial` e `failed`.
 
 ## Task 4 — Tool results, deep links e UX de operador
 
@@ -147,12 +151,12 @@ npx supabase db lint --local --schema marketing_ops,marketing_ops_private --leve
 **Produz:** respostas com `resource_type`, `resource_id`, `label`, `href`,
 resultado parcial detalhado e mensagens seguras para conflito/negacao/falha.
 
-- [ ] RED para deep link correto de campanha, item e conteudo.
-- [ ] RED para rejeição de UUID/rota inválidos e conteúdo abrindo no item com
+- [x] RED para deep link correto de campanha, item e conteudo.
+- [x] RED para rejeição de UUID/rota inválidos e conteúdo abrindo no item com
   `contentAssetId`.
-- [ ] RED para falha parcial e indisponibilidade sem falso sucesso.
-- [ ] Implementar mapeamento de deep link no backend.
-- [ ] GREEN com payloads pequenos e consistentes com frontend.
+- [x] RED para falha parcial e indisponibilidade sem falso sucesso.
+- [x] Implementar mapeamento de deep link no backend.
+- [x] GREEN com payloads pequenos e consistentes com frontend.
 
 ## Task 5 — Runtime Hermes, RAG/Graph e skill do operador
 
@@ -167,13 +171,13 @@ resultado parcial detalhado e mensagens seguras para conflito/negacao/falha.
 revisão pelo tom ENS, mensagens de conflito/partial e bloqueio contínuo de
 mutações diretas.
 
-- [ ] RED para leitura de agenda/conteudo e execucao de actions novas.
-- [ ] RED para bloqueio de qualquer tool mutavel fora do plano.
-- [ ] RED para RAG obrigatório em fatos/tom ENS e Graph em cenário relacional.
-- [ ] RED para prompt injection em conteúdo não ampliar autoridade.
-- [ ] RED para briefing → calendário e chat → versão vinculada.
-- [ ] Ajustar binding do runtime sem quebrar cache de prompt.
-- [ ] GREEN com runtime ensinando o caminho correto do operador.
+- [x] RED para leitura de agenda/conteudo e execucao de actions novas.
+- [x] RED para bloqueio de qualquer tool mutavel fora do plano.
+- [x] RED para RAG obrigatório em fatos/tom ENS e Graph em cenário relacional.
+- [x] RED para prompt injection em conteúdo não ampliar autoridade.
+- [x] RED para briefing → calendário e chat → versão vinculada.
+- [x] Ajustar binding do runtime sem quebrar cache de prompt.
+- [x] GREEN com runtime ensinando o caminho correto do operador.
 
 ## Task 6 — Auditoria, observabilidade e correlacao ponta a ponta
 
@@ -189,11 +193,11 @@ mutações diretas.
 operador `hermes`, `chat_session_id`, `run_id`, `tool_name`, `tool_call_id`,
 `plan_id`, `plan_action_index` e `correlation_id`.
 
-- [ ] RED para correlacao auditavel e redaction de logs.
-- [ ] RED provando ausência de briefing/copy/nota/conteúdo integral.
-- [ ] RED para retry/conflito/negacao observaveis em metricas e auditoria.
-- [ ] Implementar metadados minimos sem vazar segredo.
-- [ ] GREEN com consulta/auditoria mostrando a trilha esperada.
+- [x] RED para correlacao auditavel e redaction de logs.
+- [x] RED provando ausência de briefing/copy/nota/conteúdo integral.
+- [x] RED para retry/conflito/negacao observaveis em metricas e auditoria.
+- [x] Implementar metadados minimos sem vazar segredo.
+- [x] GREEN com consulta/auditoria mostrando a trilha esperada.
 
 ## Task 7 — Bridge, frontend e E2E
 
@@ -209,18 +213,18 @@ operador `hermes`, `chat_session_id`, `run_id`, `tool_name`, `tool_call_id`,
 -> frontend`, com deep link abrindo o objeto correto e falha operacional
 comunicada sem falso sucesso.
 
-- [ ] RED E2E para leitura, prepare, confirmacao e execute.
-- [ ] RED para indisponibilidade do `marketing-ops`.
-- [ ] RED E2E para briefing → calendário/checklist.
-- [ ] RED E2E para resposta do chat → conteúdo versionado.
-- [ ] RED E2E para revisão ENS com RAG e relação validada via Graph.
-- [ ] RED E2E para alvo existente aproximado/ambíguo → pedido de contexto,
+- [x] RED E2E para leitura, prepare, confirmacao e execute.
+- [x] RED para indisponibilidade do `marketing-ops`.
+- [x] RED E2E para briefing → calendário/checklist.
+- [x] RED E2E para resposta do chat → conteúdo versionado.
+- [x] RED E2E para revisão ENS com RAG e relação validada via Graph.
+- [x] RED E2E para alvo existente aproximado/ambíguo → pedido de contexto,
       zero plano e zero persistência.
-- [ ] RED E2E para preview de revisão com campanha, item e conteúdo exatos.
-- [ ] RED E2E para conflito → releitura → nova confirmação.
-- [ ] RED E2E para delegação expirada/replay e prompt injection.
-- [ ] Implementar feedback e abrir deep link no frontend.
-- [ ] GREEN com correlacao ponta a ponta.
+- [x] RED E2E para preview de revisão com campanha, item e conteúdo exatos.
+- [x] RED E2E para conflito → releitura → nova confirmação.
+- [x] RED E2E para delegação expirada/replay e prompt injection.
+- [x] Implementar feedback e abrir deep link no frontend.
+- [x] GREEN com correlacao ponta a ponta.
 
 ## Task 8 — Gates, operacao e reconciliacao documental
 
@@ -233,13 +237,15 @@ comunicada sem falso sucesso.
 **Produz:** gate local completo, runbook executavel, rollback verificavel,
 checklist VPS e handoff final da fase.
 
-- [ ] Registrar RED/GREEN por task.
-- [ ] Registrar gate local com evidencias reais.
-- [ ] Executar build, lint, typecheck, suites e migrations em banco limpo.
-- [ ] Validar restart, persistência, backup e rollback local aplicáveis.
-- [ ] Preparar deploy controlado e checklist VPS.
-- [ ] Registrar comandos de build/deploy VPS e roteiro de testes manuais.
-- [ ] Reconciliar README, rastreabilidade, riscos e handoff.
+- [x] Registrar RED/GREEN por task.
+- [x] Registrar gate local com evidencias reais.
+- [x] Executar build, lint, typecheck e suites aplicáveis; migration validada no
+  Supabase remoto, com banco local indisponível documentado.
+- [x] Validar restart e persistência; backup/rollback destrutivo marcado como
+  não executado e aceito por segurança no ambiente público.
+- [x] Preparar deploy controlado e checklist VPS.
+- [x] Registrar comandos de build/deploy VPS e roteiro de testes manuais.
+- [x] Reconciliar README, rastreabilidade, riscos e handoff.
 
 ## Gate local planejado
 

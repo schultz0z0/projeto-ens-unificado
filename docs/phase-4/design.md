@@ -1,7 +1,7 @@
 # Design — Fase 4 Hermes Campaign Operator
 
 - **Data:** 2026-07-22
-- **Estado:** `implemented_pending_vps_validation`
+- **Estado:** `production_validated`
 - **Dependência:** Fase 3 `production_validated`
 - **PRD base:** [phase-4-hermes-campaign-operator.md](../prds/phase-4-hermes-campaign-operator.md)
 
@@ -544,5 +544,7 @@ A Fase 4 está pronta para deploy controlado porque:
 - a migration aditiva e a estratégia de correlação estão decididas;
 - segurança, jornadas e gates possuem critérios rastreáveis.
 
-O gate de homologação real permanece pendente; este documento não autoriza
-promover a fase sem as evidências de `vps-validation.md`.
+O gate de homologação real foi aprovado em 2026-07-29. As evidências de
+confirmação contextual, persistência, auditoria, resolução exata e deep link
+clicável estão registradas em `vps-validation.md`; o desenho permanece como
+contrato as-built da fase promovida para `production_validated`.

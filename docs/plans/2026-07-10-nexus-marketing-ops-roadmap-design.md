@@ -381,7 +381,7 @@ Sem o gate VPS, a fase fica `pronta para produção`.
 1. Fundação do Marketing Ops.
 2. Workspace Operacional MVP.
 3. Calendário e Esteira de Produção.
-4. Hermes Campaign Operator.
+4. Hermes Campaign Operator — `production_validated` em 2026-07-29.
 5. Governança e Aprovações.
 6. Execução Assistida Piloto.
 7. Performance, Diagnóstico e Aprendizado.

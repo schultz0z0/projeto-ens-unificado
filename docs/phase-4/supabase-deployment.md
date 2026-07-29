@@ -1,7 +1,7 @@
 # Supabase / schema deployment — Fase 4
 
-- **Estado:** `migration_history_aligned_remote`
-- **Data-base:** 2026-07-28
+- **Estado:** `migration_history_aligned_remote_production_trace_validated`
+- **Data-base:** 2026-07-29
 - **Observação:** migration aditiva obrigatória para F4-RF-11 aplicada no
   projeto Supabase conectado e com histórico local/remoto alinhado
 
@@ -54,6 +54,14 @@ Ela foi desenhada para ser:
 - nova auditoria de 2026-07-28 confirmou RLS habilitado nas 16 tabelas do
   schema `marketing_ops`, inclusive campanhas, itens, auditoria e histórico;
   não há migration, política ou DDL novo neste release candidato.
+- o gate final de 2026-07-29 persistiu o evento
+  `c0c8a13e-f323-44a7-b576-1e854cf0ad8f` com
+  `operator_origin=hermes`, `campaign.note_added`, versões 2→3,
+  `chat_session_id=9407e388-c8b5-47f5-97d2-a35406845f19`,
+  `run_id=88fb782f-bd94-4473-870b-57ff217554d5`,
+  `tool_call_id=eb95aae4-1869-47d3-afdb-768a438681a7`,
+  `plan_id=4bd13e09-0b35-443d-ab23-d025186d7c2e` e
+  `plan_action_index=0`, comprovando o uso real das colunas da migration.
 
 ## Limite da auditoria de schema
 

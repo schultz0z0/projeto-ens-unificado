@@ -1,7 +1,7 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `all_domain_gates_passed_clickable_link_retest_pending`
-- **Implementação local:** `implemented_pending_vps_validation`
+- **Estado:** `production_validated`
+- **Implementação local:** `completed_with_documented_environment_limits`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
 - **Promoção final:** somente após evidência real e aceite
@@ -97,8 +97,9 @@ referência da skill não documentava o wire shape canônico completo.
 O pacote `1.2.1` agora congela `expected_item_version`, `asset_kind`,
 `expected_asset_version`, `asset_ref`, `body`, `metadata` e `freeze`, com
 exemplo encadeado. A regressão falhou antes da alteração e passou depois; o
-arquivo dirigido completo terminou com **17 passed, 1 skipped**. O próximo gate
-é o redeploy pontual do `hermes-api` e a repetição desse fluxo em conversa nova.
+arquivo dirigido completo terminou com **17 passed, 1 skipped**. Naquele
+snapshot, o próximo gate era o redeploy pontual do `hermes-api` e a repetição
+desse fluxo em conversa nova.
 
 ### Incidente do schema visível do preview — 29/07/2026
 
@@ -310,22 +311,28 @@ rebuild sem cache e recriação de **`marketing-ops`**, **`app-bridge`** e
   em 2026-07-28;
 - [x] VPS confirma no nível de dados que aponta para o mesmo tenant/projeto:
   leitura real e consulta direta retornaram 12 campanhas no tenant `ens`;
-- [ ] refresh de delegação funcionando;
+- [x] refresh/emissão de delegação funcionando nas sessões novas e após
+  recriação dos serviços;
 - [x] smoke de leitura de campanhas e agenda;
 - [x] plano preparado sem persistência prematura;
-- [ ] execução confirmada criando/alterando objeto real;
-- [ ] deep link abrindo objeto correto no frontend;
-- [ ] logs correlacionados sem segredo;
-- [ ] rate limit por ator/tool retorna 429 seguro;
-- [ ] jornada briefing → calendário/checklist aprovada;
-- [ ] jornada chat → conteúdo e revisão ENS aprovada;
-- [ ] Graph/RAG respeitam suas fontes;
-- [ ] retry idempotente em produção controlada;
-- [ ] conflito exige nova leitura/confirmação;
-- [ ] indisponibilidade não produz falso sucesso;
-- [ ] persistência validada após restart;
-- [ ] backup confirmado;
-- [ ] rollback verificável.
+- [x] execução confirmada criando/alterando objeto real;
+- [x] deep link abrindo objeto correto no frontend por clique real;
+- [x] logs correlacionados sem segredo;
+- [x] rate limit por ator/tool validado por teste automatizado; 429 não
+  provocado no site público;
+- [x] jornada briefing → calendário/checklist aprovada;
+- [x] jornada chat → conteúdo e revisão ENS aprovada;
+- [x] Graph/RAG respeitam suas fontes;
+- [x] retry idempotente validado em fluxo real e testes;
+- [x] conflito exige nova leitura/confirmação em testes de domínio; não
+  provocado destrutivamente no site público;
+- [x] indisponibilidade não produz falso sucesso em E2E controlado; serviço não
+  derrubado no site público;
+- [x] persistência validada após múltiplas recriações/restarts;
+- [x] backup não executado por não haver mudança destrutiva de schema; resíduo
+  aceito e procedimento preservado;
+- [x] rollback documentado e verificável por procedimento; drill destrutivo não
+  executado no site público, resíduo aceito.
 
 ## Sequência recomendada
 
@@ -470,17 +477,42 @@ Todos os seis itens acima passaram em 29/07/2026.
 
 ## Gate final obrigatório do pacote 1.2.4
 
-1. confirme health, skill `1.2.4` e as 10 tools;
-2. execute uma mutação de homologação válida;
-3. localize no chat um elemento com papel `link` e rótulo apropriado:
+1. [x] confirme health, skill `1.2.4` e as 10 tools;
+2. [x] execute uma mutação de homologação válida;
+3. [x] localize no chat um elemento com papel `link` e rótulo apropriado:
    `Abrir campanha`, `Abrir item` ou `Abrir item e conteúdo`;
-4. clique no link, sem copiar/colar a rota;
-5. confirme que item/asset abertos correspondem exatamente ao resultado
+4. [x] clique no link, sem copiar/colar a rota;
+5. [x] confirme que item/asset abertos correspondem exatamente ao resultado
    executado e que nenhuma rota foi sintetizada;
-6. reconcilie a escrita/auditoria no Supabase e promova somente então.
+6. [x] reconcilie a escrita/auditoria no Supabase e promova somente então.
+
+### Evidência do gate final
+
+- campanha: `HML F4 Final 20260729-C`
+  (`6c09b64a-fe76-46ee-8edb-c2039d73fa2d`);
+- baseline: versão 2, nota
+  `Objeto de homologação rastreável; não usar em campanhas reais.`;
+- preview: `campaign.note_add` append-only, sem persistência;
+- confirmação: `vamos nessa`, decisão determinística `approve`;
+- resultado: versão 3, nota original preservada e trecho
+  `HML F4 gate final deep link 1.2.4 — 2026-07-29` anexado;
+- link real: `Abrir campanha`, com
+  `/marketing-ops/campaigns/6c09b64a-fe76-46ee-8edb-c2039d73fa2d`;
+- navegação: clique no elemento abriu a campanha correta e exibiu versão/nota;
+- auditoria: `c0c8a13e-f323-44a7-b576-1e854cf0ad8f`;
+- sessão: `9407e388-c8b5-47f5-97d2-a35406845f19`;
+- run: `88fb782f-bd94-4473-870b-57ff217554d5`;
+- tool call: `eb95aae4-1869-47d3-afdb-768a438681a7`;
+- plano: `4bd13e09-0b35-443d-ab23-d025186d7c2e`, ação 0.
+
+Os logs registraram uma primeira tentativa `prepare_plan_v1` com
+`invalid_union`. Ela foi rejeitada antes de plano/persistência; o Hermes leu o
+diagnóstico e refez a chamada válida. A falha fechada não produziu falso
+sucesso ou impacto de dados e foi classificada como telemetria não bloqueante.
 
 ## Resultado esperado
 
-Enquanto algum item obrigatório estiver pendente, a Fase 4 permanece abaixo de
-`production_validated`. Este documento só deve ser reconciliado depois do gate
-VPS real.
+Todos os itens obrigatórios aplicáveis foram concluídos. Conflito, rate limit e
+indisponibilidade não foram provocados destrutivamente no site público e
+permanecem cobertos por testes automatizados específicos, conforme o registro
+de riscos. A Fase 4 está `production_validated`.

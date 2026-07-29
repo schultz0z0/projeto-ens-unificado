@@ -1,9 +1,9 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_skill_1_2_4_redeploy_then_click_only`
+- **Estado:** `phase_4_closed`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
-- **Código:** implementação local concluída; gate VPS pendente
+- **Código:** implementação e gate VPS concluídos
 
 ## Ordem de leitura
 
@@ -15,7 +15,21 @@
 
 ## Ponto exato de continuação
 
-Os pacotes `1.2.1` e `1.2.2` já foram implantados. Asset + versão inicial, deep
+Não há continuação pendente da Fase 4. O próximo ciclo pode iniciar a Fase 5
+usando PRD, design, rastreabilidade e gate VPS desta fase como baseline
+`production_validated`.
+
+O pacote `1.2.4` foi implantado no caminho canônico. Health de Hermes e Bridge,
+skill instalada e catálogo com 10 tools passaram. No gate final, a campanha
+`HML F4 Final 20260729-C` recebeu uma nota append-only somente após a
+confirmação contextual `vamos nessa`; o link Markdown `Abrir campanha` foi
+clicado e abriu o objeto correto na versão 3. Supabase e auditoria confirmaram
+a mesma execução.
+
+O histórico abaixo é mantido como trilha de decisões e incidentes; não
+representa trabalho pendente.
+
+Os pacotes `1.2.1` e `1.2.2` foram implantados. Asset + versão inicial, deep
 link, frontend, Supabase, auditoria, idempotência, timeline, agenda, RAG,
 Graph, admin, manager, member e prompt injection passaram.
 
@@ -30,10 +44,9 @@ O pacote `1.2.3` foi publicado e passou nos dois cenários: criou a versão 2 no
 asset correto e falhou fechado para o título inexistente. A rota retornada
 também abriu o item/asset corretos, mas apareceu no chat como texto simples.
 
-O pacote `1.2.4` e sua regressão RED→GREEN estão prontos. Publique **somente
-`hermes-api`** pelo bloco do décimo sexto release em `runbook.md`; depois
-execute uma mutação de homologação e clique no link Markdown retornado. Esse é
-o único gate restante.
+O pacote `1.2.4` e sua regressão RED→GREEN foram publicados e validados. O
+bloco do décimo sexto release em `runbook.md` permanece apenas para reprodução
+ou recuperação operacional.
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
 alinhado. Os hotfixes já publicados validaram a leitura real de
@@ -84,7 +97,7 @@ ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
 auditoria e zero idempotência para `HML F4 Final 20260729-A`.
 
 O histórico abaixo explica os releases anteriores; não o use como próximo
-passo. O comando vigente é o do décimo sexto release candidato.
+passo de desenvolvimento.
 
 ## Artefatos críticos já entregues
 
@@ -107,3 +120,7 @@ passo. O comando vigente é o do décimo sexto release candidato.
 - não reabrir decisões da Fase 3 sem regressão comprovada;
 - não promover a fase por documentação ou E2E fake sozinhos;
 - usar `runbook.md` e `vps-validation.md` como fonte autoritativa do deploy.
+- não reabrir a Fase 4 por causa do `invalid_union` recuperado no primeiro
+  prepare do gate final: ele foi recusado sem escrita e corrigido na mesma
+  conversa; trate-o somente como telemetria de otimização, salvo regressão
+  observável.

@@ -1,7 +1,7 @@
 # Runbook — Fase 4
 
-- **Estado:** `ready_for_execution`
-- **Implementação:** `completed_pending_vps_gate`
+- **Estado:** `executed_and_reusable`
+- **Implementação:** `production_validated`
 - **Objetivo:** executar deploy e operação controlada do operador Hermes sobre o `marketing-ops`
 
 ## Escopo operacional
@@ -480,6 +480,10 @@ Fase 4. O resultado deve conter um elemento com papel `link`; clique nele e
 confirme que a URL e o objeto aberto correspondem exatamente ao `deep_link`
 retornado pelo servidor.
 
+Execução registrada em 2026-07-29: health e discovery passaram, a mutação
+append-only foi confirmada contextualmente e o clique em `Abrir campanha`
+abriu o objeto correto. Este bloco permanece como procedimento reproduzível.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 
@@ -551,3 +555,6 @@ handler de `CallToolResult` e a delegação ponta a ponta.
 
 Este runbook só muda para `executed_and_reusable` quando houver deploy real,
 smoke real e aceite do usuário no gate VPS.
+
+Critério cumprido em 2026-07-29. O runbook está `executed_and_reusable`; novo
+deploy da Fase 4 só é necessário para recuperação, rollback ou regressão futura.

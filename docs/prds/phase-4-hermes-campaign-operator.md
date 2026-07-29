@@ -1,6 +1,6 @@
 # PRD — Fase 4: Hermes Campaign Operator
 
-- **Status:** implemented_pending_clickable_link_vps_retest
+- **Status:** production_validated
 - **Dependências:** Fases 1–3 concluídas
 - **Resultado:** Hermes consulta e opera campanhas reais com confirmação e auditoria
 
@@ -147,21 +147,21 @@ O frontend deve apresentar feedback quando um objeto for criado/alterado e permi
 
 ## Critérios de aceite
 
-- [ ] Hermes lista somente campanhas autorizadas.
-- [ ] Estado operacional sempre vem do Marketing Ops.
-- [ ] Hermes cria rascunho após confirmação.
-- [ ] Objeto criado aparece no frontend sem reconciliação manual.
-- [ ] Objeto existente só é alterado após correspondência exata e preview do
+- [x] Hermes lista somente campanhas autorizadas.
+- [x] Estado operacional sempre vem do Marketing Ops.
+- [x] Hermes cria rascunho após confirmação.
+- [x] Objeto criado aparece no frontend sem reconciliação manual.
+- [x] Objeto existente só é alterado após correspondência exata e preview do
       alvo; ausência/ambiguidade termina sem plano ou persistência.
-- [ ] Retry não duplica objeto.
-- [ ] Tenant/papel forjados são rejeitados.
-- [ ] Delegação expirada ou reutilizada falha.
-- [ ] Conflito exige nova consulta/decisão.
-- [ ] Conteúdo do chat vira versão vinculada.
-- [ ] Deep link abre o objeto correto.
-- [ ] Auditoria conecta ator, chat, run e ferramenta.
-- [ ] Hermes não aprova nem executa ação sensível.
-- [ ] Indisponibilidade do Marketing Ops é comunicada sem falso sucesso.
+- [x] Retry não duplica objeto.
+- [x] Tenant/papel forjados são rejeitados.
+- [x] Delegação expirada ou reutilizada falha.
+- [x] Conflito exige nova consulta/decisão.
+- [x] Conteúdo do chat vira versão vinculada.
+- [x] Deep link abre o objeto correto.
+- [x] Auditoria conecta ator, chat, run e ferramenta.
+- [x] Hermes não aprova nem executa ação sensível.
+- [x] Indisponibilidade do Marketing Ops é comunicada sem falso sucesso.
 
 ## Testes
 
@@ -189,3 +189,7 @@ Config MCP persistente, rede interna, secrets, delegação, health, smoke com us
 ## Gate de saída
 
 A Fase 5 inicia quando o Hermes opera rascunhos e itens com segurança, sem acesso direto ao banco, e a trilha ponta a ponta está validada localmente e na VPS.
+
+Gate cumprido em 2026-07-29. A evidência consolidada está em
+`docs/phase-4/vps-validation.md`; a Fase 5 pode iniciar sem reabrir decisões
+fechadas da Fase 4.

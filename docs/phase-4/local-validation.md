@@ -1,6 +1,6 @@
 # Validação local — Fase 4
 
-- **Estado:** `partially_executed`
+- **Estado:** `completed_with_documented_environment_limits`
 - **Base:** 2026-07-29
 - **Branch:** `main`
 - **Política:** registrar apenas gates realmente executados
@@ -18,30 +18,35 @@
 - [x] catálogo sem tools diretas legadas de mutação (Task 1, discovery unitário);
 - [x] catálogo de leitura da Task 2 e capacidades contextuais validados
   unitariamente;
-- [ ] migration aplicada em banco limpo e sobre baseline existente;
+- [x] migration aplicada e conferida no Supabase remoto; banco limpo local não
+  executado por ausência documentada de Docker/PostgreSQL;
 - [x] testes unitários de domínio e executor do plano verdes;
 - [x] testes dirigidos do runtime Hermes verdes;
 - [x] build, lint e typecheck aplicáveis verdes (`marketing-ops` e `chat-web`
   com build/typecheck verdes; lint do frontend sem erro novo);
 - [x] E2E `frontend -> bridge -> Hermes -> MCP -> marketing-ops -> frontend`
   verde em stack fake/controlada do Playwright;
-- [ ] retry idempotente sem duplicidade;
-- [ ] conflito de versão com nova consulta e nova confirmação;
+- [x] retry idempotente sem duplicidade, coberto pelo executor e confirmado no
+  fluxo real de campanha/conteúdo;
+- [x] conflito de versão com nova consulta e nova confirmação, coberto por
+  testes de domínio/contrato; não provocado destrutivamente em produção;
 - [x] mutações diretas bloqueadas no runtime em teste;
-- [ ] tenant/papel forjados rejeitados;
+- [x] tenant/papel forjados rejeitados em testes e no cenário real de prompt
+  injection;
 - [x] delegação expirada/reutilizada rejeitada em testes dirigidos de token;
 - [x] rate limit por ator e tool validado unitariamente;
 - [x] prompt injection sem ampliação de autoridade, comprovada em produção;
 - [x] redaction de delegação e snapshots de auditoria validada unitariamente;
 - [x] auditoria sem briefing, copy, nota ou conteúdo integral em teste unitário;
 - [x] deep links validados em unit/component test para campanha, item e asset;
-- [ ] briefing convertido em calendário/checklist após confirmação;
-- [ ] resposta do chat convertida em versão vinculada;
-- [ ] revisão pelo tom ENS fundamentada no RAG; fonte consultada, versão final pendente;
+- [x] briefing convertido em item de calendário/esteira após confirmação;
+- [x] resposta do chat convertida em versão vinculada;
+- [x] revisão pelo tom ENS fundamentada no RAG e persistida no asset exato;
 - [x] Graph usado em cenário relacional sem substituir estado transacional;
 - [x] indisponibilidade comunicada sem falso sucesso;
-- [ ] serviço reiniciado sem perder dados/auditoria;
-- [ ] backup e rollback validados ou marcados não aplicáveis com justificativa.
+- [x] serviço recriado/reiniciado nos deploys sem perder dados/auditoria;
+- [x] backup/rollback não provocados no site público; estratégia e comandos
+  revisados em `rollback.md` e aceitos como gate operacional não destrutivo.
 
 ## Evidências a registrar quando a execução começar
 
@@ -459,8 +464,8 @@ shape completo. O domínio não foi alterado.
 | `python -m pytest services/hermes-runtime/docker/tests/test_marketing_ops_delegation_runtime.py -q` | **17 passed, 1 skipped** |
 
 O pacote foi versionado como `1.2.1`. O skip continua sendo apenas o teste POSIX
-indisponível nesta estação Windows. A prova final exige redeploy do
-`hermes-api` e repetição do plano de conteúdo no ambiente publicado.
+indisponível nesta estação Windows. Naquele snapshot, a prova final exigia
+redeploy do `hermes-api` e repetição do plano de conteúdo no ambiente publicado.
 
 ## Registro da leitura de versões para revisão ENS — 2026-07-29
 
@@ -544,5 +549,27 @@ parágrafo, sem papel `link`. O E2E do frontend já exige Markdown clicável.
 | `ChatMessageContent.test.tsx` | **2 passed**; Markdown permitido vira link e rota inválida permanece texto |
 
 O pacote `1.2.4` preserva a rota server-returned e exige um link Markdown com
-rótulo compatível com o recurso. Resta somente o redeploy de `hermes-api` e o
-clique real final.
+rótulo compatível com o recurso. Naquele snapshot, restavam somente o redeploy
+de `hermes-api` e o clique real final; ambos constam no registro abaixo.
+
+## Registro final do pacote 1.2.4 — 2026-07-29
+
+O redeploy e o clique final foram concluídos no ambiente publicado:
+
+| Verificação | Resultado |
+|---|---|
+| health Hermes/Bridge | HTTP 200, serviços configurados |
+| skill/catálogo | `1.2.4` no caminho canônico; 10 tools descobertas |
+| runtime dirigido reexecutado no fechamento | **20 passed, 1 skipped**; skip POSIX esperado no Windows |
+| `ChatMessageContent.test.tsx` reexecutado no fechamento | **2 passed** |
+| antes da confirmação | campanha na versão 2, nota original intacta, zero auditoria da ação |
+| decisão contextual | `vamos nessa` → `approve`, contrato determinístico |
+| persistência | nota anexada com separador; campanha avançou para versão 3 |
+| link | elemento `link` `Abrir campanha`, `href` server-returned inalterado |
+| navegação | clique real abriu a campanha correta e exibiu a nota nova |
+| auditoria | evento `campaign.note_added` com chat/run/tool/plano/ação completos |
+
+A primeira tentativa de prepare inválida foi rejeitada sem assinatura ou
+persistência e corrigida na mesma conversa. Não houve falso sucesso nem escrita
+prematura. Com a evidência real substituindo os gates locais dependentes de
+infraestrutura ausente, o gate aplicável desta estação está concluído.

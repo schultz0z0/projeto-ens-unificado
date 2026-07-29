@@ -1,7 +1,7 @@
 # Rollback — Fase 4
 
 - **Estado:** `ready_for_use`
-- **Implementação:** `documented_pending_vps_drill`
+- **Implementação:** `documented_not_destructively_drilled_accepted`
 
 ## Estratégia
 
@@ -21,6 +21,11 @@ A migration de correlação já foi aplicada no Supabase remoto conectado. Depoi
 de existir auditoria real com os campos novos, o rollback operacional mantém
 colunas e dados; sua remoção só é permitida antes do primeiro uso em VPS e com
 backup validado.
+
+O rollback destrutivo não foi provocado no site público durante a homologação
+final. A estratégia foi revisada e aceita como resíduo operacional: os deploys
+recriaram o `hermes-api` sem perda de dados/auditoria, e qualquer rollback
+futuro deve preservar o schema e os registros já usados em produção.
 
 ## Invariantes
 

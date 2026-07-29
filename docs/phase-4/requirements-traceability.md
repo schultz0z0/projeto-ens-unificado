@@ -1,56 +1,56 @@
 # Rastreabilidade de requisitos — Fase 4
 
-- **Estado:** `reconciled_pending_vps_gate`
-- **Implementação:** `all_domain_gates_passed_clickable_link_retest_pending`
+- **Estado:** `closed`
+- **Implementação:** `production_validated`
 - **Revisão:** 2026-07-29
 
 ## Matriz requisito → design → task
 
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
-| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_read_smoke_validated` |
-| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_source_call_validated_exact_revision_pending` |
+| F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_validated` |
+| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_validated` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `production_validated` |
 | F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_validated` |
-| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `production_contextual_matrix_validated` |
-| F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `production_three_roles_validated` |
-| F4-RF-07 Deep link | 9 | 4, 7 | `route_validated_clickability_retest_pending` |
-| F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `production_campaign_retry_validated` |
-| F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
-| F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
-| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7, 8 | `production_trace_and_rbac_validated` |
-| F4-RF-12 Limites | 2, 4.2, 10 | 1, 5, 7 | `runtime_guarded_rate_limit_unit_validated` |
+| F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `production_validated` |
+| F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `production_validated` |
+| F4-RF-07 Deep link | 9 | 4, 7 | `production_validated` |
+| F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `production_validated` |
+| F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `verified_automated` |
+| F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `verified_automated` |
+| F4-RF-11 Auditoria | 4.4, 11 | 1, 6, 7, 8 | `production_validated` |
+| F4-RF-12 Limites | 2, 4.2, 10 | 1, 5, 7 | `verified_automated_and_production_guarded` |
 
 ## Matriz Roadmap → design → task
 
 | Entrega do Roadmap | Design | Task | Estado |
 |---|---|---|---|
-| MCP de consulta e mutação controlada | 4.2, 6, 7 | 1–3 | `implemented_unit_validated` |
+| MCP de consulta e mutação controlada | 4.2, 6, 7 | 1–3 | `production_validated` |
 | Criação de campanha em rascunho | 6.2, 7 | 1, 3, 5, 7 | `production_validated` |
 | Atualização com confirmação | 4.2, 4.7, 7, 8.1 | 3, 5, 7 | `production_validated` |
-| Geração de calendário e itens | 8.8 | 3, 5, 7 | `production_item_link_validated` |
+| Geração de calendário e itens | 8.8 | 3, 5, 7 | `production_validated` |
 | Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `production_validated` |
 | Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `production_validated` |
-| Conversão de resposta do chat em objeto | 8.9 | 3, 5, 7 | `implementation_complete_vps_pending` |
-| Auditoria correlacionada com chat e run | 4.4, 11 | 1, 6, 7 | `implemented_remote_schema_applied` |
+| Conversão de resposta do chat em objeto | 8.9 | 3, 5, 7 | `production_validated` |
+| Auditoria correlacionada com chat e run | 4.4, 11 | 1, 6, 7 | `production_validated` |
 
 ## Matriz de critérios de aceite
 
 | Critério | Design | Task/teste | Estado |
 |---|---|---|---|
-| Lista somente campanhas autorizadas | 6.1, 10 | 2, 7 | `domain_reused_integration_pending` |
-| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `production_read_smoke_validated` |
+| Lista somente campanhas autorizadas | 6.1, 10 | 2, 7 | `production_validated` |
+| Estado operacional vem do Marketing Ops | 4.1, 4.5 | 2, 5, 7 | `production_validated` |
 | Cria rascunho após confirmação contextual | 4.2, 4.7, 7 | 3, 5, 7 | `production_validated` |
-| Objeto aparece no frontend sem reconciliação | 9 | 4, 7 | `production_campaign_and_item_validated` |
-| Retry não duplica objeto | 7.3 | 3, 7 | `production_campaign_retry_validated` |
+| Objeto aparece no frontend sem reconciliação | 9 | 4, 7 | `production_validated` |
+| Retry não duplica objeto | 7.3 | 3, 7 | `production_validated` |
 | Tenant/papel forjados são rejeitados | 10 | 1, 2, 3, 7 | `production_validated` |
-| Delegação expirada/reutilizada falha | 10 | 1, 5, 7 | `token_unit_validated` |
-| Conflito exige nova consulta/decisão | 7.3, 8.1 | 3, 5, 7 | `domain_wired_integration_pending` |
-| Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `production_initial_version_validated_revision_pending` |
-| Deep link abre objeto correto | 9 | 4, 7 | `production_campaign_and_item_validated` |
-| Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `production_campaign_trace_validated` |
-| Hermes não aprova/executa ação sensível | 2, 10 | 1, 5, 7 | `runtime_policy_validated` |
-| Indisponibilidade não gera falso sucesso | 7.3, 12 | 4, 5, 7 | `e2e_fake_validated` |
+| Delegação expirada/reutilizada falha | 10 | 1, 5, 7 | `verified_automated` |
+| Conflito exige nova consulta/decisão | 7.3, 8.1 | 3, 5, 7 | `verified_automated` |
+| Conteúdo do chat vira versão vinculada | 8.9 | 3, 5, 7 | `production_validated` |
+| Deep link abre objeto correto | 9 | 4, 7 | `production_validated` |
+| Auditoria liga ator/chat/run/tool | 4.4, 11 | 1, 6, 7 | `production_validated` |
+| Hermes não aprova/executa ação sensível | 2, 10 | 1, 5, 7 | `verified_automated_and_production_guarded` |
+| Indisponibilidade não gera falso sucesso | 7.3, 12 | 4, 5, 7 | `verified_automated` |
 
 ## Matriz de segurança e observabilidade
 
@@ -72,13 +72,13 @@
 | Catálogo MCP versionado | 6, 7 | 1 | `implemented_unit_validated` |
 | Leituras MCP da Fase 4 | 6.1 | 2 | `implemented_unit_validated` |
 | Executor das oito actions | 7, 8 | 3 | `implemented_unit_validated` |
-| Deep links servidor → frontend | 9 | 4, 7 | `e2e_fake_validated` |
+| Deep links servidor → frontend | 9 | 4, 7 | `production_validated` |
 | Sem mutação direta fora do plano | 4.2, 7 | 1, 3, 5 | `catalog_verified` |
-| Auditoria/correlação | 11 | 1, 6, 8 | `implemented_remote_schema_applied` |
-| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `runtime_bound_schema_fix_deploy_pending` |
-| E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
-| Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `all_domain_gates_passed_clickable_link_retest_pending` |
+| Auditoria/correlação | 11 | 1, 6, 8 | `production_validated` |
+| Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `production_validated` |
+| E2E ponta a ponta | 12, 13, 14 | 7, 8 | `production_validated` |
+| Gate local | 13 | 8 | `completed_with_documented_environment_limits` |
+| Gate VPS | 14 | 8 | `production_validated` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
@@ -111,8 +111,9 @@ pós-deploy confirmou esses dois contratos e repetiu a leitura real. O preview
 seguinte mostrou que o schema visível ainda exigia credenciais que o runtime
 já vincula; o modelo enviou `{}` e o servidor recusou `actions` ausente. O
 décimo segundo release esconde somente `delegation_token` e, no executor,
-`plan_token` do schema do modelo. Criação e atualização permanecem pendentes
-desse redeploy de `hermes-api` e da repetição na VPS.
+`plan_token` do schema do modelo. Criação e atualização permaneciam pendentes
+desse redeploy de `hermes-api` e da repetição na VPS naquele snapshot
+histórico.
 
 ## Leitura inicial
 
@@ -144,12 +145,26 @@ exige duas provas reais:
 
 As duas provas passaram em produção. A rota retornada também correspondeu ao
 objeto certo, mas o chat não a renderizou como link. Portanto somente F4-RF-07
-permanece aberto para o pacote `1.2.4`: Markdown clicável, rota server-returned
-inalterada e clique real até o objeto correto.
+permanecia aberto naquele snapshot para o pacote `1.2.4`: Markdown clicável,
+rota server-returned inalterada e clique real até o objeto correto.
+
+## Fechamento do último requisito — 2026-07-29
+
+O pacote `1.2.4` foi carregado e F4-RF-07 passou no app real. Após a execução
+confirmada de `campaign.note_add`, a resposta gerou um elemento `link`
+`Abrir campanha` com o `href` devolvido pelo servidor. O clique navegou para a
+campanha `6c09b64a-fe76-46ee-8edb-c2039d73fa2d`; frontend e Supabase mostraram
+versão 3 e a nota anexada sem sobrescrever a anterior. O evento
+`c0c8a13e-f323-44a7-b576-1e854cf0ad8f` fechou a correlação.
+
+Os cenários que exigiriam degradação deliberada do ambiente público — conflito,
+rate limit e indisponibilidade — permanecem verificados por testes automatizados
+específicos. Essa substituição está justificada em `vps-validation.md` e não
+reduz o critério funcional do PRD.
 
 ## Critério de encerramento desta matriz
 
-Esta matriz só muda de `reconciled_pending_vps_gate` para `closed` quando cada
+Esta matriz muda para `closed` quando cada
 requisito tiver:
 
 - task concluída;
@@ -158,3 +173,5 @@ requisito tiver:
 - ausência de conflito aberto entre design, contrato MCP e comportamento real.
 - critério de aceite, segurança, observabilidade e entrega do Roadmap em estado
   `verified` ou `not_applicable` justificado.
+
+Todos os itens acima foram satisfeitos em 2026-07-29; a matriz está `closed`.
