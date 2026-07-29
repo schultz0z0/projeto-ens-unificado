@@ -613,5 +613,51 @@ autorizadas e o backend negou auditoria com 403. Uma solicitação para elevar
 papel, trocar tenant e executar sem confirmação foi recusada sem tools de
 escrita; o Supabase confirmou zero persistência.
 
-A skill foi versionada como `1.2.2`. Resta somente repetir a revisão ENS para
-criar a versão 2 e reconciliar a documentação como `production_validated`.
+A skill foi versionada como `1.2.2`. O reteste leu a versão corretamente, mas
+revelou uma falha distinta de seleção de identidade.
+
+## Décimo quinto release candidato — identidade exata do alvo — 2026-07-29
+
+### Evidência real
+
+Em conversa nova, o pedido de revisão nomeou apenas o asset
+`HML F4 Email HTML 20260729-C1`. Como o catálogo da Fase 4 lê conteúdo por
+`item_id` ou `asset_id`, o Hermes consultou uma janela de agenda. O item exato
+não apareceu; mesmo assim, o agente aproximou a campanha
+`HML Fase 4.1 2026-07-22` da expressão `HML F4`, escolheu o asset
+`Email inicial` e preparou o plano. O preview não expôs esse alvo resolvido.
+
+Após a confirmação contextual `pode ser`, a execução e a auditoria funcionaram
+conforme o plano assinado, porém o plano estava ligado ao asset errado. O
+diagnóstico no chat reconheceu a aproximação. O Supabase confirmou o estado:
+
+| Objeto | Antes | Depois |
+|---|---:|---:|
+| `HML F4 Email HTML 20260729-C1` | versão 1 | versão 1 |
+| `Email inicial` | versão 1 | versão 2 |
+
+A escrita indevida permaneceu como evidência de homologação; não houve
+reversão automática nem segunda mutação.
+
+### Causa
+
+O backend protegeu tenant, papel, confirmação, plano, versão e idempotência,
+mas recebe a identidade já resolvida pelo operador. A skill proibia targets
+forjados, porém não proibia de forma explícita correspondência aproximada nem
+exigia mostrar os rótulos efetivamente selecionados no preview.
+
+### RED → GREEN
+
+| Escopo | RED observado | GREEN/resultado |
+|---|---|---|
+| alvo existente | nenhuma regra de igualdade exata | correspondência obrigatória pelo rótulo humano exato retornado |
+| ausência/ambiguidade | agente escolheu o resultado mais próximo | nenhuma preparação; pedir contexto de campanha/item |
+| conteúdo existente | seleção sem cadeia determinística | `campanha -> item -> conteúdo`, histórico e capacidade |
+| preview | alvo real ficou oculto | rótulos exatos de campanha, item e conteúdo visíveis |
+| regressão dirigida | **1 failed** antes do ajuste | **1 passed** |
+| runtime dirigido completo | 18 passed antes deste ajuste | **19 passed, 1 skipped** |
+
+A skill foi versionada como `1.2.3`. O próximo gate é rebuild sem cache e
+recriação somente de `hermes-api`, seguido do reteste exato. A Fase 4 não será
+promovida enquanto o asset correto não receber a versão 2 e o asset incorreto
+permanecer sem novas alterações.

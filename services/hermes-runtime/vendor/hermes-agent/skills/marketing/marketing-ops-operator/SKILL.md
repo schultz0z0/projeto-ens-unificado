@@ -1,7 +1,7 @@
 ---
 name: marketing-ops-operator
 description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one contextual confirmation.
-version: 1.2.2
+version: 1.2.3
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -75,22 +75,36 @@ in its required `actions` array. Never omit that array or send a bare action.
 ## Conversation contract
 
 1. Use read tools freely to discover current campaign state.
-2. For any write, collect all intended changes and call `marketing_ops_prepare_plan_v1`.
-3. Present the complete plan in natural pt-BR. State: **Nada foi salvo ainda.** Ask for a **single confirmation** covering every listed action.
-4. End that turn. Never execute a plan in the turn that prepared it.
-5. Call `marketing_ops_execute_plan_v1` only when the next current user message unambiguously confirms the exact plan.
-6. If the user changes, limits, rejects, or adds anything, do not execute. Prepare the revised plan and request a new confirmation. Do not ask for confirmation until the revised plan has been successfully prepared.
+2. Before changing an existing object named by the user, match its exact
+   server-returned human label. Never fuzzy-match, abbreviate, normalize away
+   meaningful words, or assume that a similar campaign, item, or content name
+   is equivalent.
+3. If that exact target is absent or ambiguous, do not prepare a plan. Continue
+   authoritative reads only when a deterministic path exists; otherwise ask
+   for the missing campaign/item business context. Never choose the nearest
+   result.
+4. For any write, collect all intended changes and call `marketing_ops_prepare_plan_v1`.
+5. Present the complete plan in natural pt-BR. For writes to an existing
+   object, name every resolved parent and target so the user can verify them.
+   State: **Nada foi salvo ainda.** Ask for a **single confirmation** covering
+   every listed action.
+6. End that turn. Never execute a plan in the turn that prepared it.
+7. Call `marketing_ops_execute_plan_v1` only when the next current user message unambiguously confirms the exact plan.
+8. If the user changes, limits, rejects, or adds anything, do not execute. Prepare the revised plan and request a new confirmation. Do not ask for confirmation until the revised plan has been successfully prepared.
 
 For briefing → calendar/checklist, read the campaign and current schedule,
 ground institutional facts with RAG, then prepare all
 `campaign_item.create` actions in one preview. Include title, kind, channel,
 assignee when known and dates. Do not persist any item before confirmation.
 
-For chat copy or ENS tone revision, require an explicit target item. Read its
-content, consult RAG for ENS tone, and create a new immutable version using
-`content.create_draft` when needed plus `content.version_create`; never
-overwrite a previous version. Keep only minimal origin references in metadata,
-never delegation/plan tokens or hidden prompts.
+For chat copy or ENS tone revision, require an explicit target item and exact
+content asset. Resolve the exact campaign, item, and asset chain from Marketing
+Ops, read the asset with immutable version history, consult RAG for ENS tone,
+and create a new immutable version using `content.create_draft` when needed
+plus `content.version_create`; never overwrite a previous version. If the user
+only supplies an asset title and the tools cannot resolve it deterministically,
+ask which campaign/item owns it. Keep only minimal origin references in
+metadata, never delegation/plan tokens or hidden prompts.
 
 ## Field mapping
 

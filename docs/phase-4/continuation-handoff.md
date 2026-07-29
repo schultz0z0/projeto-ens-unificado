@@ -1,6 +1,6 @@
 # Handoff de continuação — Fase 4
 
-- **Estado:** `pending_skill_1_2_2_redeploy_then_revision_only`
+- **Estado:** `pending_skill_1_2_3_redeploy_then_exact_target_revision`
 - **Snapshot:** 2026-07-29
 - **Dependência anterior:** Fase 3 `production_validated`
 - **Código:** implementação local concluída; gate VPS pendente
@@ -15,15 +15,22 @@
 
 ## Ponto exato de continuação
 
-O pacote `1.2.1` já foi implantado e comprovou asset + versão inicial, deep
-link, frontend, Supabase, auditoria e idempotência. Timeline, agenda, RAG,
-Graph, admin, manager, member e prompt injection também passaram.
+Os pacotes `1.2.1` e `1.2.2` já foram implantados. Asset + versão inicial, deep
+link, frontend, Supabase, auditoria, idempotência, timeline, agenda, RAG,
+Graph, admin, manager, member e prompt injection passaram.
 
-O único ponto atual é a revisão ENS: o Hermes consultou RAG e Graph, mas leu o
-asset sem `include_versions=true` e não recebeu o corpo. O pacote `1.2.2` e sua
-regressão RED→GREEN estão prontos. Publique **somente `hermes-api`** pelo bloco
-do décimo quarto release em `runbook.md`; depois repita apenas a revisão do
-conteúdo `HML F4 Email HTML 20260729-C1` para versão 2.
+O reteste da revisão ENS após `1.2.2` leu o histórico, mas revelou um bloqueador
+novo: o Hermes não encontrou o título exato na janela consultada, aproximou
+`HML Fase 4.1` de `HML F4`, ocultou o alvo resolvido no preview e criou a
+versão 2 no asset `Email inicial`. O asset solicitado
+`HML F4 Email HTML 20260729-C1` permaneceu na versão 1. O diagnóstico do chat,
+os logs e o Supabase concordam; a mutação incorreta não foi apagada.
+
+O pacote `1.2.3` e sua regressão RED→GREEN estão prontos. Publique **somente
+`hermes-api`** pelo bloco do décimo quinto release em `runbook.md`; depois
+repita a revisão nomeando campanha `HML F4 Final 20260729-C`, item
+`HML F4 Email 20260729-C1` e conteúdo
+`HML F4 Email HTML 20260729-C1`.
 
 O escopo local da Fase 4 está concluído e o histórico de migration remoto está
 alinhado. Os hotfixes já publicados validaram a leitura real de
@@ -74,7 +81,7 @@ ausente e o MCP recusou sem persistir. O Supabase confirmou zero campanha, zero
 auditoria e zero idempotência para `HML F4 Final 20260729-A`.
 
 O histórico abaixo explica os releases anteriores; não o use como próximo
-passo. O comando vigente é o do décimo quarto release candidato.
+passo. O comando vigente é o do décimo quinto release candidato.
 
 ## Artefatos críticos já entregues
 
@@ -90,6 +97,10 @@ passo. O comando vigente é o do décimo quarto release candidato.
 - não alterar o schema nem afrouxar `campaign.create_draft` para contornar o
   erro de composição; a correção está no contrato do operador;
 - não expor mutações novas como tools diretas do MCP;
+- nunca aceitar preview de objeto existente que não mostre os rótulos exatos
+  de campanha, item e conteúdo resolvidos;
+- se o título não puder ser resolvido exatamente, exigir esclarecimento e
+  confirmar ausência de `prepare_plan`, `execute_plan` e persistência;
 - não reabrir decisões da Fase 3 sem regressão comprovada;
 - não promover a fase por documentação ou E2E fake sozinhos;
 - usar `runbook.md` e `vps-validation.md` como fonte autoritativa do deploy.

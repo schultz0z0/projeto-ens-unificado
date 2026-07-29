@@ -1,7 +1,7 @@
 # Rastreabilidade de requisitos — Fase 4
 
 - **Estado:** `reconciled_pending_vps_gate`
-- **Implementação:** `all_real_gates_except_ens_revision_retest`
+- **Implementação:** `blocked_wrong_target_pending_skill_1_2_3_retest`
 - **Revisão:** 2026-07-29
 
 ## Matriz requisito → design → task
@@ -9,12 +9,12 @@
 | Requisito | Design | Task | Estado |
 |---|---|---|---|
 | F4-RF-01 Consulta fundamentada | 3, 6.1, 12 | 2 | `production_read_smoke_validated` |
-| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_source_call_validated_revision_pending` |
+| F4-RF-02 Uso do RAG | 5, 10 | 5, 7 | `production_source_call_validated_exact_revision_pending` |
 | F4-RF-03 Uso do Graph | 5 | 5, 7 | `production_validated` |
-| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_preview_validated` |
+| F4-RF-04 Preview | 4.2, 7.2 | 3, 4, 5 | `production_general_validated_exact_target_retest_pending` |
 | F4-RF-05 Confirmação | 4.2, 4.7, 7 | 3, 5, 7 | `production_contextual_matrix_validated` |
 | F4-RF-06 Delegação | 5, 10, 11 | 1, 3, 5, 6 | `production_three_roles_validated` |
-| F4-RF-07 Deep link | 9 | 4, 7 | `production_campaign_and_item_validated` |
+| F4-RF-07 Deep link | 9 | 4, 7 | `production_campaign_item_content_create_validated_revision_target_pending` |
 | F4-RF-08 Idempotência | 4.2, 7.3, 10 | 3, 6 | `production_campaign_retry_validated` |
 | F4-RF-09 Conflito | 7.3, 8, 12 | 3, 4, 5 | `domain_wired_integration_pending` |
 | F4-RF-10 Operação parcial | 7.3, 8, 12 | 3, 4 | `executor_unit_validated` |
@@ -30,7 +30,7 @@
 | Atualização com confirmação | 4.2, 4.7, 7, 8.1 | 3, 5, 7 | `production_validated` |
 | Geração de calendário e itens | 8.8 | 3, 5, 7 | `production_item_link_validated` |
 | Criação e vínculo de conteúdo | 8.4–8.6, 8.9 | 3, 5, 7 | `production_validated` |
-| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `skill_1_2_2_redeploy_pending` |
+| Revisão pelo tom de voz ENS | 4.5, 8.9 | 5, 7 | `skill_1_2_3_exact_target_redeploy_pending` |
 | Conversão de resposta do chat em objeto | 8.9 | 3, 5, 7 | `implementation_complete_vps_pending` |
 | Auditoria correlacionada com chat e run | 4.4, 11 | 1, 6, 7 | `implemented_remote_schema_applied` |
 
@@ -78,7 +78,7 @@
 | Runtime Hermes alinhado | 3.1, 4.2, 4.7, 4.8, 12 | 5 | `runtime_bound_schema_fix_deploy_pending` |
 | E2E ponta a ponta | 12, 13, 14 | 7, 8 | `fake_stack_validated_real_backend_pending` |
 | Gate local | 13 | 8 | `partially_executed` |
-| Gate VPS | 14 | 8 | `all_real_gates_except_ens_revision_retest` |
+| Gate VPS | 14 | 8 | `blocked_wrong_target_pending_skill_1_2_3_retest` |
 
 Os checklists de `local-validation.md` e `vps-validation.md` são parte desta
 matriz. Itens não aplicáveis devem ser marcados com justificativa, nunca
@@ -125,6 +125,22 @@ desse redeploy de `hermes-api` e da repetição na VPS.
 - F4-RF-02 e F4-RF-03 são requisitos de fronteira arquitetural; a
   implementação deve provar que RAG e Graph continuam complementares, nunca
   transacionais.
+
+## Reconciliação do alvo incorreto — 2026-07-29
+
+O reteste de revisão provou RAG, Graph, leitura de versão, confirmação,
+execução, auditoria e deep link isoladamente, mas falhou no vínculo entre a
+intenção humana e a identidade transacional: o plano foi preparado para um
+asset semelhante, não para o nome solicitado. Por isso F4-RF-04, F4-RF-07 e a
+linha de revisão ENS permanecem pendentes.
+
+O pacote `1.2.3` adiciona o gate de identidade exata e rastreável. O fechamento
+exige duas provas reais:
+
+1. cenário positivo com campanha/item/conteúdo exatos visíveis no preview e
+   versão criada somente no asset correto;
+2. cenário negativo sem identidade resolvível, encerrado com pedido de contexto
+   e zero plano/persistência.
 
 ## Critério de encerramento desta matriz
 

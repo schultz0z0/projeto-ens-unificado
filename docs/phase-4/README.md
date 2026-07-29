@@ -6,15 +6,17 @@ evidência de teste aplicável e o schema remoto do Supabase foram reconciliados
 A homologação real está no último gate. Com GPT-5.6 Terra, campanha, item,
 conteúdo inicial, timeline, agenda, confirmação contextual, RAG, Graph, RBAC,
 prompt injection, deep links, auditoria e idempotência passaram no app, logs e
-Supabase. Resta repetir a revisão ENS depois do pacote `1.2.2`, que congela a
-leitura do corpo da versão atual.
+Supabase. O reteste de revisão após o pacote `1.2.2` leu o corpo corretamente,
+mas revelou seleção aproximada de identidade: o agente confundiu dois assets e
+criou a versão no conteúdo errado. O pacote local `1.2.3` corrige a resolução
+exata e o preview identificável; falta seu deploy e o reteste final.
 
 ## Status
 
 - **Fase:** `implemented_pending_vps_validation`
 - **Snapshot reconciliado:** 2026-07-29
 - **Tasks:** 1–8 concluídas no escopo local/documental
-- **Homologação VPS:** `all_real_gates_except_ens_revision_retest`
+- **Homologação VPS:** `blocked_wrong_target_pending_skill_1_2_3_retest`
 - **Supabase remoto:** `migration_history_aligned_remote`
 - **Branch única:** `main`
 - **Dependência:** Fase 3 `production_validated`
@@ -35,8 +37,8 @@ leitura do corpo da versão atual.
 | Supabase remoto | `migration_history_aligned_remote` | [deploy](supabase-deployment.md) |
 | Gate local | `partially_executed` | [local-validation.md](local-validation.md) |
 | Operação/rollback | `ready_for_execution` | [runbook](runbook.md), [rollback](rollback.md) |
-| Homologação VPS | `all_real_gates_except_ens_revision_retest` | [checklist](vps-validation.md) |
-| Handoff | `pending_skill_1_2_2_redeploy_then_revision_only` | [continuation-handoff.md](continuation-handoff.md) |
+| Homologação VPS | `blocked_wrong_target_pending_skill_1_2_3_retest` | [checklist](vps-validation.md) |
+| Handoff | `pending_skill_1_2_3_redeploy_then_exact_target_revision` | [continuation-handoff.md](continuation-handoff.md) |
 
 ## Escopo entregue
 
@@ -63,7 +65,7 @@ leitura do corpo da versão atual.
   do operador Hermes aprovados;
 - runtime Hermes: decisão contextual isolada, respostas curtas inequívocas
   resolvidas sem modelo, contrato de saída fechado, delegação/scrub/RAG-Graph
-  e instalação canônica da skill estruturada validados localmente (15 testes
+  e instalação canônica da skill estruturada validados localmente (19 testes
   passaram; 1 teste POSIX ficou indisponível no Windows);
 - migration remota
   `20260722130000_phase_4_hermes_operator_audit.sql` aplicada no Supabase
@@ -82,7 +84,14 @@ leitura do corpo da versão atual.
 - asset + versão inicial, timeline, agenda, auditoria e deep link passaram no
   pacote `1.2.1`;
 - RAG, Graph, RBAC por três papéis e prompt injection passaram; o pacote
-  `1.2.2` corrige somente a leitura do histórico para revisão ENS;
+  `1.2.2` corrigiu a leitura do histórico, porém o reteste revelou uma mutação
+  no asset errado por correspondência aproximada;
+- o incidente real foi reconciliado com logs, diagnóstico do Hermes e Supabase:
+  o asset solicitado permaneceu na versão 1 e o asset `Email inicial` recebeu
+  indevidamente a versão 2; a auditoria aponta uma única execução correlacionada;
+- a regressão RED→GREEN do pacote `1.2.3` exige rótulo humano exato, falha
+  fechada quando o alvo não é resolvido e preview explícito de
+  campanha/item/conteúdo;
 - limitação ambiental local explicitada: Docker/PostgreSQL não estão
   disponíveis nesta máquina, então pgTAP/reset/lint de banco e homologação VPS
   real continuam fora deste snapshot.
@@ -94,11 +103,15 @@ leitura do corpo da versão atual.
 - a promoção para `production_validated` não pode ocorrer apenas com o E2E fake
   e a migration remota, porque a jornada completa ainda precisa ser repetida na
   infraestrutura final.
-- somente a revisão ENS para versão 2 precisa ser repetida após a skill `1.2.2`.
+- o pacote `1.2.3` ainda precisa ser publicado no `hermes-api`;
+- a revisão ENS deve ser repetida com campanha, item e conteúdo explícitos,
+  validando zero escrita antes da confirmação, versão 2 no asset correto e
+  ausência de nova escrita no asset incorreto.
 
 ## Decisão
 
-**A Fase 4 está implementada e todos os gates reais passaram, exceto a revisão
-ENS para versão 2.** A promoção para `production_validated` depende do deploy
-pontual da skill `1.2.2`, desse único reteste e da reconciliação final conforme
+**A Fase 4 continua implementada, mas não está promovida: o reteste real
+encontrou seleção de alvo incorreta antes do fechamento.** A promoção para
+`production_validated` depende do deploy pontual da skill `1.2.3`, do reteste
+da revisão no asset exato e da reconciliação final conforme
 [vps-validation.md](vps-validation.md).

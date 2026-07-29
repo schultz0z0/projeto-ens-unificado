@@ -536,3 +536,27 @@ def test_marketing_ops_operator_contract_freezes_content_read_wire_shape() -> No
     assert '"version_limit": 5' in contract
     assert "exactly one of `item_id` or `asset_id`" in contract
     assert "`campaign`, `campaign_item`, or `content_asset`" in contract
+
+
+def test_marketing_ops_operator_fails_closed_on_inexact_existing_targets() -> None:
+    skill_dir = VENDOR_ROOT / "skills" / "marketing" / "marketing-ops-operator"
+    skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    contract = (skill_dir / "references" / "mcp-contract.md").read_text(
+        encoding="utf-8"
+    )
+    preview = (skill_dir / "templates" / "plan-preview.md").read_text(
+        encoding="utf-8"
+    )
+
+    normalized_skill = " ".join(skill.lower().split())
+    normalized_contract = " ".join(contract.lower().split())
+    normalized_preview = " ".join(preview.lower().split())
+
+    assert "never fuzzy-match" in normalized_skill
+    assert "exact server-returned human label" in normalized_skill
+    assert "do not prepare a plan" in normalized_skill
+    assert "campaign -> campaign item -> content asset" in normalized_contract
+    assert "exact target cannot be resolved" in normalized_contract
+    assert "campanha resolvida" in normalized_preview
+    assert "item resolvido" in normalized_preview
+    assert "conteúdo resolvido" in normalized_preview

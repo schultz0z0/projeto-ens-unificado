@@ -476,5 +476,46 @@ indisponível nesta estação Windows. A prova final exige redeploy do
 | RBAC admin/manager/member | passou no app e logs |
 | prompt injection/cross-tenant/sem confirmação | recusado; zero persistência |
 
-O pacote `1.2.2` aguarda redeploy pontual de `hermes-api`. Depois dele, somente
-a criação da versão 2 precisa ser repetida.
+O pacote `1.2.2` foi publicado e permitiu ler o corpo/versionamento. O reteste
+subsequente revelou o incidente de identidade descrito abaixo.
+
+## Registro de identidade exata para mutações — 2026-07-29
+
+### Falha real reproduzida
+
+O pedido nomeou `HML F4 Email HTML 20260729-C1`. A leitura global por título não
+é oferecida pelo catálogo da Fase 4; ao consultar uma janela de itens, o Hermes
+não encontrou o nome exato e aproximou `HML Fase 4.1 2026-07-22` de `HML F4`.
+O preview não mostrou os rótulos resolvidos. Após `pode ser`, o plano assinado
+criou a versão 2 no asset `Email inicial`, e não no asset pedido.
+
+O diagnóstico do próprio Hermes confirmou a seleção aproximada. O Supabase
+confirmou:
+
+- asset solicitado `HML F4 Email HTML 20260729-C1`: versão atual 1, sem escrita;
+- asset incorreto `Email inicial`: versão atual 2, com a nova copy ENS;
+- auditoria: uma ação `content_version.created`, originada por Hermes, ligada
+  ao item incorreto e ao plano executado.
+
+Nenhuma tentativa de limpeza ou reversão foi feita, preservando a evidência e
+evitando uma nova mutação não confirmada.
+
+### RED → GREEN
+
+| Comando/teste | Resultado |
+|---|---|
+| regressão `fails_closed_on_inexact_existing_targets` antes da correção | **1 failed**; regra de correspondência exata ausente |
+| mesma regressão após completar skill, contrato e template | **1 passed** |
+| runtime dirigido completo | **19 passed, 1 skipped** |
+
+O pacote `1.2.3` exige:
+
+- correspondência pelo rótulo humano exato devolvido pelo Marketing Ops;
+- proibição explícita de fuzzy match, abreviação ou “resultado mais próximo”;
+- resolução `campanha -> item -> conteúdo`;
+- falha fechada e pedido de contexto quando o alvo exato não for resolvido;
+- preview com os nomes exatos de campanha, item e conteúdo antes da confirmação.
+
+O próximo gate é publicar somente `hermes-api` e repetir a revisão com a cadeia
+de negócio explicitada. A promoção permanece bloqueada até o Supabase provar a
+versão 2 no asset correto e nenhuma nova versão no asset incorreto.

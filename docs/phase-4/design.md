@@ -118,6 +118,9 @@ Regras:
   usar o Graph como fonte transacional;
 - estado de campanha, agenda, item, conteúdo e versão sempre vem do MCP do
   `marketing-ops`;
+- identidade de objeto existente também vem do MCP e exige igualdade pelo
+  rótulo humano retornado; prefixo, abreviação, fragmento de data ou nome
+  semelhante não autorizam aproximação;
 - revisão pelo tom ENS produz primeiro uma proposta com referências mínimas;
   salvar a revisão cria nova versão em rascunho somente após o fluxo de plano e
   confirmação em turno posterior.
@@ -173,6 +176,13 @@ O operador deve carregar apenas a referência necessária pela ferramenta
 com offset, em intervalo semiaberto; datas simples, relativas, vazias ou
 parciais não são payloads válidos para a tool. Esta regra evita retries de
 schema desnecessários sem alterar a validação server-side.
+
+Para qualquer escrita em objeto existente, a skill exige resolução exata e
+falha fechada. Conteúdo é resolvido pela cadeia
+`campanha -> item -> content asset`; se o catálogo não permitir chegar ao
+título exato com os dados fornecidos, o Hermes pede o contexto humano ausente e
+não prepara plano. O template de preview exibe os rótulos exatos de cada nível
+aplicável para tornar a identidade auditável antes da confirmação.
 
 ## 5. Arquitetura
 
@@ -316,7 +326,8 @@ O resultado planejado continua sem persistência de domínio e passa a incluir:
 
 - `plan_token` assinado;
 - resumo estruturado por ação;
-- recursos alvo previstos;
+- recursos alvo previstos, com rótulos humanos exatos apresentados no preview
+  conversacional para objetos existentes;
 - riscos de conflito conhecidos;
 - indicação se há dependência de confirmação humana.
 
@@ -393,11 +404,15 @@ persistido antes da confirmação do plano completo.
 
 ### 8.9 Resposta do chat, conteúdo e revisão ENS
 
-Salvar uma resposta/copy do chat exige item alvo explícito. O plano usa
-`content.create_draft` e `content.version_create`; a versão guarda somente
-referências mínimas de origem (`chat_session_id`, `run_id` e referências RAG),
-nunca tokens. Revisão de tom segue o mesmo fluxo e sempre cria nova versão,
-sem sobrescrever uma versão anterior.
+Salvar uma resposta/copy do chat exige item alvo explícito. Revisar conteúdo
+existente exige campanha, item e asset resolvidos por rótulo exato. Quando o
+usuário fornece somente um título que não pode ser localizado
+deterministicamente, o Hermes pergunta a campanha/item e encerra sem plano. O
+plano usa `content.create_draft` e `content.version_create`; a versão guarda
+somente referências mínimas de origem (`chat_session_id`, `run_id` e
+referências RAG), nunca tokens. Revisão de tom segue o mesmo fluxo e sempre
+cria nova versão, sem sobrescrever uma versão anterior. O preview nomeia os
+alvos resolvidos antes de solicitar confirmação.
 
 ## 9. Deep links
 
@@ -490,6 +505,8 @@ Casos obrigatórios:
 - briefing convertido em calendário/checklist após confirmação;
 - resposta do chat convertida em versão vinculada;
 - revisão pelo tom ENS fundamentada no RAG;
+- correspondência aproximada de nome recusada sem plano/persistência;
+- preview de mutação existente exibindo campanha/item/conteúdo exatos;
 - Graph consultado em cenário relacional e nunca usado como estado atual.
 
 ## 13. Gate local

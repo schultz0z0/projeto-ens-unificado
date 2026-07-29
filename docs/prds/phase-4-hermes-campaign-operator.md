@@ -1,6 +1,6 @@
 # PRD — Fase 4: Hermes Campaign Operator
 
-- **Status:** approved_for_vps_validation
+- **Status:** implemented_pending_exact_target_vps_retest
 - **Dependências:** Fases 1–3 concluídas
 - **Resultado:** Hermes consulta e opera campanhas reais com confirmação e auditoria
 
@@ -83,6 +83,9 @@ Graph é usado para relações e trabalhos validados; não substitui a consulta 
 ### F4-RF-04 — Preview
 
 Antes de mutação relevante, o Hermes apresenta resumo dos campos e impacto.
+Para objeto existente, o preview também identifica pelos rótulos exatos cada
+alvo aplicável (campanha, item e conteúdo). Nome semelhante ou identidade
+ambígua interrompe o fluxo sem plano.
 
 ### F4-RF-05 — Confirmação
 
@@ -148,6 +151,8 @@ O frontend deve apresentar feedback quando um objeto for criado/alterado e permi
 - [ ] Estado operacional sempre vem do Marketing Ops.
 - [ ] Hermes cria rascunho após confirmação.
 - [ ] Objeto criado aparece no frontend sem reconciliação manual.
+- [ ] Objeto existente só é alterado após correspondência exata e preview do
+      alvo; ausência/ambiguidade termina sem plano ou persistência.
 - [ ] Retry não duplica objeto.
 - [ ] Tenant/papel forjados são rejeitados.
 - [ ] Delegação expirada ou reutilizada falha.

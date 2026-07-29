@@ -57,6 +57,32 @@ claim that the body is unavailable until a successful call with
 Never substitute `item`, `production_item`, `asset`, or another alias for the
 canonical `resource_type`.
 
+### Exact identity resolution before an existing-object write
+
+Resolve an existing content target through the authoritative chain:
+`campaign -> campaign item -> content asset`.
+
+1. Read campaigns and require an exact server-returned campaign name when the
+   user supplied one.
+2. Read the relevant schedule range and require an exact server-returned item
+   title inside that campaign.
+3. Call `marketing_ops_get_content_v1` with that exact `item_id`, then require
+   an exact server-returned asset title.
+4. Read the selected `asset_id` with `include_versions: true`, and query its
+   contextual capability before preparing the version plan.
+
+Never infer identity from a shared prefix, abbreviation, date fragment,
+similar wording, or the closest result. If an exact target cannot be resolved
+or more than one exact candidate remains, do not prepare or execute a plan.
+Ask for the missing campaign, item, or content business context. A bounded
+schedule result that omits the requested label is not evidence that a similar
+result is the same object.
+
+Before requesting confirmation, the natural preview must name the exact
+server-returned campaign, item, and content labels selected for the write.
+User approval binds to those displayed labels and the signed plan; never hide
+the resolved target behind wording such as "o mesmo conteúdo".
+
 ## Schedule range
 
 `marketing_ops_list_campaign_items_v1` requires both `from` and `to` as full

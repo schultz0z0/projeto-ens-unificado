@@ -360,6 +360,67 @@ Depois do deploy, repita apenas a revisão ENS do asset existente. O Hermes deve
 ler o corpo da versão 1, consultar RAG e Graph, preparar uma versão 2 sem
 persistência, aguardar confirmação e preservar a versão 1.
 
+### Décimo quinto release candidato: identidade exata do alvo existente
+
+O pacote `1.2.2` leu o histórico corretamente, mas o reteste selecionou um
+asset parecido quando o título exato não apareceu no resultado da agenda. O
+pacote `1.2.3` altera somente a skill gerenciada do Hermes:
+
+- nunca aproxima, abrevia ou escolhe o resultado mais próximo;
+- resolve conteúdo pela cadeia exata `campanha -> item -> conteúdo`;
+- interrompe e pede contexto se o alvo exato não for encontrado;
+- mostra no preview os rótulos exatos de campanha, item e conteúdo.
+
+Não há mudança de backend, Bridge, frontend, schema ou migration. Faça rebuild
+sem cache e recriação somente de `hermes-api`:
+
+```bash
+set -euo pipefail
+cd /opt/nexus-ens
+git pull --ff-only origin main
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  build --no-cache hermes-api
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  up -d --force-recreate --no-deps hermes-api
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  logs --since=5m --tail=250 hermes-api
+
+curl -fsS http://127.0.0.1:8652/health
+curl -fsS http://127.0.0.1:8081/health
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  exec -T hermes-api sh -lc '
+    test ! -e /opt/data/skills/marketing-ops-operator &&
+    grep -q "^version: 1.2.3$" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "Never fuzzy-match" /opt/data/skills/marketing/marketing-ops-operator/SKILL.md &&
+    grep -q "campaign -> campaign item -> content asset" /opt/data/skills/marketing/marketing-ops-operator/references/mcp-contract.md &&
+    grep -q "Campanha resolvida" /opt/data/skills/marketing/marketing-ops-operator/templates/plan-preview.md
+  '
+
+docker compose --env-file .env \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  exec -T hermes-api hermes mcp test nexus_marketing_ops
+```
+
+Depois desses checks, abra uma conversa nova. No cenário positivo, nomeie a
+campanha `HML F4 Final 20260729-C`, o item `HML F4 Email 20260729-C1` e o
+conteúdo `HML F4 Email HTML 20260729-C1`. Não confirme um preview que não mostre
+os três rótulos exatos. Em cenário negativo separado, forneça somente um título
+não resolvível e confirme que o Hermes pede contexto sem preparar ou executar
+plano.
+
 Validações de build fora do container, antes do deploy, quando o checkout da VPS
 ou de uma máquina de release permitir:
 

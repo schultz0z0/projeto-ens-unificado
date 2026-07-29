@@ -1,6 +1,6 @@
 # Validação VPS — Fase 4
 
-- **Estado:** `all_real_gates_except_ens_revision_retest`
+- **Estado:** `blocked_wrong_target_pending_skill_1_2_3_retest`
 - **Implementação local:** `implemented_pending_vps_validation`
 - **Responsável pelo deploy:** usuário
 - **Responsável pelos testes manuais finais:** assistente, após o deploy
@@ -28,10 +28,30 @@ o checklist autoritativo para fechar a promoção da Fase 4 em produção.
   recusada sem `prepare_plan`/`execute_plan`; Supabase confirmou zero campanha
   e zero auditoria para o nome injetado.
 
-A revisão ENS permaneceu pendente porque `get_content_v1` foi chamado com
-seletor inválido na primeira tentativa e depois sem `include_versions=true`.
-O pacote `1.2.2` congela o contrato de leitura. A regressão RED→GREEN passou e o
-arquivo dirigido terminou com **18 passed, 1 skipped**.
+A revisão ENS permaneceu inicialmente pendente porque `get_content_v1` foi
+chamado com seletor inválido na primeira tentativa e depois sem
+`include_versions=true`. O pacote `1.2.2` corrigiu a leitura. Seu reteste,
+porém, revelou a seleção aproximada de um asset diferente; portanto o gate
+continua bloqueado pelo pacote `1.2.3`.
+
+### Incidente de identidade após o pacote 1.2.2 — 29/07/2026
+
+- pedido: revisar `HML F4 Email HTML 20260729-C1`;
+- seleção efetiva: `Email inicial`, da campanha
+  `HML Fase 4.1 2026-07-22`;
+- causa declarada pelo Hermes: o nome exato não apareceu no resultado da agenda
+  e o agente assumiu incorretamente que nomes semelhantes eram equivalentes;
+- preview: não mostrou campanha/item/asset efetivamente resolvidos;
+- confirmação: `pode ser` classificou corretamente como aprovação do plano;
+- execução: criou a versão 2 no asset incorreto;
+- asset pedido: permaneceu na versão 1;
+- auditoria: uma ação `content_version.created`, origem Hermes, ligada ao
+  item/asset incorretos;
+- limpeza: não executada, para preservar evidência e evitar escrita adicional
+  sem confirmação.
+
+A regressão do pacote `1.2.3` passou com **19 passed, 1 skipped** e exige
+correspondência exata, falha fechada e preview identificável.
 
 ### Validação com GPT-5.6 Terra e incidente de conteúdo — 29/07/2026
 
@@ -383,8 +403,9 @@ teste.
    versão inicial da copy. Esperado: não ocorrer `invalid_union` nem
    `delegation_scope_denied`; o link de conteúdo abre o asset e sua versão.
 8. Peça uma revisão de tom ENS baseada em fato institucional e uma consulta que
-   exija relação/trabalho validado. Esperado: RAG e Graph são usados como fontes
-   adequadas, nunca como estado transacional.
+   exija relação/trabalho validado. Nomeie a campanha, o item e o conteúdo
+   exatos. Esperado: RAG e Graph são usados como fontes adequadas, o preview
+   mostra os três rótulos exatos e nenhuma escrita ocorre antes da confirmação.
 9. Como manager, valide a leitura e auditoria permitidas. Como member, valide
    que apenas campanhas autorizadas são listadas. Não use a conta member para
    mutações fora de sua autorização.
@@ -406,6 +427,26 @@ tokens.
 - resultado do smoke de conflito e indisponibilidade;
 - evidência dos cenários RAG, Graph, tom ENS e prompt injection;
 - aceite funcional do usuário.
+
+## Gate adicional obrigatório do pacote 1.2.3
+
+Antes do reteste, registre no Supabase os números de versão dos dois assets:
+
+- correto: `1f76b4b7-864d-4bd3-9f7b-878a82af95a5`;
+- incorreto/evidência: `6e14cff5-f53e-4f8b-ae2c-ae23fdbb7eda`.
+
+O cenário só passa se:
+
+1. o preview mostrar exatamente `HML F4 Final 20260729-C`,
+   `HML F4 Email 20260729-C1` e `HML F4 Email HTML 20260729-C1`;
+2. antes da confirmação, ambos os assets permanecerem sem nova versão;
+3. após uma confirmação natural inequívoca, o asset correto avançar de 1 para
+   2, preservando sua versão 1;
+4. o asset incorreto continuar em 2, sem versão 3;
+5. deep link, auditoria, chat/run/tool/plano e corpo persistido apontarem para
+   o item/asset corretos;
+6. em conversa separada, um pedido só com título não resolvível resultar em
+   pergunta de contexto, sem `prepare_plan`, `execute_plan` ou persistência.
 
 ## Resultado esperado
 

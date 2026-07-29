@@ -214,6 +214,9 @@ comunicada sem falso sucesso.
 - [ ] RED E2E para briefing → calendário/checklist.
 - [ ] RED E2E para resposta do chat → conteúdo versionado.
 - [ ] RED E2E para revisão ENS com RAG e relação validada via Graph.
+- [ ] RED E2E para alvo existente aproximado/ambíguo → pedido de contexto,
+      zero plano e zero persistência.
+- [ ] RED E2E para preview de revisão com campanha, item e conteúdo exatos.
 - [ ] RED E2E para conflito → releitura → nova confirmação.
 - [ ] RED E2E para delegação expirada/replay e prompt injection.
 - [ ] Implementar feedback e abrir deep link no frontend.
@@ -258,6 +261,8 @@ checklist VPS e handoff final da fase.
 - deep link abrindo a tela correta;
 - logs correlacionados;
 - jornadas manuais de calendário, conteúdo e tom ENS aprovadas;
+- identidade exata do objeto existente visível no preview e comprovada no
+  banco; aproximação de nome falha fechada;
 - rate limit, conflito e indisponibilidade aprovados;
 - persistência após restart e backup confirmados;
 - rollback de configuracao validado.
