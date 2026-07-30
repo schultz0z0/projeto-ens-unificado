@@ -12,6 +12,33 @@ const toolResult = (value: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(value) }],
 });
 
+const pictureJobSummaryFields = [
+  "id",
+  "workspace_id",
+  "kind",
+  "status",
+  "progress",
+  "attempt_count",
+  "max_attempts",
+  "result_artifact_id",
+  "error_code",
+  "error_message",
+  "created_at",
+  "started_at",
+  "completed_at",
+] as const;
+
+export const toPictureJobSummary = (value: unknown) => {
+  const job = value && typeof value === "object"
+    ? value as Record<string, unknown>
+    : {};
+  const summary: Record<string, unknown> = {};
+  for (const field of pictureJobSummaryFields) {
+    if (job[field] !== undefined) summary[field] = job[field];
+  }
+  return summary;
+};
+
 const toolError = (error: unknown) => {
   const pictureError = error instanceof PictureError
     ? error
@@ -104,7 +131,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
           reference_artifact_ids: input.reference_artifact_ids,
         },
       });
-      return toolResult({ data: job });
+      return toolResult({ data: toPictureJobSummary(job) });
     } catch (error) { return toolError(error); }
   });
 
@@ -139,7 +166,7 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
           reference_artifact_ids: [],
         },
       });
-      return toolResult({ data: job });
+      return toolResult({ data: toPictureJobSummary(job) });
     } catch (error) { return toolError(error); }
   });
 
@@ -154,12 +181,13 @@ export const createPictureMcpServer = (dependencies: PictureMcpDependencies) => 
         workspaceId: input.workspace_id,
         refreshDelegation: dependencies.refreshDelegation,
       });
-      return toolResult({ data: await dependencies.jobReader.getOwnedJob({
+      const job = await dependencies.jobReader.getOwnedJob({
         tenantId: actor.tenantId,
         userId: actor.userId,
         workspaceId: actor.workspaceId,
         jobId: input.job_id,
-      }) });
+      });
+      return toolResult({ data: toPictureJobSummary(job) });
     } catch (error) { return toolError(error); }
   });
 

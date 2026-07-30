@@ -1,7 +1,7 @@
 ---
 name: picture-hermes
 description: Planejar, gerar e revisar peças visuais complexas no modo Picture-Hermes com workspace persistente e tools nexus_picture.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Picture-Hermes
@@ -27,9 +27,9 @@ Você pode planejar, iniciar, revisar e consultar jobs. Você não é a autorida
 1. Chame `picture_get_workspace` antes de planejar uma revisão ou afirmar o estado atual.
 2. Reúna no chat somente o briefing que estiver faltando. Não peça ao usuário nomes de tools, IDs, JSON ou detalhes internos.
 3. Escolha a técnica e o menor pipeline capaz de entregar a direção aprovada. Preserve referências reais de produto e logos com composição determinística.
-4. Na primeira geração, envie `CreativeBrief` e `CompositionPlan` completos a `picture_start_job`, uma única vez, com chave de idempotência estável no turno.
-5. Para alterações após existir uma candidata, consulte o workspace, produza novamente um plano completo e chame `picture_revise`.
-6. Consulte `picture_get_job` para o estado real. Não invente progresso, artefatos ou conclusão.
+4. Na primeira geração, envie `workspace_id`, `CreativeBrief`, `CompositionPlan`, `reference_artifact_ids` e `idempotency_key` completos a `picture_start_job`, uma única vez, com chave de idempotência estável no turno.
+5. Para alterações após existir uma candidata, consulte o workspace, produza novamente um plano completo e chame `picture_revise` com `workspace_id`, `revision_request`, `composition_plan` e `idempotency_key`.
+6. Consulte `picture_get_job` sempre com `workspace_id` e `job_id` para o estado real. Não invente progresso, artefatos ou conclusão.
 7. Em `succeeded`, informe que a candidata está pronta para revisão humana. Somente o estado `validated` significa peça aprovada.
 
 ## Regra crítica de serialização
@@ -68,7 +68,7 @@ Operações aceitas:
 - `grain`: `intensity` opcional entre 0 e 1.
 - `vignette`: `opacity` opcional entre 0 e 1.
 - `text`: `title`; opcionais `font`, `color`, `fontSize`, `zone`.
-- `compose`: `overlays` (array nativo) ou `overlays_file`.
+- `compose`: `overlays` (array nativo) ou `overlays_file`; `size` define o canvas quando `compose` é a primeira operação.
 - `upscale`: `scale` opcional de 2 a 4.
 
 Modelos: `flux-schnell` para rascunhos/fundos rápidos; `flux-dev` ou `imagineart` para hero com qualidade; `recraft-v3` para visual gráfico; `kontext`/`reve-fast` para edições; `seedream` para compor várias referências; `banana2`/`banana-pro` quando preservação ou complexidade justificar custo maior.
@@ -78,12 +78,14 @@ Modelos: `flux-schnell` para rascunhos/fundos rápidos; `flux-dev` ou `imaginear
 Cada objeto exige `type`:
 
 - `gradient-overlay`: `gradient`; opcionais `opacity`, `blend`, `depth`.
-- `shape`: `shape` (`rect`, `circle`, `line`, `arrow`); opcionais `zone`, dimensões, cores, borda, pontos e `depth`.
+- `shape`: `shape` (`rect`, `circle`, `line`, `arrow`); opcionais `zone`, dimensões, cores, borda, pontos, `anchor`, `rotation`, `allowBleed` e `depth`.
 - `satori-text`: `jsx`; opcionais `zone`, dimensões, `anchor`, `opacity`, `depth`.
-- `image`: `src` relativo ao workspace; opcionais posição, dimensões, `anchor`, `opacity`, raio, rotação e `depth`.
+- `image`: `src` relativo ao workspace; opcionais posição, dimensões, `anchor`, `opacity`, raio, rotação, `allowBleed` e `depth`.
 - `watermark`: `src`; opcionais `position`, `margin`, `opacity`, `size`, `depth`.
 
-Zonas nomeadas incluem `hero-center`, `title-area`, `top-bar`, `bottom-bar`, `left-third`, `right-third`, cantos safe e centros laterais. Também é permitido `{ "x": número, "y": número }`.
+Zonas nomeadas incluem `hero-center`, `title-area`, `top-bar`, `bottom-bar`, `left-third`, `right-third`, cantos safe e centros laterais. Uma coordenada numérica exige unidade explícita: `{ "x": 72, "y": 80, "unit": "px" }` ou `{ "x": 7, "y": 82, "unit": "percent" }`. Nunca envie apenas `{ "x", "y" }`.
+
+`anchor` descreve qual ponto do elemento coincide com a zona: use `top-left` quando `x/y` representam a margem esquerda/superior e `center` quando representam o centro. `allowBleed: true` é permitido somente para imagem ou forma decorativa que deva sangrar intencionalmente; texto nunca deve ultrapassar o canvas. Em compose-first, `compose.size` deve ser igual a `creative_brief.output`.
 
 Para texto preciso, use `satori-text`; preserve o texto literalmente. O `jsx` aceita string ou nó `{ "tag", "props", "children" }`, e `children` também é array JSON nativo. Não peça ao modelo generativo para reconstruir logos. Para referências, use somente paths relativos presentes no manifest, normalmente sob `references/`. Nunca use path absoluto, `..` ou barra invertida.
 
@@ -94,6 +96,7 @@ Para texto preciso, use `satori-text`; preserve o texto literalmente. O `jsx` ac
 - Mantenha safe area mínima de 5%, contraste e CTA legível.
 - Prefira `generate -> crop/grade -> compose` para preservar cores e tipografia da marca na camada final.
 - Use geração para cenário/ilustração e composição determinística para textos, logos, selos, formas e gradientes.
+- Quando o usuário pedir modo determinístico ou não houver crédito FAL, use somente operações locais e comece por `compose` com `size`; não inclua `generate`, `edit`, `remove-bg`, `replace-bg` ou `upscale`.
 - Em edição generativa, descreva o que deve permanecer idêntico.
 
 ## Estados e revisões

@@ -46,7 +46,11 @@ const zone = z.union([
     "center-left",
     "center-right",
   ]),
-  z.object({ x: z.number().finite(), y: z.number().finite() }).strict(),
+  z.object({
+    x: z.number().finite(),
+    y: z.number().finite(),
+    unit: z.enum(["px", "percent"]),
+  }).strict(),
 ]);
 
 
@@ -73,6 +77,7 @@ const imageOverlay = z.object({
   borderRadius: z.number().nonnegative().optional(),
   rotation: z.number().finite().optional(),
   depth: depth.optional(),
+  allowBleed: z.boolean().optional(),
 }).strict();
 
 const textOverlay = z.object({
@@ -102,6 +107,9 @@ const shapeOverlay = z.object({
   headSize: z.number().positive().optional(),
   curve: z.number().finite().optional(),
   depth: depth.optional(),
+  anchor: z.enum(["center", "top-left", "top-right", "bottom-left", "bottom-right"]).optional(),
+  rotation: z.number().finite().optional(),
+  allowBleed: z.boolean().optional(),
 }).strict();
 
 const gradientOverlay = z.object({
@@ -174,6 +182,9 @@ const pipelineStep = z.discriminatedUnion("op", [
     overlays_file: workspacePath.optional(),
     overlays: z.array(OverlaySchema).max(200).optional().describe(
       "Use a native JSON array of overlay objects. Never send stringified JSON.",
+    ),
+    size: size.optional().describe(
+      "Canvas size for compose-first plans, for example 1080x1080 or 1080x1920.",
     ),
   }).strict(),
   z.object({ op: z.literal("upscale"), scale: z.number().int().min(2).max(4).optional() }).strict(),

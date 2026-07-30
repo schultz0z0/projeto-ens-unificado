@@ -39,6 +39,7 @@
       },
       {
         "op": "compose",
+        "size": "1080x1080",
         "overlays": [
           {
             "type": "gradient-overlay",
@@ -50,7 +51,8 @@
           {
             "type": "shape",
             "shape": "rect",
-            "zone": { "x": 8, "y": 76 },
+            "zone": { "x": 8, "y": 76, "unit": "percent" },
+            "anchor": "top-left",
             "width": 300,
             "height": 92,
             "fill": "#F58220",

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { PictureError } from "../src/errors.ts";
 
 const WORKSPACE = "11111111-1111-4111-8111-111111111111";
 const USER = "22222222-2222-4222-8222-222222222222";
@@ -138,4 +139,32 @@ test("heartbeat extends only a matching active lease", async () => {
   expect(await service.heartbeat(job!.id, "worker-b")).toBeNull();
   const extended = await service.heartbeat(job!.id, "worker-a");
   expect(new Date(extended!.lease_expires_at!).getTime()).toBeGreaterThanOrEqual(new Date(before!).getTime());
+});
+
+test("layout contract failures are not retried", async () => {
+  let observed: Record<string, unknown> | undefined;
+  const { JobService } = await import("../src/service/job-service.ts");
+  const service = new JobService({
+    repository: {
+      async enqueue() { return null; },
+      async claim() { return null; },
+      async heartbeat() { return null; },
+      async complete() { return null; },
+      async fail(input: Record<string, unknown>) {
+        observed = input;
+        return null;
+      },
+    } as any,
+  });
+
+  await service.fail(
+    "11111111-1111-4111-8111-111111111111",
+    "worker-1",
+    new PictureError("picture_overlay_out_of_bounds", "shape exceeds canvas", 400),
+  );
+
+  expect(observed).toMatchObject({
+    errorCode: "picture_overlay_out_of_bounds",
+    retryable: false,
+  });
 });

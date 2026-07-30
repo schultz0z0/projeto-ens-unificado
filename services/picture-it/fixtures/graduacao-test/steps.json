@@ -11,6 +11,7 @@
   },
   {
     "op": "compose",
+    "size": "1080x1080",
     "overlays": "graduação-test/overlays.json"
   }
 ]

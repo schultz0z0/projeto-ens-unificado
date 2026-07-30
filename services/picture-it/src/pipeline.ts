@@ -17,8 +17,12 @@ export async function executePipeline(
   options: { workingDirectory?: string } = {},
 ): Promise<string> {
   let buffer: Buffer | null = null;
-  const falKey = ensureFalKey();
-  configureFal(falKey);
+  const usesFal = steps.some((step) =>
+    ["generate", "edit", "remove-bg", "replace-bg", "upscale"].includes(step.op)
+  );
+  if (usesFal) {
+    configureFal(ensureFalKey());
+  }
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]!;
@@ -134,8 +138,9 @@ export async function executePipeline(
           overlays = step.overlays;
         }
         // If compose is the first step (no buffer yet), create a blank transparent canvas
-        const canvasW = 1080;
-        const canvasH = 1080;
+        const canvasSize = parseSize(step.size || "1080x1080");
+        const canvasW = canvasSize.width;
+        const canvasH = canvasSize.height;
         if (!buffer) {
           buffer = await sharp({
             create: { width: canvasW, height: canvasH, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },

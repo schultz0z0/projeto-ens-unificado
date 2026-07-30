@@ -1,7 +1,7 @@
 ---
 name: picture-it
 description: Generate and edit images from the CLI using picture-it. Use this skill whenever the user asks to create, edit, or manipulate images — blog headers, social cards, hero images, product comparisons, YouTube thumbnails, movie posters, magazine covers, Instagram edits, background removal, or any visual content. Also trigger when the user mentions picture-it by name, wants to composite images, apply color grading, add text to images, remove or replace backgrounds, crop/resize photos, or needs any kind of image generation or photo editing from the terminal. This skill covers multi-pass AI image editing workflows that chain composable operations together.
-compatibility: Requires Node.js 18+ and picture-it CLI (npm package). FAL_KEY environment variable needed for AI operations. Network access to fal.ai for image generation/editing.
+compatibility: Requires Node.js 18+ and picture-it CLI (npm package). FAL_KEY and network access to fal.ai are needed only for AI operations; deterministic composition runs locally without them.
 license: MIT
 metadata:
   author: geongeorge
@@ -49,7 +49,7 @@ picture-it download-fonts
 
 ### Credentials
 
-The FAL API key is required for AI operations (generate, edit, remove-bg, upscale). Set it via environment variable or the CLI:
+The FAL API key is required only for AI operations (generate, edit, remove-bg, replace-bg, upscale). Deterministic compose-first pipelines do not require it. Set it via environment variable or the CLI:
 
 ```bash
 # Option 1: Environment variable (preferred — use platform-managed secrets)

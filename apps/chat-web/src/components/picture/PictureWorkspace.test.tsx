@@ -56,14 +56,14 @@ describe("PictureWorkspace", () => {
 });
 
 describe("PictureWorkspaceActions", () => {
-  it("only enables approve in review and new piece after validation", () => {
+  it("only enables approve in review and allows a new piece outside resetting", () => {
     const { rerender } = render(<PictureWorkspaceActions workspace={workspace("drafting") as never} onApprove={state.approve} onNewPiece={state.newPiece} />);
     expect(screen.getByRole("button", { name: /Aprovar peça/ }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByRole("button", { name: /Criar nova peça/ }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /Criar nova peça/ }).hasAttribute("disabled")).toBe(false);
     rerender(<PictureWorkspaceActions workspace={workspace("review") as never} onApprove={state.approve} onNewPiece={state.newPiece} />);
     expect(screen.getByRole("button", { name: /Aprovar peça/ }).hasAttribute("disabled")).toBe(false);
-    rerender(<PictureWorkspaceActions workspace={workspace("validated") as never} onApprove={state.approve} onNewPiece={state.newPiece} />);
-    expect(screen.getByRole("button", { name: /Criar nova peça/ }).hasAttribute("disabled")).toBe(false);
+    rerender(<PictureWorkspaceActions workspace={workspace("resetting") as never} onApprove={state.approve} onNewPiece={state.newPiece} />);
+    expect(screen.getByRole("button", { name: /Criar nova peça/ }).hasAttribute("disabled")).toBe(true);
   });
 
   it("explains cleanup, cancels safely and confirms new piece once while pending", async () => {
@@ -73,6 +73,7 @@ describe("PictureWorkspaceActions", () => {
     render(<PictureWorkspaceActions workspace={workspace("validated") as never} onApprove={state.approve} onNewPiece={state.newPiece} />);
     await user.click(screen.getByRole("button", { name: /Criar nova peça/ }));
     expect(screen.getByText(/chat, briefing, arquivos auxiliares, JSONs e versões intermediárias/)).toBeTruthy();
+    expect(screen.getByText(/Se a peça final tiver sido aprovada/)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(state.newPiece).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: /Criar nova peça/ }));

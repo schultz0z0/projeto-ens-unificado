@@ -56,6 +56,47 @@ test("CompositionPlan accepts the full structured plan", async () => {
   expect(CompositionPlanSchema.parse(validPlan).pipeline).toHaveLength(3);
 });
 
+test("CompositionPlan requires explicit units for numeric overlay positions", async () => {
+  const { CompositionPlanSchema } = await loadContracts();
+  const positionedPlan = {
+    ...validPlan,
+    pipeline: [{
+      op: "compose",
+      size: "1080x1350",
+      overlays: [{
+        type: "shape",
+        shape: "rect",
+        zone: { x: 72, y: 80, unit: "px" },
+        anchor: "top-left",
+        rotation: -2,
+        allowBleed: false,
+        width: 320,
+        height: 80,
+      }],
+    }],
+  };
+
+  const parsed = CompositionPlanSchema.parse(positionedPlan);
+  expect((parsed.pipeline[0] as any).size).toBe("1080x1350");
+  expect((parsed.pipeline[0] as any).overlays[0]).toMatchObject({
+    zone: { x: 72, y: 80, unit: "px" },
+    anchor: "top-left",
+    rotation: -2,
+    allowBleed: false,
+  });
+
+  expect(() => CompositionPlanSchema.parse({
+    ...positionedPlan,
+    pipeline: [{
+      ...positionedPlan.pipeline[0]!,
+      overlays: [{
+        ...positionedPlan.pipeline[0]!.overlays[0]!,
+        zone: { x: 72, y: 80 },
+      }],
+    }],
+  })).toThrow();
+});
+
 test("CompositionPlan rejects unknown operations", async () => {
   const { CompositionPlanSchema } = await loadContracts();
   expect(() => CompositionPlanSchema.parse({

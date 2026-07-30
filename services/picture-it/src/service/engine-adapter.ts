@@ -36,7 +36,11 @@ export class PictureEngineAdapter {
         const overlays = step.overlays_file
           ? JSON.parse(await readFile(resolveWorkspacePath(input.packageRoot, step.overlays_file), "utf8"))
           : step.overlays;
-        steps.push({ op: "compose", overlays } as PipelineStep);
+        steps.push({
+          op: "compose",
+          overlays,
+          ...(step.size ? { size: step.size } : {}),
+        } as PipelineStep);
       } else {
         steps.push(step as PipelineStep);
       }
