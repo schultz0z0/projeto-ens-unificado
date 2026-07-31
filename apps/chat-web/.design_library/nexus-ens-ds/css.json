@@ -1,0 +1,167 @@
+{
+  "$schema": "https://design-library.local/schema/v1",
+  "name": "Nexus ENS Design System",
+  "version": "1.1.0",
+  "source": "projeto-ens-unificado/apps/chat-web",
+  "tokens": {
+    "color": {
+      "brand": {
+        "primary":   { "value": "189 100% 36%", "token": "--color-nexus-primary",   "role": "Brand primary — actions, focus, key surfaces" },
+        "secondary": { "value": "189 92% 44%",  "token": "--color-nexus-secondary", "role": "Brand secondary — hover/active states" },
+        "accent":    { "value": "189 90% 56%",  "token": "--color-nexus-accent",    "role": "Brand accent — highlights, decorative" },
+        "deep":      { "value": "222 47% 11%",  "token": "--color-nexus-deep",      "role": "Brand deep navy — text on light, dark surface base" }
+      },
+      "text": {
+        "primary":   { "value": "222 47% 11%", "token": "--color-text-primary",   "role": "Primary copy" },
+        "secondary": { "value": "215 20% 25%", "token": "--color-text-secondary", "role": "Secondary copy" },
+        "muted":     { "value": "215 14% 45%", "token": "--color-text-muted",     "role": "Meta, captions, placeholders" }
+      },
+      "surface": {
+        "background":    { "value": "0 0% 100%",   "token": "--color-background", "role": "App background" },
+        "foreground":    { "value": "222 47% 11%", "token": "--color-foreground", "role": "Default text on background" },
+        "surface":       { "value": "0 0% 100%",   "token": "--color-surface",    "role": "Solid surface (cards, panels)" },
+        "surfaceSubtle": { "value": "220 60% 98%", "token": "--color-surface-subtle", "role": "Tinted surface — sidebar, soft blocks" }
+      },
+      "glass": {
+        "surface": { "value": "0 0% 100%", "token": "--color-glass-surface", "role": "Glass panel base (alpha applied at component)" },
+        "border":  { "value": "0 0% 100%", "token": "--color-glass-border",  "role": "Glass border (alpha applied at component)" }
+      },
+      "semantic": {
+        "primary":            { "value": "189 100% 36%", "token": "--color-primary", "role": "Primary action" },
+        "primaryForeground":  { "value": "0 0% 100%",    "token": "--color-primary-foreground", "role": "Text on primary" },
+        "secondary":          { "value": "220 40% 96%",  "token": "--color-secondary", "role": "Secondary surface" },
+        "secondaryForeground":{ "value": "189 100% 36%", "token": "--color-secondary-foreground", "role": "Text on secondary" },
+        "muted":              { "value": "220 40% 96%",  "token": "--color-muted", "role": "Muted surface" },
+        "mutedForeground":    { "value": "215 14% 45%",  "token": "--color-muted-foreground", "role": "Text on muted" },
+        "accent":             { "value": "220 40% 96%",  "token": "--color-accent", "role": "Accent surface" },
+        "accentForeground":   { "value": "222 47% 11%",  "token": "--color-accent-foreground", "role": "Text on accent" },
+        "destructive":            { "value": "0 84% 60%",   "token": "--color-destructive", "role": "Destructive action / error" },
+        "destructiveForeground":  { "value": "0 0% 100%",   "token": "--color-destructive-foreground", "role": "Text on destructive" },
+        "success": { "value": "142 71% 45%", "token": "--color-success", "role": "Success state" },
+        "warning": { "value": "38 92% 50%",  "token": "--color-warning", "role": "Warning state" },
+        "info":    { "value": "199 89% 48%", "token": "--color-info",    "role": "Informational state" }
+      },
+      "ui": {
+        "border": { "value": "220 13% 91%", "token": "--color-border", "role": "Default border" },
+        "input":  { "value": "220 13% 91%", "token": "--color-input",  "role": "Form input border" },
+        "ring":   { "value": "189 100% 36%", "token": "--color-ring", "role": "Focus ring" }
+      },
+      "sidebar": {
+        "background":         { "value": "0 0% 98%",   "token": "--color-sidebar-background" },
+        "foreground":         { "value": "215 20% 25%", "token": "--color-sidebar-foreground" },
+        "primary":            { "value": "189 100% 36%", "token": "--color-sidebar-primary" },
+        "primaryForeground":  { "value": "0 0% 100%",   "token": "--color-sidebar-primary-foreground" },
+        "accent":             { "value": "220 40% 96%",  "token": "--color-sidebar-accent" },
+        "accentForeground":   { "value": "222 47% 11%",  "token": "--color-sidebar-accent-foreground" },
+        "border":             { "value": "220 13% 91%",  "token": "--color-sidebar-border" },
+        "ring":               { "value": "189 100% 36%", "token": "--color-sidebar-ring" }
+      },
+      "card": {
+        "default":     { "value": "0 0% 100%",   "token": "--color-card" },
+        "foreground":  { "value": "222 47% 11%", "token": "--color-card-foreground" }
+      },
+      "popover": {
+        "default":     { "value": "0 0% 100%",   "token": "--color-popover" },
+        "foreground":  { "value": "222 47% 11%", "token": "--color-popover-foreground" }
+      }
+    },
+    "radius": {
+      "sm":   { "value": "calc(1rem - 4px)", "token": "--radius-sm", "role": "Compact controls, tags" },
+      "md":   { "value": "calc(1rem - 2px)", "token": "--radius-md", "role": "Buttons, inputs" },
+      "lg":   { "value": "1rem",              "token": "--radius-lg", "role": "Cards, modals" },
+      "xl":   { "value": "calc(1rem + 8px)",  "token": "--radius-xl", "role": "Large surfaces, hero panels" }
+    },
+    "shadow": {
+      "sm":   { "value": "0 1px 4px 0 rgba(11,18,32,0.10)",                       "token": "--shadow-sm" },
+      "md":   { "value": "0 8px 24px -4px rgba(11,18,32,0.20)",                   "token": "--shadow-md" },
+      "lg":   { "value": "0 16px 40px -6px rgba(11,18,32,0.24)",                  "token": "--shadow-lg" },
+      "glass":{ "value": "0 18px 42px -24px rgba(11,18,32,0.34), 0 8px 22px -14px rgba(11,18,32,0.18), inset 0 1px 0 rgba(255,255,255,0.24)", "token": "--shadow-glass" }
+    },
+    "type": {
+      "fontFamily": {
+        "sans": { "value": "'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif", "token": "--type-font-sans" },
+        "mono": { "value": "ui-monospace, 'JetBrains Mono', Menlo, monospace", "token": "--type-mono" }
+      },
+      "scale": {
+        "display1": { "value": "700 56px/1.05", "token": "--type-display-1", "role": "Hero / landing headline" },
+        "display2": { "value": "700 40px/1.10", "token": "--type-display-2", "role": "Section headline" },
+        "h1":       { "value": "600 32px/1.20", "token": "--type-h1", "role": "Page title" },
+        "h2":       { "value": "600 24px/1.25", "token": "--type-h2", "role": "Section title" },
+        "h3":       { "value": "600 20px/1.30", "token": "--type-h3", "role": "Card title" },
+        "h4":       { "value": "600 18px/1.35", "token": "--type-h4", "role": "Sub-card title" },
+        "bodyLg":   { "value": "400 16px/1.55", "token": "--type-body-lg", "role": "Lead paragraph" },
+        "body":     { "value": "400 14px/1.55", "token": "--type-body", "role": "Default body" },
+        "bodySm":   { "value": "400 13px/1.50", "token": "--type-body-sm", "role": "Helper, table cell" },
+        "caption":  { "value": "400 12px/1.40", "token": "--type-caption", "role": "Meta" },
+        "overline": { "value": "500 11px/1.20", "token": "--type-overline", "role": "Eyebrow / label" }
+      }
+    },
+    "spacing": {
+      "1":  { "value": "4px",  "token": "--space-1" },
+      "2":  { "value": "8px",  "token": "--space-2" },
+      "3":  { "value": "12px", "token": "--space-3" },
+      "4":  { "value": "16px", "token": "--space-4" },
+      "5":  { "value": "20px", "token": "--space-5" },
+      "6":  { "value": "24px", "token": "--space-6" },
+      "8":  { "value": "32px", "token": "--space-8" },
+      "10": { "value": "40px", "token": "--space-10" },
+      "12": { "value": "48px", "token": "--space-12" },
+      "16": { "value": "64px", "token": "--space-16" },
+      "20": { "value": "80px", "token": "--space-20" }
+    },
+    "motion": {
+      "ease": {
+        "outSoft":    { "value": "cubic-bezier(0.22, 1, 0.36, 1)", "token": "--ease-out-soft" },
+        "inOutSoft":  { "value": "cubic-bezier(0.65, 0, 0.35, 1)", "token": "--ease-in-out-soft" }
+      },
+      "duration": {
+        "fast": { "value": "160ms", "token": "--duration-fast" },
+        "base": { "value": "240ms", "token": "--duration-base" },
+        "slow": { "value": "360ms", "token": "--duration-slow" }
+      }
+    },
+    "chatStatus": {
+      "info":    { "bg": "199 89% 48%", "fg": "199 89% 35%" },
+      "success": { "bg": "142 71% 45%", "fg": "142 71% 32%" },
+      "warning": { "bg": "38 92% 50%",  "fg": "38 92% 30%" },
+      "danger":  { "bg": "0 84% 60%",   "fg": "0 84% 45%" }
+    },
+    "markdown": {
+      "bg":        "hsl(0 0% 100% / 0.80)",
+      "border":    "hsl(220 13% 91%)",
+      "tableRow":  "hsl(220 13% 96%)"
+    },
+    "code": {
+      "bg":   "222 47% 8%",
+      "text": "220 40% 96%"
+    },
+    "attachment": {
+      "user-border":      "hsl(0 0% 100% / 0.20)",
+      "user-bg":          "hsl(0 0% 100% / 0.10)",
+      "assistant-border": "hsl(220 13% 91%)",
+      "assistant-bg":     "hsl(0 0% 100% / 0.70)"
+    },
+    "suggestion": {
+      "bg":            "hsl(0 0% 100% / 0.40)",
+      "border":        "hsl(0 0% 100% / 0.20)",
+      "hoverBg":       "hsl(0 0% 100% / 0.60)",
+      "hoverBorder":   "hsl(189 100% 36% / 0.30)"
+    },
+    "typingPulse": { "value": "189 100% 36%" }
+  },
+  "themed": {
+    "dark": {
+      "background": "222 47% 11%",
+      "card": "222 47% 11%",
+      "popover": "222 47% 11%",
+      "muted": "217 33% 18%",
+      "secondary": "217 33% 18%",
+      "accent": "217 33% 18%"
+    }
+  },
+  "themes": {
+    "default": "light",
+    "available": ["light", "dark", "brand-blue", "auto"],
+    "manifest": "themes/theme.json"
+  }
+}

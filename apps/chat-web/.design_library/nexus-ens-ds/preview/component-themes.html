@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Themes — Nexus ENS DS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../themes/light.css" />
+  <link rel="stylesheet" href="../themes/dark.css" />
+  <link rel="stylesheet" href="../themes/brand-blue.css" />
+  <link rel="stylesheet" href="../themes/auto.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 32px; max-width: 1100px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 24px; }
+    .theme-bar { display: inline-flex; gap: 8px; padding: 6px; background: hsl(var(--color-muted)); border-radius: var(--radius-md); margin-bottom: 32px; }
+    .theme-bar button { font: 500 13px/1 var(--type-font-sans); padding: 8px 14px; border: 1px solid transparent; background: transparent; color: hsl(var(--color-text-secondary)); border-radius: calc(var(--radius-md) - 2px); cursor: pointer; }
+    .theme-bar button.is-active { background: hsl(var(--color-background)); color: hsl(var(--color-text-primary)); box-shadow: var(--shadow-sm); font-weight: 600; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+    .panel { padding: 20px; }
+    .panel header { margin-bottom: 16px; }
+    .panel h2 { font: var(--type-h3); margin: 0 0 4px; }
+    .panel .meta { font: var(--type-caption); color: hsl(var(--color-text-muted)); }
+    .btn { display: inline-flex; align-items: center; font: 500 14px/1 var(--type-font-sans); padding: 0 16px; height: 36px; border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; }
+    .btn--primary { color: #fff; background: linear-gradient(135deg, hsl(var(--color-nexus-primary)), hsl(var(--color-nexus-accent))); }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+    .btn--destructive { color: #fff; background: hsl(var(--color-destructive)); }
+    .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+    .swatch { border: 1px solid hsl(var(--color-border)); border-radius: var(--radius-md); padding: 10px; background: hsl(var(--color-surface)); }
+    .swatch__chip { width: 100%; height: 36px; border-radius: 6px; margin-bottom: 8px; }
+    .swatch__label { font: 500 11px/1.2 var(--type-font-sans); color: hsl(var(--color-text-primary)); }
+    .swatch__token { font: 400 10px/1.2 var(--type-font-sans); color: hsl(var(--color-text-muted)); font-family: var(--type-mono); }
+  </style>
+</head>
+<body>
+  <h1>Themes</h1>
+  <p class="lead">4 temas disponíveis: <code>light</code> (canônico do app), <code>dark</code> (parity com <code>.dark</code> em <code>src/index.css</code>), <code>brand-blue</code> (demo) e <code>auto</code> (segue o SO). Use o seletor abaixo para alternar.</p>
+
+  <div class="theme-bar" role="tablist" aria-label="Seletor de tema">
+    <button data-theme="light" class="is-active" type="button">Light</button>
+    <button data-theme="dark" type="button">Dark</button>
+    <button data-theme="brand-blue" type="button">Brand Blue</button>
+    <button data-theme="auto" type="button">Auto (SO)</button>
+  </div>
+
+  <div class="grid-2">
+    <article class="nexus-card panel">
+      <header>
+        <h2>Tokens ativos</h2>
+        <p class="meta">O seletor acima troca o <code>data-theme</code> no <code>&lt;html&gt;</code>. Tokens reativos em CSS puro.</p>
+      </header>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-nexus-primary));"></div><div class="swatch__label">Brand primary</div><div class="swatch__token">--color-nexus-primary</div></div>
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-background)); border:1px solid hsl(var(--color-border));"></div><div class="swatch__label">Background</div><div class="swatch__token">--color-background</div></div>
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-surface)); border:1px solid hsl(var(--color-border));"></div><div class="swatch__label">Surface</div><div class="swatch__token">--color-surface</div></div>
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-text-primary));"></div><div class="swatch__label">Text primary</div><div class="swatch__token">--color-text-primary</div></div>
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-destructive));"></div><div class="swatch__label">Destructive</div><div class="swatch__token">--color-destructive</div></div>
+        <div class="swatch"><div class="swatch__chip" style="background: hsl(var(--color-success));"></div><div class="swatch__label">Success</div><div class="swatch__token">--color-success</div></div>
+      </div>
+    </article>
+
+    <article class="nexus-card panel">
+      <header>
+        <h2>Componentes sob o tema</h2>
+        <p class="meta">Mesmas classes, tokens reativos.</p>
+      </header>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn btn--primary">Primary</button>
+        <button class="btn btn--tertiary">Tertiary</button>
+        <button class="btn btn--destructive">Destructive</button>
+        <span class="nexus-badge success">Success</span>
+        <span class="nexus-badge warning">Warning</span>
+        <span class="nexus-badge danger">Danger</span>
+        <span class="nexus-badge info">Info</span>
+      </div>
+      <p style="font: var(--type-body); color: hsl(var(--color-text-secondary)); margin: 0 0 12px;">Texto secundário num parágrafo para verificar legibilidade contra o background atual.</p>
+      <div class="nexus-empty" style="padding: 16px 0; gap: 6px;">
+        <div class="nexus-empty__icon" style="width: 40px; height: 40px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 class="nexus-empty__title" style="font-size: 16px;">Empty state</h3>
+        <p class="nexus-empty__desc" style="font-size: 13px;">Verifique contraste e cores neste estado vazio.</p>
+      </div>
+    </article>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll('[data-theme]');
+    const root = document.documentElement;
+    buttons.forEach((b) => {
+      b.addEventListener('click', () => {
+        const theme = b.dataset.theme;
+        root.setAttribute('data-theme', theme);
+        buttons.forEach((x) => x.classList.toggle('is-active', x === b));
+      });
+    });
+  </script>
+</body>
+</html>

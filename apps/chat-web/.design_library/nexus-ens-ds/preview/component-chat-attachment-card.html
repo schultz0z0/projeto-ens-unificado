@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Attachment Card — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px; max-width: 880px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    h2 { font: var(--type-h3); margin: 40px 0 16px; }
+    .dark-user { background: linear-gradient(135deg, rgba(0,157,183,0.92), rgba(0,157,183,0.76)); padding: 24px; border-radius: var(--radius-lg); }
+    .image-ph { width: 100%; height: 180px; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(199 89% 48%)); display: flex; align-items: center; justify-content: center; color: #fff; font: 600 12px var(--type-font-sans); }
+  </style>
+</head>
+<body>
+  <h1>Chat Attachment Card</h1>
+  <p class="lead">Cartão de anexo com 3 variações: imagem, vídeo, arquivo. Adapta chrome para user (translúcido) e assistant (sólido claro).</p>
+
+  <h2>Assistant — imagem</h2>
+  <article class="chat-attachment" style="max-width: 420px;">
+    <img class="chat-attachment__preview" alt="capa-lp-riscos.png" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23009DB7'/><stop offset='1' stop-color='%23007B92'/></linearGradient></defs><rect width='800' height='400' fill='url(%23g)'/><text x='40' y='220' fill='white' font-family='Outfit' font-size='32' font-weight='700'>capa-lp-riscos.png</text></svg>" />
+    <div class="chat-attachment__row">
+      <div class="chat-attachment__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <div class="chat-attachment__body">
+        <p class="chat-attachment__name">capa-lp-riscos.png</p>
+        <p class="chat-attachment__meta">Imagem • PNG · 1.2 MB</p>
+      </div>
+      <div class="chat-attachment__actions">
+        <button class="chat-attachment__btn" aria-label="Ampliar capa-lp-riscos.png">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <button class="chat-attachment__btn" aria-label="Baixar capa-lp-riscos.png">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <h2>User — imagem (chrome translúcido sobre gradient brand)</h2>
+  <div class="dark-user">
+    <article class="chat-attachment user" style="max-width: 420px;">
+      <img class="chat-attachment__preview" alt="referencia.png" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23FF6B6B'/><stop offset='1' stop-color='%23FFD93D'/></linearGradient></defs><rect width='800' height='400' fill='url(%23g)'/><text x='40' y='220' fill='white' font-family='Outfit' font-size='32' font-weight='700'>referencia.png</text></svg>" />
+      <div class="chat-attachment__row">
+        <div class="chat-attachment__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <div class="chat-attachment__body">
+          <p class="chat-attachment__name">referencia.png</p>
+          <p class="chat-attachment__meta">Imagem • PNG · 480 KB</p>
+        </div>
+        <div class="chat-attachment__actions">
+          <button class="chat-attachment__btn" aria-label="Ampliar referencia.png">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button class="chat-attachment__btn" aria-label="Baixar referencia.png">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <h2>Assistant — arquivo (sem preview)</h2>
+  <article class="chat-attachment" style="max-width: 420px;">
+    <div class="chat-attachment__row">
+      <div class="chat-attachment__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="chat-attachment__body">
+        <p class="chat-attachment__name">briefing-riscos-emergentes.json</p>
+        <p class="chat-attachment__meta">Arquivo • JSON · 2 KB</p>
+      </div>
+      <div class="chat-attachment__actions">
+        <button class="chat-attachment__btn" aria-label="Abrir briefing-riscos-emergentes.json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+        <button class="chat-attachment__btn" aria-label="Baixar briefing-riscos-emergentes.json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+    </div>
+  </article>
+</body>
+</html>

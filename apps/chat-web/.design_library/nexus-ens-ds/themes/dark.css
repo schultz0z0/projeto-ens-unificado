@@ -1,0 +1,134 @@
+/* ==========================================================================
+   Nexus ENS Design System — Theme: Dark
+   Parity with the `.dark` block declared in `src/index.css` of chat-web.
+   Use as an OPT-IN theme — the production app is light-only today; this
+   theme is provided so a future dark mode rollout has a DS contract.
+   --------------------------------------------------------------------------
+   Usage:
+     <html data-theme="dark">
+       <link rel="stylesheet" href="themes/light.css">     (fallback KV)
+       <link rel="stylesheet" href="themes/dark.css">      (overrides)
+       <link rel="stylesheet" href="colors_and_type.css">
+       <link rel="stylesheet" href="components.css">
+   --------------------------------------------------------------------------
+   Includes body background override + dark-tuned shadows.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  /* ---- Brand: hue unchanged, but accents pushed brighter for legibility */
+  --color-nexus-primary:        189 100% 36%;
+  --color-nexus-secondary:      189 92% 44%;
+  --color-nexus-accent:         189 90% 56%;
+  --color-nexus-deep:           220 40% 96%;
+
+  /* ---- Text: dark background needs high-contrast text */
+  --color-text-primary:         220 40% 98%;
+  --color-text-secondary:       215 20% 75%;
+  --color-text-muted:           215 14% 65%;
+
+  /* ---- Surface: navy base */
+  --color-background:           222 47% 11%;
+  --color-foreground:           220 40% 98%;
+  --color-surface:              222 47% 14%;
+  --color-surface-subtle:       222 47% 16%;
+
+  /* ---- Glass overlays ---------------------------------------------- */
+  --color-glass-surface:        222 47% 16%;
+  --color-glass-border:         0 0% 100%;
+
+  /* ---- Semantic ----------------------------------------------------- */
+  --color-primary:              189 100% 36%;
+  --color-primary-foreground:   222 47% 11%;
+
+  --color-secondary:            217 33% 18%;
+  --color-secondary-foreground: 220 40% 98%;
+
+  --color-muted:                217 33% 18%;
+  --color-muted-foreground:     215 20% 65%;
+
+  --color-accent:               217 33% 18%;
+  --color-accent-foreground:    220 40% 98%;
+
+  --color-destructive:          0 63% 31%;
+  --color-destructive-foreground: 220 40% 98%;
+
+  --color-success:              142 71% 45%;
+  --color-warning:              38 92% 50%;
+  --color-info:                 199 89% 48%;
+
+  /* ---- UI: dark borders + inputs */
+  --color-border:               217 33% 18%;
+  --color-input:                217 33% 18%;
+  --color-ring:                 189 100% 36%;
+
+  /* ---- Sidebar ----------------------------------------------------- */
+  --color-sidebar-background:        222 47% 11%;
+  --color-sidebar-foreground:        220 40% 98%;
+  --color-sidebar-primary:           189 100% 36%;
+  --color-sidebar-primary-foreground:0 0% 100%;
+  --color-sidebar-accent:            217 33% 18%;
+  --color-sidebar-accent-foreground: 220 40% 98%;
+  --color-sidebar-border:            217 33% 18%;
+  --color-sidebar-ring:              189 100% 36%;
+
+  /* ---- Card / Popover --------------------------------------------- */
+  --color-card:                222 47% 11%;
+  --color-card-foreground:     220 40% 98%;
+  --color-popover:             222 47% 11%;
+  --color-popover-foreground:  220 40% 98%;
+
+  /* ---- Status pills: same hues, darker alpha */
+  --color-status-info-bg:    199 89% 48%;
+  --color-status-info-fg:    199 89% 70%;
+  --color-status-success-bg: 142 71% 45%;
+  --color-status-success-fg: 142 71% 65%;
+  --color-status-warning-bg: 38 92% 50%;
+  --color-status-warning-fg: 38 92% 70%;
+  --color-status-danger-bg:  0 84% 60%;
+  --color-status-danger-fg:  0 84% 75%;
+
+  /* ---- Markdown surface ------------------------------------------- */
+  --color-md-bg:        hsl(222 47% 16% / 0.85);
+  --color-md-border:    hsl(217 33% 24%);
+  --color-md-table-row: hsl(217 33% 18%);
+
+  /* ---- Code block (same) ------------------------------------------ */
+  --color-code-bg:    222 47% 6%;
+  --color-code-text:  220 40% 96%;
+
+  /* ---- Attachment chrome ------------------------------------------- */
+  --color-attachment-border-user:      hsl(0 0% 100% / 0.18);
+  --color-attachment-bg-user:          hsl(0 0% 100% / 0.06);
+  --color-attachment-border-assistant: hsl(217 33% 24%);
+  --color-attachment-bg-assistant:     hsl(222 47% 16% / 0.85);
+
+  /* ---- Suggestion card --------------------------------------------- */
+  --color-suggestion-bg:        hsl(222 47% 16% / 0.50);
+  --color-suggestion-border:    hsl(0 0% 100% / 0.08);
+  --color-suggestion-hover-bg:  hsl(222 47% 18% / 0.70);
+  --color-suggestion-hover-border: hsl(189 100% 36% / 0.40);
+
+  /* ---- Skeleton (dark) --------------------------------------------- */
+  --color-skeleton-base:  hsl(217 33% 22%);
+  --color-skeleton-shine: hsl(217 33% 30% / 0.85);
+}
+
+/* Dark body background — replaces the light radial */
+[data-theme="dark"] body {
+  background: radial-gradient(ellipse at top,
+    hsl(222 47% 13%),
+    hsl(222 47% 9%) 60%,
+    hsl(222 47% 6%)
+  );
+}
+
+/* Dark-tuned shadows (so the navy surface doesn't drown the elevation) */
+[data-theme="dark"] {
+  --shadow-sm: 0 1px 4px 0 rgb(0 0 0 / 0.40);
+  --shadow-md: 0 8px 24px -4px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 16px 40px -6px rgb(0 0 0 / 0.65);
+  --shadow-glass:
+    0 18px 42px -24px rgb(0 0 0 / 0.70),
+    0 8px 22px -14px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+}

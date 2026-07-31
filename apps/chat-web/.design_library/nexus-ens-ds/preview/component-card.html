@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Card — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px; max-width: 1080px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    h2 { font: var(--type-h3); margin: 32px 0 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .card { padding: 20px; }
+    .card h3 { font: var(--type-h4); margin: 0 0 6px; }
+    .card p { font: var(--type-body); color: hsl(var(--color-text-secondary)); margin: 0 0 12px; }
+    .card .meta { font: var(--type-caption); color: hsl(var(--color-text-muted)); }
+    .card .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid hsl(var(--color-border)); }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%)); display:flex; align-items:center; justify-content:center; color:#fff; font:600 14px var(--type-font-sans); }
+    .dark-section { background: hsl(222 47% 11%); padding: 32px; border-radius: var(--radius-lg); margin-top: 32px; }
+    .dark-section h2 { color: hsl(220 40% 98%); }
+  </style>
+</head>
+<body>
+  <h1>Card</h1>
+  <p class="lead">Container padrão para conteúdo agrupado. Suporta variantes default, glass e elevated.</p>
+
+  <section>
+    <h2>Variantes</h2>
+    <div class="grid">
+      <article class="nexus-card card">
+        <h3>Default</h3>
+        <p>Superfície sólida com sombra discreta. Indicado para a maioria dos agrupamentos.</p>
+        <div class="meta">Atualizado há 5 min</div>
+        <div class="footer">
+          <div class="avatar">RM</div>
+          <span class="nexus-badge success"><span style="width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block"></span> Online</span>
+        </div>
+      </article>
+
+      <article class="nexus-card glass-surface card">
+        <h3>Glass</h3>
+        <p>Fundo translúcido com blur. Usado sobre gradientes e imagens.</p>
+        <div class="meta">glass-surface</div>
+        <div class="footer">
+          <div class="avatar">GL</div>
+          <span class="nexus-badge">Beta</span>
+        </div>
+      </article>
+
+      <article class="nexus-card nexus-card-elevated card">
+        <h3>Elevated</h3>
+        <p>Sombra média para destacar do restante da página.</p>
+        <div class="meta">nexus-card-elevated</div>
+        <div class="footer">
+          <div class="avatar">EV</div>
+          <span class="nexus-badge info">+12 hoje</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <div class="dark-section">
+    <h2>Em modo escuro</h2>
+    <div class="grid">
+      <article class="nexus-card card" style="background: linear-gradient(180deg, hsla(222,47%,16%,0.80), hsla(222,47%,12%,0.60)); border-color: hsla(0,0%,100%,0.08); color: hsl(220 40% 98%);">
+        <h3 style="color: hsl(220 40% 98%);">Dark surface</h3>
+        <p style="color: hsl(215 20% 75%);">Card adaptado para o tema dark com mesmo espaçamento e raio.</p>
+        <div class="meta" style="color: hsl(215 14% 65%);">Mantenha o mesmo border-radius e hierarquia tipográfica.</div>
+      </article>
+    </div>
+  </div>
+</body>
+</html>

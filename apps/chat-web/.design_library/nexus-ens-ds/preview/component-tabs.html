@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabs / Tooltip / Toast — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px 32px; max-width: 980px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    h2 { font: var(--type-h3); margin: 40px 0 16px; }
+    .panel { border: 1px solid hsl(var(--color-border)); border-radius: var(--radius-lg); padding: 24px; background: hsl(var(--color-background)); }
+    .btn { display:inline-flex; align-items:center; font:500 14px/1 var(--type-font-sans); padding:0 14px; height:36px; border-radius:var(--radius-md); border:1px solid transparent; cursor:pointer; }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+  </style>
+</head>
+<body>
+  <h1>Tabs / Tooltip / Toast</h1>
+  <p class="lead">Três peças de overlay leve + feedback inline.</p>
+
+  <h2>Tabs</h2>
+  <div class="panel">
+    <div class="nexus-tabs" role="tablist" aria-label="Detalhes da campanha">
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        <div class="nexus-tabs__list" role="tablist">
+          <button class="nexus-tabs__trigger is-active" role="tab" aria-selected="true">Visão geral</button>
+          <button class="nexus-tabs__trigger" role="tab" aria-selected="false">Materiais</button>
+          <button class="nexus-tabs__trigger" role="tab" aria-selected="false">Audiência</button>
+        </div>
+        <div class="nexus-tabs__content" role="tabpanel">
+          <h3 style="font: var(--type-h4); margin: 0 0 8px;">Visão geral</h3>
+          <p style="font: var(--type-body); color: hsl(var(--color-text-secondary)); margin: 0;">Resumo da campanha, KPIs, próximas entregas e últimos comentários.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Tooltip (4 sides)</h2>
+  <div class="panel" style="display: flex; gap: 32px; flex-wrap: wrap; padding: 64px 24px; justify-content: center;">
+    <span class="nexus-tooltip">
+      <button class="btn btn--tertiary">Top</button>
+      <span class="nexus-tooltip__bubble" data-side="top" role="tooltip">Dica no topo</span>
+    </span>
+    <span class="nexus-tooltip">
+      <button class="btn btn--tertiary">Right</button>
+      <span class="nexus-tooltip__bubble" data-side="right" role="tooltip">Dica à direita</span>
+    </span>
+    <span class="nexus-tooltip">
+      <button class="btn btn--tertiary">Bottom</button>
+      <span class="nexus-tooltip__bubble" data-side="bottom" role="tooltip">Dica embaixo</span>
+    </span>
+    <span class="nexus-tooltip">
+      <button class="btn btn--tertiary">Left</button>
+      <span class="nexus-tooltip__bubble" data-side="left" role="tooltip">Dica à esquerda</span>
+    </span>
+  </div>
+
+  <h2>Sonner toast (3 tons)</h2>
+  <div class="panel" style="position: relative; min-height: 240px;">
+    <p style="font: var(--type-body); color: hsl(var(--color-text-secondary)); margin: 0;">Exemplo de toasts empilhados no canto inferior direito.</p>
+    <aside class="nexus-toaster" role="region" aria-label="Notificações">
+      <article class="nexus-toast success">
+        <div class="nexus-toast__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="nexus-toast__body">
+          <p class="nexus-toast__title">Conversa salva</p>
+          <p class="nexus-toast__desc">"Riscos Emergentes 2026 — copy" foi arquivada.</p>
+        </div>
+        <button class="nexus-toast__close" aria-label="Fechar notificação">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </article>
+      <article class="nexus-toast warning">
+        <div class="nexus-toast__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="nexus-toast__body">
+          <p class="nexus-toast__title">Contexto insuficiente</p>
+          <p class="nexus-toast__desc">A IA pediu uma clarificação. Responda para continuar.</p>
+        </div>
+        <button class="nexus-toast__close" aria-label="Fechar notificação">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </article>
+      <article class="nexus-toast danger">
+        <div class="nexus-toast__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="nexus-toast__body">
+          <p class="nexus-toast__title">Falha na rede</p>
+          <p class="nexus-toast__desc">Não foi possível enviar a mensagem. Tentando reconectar…</p>
+        </div>
+        <button class="nexus-toast__close" aria-label="Fechar notificação">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </article>
+    </aside>
+  </div>
+</body>
+</html>

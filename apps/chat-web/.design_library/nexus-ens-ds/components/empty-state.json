@@ -1,0 +1,29 @@
+{
+  "slug": "empty-state",
+  "name": "Empty State",
+  "category": "feedback",
+  "description": "Estado vazio genérico com ícone, título, descrição e ações. Substitui o zero-data de tabelas, listas e painéis.",
+  "anatomy": [
+    "<section class='nexus-empty'>",
+    "  <div class='nexus-empty__icon'><svg/></div>",
+    "  <h3 class='nexus-empty__title'>{title}</h3>",
+    "  <p class='nexus-empty__desc'>{description}</p>",
+    "  <div class='nexus-empty__actions'>{actions}</div>",
+    "</section>"
+  ],
+  "props": {
+    "title":       { "type": "string", "required": true },
+    "description": { "type": "string" },
+    "icon":        { "type": "LucideIcon" },
+    "actions":     { "type": "ReactNode" }
+  },
+  "tokens": {
+    "icon-bg":  "hsla(189, 100%, 36%, 0.08)",
+    "icon-fg":  "hsl(var(--color-primary))",
+    "padding":  "48px 24px",
+    "radius":   "16px (icon)",
+    "title-type": "var(--type-h4)"
+  },
+  "states": ["default"],
+  "accessibility": "<section> semântico; h3 para o título; ações devem ser <button> com aria-label."
+}

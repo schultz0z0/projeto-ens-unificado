@@ -1,0 +1,19 @@
+{
+  "slug": "badge",
+  "name": "Badge",
+  "category": "indicators",
+  "description": "Indicador compacto para status, contagens ou categorização. Variantes tonal: primary, success, warning, danger, info, neutral.",
+  "anatomy": ["<span class='nexus-badge'>", "dot opcional", "label"],
+  "props": {
+    "variant": { "type": "enum", "values": ["primary", "success", "warning", "danger", "info", "neutral"], "default": "primary" },
+    "dot":     { "type": "boolean", "default": false }
+  },
+  "tokens": {
+    "radius": "999px",
+    "type": "var(--type-overline)",
+    "padding": "4px 10px",
+    "bg-primary": "hsla(189, 100%, 36%, 0.10)"
+  },
+  "states": ["default"],
+  "accessibility": "Decorativo por padrão (aria-hidden=true); se transmitir status use role='status'."
+}

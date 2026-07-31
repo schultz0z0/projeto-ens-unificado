@@ -1,0 +1,43 @@
+{
+  "slug": "chat-message",
+  "name": "Chat Message",
+  "category": "chat",
+  "description": "Bolha de mensagem completa. Inclui header com avatar+autor (assistant), corpo markdown, status pills inline, artifact card, attachment e indicador de streaming/typing.",
+  "anatomy": [
+    "<article class='chat-bubble {role}'>",
+    "  <header class='chat-bubble__header'> (assistant only)",
+    "    <span class='chat-bubble__avatar'><svg/></span>",
+    "    <span class='chat-bubble__author'>Nexus AI</span>",
+    "  </header>",
+    "  <div class='chat-prose'>{text or markdown}</div>",
+    "  <aside class='chat-attachment'>…</aside> (optional)",
+    "  <aside class='chat-artifact'>…</aside> (optional)",
+    "  <div class='chat-status'>…</div> (optional)",
+    "  <span class='time'>14:03</span>",
+    "</article>"
+  ],
+  "props": {
+    "role":           { "type": "enum", "values": ["user", "assistant"], "required": true },
+    "content":        { "type": "string | Markdown", "required": true },
+    "isStreaming":    { "type": "boolean", "default": false },
+    "attachments":    { "type": "array<ChatAttachment>", "default": [] },
+    "artifact":       { "type": "ChatArtifact | null" },
+    "status":         { "type": "ChatStatus | null" },
+    "author":         { "type": "string", "default": "Nexus AI" },
+    "timestamp":      { "type": "string" }
+  },
+  "tokens": {
+    "user-bubble":     "linear-gradient(135deg, rgba(0,157,183,0.92), rgba(0,157,183,0.76))",
+    "assistant-bubble":"linear-gradient(135deg, hsla(0,0%,100%,0.85), hsla(220,60%,98%,0.70))",
+    "radius":          "20px",
+    "max-width":       "min(720px, 80%)",
+    "padding":         "14px 18px",
+    "avatar-bg":       "hsla(189, 100%, 36%, 0.18)",
+    "avatar-fg":       "hsl(189 100% 36%)",
+    "typing-dot":      "hsl(var(--color-typing-pulse))",
+    "prose-color":     "hsl(var(--color-text-primary))"
+  },
+  "states": ["idle", "streaming (cursor pulsante)", "typing (3-dot bounce)", "error (mensagem inline ⚠️)"],
+  "sub-components": ["chat-prose (markdown)", "chat-artifact", "chat-attachment", "chat-status", "chat-typing"],
+  "accessibility": "<article role='article'> com aria-label='Mensagem de {autor}'. Conteúdo markdown via react-markdown + remark-gfm."
+}

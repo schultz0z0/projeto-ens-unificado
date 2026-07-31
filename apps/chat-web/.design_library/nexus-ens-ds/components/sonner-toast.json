@@ -1,0 +1,41 @@
+{
+  "slug": "sonner-toast",
+  "name": "Sonner Toast",
+  "category": "feedback",
+  "description": "Wrapper de toasts inspirado em Sonner: container fixo bottom-right, toasts empilhados com 4 tons (default/success/warning/danger), título + descrição + close.",
+  "anatomy": [
+    "<aside class='nexus-toaster' role='region' aria-label='Notificações'>",
+    "  <article class='nexus-toast success'>",
+    "    <div class='nexus-toast__icon'><CheckCircle/></div>",
+    "    <div class='nexus-toast__body'>",
+    "      <p class='nexus-toast__title'>{title}</p>",
+    "      <p class='nexus-toast__desc'>{description}</p>",
+    "    </div>",
+    "    <button class='nexus-toast__close' aria-label='Fechar' />",
+    "  </article>",
+    "</aside>"
+  ],
+  "props": {
+    "toasts": { "type": "array<ToastProps>", "default": [] },
+    "position": { "type": "enum", "values": ["bottom-right", "bottom-left", "top-right", "top-left"], "default": "bottom-right" }
+  },
+  "props-of-toast": {
+    "id":     { "type": "string" },
+    "title":  { "type": "string", "required": true },
+    "description": { "type": "string" },
+    "tone":   { "type": "enum", "values": ["default", "success", "warning", "danger"], "default": "default" },
+    "duration": { "type": "number", "default": 4000 }
+  },
+  "tokens": {
+    "container-pos": "fixed; bottom: 16px; right: 16px",
+    "max-width":     "360px",
+    "gap":           "8px",
+    "bg":            "hsl(var(--color-background))",
+    "border":        "hsl(var(--color-border))",
+    "shadow":        "var(--shadow-lg)",
+    "z-toast":       "var(--z-toast)",
+    "animation":     "nexus-toast-in 0.24s var(--ease-out-soft)"
+  },
+  "states": ["default", "success", "warning", "danger", "leaving"],
+  "accessibility": "Container com role='region' aria-label; cada toast é article; botão close com aria-label='Fechar notificação'."
+}

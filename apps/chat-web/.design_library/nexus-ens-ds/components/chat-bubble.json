@@ -1,0 +1,23 @@
+{
+  "slug": "chat-bubble",
+  "name": "Chat Bubble",
+  "category": "chat",
+  "description": "Bolha de mensagem de chat. Variantes: user (gradient brand + glass highlight) e assistant (glass sobre fundo claro/escuro).",
+  "anatomy": ["<article class='chat-bubble'>", "avatar opcional", "content", "timestamp opcional"],
+  "props": {
+    "role":       { "type": "enum", "values": ["user", "assistant"], "required": true },
+    "content":    { "type": "string", "required": true },
+    "timestamp":  { "type": "string" },
+    "avatarSrc":  { "type": "string" }
+  },
+  "tokens": {
+    "user-bg":     "linear-gradient(135deg, rgba(0,157,183,0.92), rgba(0,157,183,0.76))",
+    "user-text":   "#ffffff",
+    "assistant-bg":"linear-gradient(135deg, hsla(0,0%,100%,0.85), hsla(220,60%,98%,0.70))",
+    "radius":      "20px",
+    "max-width":   "min(720px, 90%)",
+    "padding":     "12px 16px"
+  },
+  "states": ["default", "streaming (cursor piscando no final)"],
+  "accessibility": "<article> com role='article' ou 'listitem'; aria-label com role + autor."
+}

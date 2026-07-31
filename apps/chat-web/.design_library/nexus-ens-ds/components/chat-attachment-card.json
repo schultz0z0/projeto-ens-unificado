@@ -1,0 +1,50 @@
+{
+  "slug": "chat-attachment-card",
+  "name": "Chat Attachment Card",
+  "category": "chat",
+  "description": "Cartão de anexo do chat com 3 variações: image (preview + meta), video (player + meta), file (ícone + meta). Ações: ampliar/abrir e baixar. Adapta chrome para user (translúcido sobre brand gradient) e assistant (sólido claro).",
+  "anatomy": [
+    "<article class='chat-attachment {role}'>",
+    "  <button class='chat-attachment__preview-trigger' (imagem)>",
+    "    <img class='chat-attachment__preview' />",
+    "  </button>",
+    "  <video class='chat-attachment__preview' /> (vídeo)",
+    "  <div class='chat-attachment__row'>",
+    "    <div class='chat-attachment__icon'><ImageIcon|FileText|FileCode2/></div>",
+    "    <div class='chat-attachment__body'>",
+    "      <p class='chat-attachment__name'>{fileName}</p>",
+    "      <p class='chat-attachment__meta'>{kind} • {extension}</p>",
+    "    </div>",
+    "    <div class='chat-attachment__actions'>",
+    "      <button aria-label='Ampliar' class='chat-attachment__btn'>…</button>",
+    "      <button aria-label='Baixar' class='chat-attachment__btn'>…</button>",
+    "    </div>",
+    "  </div>",
+    "</article>"
+  ],
+  "props": {
+    "kind":        { "type": "enum", "values": ["image", "video", "file"], "required": true },
+    "name":        { "type": "string", "required": true },
+    "url":         { "type": "string", "required": true },
+    "extension":   { "type": "string" },
+    "role":        { "type": "enum", "values": ["user", "assistant"], "default": "assistant" },
+    "storagePath": { "type": "string" },
+    "artifactId":  { "type": "string" },
+    "onOpen":      { "type": "function" },
+    "onDownload":  { "type": "function" }
+  },
+  "tokens": {
+    "radius":         "var(--radius-md)",
+    "padding-row":    "12px",
+    "icon-size":      "48px",
+    "action-size":    "36px circle",
+    "user-border":    "var(--color-attachment-border-user)",
+    "user-bg":        "var(--color-attachment-bg-user)",
+    "assistant-border": "var(--color-attachment-border-assistant)",
+    "assistant-bg":   "var(--color-attachment-bg-assistant)",
+    "preview-max-h":  "280px (image) / 320px (video)"
+  },
+  "states": ["default", "user (chrome translucent)", "preview-open (modal)"],
+  "sub-components": ["chat-attachment__preview (imagem clicável)", "chat-attachment__btn (icon-only)"],
+  "accessibility": "Cada botão tem aria-label explícito ('Ampliar {name}', 'Baixar {name}'); image trigger usa <button> semântico; vídeo tem controls nativos."
+}

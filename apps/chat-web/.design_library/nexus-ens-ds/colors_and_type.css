@@ -1,0 +1,235 @@
+/* ==========================================================================
+   Nexus ENS Design System — Tokens
+   Source: projeto-ens-unificado/apps/chat-web (extracted from src/index.css)
+   Distribution: HSL triples for Tailwind/shadcn compatibility
+   ========================================================================== */
+
+:root {
+  /* ---- Brand --------------------------------------------------------- */
+  --color-nexus-primary:        189 100% 36%;
+  --color-nexus-secondary:      189 92% 44%;
+  --color-nexus-accent:         189 90% 56%;
+  --color-nexus-deep:           222 47% 11%;
+
+  /* ---- Text --------------------------------------------------------- */
+  --color-text-primary:         222 47% 11%;
+  --color-text-secondary:       215 20% 25%;
+  --color-text-muted:           215 14% 45%;
+
+  /* ---- Surface ------------------------------------------------------ */
+  --color-background:           0 0% 100%;
+  --color-foreground:           222 47% 11%;
+  --color-surface:              0 0% 100%;
+  --color-surface-subtle:       220 60% 98%;
+
+  /* ---- Glass overlays ---------------------------------------------- */
+  --color-glass-surface:        0 0% 100%;
+  --color-glass-border:         0 0% 100%;
+
+  /* ---- Semantic ----------------------------------------------------- */
+  --color-primary:              189 100% 36%;
+  --color-primary-foreground:   0 0% 100%;
+
+  --color-secondary:            220 40% 96%;
+  --color-secondary-foreground: 189 100% 36%;
+
+  --color-muted:                220 40% 96%;
+  --color-muted-foreground:     215 14% 45%;
+
+  --color-accent:               220 40% 96%;
+  --color-accent-foreground:    222 47% 11%;
+
+  --color-destructive:          0 84% 60%;
+  --color-destructive-foreground: 0 0% 100%;
+
+  --color-success:              142 71% 45%;
+  --color-warning:              38 92% 50%;
+  --color-info:                 199 89% 48%;
+
+  /* ---- UI ---------------------------------------------------------- */
+  --color-border:               220 13% 91%;
+  --color-input:                220 13% 91%;
+  --color-ring:                 189 100% 36%;
+
+  /* ---- Sidebar ----------------------------------------------------- */
+  --color-sidebar-background:        0 0% 98%;
+  --color-sidebar-foreground:        215 20% 25%;
+  --color-sidebar-primary:           189 100% 36%;
+  --color-sidebar-primary-foreground:0 0% 100%;
+  --color-sidebar-accent:            220 40% 96%;
+  --color-sidebar-accent-foreground: 222 47% 11%;
+  --color-sidebar-border:            220 13% 91%;
+  --color-sidebar-ring:              189 100% 36%;
+
+  /* ---- Card / Popover (extended shadcn) --------------------------- */
+  --color-card:                0 0% 100%;
+  --color-card-foreground:     222 47% 11%;
+  --color-popover:             0 0% 100%;
+  --color-popover-foreground:  222 47% 11%;
+
+  /* ---- Radii ------------------------------------------------------- */
+  --radius-base: 1rem;
+  --radius-sm:   calc(var(--radius-base) - 4px);
+  --radius-md:   calc(var(--radius-base) - 2px);
+  --radius-lg:   var(--radius-base);
+  --radius-xl:   calc(var(--radius-base) + 8px);
+
+  /* ---- Shadows (HSL source: rgb(11 18 32)) ----------------------- */
+  --shadow-sm: 0 1px 4px 0 rgba(11, 18, 32, 0.10);
+  --shadow-md: 0 8px 24px -4px rgba(11, 18, 32, 0.20);
+  --shadow-lg: 0 16px 40px -6px rgba(11, 18, 32, 0.24);
+  --shadow-glass:
+    0 18px 42px -24px rgba(11, 18, 32, 0.34),
+    0 8px 22px -14px rgba(11, 18, 32, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+
+  /* ---- Type scale -------------------------------------------------- */
+  --type-font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --type-display-1: 700 56px/1.05 var(--type-font-sans);
+  --type-display-2: 700 40px/1.10 var(--type-font-sans);
+  --type-h1:        600 32px/1.20 var(--type-font-sans);
+  --type-h2:        600 24px/1.25 var(--type-font-sans);
+  --type-h3:        600 20px/1.30 var(--type-font-sans);
+  --type-h4:        600 18px/1.35 var(--type-font-sans);
+  --type-body-lg:   400 16px/1.55 var(--type-font-sans);
+  --type-body:      400 14px/1.55 var(--type-font-sans);
+  --type-body-sm:   400 13px/1.50 var(--type-font-sans);
+  --type-caption:   400 12px/1.40 var(--type-font-sans);
+  --type-overline:  500 11px/1.20 var(--type-font-sans);
+  --type-mono:      400 13px/1.60 ui-monospace, 'JetBrains Mono', Menlo, monospace;
+
+  /* ---- Spacing rhythm (4px base) ---------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ---- Motion ------------------------------------------------------ */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 360ms;
+
+  /* ---- Status pills (inline chat status / confidence / review) --- */
+  --color-status-info-bg:    199 89% 48%;
+  --color-status-info-fg:    199 89% 35%;
+  --color-status-success-bg: 142 71% 45%;
+  --color-status-success-fg: 142 71% 32%;
+  --color-status-warning-bg: 38 92% 50%;
+  --color-status-warning-fg: 38 92% 30%;
+  --color-status-danger-bg:  0 84% 60%;
+  --color-status-danger-fg:  0 84% 45%;
+
+  /* ---- Markdown surface (assistant prose) ------------------------- */
+  --color-md-bg:        hsl(0 0% 100% / 0.80);
+  --color-md-border:    hsl(220 13% 91%);
+  --color-md-table-row: hsl(220 13% 96%);
+
+  /* ---- Code block (chat) ------------------------------------------- */
+  --color-code-bg:    222 47% 8%;
+  --color-code-text:  220 40% 96%;
+
+  /* ---- Attachment chrome (file card) ------------------------------ */
+  --color-attachment-border-user:      hsl(0 0% 100% / 0.20);
+  --color-attachment-bg-user:          hsl(0 0% 100% / 0.10);
+  --color-attachment-border-assistant: hsl(220 13% 91%);
+  --color-attachment-bg-assistant:     hsl(0 0% 100% / 0.70);
+
+  /* ---- Suggestion card (empty state grid) ------------------------- */
+  --color-suggestion-bg:       hsl(0 0% 100% / 0.40);
+  --color-suggestion-border:   hsl(0 0% 100% / 0.20);
+  --color-suggestion-hover-bg: hsl(0 0% 100% / 0.60);
+  --color-suggestion-hover-border: hsl(189 100% 36% / 0.30);
+
+  /* ---- Brand ring (chat typing pulse) ----------------------------- */
+  --color-typing-pulse: 189 100% 36%;
+
+  /* ---- Overlay (modal/sheet/tooltip scrim) ------------------------ */
+  --color-overlay:        222 47% 11%;
+
+  /* ---- Skeleton surface ------------------------------------------- */
+  --color-skeleton-base:  hsl(220 13% 91%);
+  --color-skeleton-shine: hsl(0 0% 100% / 0.65);
+
+  /* ---- Z-index scale ---------------------------------------------- */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+  --z-toast: 1700;
+}
+
+.dark {
+  --color-text-primary:         220 40% 98%;
+  --color-text-secondary:       215 20% 75%;
+  --color-text-muted:           215 14% 65%;
+
+  --color-background:           222 47% 11%;
+  --color-foreground:           220 40% 98%;
+
+  --color-primary:              189 100% 36%;
+  --color-primary-foreground:   222 47% 11%;
+
+  --color-secondary:            217 33% 18%;
+  --color-secondary-foreground: 220 40% 98%;
+
+  --color-muted:                217 33% 18%;
+  --color-muted-foreground:     215 20% 65%;
+
+  --color-accent:               217 33% 18%;
+  --color-accent-foreground:    220 40% 98%;
+
+  --color-destructive:          0 63% 31%;
+  --color-destructive-foreground: 220 40% 98%;
+
+  --color-border:               217 33% 18%;
+  --color-input:                217 33% 18%;
+  --color-ring:                 189 100% 36%;
+
+  --color-card:                222 47% 11%;
+  --color-card-foreground:     220 40% 98%;
+  --color-popover:             222 47% 11%;
+  --color-popover-foreground:  220 40% 98%;
+
+  --color-sidebar-background:        222 47% 11%;
+  --color-sidebar-foreground:        220 40% 98%;
+  --color-sidebar-primary:           189 100% 36%;
+  --color-sidebar-primary-foreground:0 0% 100%;
+  --color-sidebar-accent:            217 33% 18%;
+  --color-sidebar-accent-foreground: 220 40% 98%;
+  --color-sidebar-border:            217 33% 18%;
+  --color-sidebar-ring:              189 100% 36%;
+}
+
+/* ==========================================================================
+   Global resets
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--type-font-sans);
+  color: hsl(var(--color-foreground));
+  background: radial-gradient(ellipse at top,
+    hsl(220 60% 98%),
+    hsl(30 100% 97%) 50%,
+    hsl(220 100% 98%)
+  );
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.dark body {
+  background: radial-gradient(ellipse at top, hsl(222 47% 13%), hsl(222 47% 9%) 60%, hsl(222 47% 6%));
+}

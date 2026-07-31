@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nexus ENS — Chat UI Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../colors_and_type.css" />
+  <link rel="stylesheet" href="../../components.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    .app { display: grid; grid-template-columns: 256px 1fr; min-height: 100vh; }
+
+    /* thread scroll area */
+    .thread-wrap { display: flex; flex-direction: column; min-width: 0; }
+    .thread { flex: 1; overflow-y: auto; padding: 24px 32px 32px; display: flex; flex-direction: column; gap: 18px; }
+    .thread .conf-row { display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+    .composer-zone { padding: 12px 32px 20px; }
+
+    /* composer inline (reusa chat-composer-radiant) */
+    .chat-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px; background: hsl(var(--color-background)); }
+    .chat-composer textarea { flex: 1; resize: none; border: none; outline: none; background: transparent; font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-primary)); padding: 8px; min-height: 40px; max-height: 200px; }
+    .chat-composer textarea::placeholder { color: hsl(var(--color-text-muted)); }
+    .chat-composer .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid transparent; background: transparent; color: hsl(var(--color-text-secondary)); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .chat-composer .icon-btn:hover { background: hsl(var(--color-muted)); }
+    .chat-composer .icon-btn svg { width: 18px; height: 18px; }
+
+    /* imagem placeholder para anexos */
+    .img-ph { width: 100%; height: 200px; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(199 89% 48%)); display: flex; align-items: center; justify-content: center; color: #fff; font: 600 12px var(--type-font-sans); }
+
+    /* label de seção (apenas visual) */
+    .section-tag { font: 500 11px/1.2 var(--type-font-sans); text-transform: uppercase; letter-spacing: 0.08em; color: hsl(var(--color-text-muted)); padding: 8px 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============= Sidebar de histórico ============= -->
+    <aside class="chat-history">
+      <div class="chat-history__header">
+        <span class="chat-history__title">Histórico</span>
+        <button class="chat-history__close" aria-label="Fechar histórico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="chat-history__new">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Chat
+      </button>
+      <div class="chat-history__list">
+        <div class="chat-history__item is-active">
+          <svg class="chat-history__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <div class="chat-history__item-body">
+            <p class="chat-history__item-title">Riscos Emergentes 2026 — copy</p>
+            <p class="chat-history__item-time">30 de jul, 14:32</p>
+          </div>
+          <div class="chat-history__item-actions">
+            <button aria-label="Renomear conversa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+            <button aria-label="Excluir conversa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+          </div>
+        </div>
+        <div class="chat-history__item">
+          <svg class="chat-history__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <div class="chat-history__item-body">
+            <p class="chat-history__item-title">Estratégia Q3 — Logística</p>
+            <p class="chat-history__item-time">29 de jul, 09:14</p>
+          </div>
+        </div>
+        <div class="chat-history__item">
+          <svg class="chat-history__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <div class="chat-history__item-body">
+            <p class="chat-history__item-title">Briefing LP proteção patrimonial</p>
+            <p class="chat-history__item-time">28 de jul, 17:02</p>
+          </div>
+        </div>
+        <div class="chat-history__item">
+          <svg class="chat-history__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <div class="chat-history__item-body">
+            <p class="chat-history__item-title">Edição de copy — H2H</p>
+            <p class="chat-history__item-time">26 de jul, 11:48</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============= Thread + composer ============= -->
+    <div class="thread-wrap">
+      <div class="thread" style="max-width: 880px; margin: 0 auto; width: 100%;">
+
+        <!-- Live status pill -->
+        <div class="chat-status" style="align-self: center;">
+          <span class="pulse"></span>
+          <span>Hermes está processando sua mensagem…</span>
+        </div>
+
+        <!-- User: pergunta -->
+        <article class="chat-bubble chat-user-bubble user">
+          Quero lançar o curso <strong>Riscos Emergentes 2026</strong> e preciso de 3 e-mails + 1 LP. Pode me ajudar com a estratégia?
+          <span class="time">14:02</span>
+        </article>
+
+        <!-- Assistant: resposta markdown -->
+        <article class="chat-bubble chat-assistant-bubble assistant">
+          <header class="chat-bubble__header">
+            <span class="chat-bubble__avatar">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8.4l-3.7 2.7L15.6 16 12 13.2 8.4 16l1.3-4.9L6 8.4l4.4-1.6z"/></svg>
+            </span>
+            <span class="chat-bubble__author">Nexus AI</span>
+          </header>
+          <div class="chat-prose">
+            <p>Vamos montar uma jornada <strong>H2H</strong> com 3 e-mails e uma LP. Estrutura sugerida:</p>
+            <table>
+              <thead><tr><th>Etapa</th><th>Objetivo</th><th>Tom</th></tr></thead>
+              <tbody>
+                <tr><td>E-mail 1</td><td>Provocar curiosidade</td><td>Curiosidade</td></tr>
+                <tr><td>E-mail 2</td><td>Educação / valor</td><td>Didático</td></tr>
+                <tr><td>E-mail 3</td><td>Prova social + CTA</td><td>Prova social</td></tr>
+                <tr><td>LP</td><td>Conversão (inscrição)</td><td>H2H</td></tr>
+              </tbody>
+            </table>
+            <p>Posso rascunhar o E-mail 1 agora. Quer ajustar o tom, público ou objetivo?</p>
+          </div>
+          <span class="time">14:03</span>
+        </article>
+
+        <!-- Confidence + review badges -->
+        <div class="chat-confidence-group">
+          <span class="chat-confidence">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            Confiança: 87%
+          </span>
+          <span class="chat-confidence">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.7a2 2 0 0 0 1.4 1.4L21 12l-5.7 1.9a2 2 0 0 0-1.4 1.4L12 21l-1.9-5.7a2 2 0 0 0-1.4-1.4L3 12l5.7-1.9a2 2 0 0 0 1.4-1.4z"/></svg>
+            Resposta Revisada
+          </span>
+        </div>
+
+        <!-- User: anexo + pedido -->
+        <article class="chat-bubble chat-user-bubble user">
+          <aside class="chat-attachment user">
+            <div class="img-ph">capa-referencia-2025.png</div>
+            <div class="chat-attachment__row">
+              <div class="chat-attachment__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+              </div>
+              <div class="chat-attachment__body">
+                <p class="chat-attachment__name">capa-referencia-2025.png</p>
+                <p class="chat-attachment__meta">Imagem • PNG</p>
+              </div>
+              <div class="chat-attachment__actions">
+                <button class="chat-attachment__btn" aria-label="Ampliar capa-referencia-2025.png">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                </button>
+                <button class="chat-attachment__btn" aria-label="Baixar capa-referencia-2025.png">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+              </div>
+            </div>
+          </aside>
+          Pode seguir com o E-mail 1 usando essa referência visual.
+          <span class="time">14:04</span>
+        </article>
+
+        <!-- Assistant: artifact inline + markdown -->
+        <article class="chat-bubble chat-assistant-bubble assistant">
+          <header class="chat-bubble__header">
+            <span class="chat-bubble__avatar">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8.4l-3.7 2.7L15.6 16 12 13.2 8.4 16l1.3-4.9L6 8.4l4.4-1.6z"/></svg>
+            </span>
+            <span class="chat-bubble__author">Nexus AI</span>
+          </header>
+          <div class="chat-prose">
+            <p>Análisei a referência (paleta ciano + acentos âmbar). Aqui está o <strong>E-mail 1</strong> e o <strong>briefing</strong> para a LP:</p>
+            <blockquote><strong>Subject:</strong> O risco que sua apólice de 2024 não cobre — e o que fazer agora.</blockquote>
+            <p>Corpo curto, foco em curiosidade. Assinatura alinhada ao tom H2H. Quer que eu siga com a LP?</p>
+          </div>
+          <aside class="chat-artifact">
+            <div class="chat-artifact__head">
+              <div>
+                <div class="chat-artifact__title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>briefing-lp-riscos-emergentes.md</span>
+                </div>
+                <p class="chat-artifact__meta">Documento • md</p>
+              </div>
+              <button class="btn btn--tertiary" style="height:32px; padding:0 12px; font-size:12px;">Abrir</button>
+            </div>
+            <pre class="chat-artifact__body"># LP Riscos Emergentes 2026
+- publico: corretor experiente
+- tom: H2H
+- beneficio: atualização 2026
+- cta: agendar conversa</pre>
+          </aside>
+          <span class="time">14:05</span>
+        </article>
+
+        <!-- Typing indicator -->
+        <div class="conf-row">
+          <article class="chat-bubble chat-assistant-bubble assistant" style="padding: 0;">
+            <div class="chat-typing">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Composer -->
+      <div class="composer-zone" style="max-width: 880px; margin: 0 auto; width: 100%;">
+        <form class="chat-composer-radiant chat-composer" onsubmit="event.preventDefault();">
+          <button type="button" class="icon-btn" aria-label="Anexar arquivo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <textarea placeholder="Diga o que você quer criar hoje para sua marca..." rows="1"></textarea>
+          <button type="submit" class="chat-send-button icon-btn" aria-label="Enviar mensagem" style="border-radius: var(--radius-md);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .btn { display:inline-flex; align-items:center; font:500 14px/1 var(--type-font-sans); padding:0 18px; height:40px; border-radius:var(--radius-md); border:1px solid transparent; cursor:pointer; }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+    .btn--tertiary:hover { background: hsl(var(--color-muted)); }
+  </style>
+</body>
+</html>

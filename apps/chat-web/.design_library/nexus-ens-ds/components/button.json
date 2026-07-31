@@ -1,0 +1,23 @@
+{
+  "slug": "button",
+  "name": "Button",
+  "category": "actions",
+  "description": "Ação principal, secundária, terciária, destrutiva e ghost. Suporta tamanhos sm/md/lg e estados disabled/loading.",
+  "anatomy": ["<button>", "<span class='label'>", "spinner opcional"],
+  "props": {
+    "variant": { "type": "enum", "values": ["primary", "secondary", "tertiary", "destructive", "ghost"], "default": "primary" },
+    "size":    { "type": "enum", "values": ["sm", "md", "lg"], "default": "md" },
+    "loading": { "type": "boolean", "default": false },
+    "icon":    { "type": "string", "description": "lucide-react icon name" }
+  },
+  "tokens": {
+    "bg-primary": "linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%))",
+    "bg-secondary": "hsl(var(--color-secondary))",
+    "text-primary": "hsl(var(--color-primary-foreground))",
+    "radius": "var(--radius-md)",
+    "shadow": "0 12px 24px -12px rgba(0, 157, 183, 0.45), 0 4px 10px -4px rgba(11,18,32,0.12)",
+    "transition": "var(--duration-fast) var(--ease-out-soft)"
+  },
+  "states": ["default", "hover", "active", "focus-visible", "disabled", "loading"],
+  "accessibility": "Usa <button> semântico; focus ring 2px solid hsl(var(--color-ring)) com offset 2px."
+}

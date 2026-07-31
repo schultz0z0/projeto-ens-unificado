@@ -1,0 +1,34 @@
+{
+  "slug": "sheet",
+  "name": "Sheet",
+  "category": "overlays",
+  "description": "Drawer lateral com 4 sides (right/left/top/bottom), header e body. Substitui Sheet do shadcn.",
+  "anatomy": [
+    "<div class='nexus-sheet-overlay' />",
+    "<aside class='nexus-sheet nexus-sheet--{side}'>",
+    "  <header class='nexus-sheet__header'>",
+    "    <h2 class='nexus-sheet__title'>{title}</h2>",
+    "    <button class='nexus-dialog__close' aria-label='Fechar' />",
+    "  </header>",
+    "  <div class='nexus-sheet__body'>{children}</div>",
+    "</aside>"
+  ],
+  "props": {
+    "open":     { "type": "boolean", "required": true },
+    "onClose":  { "type": "function", "required": true },
+    "side":     { "type": "enum", "values": ["right", "left", "top", "bottom"], "default": "right" },
+    "title":    { "type": "string" },
+    "children": { "type": "ReactNode" },
+    "dismissible": { "type": "boolean", "default": true }
+  },
+  "tokens": {
+    "overlay":  "hsla(var(--color-overlay) / 0.50) + blur(2px)",
+    "width":    "min(420px, 90vw) (right/left)",
+    "height":   "auto, max 60vh (top/bottom)",
+    "shadow":   "var(--shadow-lg)",
+    "z-overlay":"var(--z-overlay)",
+    "z-modal":  "var(--z-modal)"
+  },
+  "states": ["open", "closed", "opening (slide in)"],
+  "accessibility": "<aside role='dialog' aria-modal='true'>; ESC fecha; foco preso; click no overlay fecha."
+}

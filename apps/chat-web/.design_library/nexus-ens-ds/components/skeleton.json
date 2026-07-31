@@ -1,0 +1,24 @@
+{
+  "slug": "skeleton",
+  "name": "Skeleton",
+  "category": "feedback",
+  "description": "Placeholder com shimmer animado. Usado durante o carregamento de listas, cards, tabelas e textos.",
+  "anatomy": [
+    "<span class='nexus-skeleton' style='width: 100%; height: 12px' />",
+    "ou <div class='nexus-skeleton' style='width: 64px; height: 64px; border-radius: 50%' />"
+  ],
+  "props": {
+    "width":  { "type": "string | number", "default": "100%" },
+    "height": { "type": "string | number", "default": "12px" },
+    "radius": { "type": "string | number", "default": "var(--radius-sm)" },
+    "as":     { "type": "string", "default": "span" }
+  },
+  "tokens": {
+    "base":  "var(--color-skeleton-base)",
+    "shine": "var(--color-skeleton-shine)",
+    "shimmer-duration": "1.4s",
+    "shimmer-easing":  "var(--ease-in-out-soft)"
+  },
+  "states": ["default (shimmer infinite)"],
+  "accessibility": "aria-hidden='true' por padrão (decorativo); se transmite progresso use role='status'."
+}

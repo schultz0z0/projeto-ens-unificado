@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 0; margin: 0; }
+    .stage { position: relative; min-height: 100vh; background: hsl(220 60% 98%); display: flex; align-items: stretch; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 24px; }
+    .col { flex: 1; padding: 24px; }
+    .col + .col { border-left: 1px dashed hsl(var(--color-border)); }
+    .stage-label { font: 500 11px/1.2 var(--type-font-sans); text-transform: uppercase; letter-spacing: 0.08em; color: hsl(var(--color-text-muted)); margin-bottom: 8px; }
+    .btn { display:inline-flex; align-items:center; font:500 14px/1 var(--type-font-sans); padding:0 14px; height:36px; border-radius:var(--radius-md); border:1px solid transparent; cursor:pointer; }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="col">
+      <div class="stage-label">Side: right (default)</div>
+      <h1>Sheet</h1>
+      <p class="lead">Drawer lateral com 4 sides. Body scrolla, header fica fixo.</p>
+      <div class="nexus-sheet-overlay"></div>
+      <aside class="nexus-sheet nexus-sheet--right" role="dialog" aria-modal="true">
+        <header class="nexus-sheet__header">
+          <h2 class="nexus-sheet__title">Configurações da campanha</h2>
+          <button class="nexus-dialog__close" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </header>
+        <div class="nexus-sheet__body">
+          <p style="font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-secondary)); margin: 0 0 12px;">Aqui fica o corpo rolável do sheet. Pode ser um formulário, uma lista de opções, detalhes de campanha, etc.</p>
+          <p style="font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-secondary)); margin: 0 0 12px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          <button class="btn btn--tertiary" style="margin-top:12px;">Salvar</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

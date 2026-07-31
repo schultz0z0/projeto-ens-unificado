@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Nexus ENS Design System — Theme: Brand (Blue)
+   Alternative brand palette — keeps structure, swaps the cyan family for
+   a royal blue. Demonstrates how to add a new theme without touching the
+   foundation.
+   --------------------------------------------------------------------------
+   Apply AFTER light.css so the cascade overrides selectively.
+   ========================================================================== */
+
+[data-theme="brand-blue"] {
+  /* ---- Brand ------------------------------------------------------- */
+  --color-nexus-primary:        217 91% 60%;
+  --color-nexus-secondary:      217 91% 50%;
+  --color-nexus-accent:         217 91% 70%;
+  --color-nexus-deep:           222 47% 11%;
+
+  /* Semantic surfaces that referenced the cyan family */
+  --color-primary:              217 91% 60%;
+  --color-primary-foreground:   0 0% 100%;
+  --color-secondary-foreground: 217 91% 60%;
+  --color-ring:                 217 91% 60%;
+
+  /* Sidebar tints */
+  --color-sidebar-primary:           217 91% 60%;
+  --color-sidebar-primary-foreground:0 0% 100%;
+  --color-sidebar-accent-foreground: 222 47% 11%;
+
+  /* Suggestion hover border tracks the brand */
+  --color-suggestion-hover-border: hsl(217 91% 60% / 0.30);
+
+  /* Typing pulse and confidence colors stay neutral */
+  --color-typing-pulse: 217 91% 60%;
+}
+
+/* Body background tinted with the new brand */
+[data-theme="brand-blue"] body {
+  background: radial-gradient(ellipse at top,
+    hsl(217 60% 97%),
+    hsl(217 60% 95%) 50%,
+    hsl(0 0% 100%)
+  );
+}

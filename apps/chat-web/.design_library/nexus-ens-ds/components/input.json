@@ -1,0 +1,29 @@
+{
+  "slug": "input",
+  "name": "Input",
+  "category": "forms",
+  "description": "Campo de texto padrão. Suporta leading/trailing icon, estado de erro e helper text.",
+  "anatomy": ["<label>", "<div class='input-shell'>", "<input>", "<span class='helper'>"],
+  "props": {
+    "type":         { "type": "enum", "values": ["text", "email", "password", "search", "url", "tel", "number"], "default": "text" },
+    "placeholder":  { "type": "string" },
+    "value":        { "type": "string" },
+    "leadingIcon":  { "type": "string" },
+    "trailingIcon": { "type": "string" },
+    "invalid":      { "type": "boolean", "default": false },
+    "disabled":     { "type": "boolean", "default": false }
+  },
+  "tokens": {
+    "bg": "hsl(var(--color-background))",
+    "border": "hsl(var(--color-input))",
+    "border-invalid": "hsl(var(--color-destructive))",
+    "text": "hsl(var(--color-text-primary))",
+    "placeholder": "hsl(var(--color-text-muted))",
+    "radius": "var(--radius-md)",
+    "height-sm": "32px",
+    "height-md": "40px",
+    "height-lg": "48px"
+  },
+  "states": ["default", "hover", "focus-visible", "filled", "invalid", "disabled"],
+  "accessibility": "Label associado via htmlFor/for; aria-invalid quando invalid; aria-describedby para helper text."
+}

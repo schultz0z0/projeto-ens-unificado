@@ -1,0 +1,21 @@
+{
+  "slug": "chat-composer",
+  "name": "Chat Composer",
+  "category": "chat",
+  "description": "Input principal do chat com anel cônico animado (conic-gradient em duas camadas) e botão de envio em gradient brand.",
+  "anatomy": ["<form class='chat-composer-radiant'>", "<textarea>", "actions (attach, send)"],
+  "props": {
+    "placeholder":   { "type": "string", "default": "Pergunte à ENS..." },
+    "submitting":    { "type": "boolean", "default": false },
+    "onSubmit":      { "type": "function" }
+  },
+  "tokens": {
+    "radius": "1.5rem",
+    "ring-color": "rgba(0, 157, 183, 0.10 → 0.84)",
+    "ring-spin": "3.4s linear infinite (camada 1) / 5.4s linear infinite reverse (camada 2)",
+    "send-bg": "linear-gradient(135deg, rgba(0,157,183,0.82), rgba(0,157,183,0.62))",
+    "shell-bg": "hsl(var(--color-background))"
+  },
+  "states": ["idle", "focus (anel acelera)", "submitting", "error"],
+  "accessibility": "<form> semântico; textarea com aria-label; botão submit com aria-label='Enviar mensagem'."
+}

@@ -1,0 +1,39 @@
+{
+  "slug": "dialog",
+  "name": "Dialog",
+  "category": "overlays",
+  "description": "Modal centralizado com overlay escurecido, header (título+descrição+close), body e footer. Substitui AlertDialog/Dialog do shadcn.",
+  "anatomy": [
+    "<div class='nexus-dialog-overlay' />",
+    "<div role='dialog' aria-modal='true' class='nexus-dialog'>",
+    "  <button class='nexus-dialog__close' aria-label='Fechar' />",
+    "  <header class='nexus-dialog__header'>",
+    "    <h2 class='nexus-dialog__title'>{title}</h2>",
+    "    <p class='nexus-dialog__desc'>{description}</p>",
+    "  </header>",
+    "  <div class='nexus-dialog__body'>{children}</div>",
+    "  <footer class='nexus-dialog__footer'>{actions}</footer>",
+    "</div>"
+  ],
+  "props": {
+    "open":         { "type": "boolean", "required": true },
+    "onClose":      { "type": "function", "required": true },
+    "title":        { "type": "string" },
+    "description":  { "type": "string" },
+    "children":     { "type": "ReactNode" },
+    "actions":      { "type": "ReactNode" },
+    "dismissible":  { "type": "boolean", "default": true }
+  },
+  "tokens": {
+    "overlay":     "hsla(var(--color-overlay) / 0.55) + blur(4px)",
+    "dialog-bg":   "hsl(var(--color-background))",
+    "radius":      "var(--radius-lg)",
+    "shadow":      "var(--shadow-lg)",
+    "width":       "min(560px, calc(100vw - 32px))",
+    "z-overlay":   "var(--z-overlay)",
+    "z-modal":     "var(--z-modal)",
+    "animation":   "nexus-dialog-pop 0.2s var(--ease-out-soft)"
+  },
+  "states": ["open", "closed", "opening (anim)", "closing (anim)"],
+  "accessibility": "role='dialog' aria-modal='true'; ESC fecha; foco preso no dialog; click no overlay fecha quando dismissible."
+}

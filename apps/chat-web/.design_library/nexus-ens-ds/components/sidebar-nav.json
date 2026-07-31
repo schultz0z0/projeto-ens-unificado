@@ -1,0 +1,22 @@
+{
+  "slug": "sidebar-nav",
+  "name": "Sidebar Navigation",
+  "category": "navigation",
+  "description": "Navegação lateral persistente com item ativo destacado em tint da cor primária. Pode usar variante glass ou sólida.",
+  "anatomy": ["<aside class='nexus-sidebar'>", "logo/brand opcional", "<nav>", "<a class='nexus-nav-item'>", "ícone", "label"],
+  "props": {
+    "variant": { "type": "enum", "values": ["solid", "glass"], "default": "solid" },
+    "items":   { "type": "array", "items": "{ id, label, icon, href, badge }" }
+  },
+  "tokens": {
+    "bg": "hsl(var(--color-sidebar-background))",
+    "border": "1px solid hsl(var(--color-sidebar-border))",
+    "padding": "var(--space-4)",
+    "width": "240px",
+    "item-radius": "var(--radius-md)",
+    "item-active-bg": "hsla(189, 100%, 36%, 0.12)",
+    "item-active-text": "hsl(var(--color-sidebar-primary))"
+  },
+  "states": ["default", "hover", "active (item)", "focus-visible"],
+  "accessibility": "<aside> + <nav aria-label='Principal'>; cada item é <a> com aria-current='page' quando ativo."
+}

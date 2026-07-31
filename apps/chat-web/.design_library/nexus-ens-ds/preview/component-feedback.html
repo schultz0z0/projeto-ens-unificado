@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Empty / Skeleton / Error — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px 32px; max-width: 980px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    h2 { font: var(--type-h3); margin: 40px 0 16px; }
+    .btn { display:inline-flex; align-items:center; font:500 14px/1 var(--type-font-sans); padding:0 16px; height:36px; border-radius:var(--radius-md); border:1px solid transparent; cursor:pointer; }
+    .btn--primary { color:#fff; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%)); }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+    .skeleton-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid hsl(var(--color-border)); border-radius: var(--radius-lg); }
+  </style>
+</head>
+<body>
+  <h1>Empty / Skeleton / Error</h1>
+  <p class="lead">Estados universais de feedback para qualquer tela. Substituem placeholders ad-hoc espalhados pelo app.</p>
+
+  <h2>Empty state</h2>
+  <section class="nexus-empty">
+    <div class="nexus-empty__icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <h3 class="nexus-empty__title">Nenhuma conversa por aqui</h3>
+    <p class="nexus-empty__desc">Comece um novo chat ou importe um histórico anterior para continuar de onde parou.</p>
+    <div class="nexus-empty__actions">
+      <button class="btn btn--primary">Novo chat</button>
+      <button class="btn btn--tertiary">Importar histórico</button>
+    </div>
+  </section>
+
+  <h2>Skeleton (shimmer)</h2>
+  <div class="skeleton-card">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="nexus-skeleton" style="width:40px; height:40px; border-radius:50%"></span>
+      <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+        <span class="nexus-skeleton" style="width: 40%; height: 12px"></span>
+        <span class="nexus-skeleton" style="width: 25%; height: 10px"></span>
+      </div>
+    </div>
+    <span class="nexus-skeleton" style="width: 100%; height: 12px"></span>
+    <span class="nexus-skeleton" style="width: 92%; height: 12px"></span>
+    <span class="nexus-skeleton" style="width: 70%; height: 12px"></span>
+  </div>
+
+  <h2>Error state</h2>
+  <section class="nexus-error" role="alert">
+    <div class="nexus-error__icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h3 class="nexus-error__title">Não foi possível carregar a conversa</h3>
+    <p class="nexus-error__desc">O Nexus AI está analisando muitos documentos agora ou houve uma falha de rede. Tente novamente em alguns instantes.</p>
+    <div class="nexus-error__actions">
+      <button class="btn btn--primary">Tentar novamente</button>
+      <button class="btn btn--tertiary">Falar com o suporte</button>
+    </div>
+  </section>
+</body>
+</html>

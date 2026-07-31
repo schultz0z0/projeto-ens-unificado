@@ -1,0 +1,139 @@
+/* ==========================================================================
+   Nexus ENS Design System — Theme: Light (canonical)
+   This is the OFFICIAL theme used by `apps/chat-web`. It mirrors
+   `src/index.css` and `src/components/ui/*.tsx` 1:1.
+   --------------------------------------------------------------------------
+   Usage:
+     <html data-theme="light">
+       <link rel="stylesheet" href="themes/light.css">
+       <link rel="stylesheet" href="colors_and_type.css">   (tokens)
+       <link rel="stylesheet" href="components.css">        (components)
+   --------------------------------------------------------------------------
+   KV contract: every CSS custom property is defined here. Other themes
+   only override the subset that differs.
+   ========================================================================== */
+
+[data-theme="light"],
+:root {
+  /* ---- Brand --------------------------------------------------------- */
+  --color-nexus-primary:        189 100% 36%;
+  --color-nexus-secondary:      189 92% 44%;
+  --color-nexus-accent:         189 90% 56%;
+  --color-nexus-deep:           222 47% 11%;
+
+  /* ---- Text --------------------------------------------------------- */
+  --color-text-primary:         222 47% 11%;
+  --color-text-secondary:       215 20% 25%;
+  --color-text-muted:           215 14% 45%;
+
+  /* ---- Surface ------------------------------------------------------ */
+  --color-background:           0 0% 100%;
+  --color-foreground:           222 47% 11%;
+  --color-surface:              0 0% 100%;
+  --color-surface-subtle:       220 60% 98%;
+
+  /* ---- Glass overlays ---------------------------------------------- */
+  --color-glass-surface:        0 0% 100%;
+  --color-glass-border:         0 0% 100%;
+
+  /* ---- Semantic ----------------------------------------------------- */
+  --color-primary:              189 100% 36%;
+  --color-primary-foreground:   0 0% 100%;
+
+  --color-secondary:            220 40% 96%;
+  --color-secondary-foreground: 189 100% 36%;
+
+  --color-muted:                220 40% 96%;
+  --color-muted-foreground:     215 14% 45%;
+
+  --color-accent:               220 40% 96%;
+  --color-accent-foreground:    222 47% 11%;
+
+  --color-destructive:          0 84% 60%;
+  --color-destructive-foreground: 0 0% 100%;
+
+  --color-success:              142 71% 45%;
+  --color-warning:              38 92% 50%;
+  --color-info:                 199 89% 48%;
+
+  /* ---- UI ---------------------------------------------------------- */
+  --color-border:               220 13% 91%;
+  --color-input:                220 13% 91%;
+  --color-ring:                 189 100% 36%;
+
+  /* ---- Sidebar ----------------------------------------------------- */
+  --color-sidebar-background:        0 0% 98%;
+  --color-sidebar-foreground:        215 20% 25%;
+  --color-sidebar-primary:           189 100% 36%;
+  --color-sidebar-primary-foreground:0 0% 100%;
+  --color-sidebar-accent:            220 40% 96%;
+  --color-sidebar-accent-foreground: 222 47% 11%;
+  --color-sidebar-border:            220 13% 91%;
+  --color-sidebar-ring:              189 100% 36%;
+
+  /* ---- Card / Popover (extended shadcn) --------------------------- */
+  --color-card:                0 0% 100%;
+  --color-card-foreground:     222 47% 11%;
+  --color-popover:             0 0% 100%;
+  --color-popover-foreground:  222 47% 11%;
+
+  /* ---- Status pills (inline chat status / confidence / review) --- */
+  --color-status-info-bg:    199 89% 48%;
+  --color-status-info-fg:    199 89% 35%;
+  --color-status-success-bg: 142 71% 45%;
+  --color-status-success-fg: 142 71% 32%;
+  --color-status-warning-bg: 38 92% 50%;
+  --color-status-warning-fg: 38 92% 30%;
+  --color-status-danger-bg:  0 84% 60%;
+  --color-status-danger-fg:  0 84% 45%;
+
+  /* ---- Markdown surface (assistant prose) ------------------------- */
+  --color-md-bg:        hsl(0 0% 100% / 0.80);
+  --color-md-border:    hsl(220 13% 91%);
+  --color-md-table-row: hsl(220 13% 96%);
+
+  /* ---- Code block (chat) ------------------------------------------- */
+  --color-code-bg:    222 47% 8%;
+  --color-code-text:  220 40% 96%;
+
+  /* ---- Attachment chrome (file card) ------------------------------ */
+  --color-attachment-border-user:      hsl(0 0% 100% / 0.20);
+  --color-attachment-bg-user:          hsl(0 0% 100% / 0.10);
+  --color-attachment-border-assistant: hsl(220 13% 91%);
+  --color-attachment-bg-assistant:     hsl(0 0% 100% / 0.70);
+
+  /* ---- Suggestion card (empty state grid) ------------------------- */
+  --color-suggestion-bg:       hsl(0 0% 100% / 0.40);
+  --color-suggestion-border:   hsl(0 0% 100% / 0.20);
+  --color-suggestion-hover-bg: hsl(0 0% 100% / 0.60);
+  --color-suggestion-hover-border: hsl(189 100% 36% / 0.30);
+
+  /* ---- Brand ring (chat typing pulse) ----------------------------- */
+  --color-typing-pulse: 189 100% 36%;
+
+  /* ---- Overlay (modal/sheet/tooltip scrim) ------------------------ */
+  --color-overlay:        222 47% 11%;
+
+  /* ---- Skeleton surface ------------------------------------------- */
+  --color-skeleton-base:  hsl(220 13% 91%);
+  --color-skeleton-shine: hsl(0 0% 100% / 0.65);
+
+  /* ---- Z-index scale ---------------------------------------------- */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+  --z-toast: 1700;
+}
+
+/* Body background — light uses a soft radial gradient on a near-white base */
+body {
+  background: radial-gradient(ellipse at top,
+    hsl(220 60% 98%),
+    hsl(30 100% 97%) 50%,
+    hsl(220 100% 98%)
+  );
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "theme-light",
+  "name": "Theme: Light",
+  "category": "themes",
+  "description": "Tema canônico do app. Background near-white com gradiente radial sutil, texto navy. Cobre todos os tokens do DS.",
+  "selector": ":root, [data-theme=\"light\"]",
+  "status": "canonical",
+  "file": "themes/light.css",
+  "tokens": {
+    "background":        "0 0% 100%",
+    "foreground":        "222 47% 11%",
+    "brand-primary":     "189 100% 36%",
+    "text-primary":      "222 47% 11%",
+    "border":            "220 13% 91%",
+    "body-bg":           "radial-gradient(hsl(220 60% 98%), hsl(30 100% 97%) 50%, hsl(220 100% 98%))"
+  }
+}

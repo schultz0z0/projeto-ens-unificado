@@ -1,0 +1,30 @@
+{
+  "library": "Nexus ENS Design System",
+  "version": "2.1.0",
+  "components": [
+    "button",
+    "input",
+    "card",
+    "badge",
+    "stat-tile",
+    "chat-bubble",
+    "chat-composer",
+    "sidebar-nav",
+    "chat-message",
+    "chat-empty-state",
+    "chat-history-sidebar",
+    "chat-attachment-card",
+    "empty-state",
+    "skeleton",
+    "error-state",
+    "dialog",
+    "sheet",
+    "tabs",
+    "tooltip",
+    "sonner-toast",
+    "theme-light",
+    "theme-dark",
+    "theme-brand-blue",
+    "theme-auto"
+  ]
+}

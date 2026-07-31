@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Composer — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px; max-width: 880px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    h2 { font: var(--type-h3); margin: 24px 0 12px; }
+
+    .chat-shell { background: linear-gradient(180deg, hsla(0,0%,100%,0.95), hsla(220,60%,98%,0.85)); border: 1px solid hsl(var(--color-border)); border-radius: 24px; padding: 20px; box-shadow: var(--shadow-md); }
+    .messages { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; min-height: 220px; }
+    .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font: var(--type-body); }
+    .msg .time { display:block; font: var(--type-caption); opacity: 0.7; margin-top: 4px; }
+    .msg.user { align-self: flex-end; }
+    .msg.assistant { align-self: flex-start; }
+
+    .chat-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px; background: hsl(var(--color-background)); }
+    .chat-composer textarea { flex: 1; resize: none; border: none; outline: none; background: transparent; font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-primary)); padding: 8px; min-height: 40px; max-height: 200px; }
+    .chat-composer textarea::placeholder { color: hsl(var(--color-text-muted)); }
+    .chat-composer .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid transparent; background: transparent; color: hsl(var(--color-text-secondary)); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .chat-composer .icon-btn:hover { background: hsl(var(--color-muted)); }
+    .chat-composer .icon-btn svg { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Chat Composer</h1>
+  <p class="lead">Input principal com anel cônico animado em duas camadas e botão de envio em gradient brand.</p>
+
+  <h2>Em uso (conversa + composer)</h2>
+  <div class="chat-shell">
+    <div class="messages">
+      <article class="msg chat-assistant-bubble assistant">
+        Olá! Sou a ENS, sua consultora de marketing e produtos. Como posso ajudar hoje?
+        <span class="time">14:02</span>
+      </article>
+      <article class="msg chat-user-bubble user">
+        Quero uma estratégia de tráfego para o curso de Riscos Emergentes 2026.
+        <span class="time">14:03</span>
+      </article>
+      <article class="msg chat-assistant-bubble assistant">
+        Ótimo! Para esse público, recomendo começar com H2H (Human-to-Human) e conteúdo de prova social. Posso rascunhar uma campanha de 3 e-mails?
+        <span class="time">14:03</span>
+      </article>
+    </div>
+
+    <form class="chat-composer-radiant chat-composer" onsubmit="event.preventDefault();">
+      <button type="button" class="icon-btn" aria-label="Anexar arquivo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <textarea placeholder="Pergunte à ENS… (Shift+Enter para nova linha)" rows="1"></textarea>
+      <button type="submit" class="chat-send-button icon-btn" aria-label="Enviar mensagem" style="border-radius: var(--radius-md);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </form>
+  </div>
+
+  <h2>Estados</h2>
+  <div class="chat-shell">
+    <form class="chat-composer-radiant chat-composer" onsubmit="event.preventDefault();">
+      <textarea placeholder="Idle — anel girando"></textarea>
+      <button type="submit" class="chat-send-button icon-btn" aria-label="Enviar" style="border-radius: var(--radius-md);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </form>
+  </div>
+</body>
+</html>

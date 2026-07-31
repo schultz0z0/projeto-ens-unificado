@@ -1,0 +1,40 @@
+{
+  "$schema": "https://design-library.local/schema/v1",
+  "name": "Nexus ENS Themes",
+  "version": "1.0.0",
+  "default": "light",
+  "themes": [
+    {
+      "id": "light",
+      "name": "Light",
+      "file": "themes/light.css",
+      "selector": ":root, [data-theme=\"light\"]",
+      "status": "canonical",
+      "description": "Official theme used by apps/chat-web. Mirrors src/index.css 1:1."
+    },
+    {
+      "id": "dark",
+      "name": "Dark",
+      "file": "themes/dark.css",
+      "selector": "[data-theme=\"dark\"]",
+      "status": "opt-in",
+      "description": "Parity with the .dark block declared in src/index.css. Production app does not use it yet; provided as a DS contract for a future dark mode rollout."
+    },
+    {
+      "id": "brand-blue",
+      "name": "Brand Blue",
+      "file": "themes/brand-blue.css",
+      "selector": "[data-theme=\"brand-blue\"]",
+      "status": "demo",
+      "description": "Forked brand palette (royal blue instead of cyan). Demonstrates how to ship a new theme without touching foundations."
+    },
+    {
+      "id": "auto",
+      "name": "Auto (system)",
+      "file": "themes/auto.css",
+      "selector": "[data-theme=\"auto\"]",
+      "status": "bridge",
+      "description": "Mirrors prefers-color-scheme: dark. Use to give the user a system-mode toggle without committing to a manual switcher."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "slug": "error-state",
+  "name": "Error State",
+  "category": "feedback",
+  "description": "Estado de erro com ícone destrutivo, título, descrição e ações (retry/support).",
+  "anatomy": [
+    "<section class='nexus-error' role='alert'>",
+    "  <div class='nexus-error__icon'><AlertCircle/></div>",
+    "  <h3 class='nexus-error__title'>{title}</h3>",
+    "  <p class='nexus-error__desc'>{description}</p>",
+    "  <div class='nexus-error__actions'>{actions}</div>",
+    "</section>"
+  ],
+  "props": {
+    "title":       { "type": "string", "required": true },
+    "description": { "type": "string" },
+    "icon":        { "type": "LucideIcon" },
+    "actions":     { "type": "ReactNode" }
+  },
+  "tokens": {
+    "border":       "hsla(0, 84%, 60%, 0.20)",
+    "bg":           "hsla(0, 84%, 60%, 0.04)",
+    "icon-bg":      "hsla(0, 84%, 60%, 0.12)",
+    "title-color":  "hsl(0 84% 35%)",
+    "desc-color":   "hsl(0 84% 40%)",
+    "radius":       "var(--radius-lg)"
+  },
+  "states": ["default"],
+  "accessibility": "role='alert' para anúncio imediato; botão de retry com aria-label explícito."
+}

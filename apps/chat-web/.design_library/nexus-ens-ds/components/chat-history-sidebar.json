@@ -1,0 +1,41 @@
+{
+  "slug": "chat-history-sidebar",
+  "name": "Chat History Sidebar",
+  "category": "chat",
+  "description": "Sidebar persistente de histórico de conversas. Header com título + close, botão 'Novo chat' em gradient brand, lista de sessões com item ativo destacado e ações (renomear/excluir) que aparecem no hover.",
+  "anatomy": [
+    "<aside class='chat-history'>",
+    "  <div class='chat-history__header'>",
+    "    <span class='chat-history__title'>Histórico</span>",
+    "    <button class='chat-history__close'>…</button>",
+    "  </div>",
+    "  <button class='chat-history__new'><Plus/> Novo Chat</button>",
+    "  <div class='chat-history__list'>",
+    "    <div class='chat-history__item is-active'>…</div> (repeating)",
+    "    <div class='chat-history__empty'>…</div> (when empty)",
+    "  </div>",
+    "</aside>"
+  ],
+  "props": {
+    "sessions":         { "type": "array<{ id, title, updatedAt }>", "default": [] },
+    "currentSessionId": { "type": "string | null" },
+    "onNewChat":        { "type": "function" },
+    "onSelectSession":  { "type": "function" },
+    "onRename":         { "type": "function" },
+    "onDelete":         { "type": "function" },
+    "onClose":          { "type": "function" }
+  },
+  "tokens": {
+    "width":            "256px",
+    "bg":               "hsl(var(--color-sidebar-background)) + backdrop-blur 20px",
+    "border":           "1px solid hsl(var(--color-sidebar-border))",
+    "item-active-bg":   "hsla(189, 100%, 36%, 0.14)",
+    "item-active-fg":   "hsl(var(--color-primary))",
+    "new-button-bg":    "linear-gradient(135deg, rgba(0,157,183,0.92), rgba(0,157,183,0.76))",
+    "item-radius":      "var(--radius-md)",
+    "item-icon":        "16px"
+  },
+  "states": ["default (lista)", "empty (zero sessões)", "active (sessão corrente)", "hover (mostra ações)"],
+  "sub-components": ["chat-history__item", "chat-history__new (gradient brand)"],
+  "accessibility": "<aside aria-label='Histórico de conversas'>; <button> por item com aria-current='true' na sessão ativa; ações com aria-label explícito ('Renomear conversa X', 'Excluir conversa X')."
+}

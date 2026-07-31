@@ -1,0 +1,15 @@
+{
+  "slug": "theme-brand-blue",
+  "name": "Theme: Brand Blue",
+  "category": "themes",
+  "description": "Fork da paleta ciano para royal blue. Demonstra como adicionar um theme sem tocar nos foundations. Útil para testes A/B ou white-label.",
+  "selector": "[data-theme=\"brand-blue\"]",
+  "status": "demo",
+  "file": "themes/brand-blue.css",
+  "tokens": {
+    "brand-primary":     "217 91% 60%",
+    "brand-secondary":   "217 91% 50%",
+    "brand-accent":      "217 91% 70%",
+    "body-bg":           "radial-gradient(hsl(217 60% 97%), hsl(217 60% 95%) 50%, hsl(0 0% 100%))"
+  }
+}

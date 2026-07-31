@@ -1,0 +1,23 @@
+{
+  "slug": "stat-tile",
+  "name": "Stat Tile",
+  "category": "data-display",
+  "description": "Tile para KPI/dashboard. Mostra label, valor e delta opcional (up/down).",
+  "anatomy": ["<div class='stat-tile'>", ".stat-tile__label", ".stat-tile__value", ".stat-tile__delta (opcional)"],
+  "props": {
+    "label":     { "type": "string", "required": true },
+    "value":     { "type": "string", "required": true },
+    "delta":     { "type": "string" },
+    "trend":     { "type": "enum", "values": ["up", "down", "flat"] }
+  },
+  "tokens": {
+    "bg": "linear-gradient(180deg, hsla(0,0%,100%,0.90), hsla(0,0%,100%,0.65))",
+    "radius": "var(--radius-lg)",
+    "padding": "var(--space-6)",
+    "shadow": "var(--shadow-sm)",
+    "label-type": "var(--type-overline)",
+    "value-type": "var(--type-h1)"
+  },
+  "states": ["default"],
+  "accessibility": "Use <dl> para listas de KPIs; cada tile combina <dt> + <dd>."
+}

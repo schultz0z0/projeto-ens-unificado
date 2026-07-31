@@ -1,0 +1,38 @@
+{
+  "slug": "chat-empty-state",
+  "name": "Chat Empty State",
+  "category": "chat",
+  "description": "Hero de boas-vindas quando não há conversa ativa. Inclui mascote com gradient brand, headline H1, subheadline, grid de suggestion cards e composer no rodapé.",
+  "anatomy": [
+    "<section class='chat-empty'>",
+    "  <div class='chat-empty__hero'>",
+    "    <div class='chat-empty__mascot'>N</div>",
+    "    <h1 class='chat-empty__title'>Inteligência que conhece o mercado de seguros.</h1>",
+    "    <p class='chat-empty__lead'>…</p>",
+    "  </div>",
+    "  <div class='chat-empty__grid'>",
+    "    <button class='chat-suggestion'>…</button> ×4",
+    "  </div>",
+    "  <div class='chat-empty__composer'>{ChatComposer}</div>",
+    "</section>"
+  ],
+  "props": {
+    "title":         { "type": "string", "default": "Inteligência que conhece o mercado de seguros." },
+    "lead":          { "type": "string", "default": "Crie estratégias, redações e peças visuais em segundos com a curadoria da ENS." },
+    "mascotLabel":   { "type": "string", "default": "N" },
+    "suggestions":   { "type": "array<{ title, desc, icon, prompt }>", "default": "4 cards (Redes Sociais, Estratégia, E-mail, SEO)" }
+  },
+  "tokens": {
+    "mascot-bg":     "linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%))",
+    "mascot-shadow": "0 12px 32px -8px rgba(0, 157, 183, 0.45)",
+    "title-type":    "var(--type-display-2)",
+    "lead-type":     "400 18px/1.5 var(--type-font-sans)",
+    "grid-max":      "960px",
+    "grid-gap":      "14px",
+    "hero-animation":"chat-empty-in 0.7s var(--ease-out-soft) both",
+    "grid-animation":"chat-empty-in 1s var(--ease-out-soft) 0.2s both"
+  },
+  "states": ["default"],
+  "sub-components": ["chat-suggestion (grid item)", "chat-composer-radiant (footer)"],
+  "accessibility": "h1 semântico no topo; cada suggestion é <button> com aria-label descritivo; composer tem textarea com aria-label."
+}

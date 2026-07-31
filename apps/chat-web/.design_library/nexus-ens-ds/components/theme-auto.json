@@ -1,0 +1,9 @@
+{
+  "slug": "theme-auto",
+  "name": "Theme: Auto (System)",
+  "category": "themes",
+  "description": "Bridge para `prefers-color-scheme: dark`. Quando `data-theme=\"auto\"` no <html>, o tema segue a preferência do SO. Carrega `prefers-color-scheme: dark` que re-aplica o token map do dark theme.",
+  "selector": "[data-theme=\"auto\"] + @media (prefers-color-scheme: dark)",
+  "status": "bridge",
+  "file": "themes/auto.css"
+}

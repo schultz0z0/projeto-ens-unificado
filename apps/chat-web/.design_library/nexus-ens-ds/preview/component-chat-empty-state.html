@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Empty State — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 0; }
+    .chat-empty { min-height: 100vh; }
+    .chat-empty__composer { padding: 0 16px; }
+    .chat-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px; background: hsl(var(--color-background)); }
+    .chat-composer textarea { flex: 1; resize: none; border: none; outline: none; background: transparent; font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-primary)); padding: 8px; min-height: 40px; max-height: 200px; }
+    .chat-composer textarea::placeholder { color: hsl(var(--color-text-muted)); }
+    .chat-composer .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid transparent; background: transparent; color: hsl(var(--color-text-secondary)); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .chat-composer .icon-btn:hover { background: hsl(var(--color-muted)); }
+    .chat-composer .icon-btn svg { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+  <section class="chat-empty">
+    <div class="chat-empty__hero">
+      <div class="chat-empty__mascot">N</div>
+      <h1 class="chat-empty__title">Inteligência que conhece o mercado de seguros.</h1>
+      <p class="chat-empty__lead">Crie estratégias, redações e peças visuais em segundos com a curadoria da ENS.</p>
+    </div>
+
+    <div class="chat-empty__grid">
+      <button class="chat-suggestion">
+        <span class="chat-suggestion__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </span>
+        <span>
+          <span class="chat-suggestion__title">Redes Sociais</span>
+          <span class="chat-suggestion__desc">Crie posts, legendas e stories virais</span>
+        </span>
+      </button>
+      <button class="chat-suggestion">
+        <span class="chat-suggestion__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </span>
+        <span>
+          <span class="chat-suggestion__title">Estratégia</span>
+          <span class="chat-suggestion__desc">Planejamento mensal e análise de mercado</span>
+        </span>
+      </button>
+      <button class="chat-suggestion">
+        <span class="chat-suggestion__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+        <span>
+          <span class="chat-suggestion__title">Campanha de E-mail</span>
+          <span class="chat-suggestion__desc">Newsletters e funis de venda automáticos</span>
+        </span>
+      </button>
+      <button class="chat-suggestion">
+        <span class="chat-suggestion__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <span>
+          <span class="chat-suggestion__title">SEO & Blog</span>
+          <span class="chat-suggestion__desc">Artigos otimizados para busca orgânica</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="chat-empty__composer">
+      <form class="chat-composer-radiant chat-composer" onsubmit="event.preventDefault();">
+        <button type="button" class="icon-btn" aria-label="Anexar arquivo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <textarea placeholder="Diga o que você quer criar hoje para sua marca..." rows="1"></textarea>
+        <button type="submit" class="chat-send-button icon-btn" aria-label="Enviar" style="border-radius: var(--radius-md);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </form>
+    </div>
+  </section>
+</body>
+</html>

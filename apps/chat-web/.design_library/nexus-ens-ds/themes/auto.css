@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Nexus ENS Design System — Theme: Auto (OS preference)
+   If the consumer sets `data-theme="auto"` on the html element, the user's
+   OS-level color scheme takes over. This file MUST be loaded AFTER
+   `themes/light.css` and `themes/dark.css`.
+   --------------------------------------------------------------------------
+   Usage:
+     <html data-theme="auto">…</html>
+     // or simply: do nothing — the cascade will use prefers-color-scheme.
+   --------------------------------------------------------------------------
+   This is the bridge for a future "system mode" toggle in chat-web.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    color-scheme: dark;
+  }
+  [data-theme="auto"] body {
+    background: radial-gradient(ellipse at top,
+      hsl(222 47% 13%),
+      hsl(222 47% 9%) 60%,
+      hsl(222 47% 6%)
+    );
+  }
+
+  /* Re-apply the dark token map only when `auto` is active. This relies on
+     `:root` being declared with `--color-*` for light, and these rules
+     overriding it. */
+  [data-theme="auto"] {
+    --color-nexus-primary:        189 100% 36%;
+    --color-text-primary:         220 40% 98%;
+    --color-text-secondary:       215 20% 75%;
+    --color-text-muted:           215 14% 65%;
+    --color-background:           222 47% 11%;
+    --color-foreground:           220 40% 98%;
+    --color-surface:              222 47% 14%;
+    --color-surface-subtle:       222 47% 16%;
+    --color-secondary:            217 33% 18%;
+    --color-secondary-foreground: 220 40% 98%;
+    --color-muted:                217 33% 18%;
+    --color-muted-foreground:     215 20% 65%;
+    --color-accent:               217 33% 18%;
+    --color-accent-foreground:    220 40% 98%;
+    --color-destructive:          0 63% 31%;
+    --color-destructive-foreground: 220 40% 98%;
+    --color-border:               217 33% 18%;
+    --color-input:                217 33% 18%;
+    --color-card:                 222 47% 11%;
+    --color-card-foreground:      220 40% 98%;
+    --color-popover:              222 47% 11%;
+    --color-popover-foreground:   220 40% 98%;
+    --color-sidebar-background:        222 47% 11%;
+    --color-sidebar-foreground:        220 40% 98%;
+    --color-sidebar-accent:            217 33% 18%;
+    --color-sidebar-accent-foreground: 220 40% 98%;
+    --color-sidebar-border:            217 33% 18%;
+    --color-md-bg:        hsl(222 47% 16% / 0.85);
+    --color-md-border:    hsl(217 33% 24%);
+    --color-md-table-row: hsl(217 33% 18%);
+    --color-attachment-border-assistant: hsl(217 33% 24%);
+    --color-attachment-bg-assistant:     hsl(222 47% 16% / 0.85);
+    --color-suggestion-bg:        hsl(222 47% 16% / 0.50);
+    --color-suggestion-border:    hsl(0 0% 100% / 0.08);
+    --color-suggestion-hover-bg:  hsl(222 47% 18% / 0.70);
+    --color-skeleton-base:  hsl(217 33% 22%);
+    --color-skeleton-shine: hsl(217 33% 30% / 0.85);
+    --shadow-sm: 0 1px 4px 0 rgb(0 0 0 / 0.40);
+    --shadow-md: 0 8px 24px -4px rgb(0 0 0 / 0.55);
+    --shadow-lg: 0 16px 40px -6px rgb(0 0 0 / 0.65);
+  }
+}

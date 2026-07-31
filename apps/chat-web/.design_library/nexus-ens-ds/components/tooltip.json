@@ -1,0 +1,29 @@
+{
+  "slug": "tooltip",
+  "name": "Tooltip",
+  "category": "overlays",
+  "description": "Bubble de dica em 4 posições (top/bottom/left/right), acionado por hover e focus. Substitui Tooltip do shadcn.",
+  "anatomy": [
+    "<span class='nexus-tooltip'>",
+    "  <button class='nexus-tooltip__trigger'>{children}</button>",
+    "  <span class='nexus-tooltip__bubble' role='tooltip' data-side='top'>{content}</span>",
+    "</span>"
+  ],
+  "props": {
+    "content": { "type": "string | ReactNode", "required": true },
+    "side":    { "type": "enum", "values": ["top", "bottom", "left", "right"], "default": "top" },
+    "delay":   { "type": "number", "default": 0 },
+    "children": { "type": "ReactElement", "required": true }
+  },
+  "tokens": {
+    "bg":       "hsl(var(--color-nexus-deep))",
+    "fg":       "hsl(220 40% 98%)",
+    "radius":   "var(--radius-sm)",
+    "padding":  "6px 10px",
+    "type":     "500 12px/1.2 var(--type-font-sans)",
+    "shadow":   "var(--shadow-md)",
+    "z-tooltip":"var(--z-tooltip)"
+  },
+  "states": ["hidden", "visible (hover/focus)"],
+  "accessibility": "role='tooltip' + aria-describedby ligando trigger ao bubble; aparece também em :focus-within."
+}

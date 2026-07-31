@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nexus ENS — Dashboard UI Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../colors_and_type.css" />
+  <link rel="stylesheet" href="../../components.css" />
+  <style>
+    * { box-sizing: border-box; }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .workspace { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; max-width: 100%; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .topbar h1 { font: var(--type-h2); margin: 0; }
+    .topbar .actions { display: flex; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; font: 500 14px/1 var(--type-font-sans); padding: 0 18px; height: 40px; border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; transition: transform var(--duration-fast) var(--ease-out-soft), background var(--duration-fast) var(--ease-out-soft); }
+    .btn svg { width: 16px; height: 16px; }
+    .btn--primary { color: #fff; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%)); box-shadow: 0 12px 24px -12px rgba(0, 157, 183, 0.55); }
+    .btn--primary:hover { transform: translateY(-1px); }
+    .btn--tertiary { color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border-color: hsl(var(--color-border)); }
+    .btn--tertiary:hover { background: hsl(var(--color-muted)); }
+    .btn--ghost { color: hsl(var(--color-text-secondary)); background: transparent; }
+    .btn--ghost:hover { background: hsl(var(--color-muted)); }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .stat-tile__icon { width: 36px; height: 36px; border-radius: 10px; display:flex; align-items:center; justify-content:center; background: hsla(189, 100%, 36%, 0.10); color: hsl(189 100% 36%); margin-bottom: 12px; }
+    .stat-tile__icon svg { width: 18px; height: 18px; }
+    .stat-tile__icon.success { background: hsla(142, 71%, 45%, 0.10); color: hsl(142 71% 32%); }
+    .stat-tile__icon.warning { background: hsla(38, 92%, 50%, 0.12); color: hsl(38 92% 30%); }
+    .stat-tile__icon.info    { background: hsla(199, 89%, 48%, 0.10); color: hsl(199 89% 35%); }
+
+    .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media (max-width: 1080px) { .grid-2 { grid-template-columns: 1fr; } }
+    .panel { padding: 20px; }
+    .panel header { display:flex; align-items:center; justify-content: space-between; margin-bottom: 16px; }
+    .panel h3 { font: var(--type-h4); margin: 0; }
+    .panel .meta { font: var(--type-caption); color: hsl(var(--color-text-muted)); }
+
+    table { width: 100%; border-collapse: collapse; font: var(--type-body-sm); }
+    th { text-align: left; font: var(--type-overline); text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--color-text-muted)); padding: 8px 12px; border-bottom: 1px solid hsl(var(--color-border)); }
+    td { padding: 12px; border-bottom: 1px solid hsl(var(--color-border)); }
+    tr:last-child td { border-bottom: none; }
+    .row-title { display: flex; align-items: center; gap: 10px; }
+    .row-title .thumb { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%)); display:flex; align-items:center; justify-content:center; color:#fff; font:600 12px var(--type-font-sans); }
+
+    .activity { display: flex; flex-direction: column; gap: 14px; }
+    .activity .item { display: flex; gap: 10px; align-items: flex-start; }
+    .activity .item .dot { width: 8px; height: 8px; border-radius: 50%; background: hsl(189 100% 36%); margin-top: 6px; flex-shrink: 0; }
+    .activity .item .text { font: var(--type-body); color: hsl(var(--color-text-primary)); }
+    .activity .item .when { font: var(--type-caption); color: hsl(var(--color-text-muted)); }
+
+    .chat-panel { display: flex; flex-direction: column; gap: 14px; min-height: 360px; }
+    .chat-panel .messages { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font: var(--type-body); }
+    .msg .time { display: block; font: var(--type-caption); opacity: 0.7; margin-top: 4px; }
+    .msg.user { align-self: flex-end; }
+    .msg.assistant { align-self: flex-start; }
+
+    .chat-composer { display: flex; align-items: flex-end; gap: 8px; padding: 10px; background: hsl(var(--color-background)); }
+    .chat-composer textarea { flex: 1; resize: none; border: none; outline: none; background: transparent; font: 400 14px/1.5 var(--type-font-sans); color: hsl(var(--color-text-primary)); padding: 8px; min-height: 40px; max-height: 160px; }
+    .chat-composer textarea::placeholder { color: hsl(var(--color-text-muted)); }
+    .chat-composer .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid transparent; background: transparent; color: hsl(var(--color-text-secondary)); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .chat-composer .icon-btn:hover { background: hsl(var(--color-muted)); }
+    .chat-composer .icon-btn svg { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="nexus-sidebar">
+      <div style="display:flex; align-items:center; gap:10px; padding: 8px 4px 16px; border-bottom: 1px solid hsl(var(--color-sidebar-border)); margin-bottom: 8px;">
+        <div style="width:32px; height:32px; border-radius:10px; background: linear-gradient(135deg, hsl(189 100% 36%), hsl(189 90% 56%)); display:flex; align-items:center; justify-content:center; color:#fff; font:700 14px var(--type-font-sans);">N</div>
+        <div>
+          <div style="font: 600 14px/1.2 var(--type-font-sans); color: hsl(var(--color-text-primary));">Nexus ENS</div>
+          <div style="font: 400 12px/1.2 var(--type-font-sans); color: hsl(var(--color-text-muted));">Marketing Ops</div>
+        </div>
+      </div>
+
+      <a class="nexus-nav-item is-active" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+        Visão geral
+      </a>
+      <a class="nexus-nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        Chat com a ENS
+      </a>
+      <a class="nexus-nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+        Picture Studio
+      </a>
+      <a class="nexus-nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Calendário
+        <span style="margin-left:auto; font: 500 11px/1 var(--type-font-sans); padding: 2px 8px; border-radius: 999px; background: hsla(189, 100%, 36%, 0.12); color: hsl(189 100% 36%);">3</span>
+      </a>
+      <a class="nexus-nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Audiência
+      </a>
+      <a class="nexus-nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurações
+      </a>
+
+      <div style="margin-top: auto; padding: 12px; border-radius: var(--radius-md); background: linear-gradient(135deg, hsla(189,100%,36%,0.10), hsla(189,90%,56%,0.04)); border: 1px solid hsla(189,100%,36%,0.18);">
+        <div style="font: 600 13px/1.3 var(--type-font-sans); color: hsl(var(--color-text-primary)); margin-bottom: 4px;">ENS Beta</div>
+        <div style="font: 400 12px/1.4 var(--type-font-sans); color: hsl(var(--color-text-muted)); margin-bottom: 10px;">Sincronize com a sua campanha de Riscos Emergentes 2026.</div>
+        <button class="btn btn--primary" style="height: 32px; padding: 0 12px; font-size: 12px;">Ativar agora</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1>Bom dia, Raphael 👋</h1>
+          <p style="font: var(--type-body); color: hsl(var(--color-text-muted)); margin: 4px 0 0;">3 campanhas ativas · 12 materiais em produção · 4 entregas hoje</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn--tertiary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Histórico
+          </button>
+          <button class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova campanha
+          </button>
+        </div>
+      </header>
+
+      <section class="stats">
+        <div class="stat-tile">
+          <div class="stat-tile__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+          <div class="stat-tile__label">E-mails enviados</div>
+          <div class="stat-tile__value">12.483</div>
+          <div class="stat-tile__delta up">▲ 8,2% vs. semana anterior</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile__icon success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="stat-tile__label">Taxa de abertura</div>
+          <div class="stat-tile__value">42,1%</div>
+          <div class="stat-tile__delta up">▲ 1,4 p.p.</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile__icon warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-tile__label">Em aprovação</div>
+          <div class="stat-tile__value">7</div>
+          <div class="stat-tile__delta down">▼ 2 desde ontem</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile__icon info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="stat-tile__label">Leads qualificados</div>
+          <div class="stat-tile__value">348</div>
+          <div class="stat-tile__delta up">▲ 22 essa semana</div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <article class="nexus-card panel">
+          <header>
+            <h3>Campanhas em produção</h3>
+            <span class="meta">Atualizado agora</span>
+          </header>
+          <table>
+            <thead>
+              <tr>
+                <th>Campanha</th>
+                <th>Status</th>
+                <th>Entrega</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="row-title">
+                    <div class="thumb">RE</div>
+                    <div>
+                      <div style="font: 600 13px var(--type-font-sans); color: hsl(var(--color-text-primary));">Riscos Emergentes 2026</div>
+                      <div style="font: 400 12px var(--type-font-sans); color: hsl(var(--color-text-muted));">3 e-mails · jornada H2H</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="nexus-badge success"><span style="width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block"></span> No ar</span></td>
+                <td>12/08</td>
+                <td>Marina C.</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="row-title">
+                    <div class="thumb" style="background: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 60%));">LP</div>
+                    <div>
+                      <div style="font: 600 13px var(--type-font-sans); color: hsl(var(--color-text-primary));">Logística & Seguros</div>
+                      <div style="font: 400 12px var(--type-font-sans); color: hsl(var(--color-text-muted));">LP + 2 criativos</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="nexus-badge warning">Aprovação</span></td>
+                <td>18/08</td>
+                <td>Pedro A.</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="row-title">
+                    <div class="thumb" style="background: linear-gradient(135deg, hsl(199 89% 48%), hsl(199 89% 60%));">PP</div>
+                    <div>
+                      <div style="font: 600 13px var(--type-font-sans); color: hsl(var(--color-text-primary));">Proteção Patrimonial</div>
+                      <div style="font: 400 12px var(--type-font-sans); color: hsl(var(--color-text-muted));">Certificação 2026</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="nexus-badge info">Rascunho</span></td>
+                <td>25/08</td>
+                <td>Ana L.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="nexus-card panel">
+          <header>
+            <h3>Atividade recente</h3>
+            <a class="meta" href="#" style="color: hsl(var(--color-primary)); text-decoration: none;">Ver tudo</a>
+          </header>
+          <div class="activity">
+            <div class="item">
+              <div class="dot"></div>
+              <div>
+                <div class="text"><b>Marina</b> aprovou o e-mail 1/3 de <b>Riscos Emergentes</b></div>
+                <div class="when">há 4 minutos</div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="dot" style="background: hsl(38 92% 50%);"></div>
+              <div>
+                <div class="text"><b>Pedro</b> enviou a LP <b>Logística</b> para aprovação</div>
+                <div class="when">há 22 minutos</div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="dot" style="background: hsl(199 89% 48%);"></div>
+              <div>
+                <div class="text"><b>ENS</b> gerou 4 novas variações de copy</div>
+                <div class="when">há 1 hora</div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="dot" style="background: hsl(142 71% 45%);"></div>
+              <div>
+                <div class="text"><b>Ana</b> publicou 2 criativos no Drive</div>
+                <div class="when">há 3 horas</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <article class="nexus-card glass-surface panel" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px;">
+        <div>
+          <h3 style="font: var(--type-h4); margin: 0 0 8px;">Conversa com a ENS</h3>
+          <p style="font: var(--type-body); color: hsl(var(--color-text-secondary)); margin: 0 0 12px;">Sua consultora de marketing e produtos. RAG atualizado com a base de conteúdos ENS 2026.</p>
+          <span class="nexus-badge"><span style="width:6px; height:6px; background:currentColor; border-radius:50%; display:inline-block"></span> Online · responde em ~3s</span>
+        </div>
+        <div class="chat-panel">
+          <div class="messages">
+            <article class="msg chat-user-bubble user">Me dá 3 ideias de copy para a LP de Riscos Emergentes 2026?<span class="time">agora</span></article>
+            <article class="msg chat-assistant-bubble assistant">Claro! Três abordagens com tons diferentes:<br><b>1) Curiosidade</b>: "O risco que sua apólice de 2024 não cobre — e o que fazer agora."<br><b>2) H2H</b>: "A pergunta que todo consultor deveria fazer antes de fechar agosto."<br><b>3) Prova social</b>: "4.200 corretores já se atualizaram. E você?"<br>Posso transformar qualquer um em sequência de 3 e-mails?<span class="time">agora</span></article>
+          </div>
+          <form class="chat-composer-radiant chat-composer" onsubmit="event.preventDefault();">
+            <button type="button" class="icon-btn" aria-label="Anexar arquivo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <textarea placeholder="Pergunte à ENS… (Shift+Enter para nova linha)" rows="1"></textarea>
+            <button type="submit" class="chat-send-button icon-btn" aria-label="Enviar" style="border-radius: var(--radius-md);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
+        </div>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "slug": "card",
+  "name": "Card",
+  "category": "surfaces",
+  "description": "Container padrão para conteúdo agrupado. Variantes: default, glass, elevated.",
+  "anatomy": ["<article class='nexus-card'>", "header opcional", "body", "footer opcional"],
+  "props": {
+    "variant":  { "type": "enum", "values": ["default", "glass", "elevated"], "default": "default" },
+    "padding":  { "type": "enum", "values": ["sm", "md", "lg"], "default": "md" }
+  },
+  "tokens": {
+    "bg-default": "hsl(var(--color-card))",
+    "bg-glass": "linear-gradient(135deg, hsla(0,0%,100%,0.5), hsla(0,0%,100%,0.25))",
+    "border": "hsl(var(--color-border))",
+    "radius": "var(--radius-lg)",
+    "shadow": "var(--shadow-sm) → var(--shadow-md on hover)"
+  },
+  "states": ["default", "hover (elevation aumenta)"],
+  "accessibility": "<article> semântico; quando interativo, usar role='button' + tabindex."
+}

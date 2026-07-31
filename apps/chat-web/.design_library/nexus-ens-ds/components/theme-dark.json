@@ -1,0 +1,20 @@
+{
+  "slug": "theme-dark",
+  "name": "Theme: Dark",
+  "category": "themes",
+  "description": "Parity com o bloco `.dark` declarado em `src/index.css`. Background navy com gradiente radial. Status fg são empurrados para hues mais claros para garantir legibilidade.",
+  "selector": "[data-theme=\"dark\"]",
+  "status": "opt-in",
+  "file": "themes/dark.css",
+  "tokens": {
+    "background":        "222 47% 11%",
+    "foreground":        "220 40% 98%",
+    "brand-primary":     "189 100% 36%",
+    "text-primary":      "220 40% 98%",
+    "text-muted":        "215 14% 65%",
+    "border":            "217 33% 18%",
+    "card":              "222 47% 11%",
+    "body-bg":           "radial-gradient(hsl(222 47% 13%), hsl(222 47% 9%) 60%, hsl(222 47% 6%))",
+    "shadows":           "rgba(0,0,0,0.40–0.70) for sm/md/lg"
+  }
+}

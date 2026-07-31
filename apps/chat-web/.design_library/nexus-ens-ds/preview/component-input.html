@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Input — Nexus ENS DS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <link rel="stylesheet" href="../components.css" />
+  <style>
+    body { padding: 48px; max-width: 760px; margin: 0 auto; }
+    h1 { font: var(--type-h1); margin: 0 0 8px; }
+    p.lead { font: var(--type-body-lg); color: hsl(var(--color-text-muted)); margin: 0 0 32px; }
+    section { margin-bottom: 40px; }
+    h2 { font: var(--type-h3); margin: 0 0 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+    .field label { font: 500 13px/1 var(--type-font-sans); color: hsl(var(--color-text-primary)); }
+    .input-shell { position: relative; display: flex; align-items: center; }
+    .input-shell .leading, .input-shell .trailing { position: absolute; top: 50%; transform: translateY(-50%); color: hsl(var(--color-text-muted)); display: flex; pointer-events: none; }
+    .input-shell .leading { left: 14px; }
+    .input-shell .trailing { right: 14px; }
+    .input-shell svg { width: 16px; height: 16px; }
+    .field input { width: 100%; height: 44px; padding: 0 14px 0 40px; font: 400 14px var(--type-font-sans); color: hsl(var(--color-text-primary)); background: hsl(var(--color-background)); border: 1px solid hsl(var(--color-input)); border-radius: var(--radius-md); transition: border-color var(--duration-fast) var(--ease-out-soft), box-shadow var(--duration-fast) var(--ease-out-soft); }
+    .field input.with-trailing { padding-right: 40px; }
+    .field input::placeholder { color: hsl(var(--color-text-muted)); }
+    .field input:hover { border-color: hsl(220 13% 80%); }
+    .field input:focus { outline: none; border-color: hsl(var(--color-ring)); box-shadow: 0 0 0 3px hsla(189, 100%, 36%, 0.18); }
+    .field input[aria-invalid="true"] { border-color: hsl(var(--color-destructive)); }
+    .field input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px hsla(0, 84%, 60%, 0.18); }
+    .field .helper { font: 400 12px/1.4 var(--type-font-sans); color: hsl(var(--color-text-muted)); }
+    .field .helper.error { color: hsl(var(--color-destructive)); }
+    .field input:disabled { background: hsl(var(--color-muted)); color: hsl(var(--color-text-muted)); cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>Input</h1>
+  <p class="lead">Campo de texto padrão. Suporta leading/trailing icon, validação e helper text.</p>
+
+  <section>
+    <h2>Estados</h2>
+    <div class="field">
+      <label for="default">Padrão</label>
+      <div class="input-shell">
+        <span class="leading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+        <input id="default" type="email" placeholder="seu@email.com" />
+      </div>
+      <span class="helper">Usaremos apenas para entrar em contato.</span>
+    </div>
+
+    <div class="field">
+      <label for="focused">Com foco (visualização)</label>
+      <div class="input-shell">
+        <span class="leading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input id="focused" type="search" value="RAG marketing" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="invalid">Com erro</label>
+      <div class="input-shell">
+        <input id="invalid" type="email" value="email-invalido" aria-invalid="true" class="with-trailing" />
+        <span class="trailing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: hsl(var(--color-destructive))"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+      </div>
+      <span class="helper error">Informe um e-mail válido.</span>
+    </div>
+
+    <div class="field">
+      <label for="disabled">Desabilitado</label>
+      <input id="disabled" type="text" value="Conteúdo bloqueado" disabled />
+    </div>
+  </section>
+</body>
+</html>

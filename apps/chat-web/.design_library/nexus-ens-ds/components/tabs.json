@@ -1,0 +1,29 @@
+{
+  "slug": "tabs",
+  "name": "Tabs",
+  "category": "navigation",
+  "description": "Sistema de abas com list (pill container), triggers e contents. Substitui Tabs do shadcn.",
+  "anatomy": [
+    "<div class='nexus-tabs'>",
+    "  <div class='nexus-tabs__list' role='tablist'>",
+    "    <button class='nexus-tabs__trigger is-active' role='tab' aria-selected='true'>Tab 1</button>",
+    "    <button class='nexus-tabs__trigger' role='tab' aria-selected='false'>Tab 2</button>",
+    "  </div>",
+    "  <div class='nexus-tabs__content' role='tabpanel'>…</div>",
+    "</div>"
+  ],
+  "props": {
+    "value":   { "type": "string", "required": true },
+    "onValueChange": { "type": "function", "required": true },
+    "items":   { "type": "array<{ value, label, content }>", "required": true }
+  },
+  "tokens": {
+    "list-bg":      "hsl(var(--color-muted))",
+    "list-radius":  "var(--radius-md)",
+    "trigger-type": "500 13px/1 var(--type-font-sans)",
+    "active-bg":    "hsl(var(--color-background))",
+    "active-shadow": "var(--shadow-sm)"
+  },
+  "states": ["default (active trigger destacado)"],
+  "accessibility": "role='tablist' no container; cada trigger com role='tab' + aria-selected; cada content com role='tabpanel' + aria-labelledby."
+}
