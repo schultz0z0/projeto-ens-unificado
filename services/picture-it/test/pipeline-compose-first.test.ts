@@ -1,6 +1,54 @@
-import { describe, test, expect } from "bun:test";
+import { afterEach, describe, test, expect } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import sharp from "sharp";
 import { CompositionPlanSchema, CreativeBriefSchema } from "../src/service/contracts.ts";
+import { executePipeline } from "../src/pipeline.ts";
 import { jsxToReact } from "../src/satori-jsx.ts";
+
+const temporaryDirectories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, {
+    recursive: true,
+    force: true,
+  })));
+});
+
+test("compose-first runs without FAL_KEY and honors the requested canvas size", async () => {
+  const previousFalKey = process.env.FAL_KEY;
+  delete process.env.FAL_KEY;
+  const directory = await mkdtemp(join(tmpdir(), "picture-compose-first-"));
+  temporaryDirectories.push(directory);
+  const output = join(directory, "story.png");
+
+  try {
+    await executePipeline([{
+      op: "compose",
+      size: "1080x1920",
+      overlays: [{
+        type: "shape",
+        shape: "rect",
+        zone: { x: 0, y: 0, unit: "px" },
+        anchor: "top-left",
+        width: 1080,
+        height: 1920,
+        fill: "#061B3A",
+        depth: "background",
+      }],
+    }], output, false, { workingDirectory: directory });
+  } finally {
+    if (previousFalKey === undefined) delete process.env.FAL_KEY;
+    else process.env.FAL_KEY = previousFalKey;
+  }
+
+  const metadata = await sharp(output).metadata();
+  expect({ width: metadata.width, height: metadata.height }).toEqual({
+    width: 1080,
+    height: 1920,
+  });
+});
 
 describe("satoriNode accepts numeric values (Class B fix)", () => {
   test("number is coerced to string in satoriNode", () => {
@@ -110,9 +158,6 @@ describe("toolError returns detailed diagnostics (telemetry fix)", () => {
       code: error.code,
       message: error.message,
     };
-    if (!(error instanceof PictureError) && error instanceof Error) {
-      detail.detail = error.message;
-    }
 
     expect(detail.code).toBe("picture_asset_missing");
     expect(detail.message).toBe("Image asset not found: references/logo.svg");

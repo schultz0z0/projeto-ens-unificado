@@ -34,13 +34,13 @@ export async function composite(
     .toBuffer();
 
   // Sort overlays by depth
-  const sorted = [...overlays].sort((a, b) => {
-    const da = DEPTH_ORDER[a.depth || "overlay"] ?? 3;
-    const db = DEPTH_ORDER[b.depth || "overlay"] ?? 3;
+  const sorted = overlays.map((overlay, index) => ({ overlay, index })).sort((a, b) => {
+    const da = DEPTH_ORDER[a.overlay.depth || "overlay"] ?? 3;
+    const db = DEPTH_ORDER[b.overlay.depth || "overlay"] ?? 3;
     return da - db;
   });
 
-  for (const overlay of sorted) {
+  for (const { overlay, index } of sorted) {
     if (verbose) log(`Compositing ${overlay.type} at depth ${overlay.depth || "overlay"}`);
 
     canvasBuffer = await compositeOverlay(
@@ -49,7 +49,8 @@ export async function composite(
       width,
       height,
       assetDir,
-      verbose
+      verbose,
+      index,
     );
   }
 
@@ -62,15 +63,16 @@ async function compositeOverlay(
   canvasWidth: number,
   canvasHeight: number,
   assetDir: string,
-  verbose: boolean
+  verbose: boolean,
+  overlayIndex: number,
 ): Promise<Buffer> {
   switch (overlay.type) {
     case "image":
-      return compositeImage(canvasBuffer, overlay, canvasWidth, canvasHeight, assetDir, verbose);
+      return compositeImage(canvasBuffer, overlay, canvasWidth, canvasHeight, assetDir, verbose, overlayIndex);
     case "satori-text":
-      return compositeSatoriText(canvasBuffer, overlay, canvasWidth, canvasHeight, verbose);
+      return compositeSatoriText(canvasBuffer, overlay, canvasWidth, canvasHeight, verbose, overlayIndex);
     case "shape":
-      return compositeShape(canvasBuffer, overlay, canvasWidth, canvasHeight, verbose);
+      return compositeShape(canvasBuffer, overlay, canvasWidth, canvasHeight, verbose, overlayIndex);
     case "gradient-overlay":
       return compositeGradient(canvasBuffer, overlay, canvasWidth, canvasHeight, verbose);
     case "watermark":
@@ -84,7 +86,8 @@ async function compositeImage(
   canvasWidth: number,
   canvasHeight: number,
   assetDir: string,
-  verbose: boolean
+  verbose: boolean,
+  overlayIndex: number,
 ): Promise<Buffer> {
   const assetPath = path.resolve(assetDir, overlay.src);
   if (!existsSync(assetPath)) {
@@ -125,16 +128,32 @@ async function compositeImage(
   }
 
   let assetBuffer = await asset.png().toBuffer();
+  const effectiveMetadata = await sharp(assetBuffer).metadata();
+  const effectiveW = effectiveMetadata.width || targetW;
+  const effectiveH = effectiveMetadata.height || targetH;
 
   // Calculate position
   const pos = resolvePosition(
     overlay.zone || "hero-center",
     canvasWidth,
     canvasHeight,
-    targetW,
-    targetH,
+    effectiveW,
+    effectiveH,
     overlay.anchor || "center"
   );
+  const placement = await preparePlacement({
+    input: assetBuffer,
+    x: pos.x,
+    y: pos.y,
+    width: effectiveW,
+    height: effectiveH,
+    canvasWidth,
+    canvasHeight,
+    allowBleed: overlay.allowBleed ?? false,
+    overlayType: overlay.type,
+    overlayIndex,
+  });
+  let placedAssetBuffer = placement.input;
 
   const composites: OverlayOptions[] = [];
 
@@ -142,7 +161,7 @@ async function compositeImage(
   if (overlay.shadow) {
     const shadowConfig = resolveShadow(overlay.shadow, overlay.depth);
     if (shadowConfig) {
-      const shadowBuf = await createShadow(assetBuffer, targetW, targetH, shadowConfig);
+      const shadowBuf = await createShadow(assetBuffer, effectiveW, effectiveH, shadowConfig);
       composites.push({
         input: shadowBuf,
         left: Math.max(0, pos.x + shadowConfig.offsetX),
@@ -154,7 +173,7 @@ async function compositeImage(
 
   // Glow
   if (overlay.glow) {
-    const glowBuf = await createGlow(assetBuffer, targetW, targetH, overlay.glow);
+    const glowBuf = await createGlow(assetBuffer, effectiveW, effectiveH, overlay.glow);
     const glowExtend = overlay.glow.spread + overlay.glow.blur;
     composites.push({
       input: glowBuf,
@@ -166,11 +185,11 @@ async function compositeImage(
 
   // Reflection
   if (overlay.reflection) {
-    const reflBuf = await createReflection(assetBuffer, targetW, targetH, overlay.reflection);
+    const reflBuf = await createReflection(assetBuffer, effectiveW, effectiveH, overlay.reflection);
     composites.push({
       input: reflBuf,
-      left: pos.x,
-      top: pos.y + targetH + 2,
+      left: Math.max(0, pos.x),
+      top: pos.y + effectiveH + 2,
       blend: "over",
     });
   }
@@ -178,13 +197,13 @@ async function compositeImage(
   // Main image
   const opacity = overlay.opacity ?? 1;
   if (opacity < 1) {
-    assetBuffer = await applyOpacity(assetBuffer, opacity);
+    placedAssetBuffer = await applyOpacity(placedAssetBuffer, opacity);
   }
 
   composites.push({
-    input: assetBuffer,
-    left: Math.max(0, pos.x),
-    top: Math.max(0, pos.y),
+    input: placedAssetBuffer,
+    left: placement.left,
+    top: placement.top,
     blend: "over",
   });
 
@@ -199,10 +218,30 @@ async function compositeSatoriText(
   overlay: SatoriTextOverlay,
   canvasWidth: number,
   canvasHeight: number,
-  verbose: boolean
+  verbose: boolean,
+  overlayIndex: number,
 ): Promise<Buffer> {
   const textW = overlay.width || canvasWidth;
   const textH = overlay.height || canvasHeight;
+
+  const pos = resolvePosition(
+    overlay.zone || "title-area",
+    canvasWidth,
+    canvasHeight,
+    textW,
+    textH,
+    overlay.anchor || "center"
+  );
+  assertWithinCanvas({
+    x: pos.x,
+    y: pos.y,
+    width: textW,
+    height: textH,
+    canvasWidth,
+    canvasHeight,
+    overlayType: overlay.type,
+    overlayIndex,
+  });
 
   const fonts = await loadFonts();
   const reactElement = jsxToReact(overlay.jsx);
@@ -218,15 +257,6 @@ async function compositeSatoriText(
   });
   const pngBuffer = resvg.render().asPng();
 
-  const pos = resolvePosition(
-    overlay.zone || "title-area",
-    canvasWidth,
-    canvasHeight,
-    textW,
-    textH,
-    overlay.anchor || "center"
-  );
-
   let input: Buffer = Buffer.from(pngBuffer);
   const opacity = overlay.opacity ?? 1;
   if (opacity < 1) {
@@ -237,8 +267,8 @@ async function compositeSatoriText(
     .composite([
       {
         input,
-        left: Math.max(0, pos.x),
-        top: Math.max(0, pos.y),
+        left: pos.x,
+        top: pos.y,
         blend: "over",
       },
     ])
@@ -251,7 +281,8 @@ async function compositeShape(
   overlay: ShapeOverlay,
   canvasWidth: number,
   canvasHeight: number,
-  verbose: boolean
+  verbose: boolean,
+  overlayIndex: number,
 ): Promise<Buffer> {
   const w = overlay.width || 100;
   const h = overlay.height || 100;
@@ -288,15 +319,37 @@ async function compositeShape(
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${svgContent}</svg>`;
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: w } });
   let pngBuffer: Buffer = Buffer.from(resvg.render().asPng());
+  if (overlay.rotation) {
+    pngBuffer = await sharp(pngBuffer)
+      .rotate(overlay.rotation, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+  }
+  const effectiveMetadata = await sharp(pngBuffer).metadata();
+  const effectiveW = effectiveMetadata.width || w;
+  const effectiveH = effectiveMetadata.height || h;
 
   const pos = resolvePosition(
     overlay.zone || "hero-center",
     canvasWidth,
     canvasHeight,
-    w,
-    h,
-    "center"
+    effectiveW,
+    effectiveH,
+    overlay.anchor || "center"
   );
+  const placement = await preparePlacement({
+    input: pngBuffer,
+    x: pos.x,
+    y: pos.y,
+    width: effectiveW,
+    height: effectiveH,
+    canvasWidth,
+    canvasHeight,
+    allowBleed: overlay.allowBleed ?? false,
+    overlayType: overlay.type,
+    overlayIndex,
+  });
+  pngBuffer = placement.input;
 
   const opacity = overlay.opacity ?? 1;
   if (opacity < 1) {
@@ -307,13 +360,81 @@ async function compositeShape(
     .composite([
       {
         input: pngBuffer,
-        left: Math.max(0, pos.x),
-        top: Math.max(0, pos.y),
+        left: placement.left,
+        top: placement.top,
         blend: "over",
       },
     ])
     .png()
     .toBuffer();
+}
+
+interface PlacementBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  overlayType: Overlay["type"];
+  overlayIndex: number;
+}
+
+function layoutError(bounds: PlacementBounds) {
+  return new PictureError(
+    "picture_overlay_out_of_bounds",
+    `Overlay ${bounds.overlayIndex} (${bounds.overlayType}) bounds `
+      + `[${bounds.x},${bounds.y},${bounds.width},${bounds.height}] exceed canvas `
+      + `[0,0,${bounds.canvasWidth},${bounds.canvasHeight}].`,
+    400,
+  );
+}
+
+function assertWithinCanvas(bounds: PlacementBounds) {
+  if (
+    bounds.x < 0
+    || bounds.y < 0
+    || bounds.x + bounds.width > bounds.canvasWidth
+    || bounds.y + bounds.height > bounds.canvasHeight
+  ) {
+    throw layoutError(bounds);
+  }
+}
+
+async function preparePlacement(bounds: PlacementBounds & {
+  input: Buffer;
+  allowBleed: boolean;
+}): Promise<{ input: Buffer; left: number; top: number }> {
+  if (!bounds.allowBleed) {
+    assertWithinCanvas(bounds);
+    return { input: bounds.input, left: bounds.x, top: bounds.y };
+  }
+
+  const cropLeft = Math.max(0, -bounds.x);
+  const cropTop = Math.max(0, -bounds.y);
+  const left = Math.max(0, bounds.x);
+  const top = Math.max(0, bounds.y);
+  const visibleWidth = Math.min(bounds.width - cropLeft, bounds.canvasWidth - left);
+  const visibleHeight = Math.min(bounds.height - cropTop, bounds.canvasHeight - top);
+  if (visibleWidth <= 0 || visibleHeight <= 0) throw layoutError(bounds);
+  if (
+    cropLeft === 0
+    && cropTop === 0
+    && visibleWidth === bounds.width
+    && visibleHeight === bounds.height
+  ) {
+    return { input: bounds.input, left, top };
+  }
+  return {
+    input: await sharp(bounds.input).extract({
+      left: cropLeft,
+      top: cropTop,
+      width: visibleWidth,
+      height: visibleHeight,
+    }).png().toBuffer(),
+    left,
+    top,
+  };
 }
 
 async function compositeGradient(

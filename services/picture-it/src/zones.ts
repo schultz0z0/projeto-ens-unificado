@@ -1,7 +1,7 @@
-import { ZONES, type ZoneName, type AnchorPosition } from "./types.ts";
+import { ZONES, type PositionZone, type AnchorPosition } from "./types.ts";
 
 export function resolvePosition(
-  zone: ZoneName | { x: number; y: number },
+  zone: PositionZone,
   canvasWidth: number,
   canvasHeight: number,
   elementWidth: number,
@@ -17,9 +17,16 @@ export function resolvePosition(
     centerX = (z.x / 100) * canvasWidth;
     centerY = (z.y / 100) * canvasHeight;
   } else {
-    // Raw percentages or pixels
-    centerX = zone.x <= 100 && zone.x >= 0 ? (zone.x / 100) * canvasWidth : zone.x;
-    centerY = zone.y <= 100 && zone.y >= 0 ? (zone.y / 100) * canvasHeight : zone.y;
+    const percent = zone.unit === "percent";
+    const pixels = zone.unit === "px";
+    // Unitless positions retain the original percentage-or-pixel heuristic
+    // for CLI consumers. The Hermes-facing schema requires an explicit unit.
+    centerX = percent || (!pixels && zone.x <= 100 && zone.x >= 0)
+      ? (zone.x / 100) * canvasWidth
+      : zone.x;
+    centerY = percent || (!pixels && zone.y <= 100 && zone.y >= 0)
+      ? (zone.y / 100) * canvasHeight
+      : zone.y;
   }
 
   // Adjust from center point to top-left based on anchor

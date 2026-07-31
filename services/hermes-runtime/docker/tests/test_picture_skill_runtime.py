@@ -44,6 +44,16 @@ def test_picture_skill_contract_and_runtime_wiring():
     compose = next(step for step in pipeline if step["op"] == "compose")
     assert isinstance(pipeline, list)
     assert isinstance(compose["overlays"], list)
+    assert compose["size"] == "1080x1080"
+    numeric_zones = [
+        overlay["zone"]
+        for overlay in compose["overlays"]
+        if isinstance(overlay.get("zone"), dict)
+    ]
+    assert numeric_zones
+    assert all(zone["unit"] in {"px", "percent"} for zone in numeric_zones)
+    shapes = [overlay for overlay in compose["overlays"] if overlay["type"] == "shape"]
+    assert all("anchor" in shape for shape in shapes)
     assert example["creative_brief"]["brand_profile"] == "ENS"
 
     script = SCRIPT.read_text(encoding="utf-8")

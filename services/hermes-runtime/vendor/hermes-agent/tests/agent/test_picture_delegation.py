@@ -13,6 +13,21 @@ delegation_token: header.current-signature-that-is-long-enough
     assert args["delegation_token"] == "header.current-signature-that-is-long-enough"
 
 
+def test_current_picture_delegation_is_injected_when_model_omits_it():
+    prompt = """[PICTURE_DELEGATION]
+delegation_token: header.current-signature-that-is-long-enough
+[/PICTURE_DELEGATION]"""
+    args = bind_current_picture_delegation(
+        "nexus_picture.picture_get_workspace",
+        {"workspace_id": "workspace"},
+        prompt,
+    )
+    assert args == {
+        "workspace_id": "workspace",
+        "delegation_token": "header.current-signature-that-is-long-enough",
+    }
+
+
 def test_picture_delegation_does_not_touch_other_tools():
     args = {"delegation_token": "original"}
     assert bind_current_picture_delegation("memory", args, "") is args

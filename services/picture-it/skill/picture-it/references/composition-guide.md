@@ -229,7 +229,7 @@ The `compose` command accepts a JSON array of overlay objects. Each overlay has 
 
 **Overlay types:** `image`, `satori-text`, `shape`, `gradient-overlay`, `watermark`
 
-**Positioning:** Use named zones (`hero-center`, `title-area`, `top-bar`, `bottom-bar`, etc.) or raw `{x, y}` percentages.
+**Positioning:** Use named zones (`hero-center`, `title-area`, `top-bar`, `bottom-bar`, etc.) or explicit coordinates such as `{ "x": 8, "y": 12, "unit": "percent" }` and `{ "x": 72, "y": 80, "unit": "px" }`. Unitless `{x, y}` remains a legacy CLI format and should not be emitted by agents.
 
 **Depth layers:** `background` → `midground` → `foreground` → `overlay` → `frame` (composited in this order)
 

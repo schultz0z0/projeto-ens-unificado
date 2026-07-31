@@ -59,6 +59,12 @@ export interface Zone {
   y: number;
 }
 
+export type PositionUnit = "px" | "percent";
+
+export type PositionZone =
+  | ZoneName
+  | { x: number; y: number; unit?: PositionUnit };
+
 export const ZONES: Record<ZoneName, Zone> = {
   "hero-center": { x: 50, y: 45 },
   "title-area": { x: 50, y: 75 },
@@ -98,7 +104,7 @@ export interface ReflectionConfig {
 export interface ImageOverlay {
   type: "image";
   src: string;
-  zone?: ZoneName | { x: number; y: number };
+  zone?: PositionZone;
   width?: number | string;
   height?: number | string;
   anchor?: AnchorPosition;
@@ -111,12 +117,13 @@ export interface ImageOverlay {
   mask?: MaskShape;
   deviceFrame?: DeviceFrame;
   depth?: DepthLayer;
+  allowBleed?: boolean;
 }
 
 export interface SatoriTextOverlay {
   type: "satori-text";
   jsx: SatoriJSX;
-  zone?: ZoneName | { x: number; y: number };
+  zone?: PositionZone;
   width?: number;
   height?: number;
   anchor?: AnchorPosition;
@@ -127,7 +134,7 @@ export interface SatoriTextOverlay {
 export interface ShapeOverlay {
   type: "shape";
   shape: "rect" | "circle" | "line" | "arrow";
-  zone?: ZoneName | { x: number; y: number };
+  zone?: PositionZone;
   width?: number;
   height?: number;
   fill?: string;
@@ -140,6 +147,9 @@ export interface ShapeOverlay {
   headSize?: number;
   curve?: number;
   depth?: DepthLayer;
+  anchor?: AnchorPosition;
+  rotation?: number;
+  allowBleed?: boolean;
 }
 
 export interface GradientOverlay {
@@ -185,7 +195,7 @@ export type PipelineStep =
   | { op: "grain"; intensity?: number }
   | { op: "vignette"; opacity?: number }
   | { op: "text"; title: string; font?: string; color?: string; fontSize?: number; zone?: string }
-  | { op: "compose"; overlays: string | Overlay[] }
+  | { op: "compose"; overlays: string | Overlay[]; size?: string }
   | { op: "upscale"; scale?: number };
 
 // --- Config ---

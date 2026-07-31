@@ -274,7 +274,12 @@ export class JobService {
   fail(jobId: string, workerId: string, error: unknown) {
     const code = String((error as { code?: unknown })?.code || "picture_render_failed").slice(0, 120);
     const message = String((error as { message?: unknown })?.message || "Rendering failed.").slice(0, 1_000);
-    const retryable = !["picture_contract_invalid", "picture_reference_not_owned", "picture_package_path_invalid"].includes(code);
+    const retryable = ![
+      "picture_contract_invalid",
+      "picture_overlay_out_of_bounds",
+      "picture_reference_not_owned",
+      "picture_package_path_invalid",
+    ].includes(code);
     return this.options.repository.fail({ jobId, workerId, errorCode: code, errorMessage: message, retryable });
   }
 }

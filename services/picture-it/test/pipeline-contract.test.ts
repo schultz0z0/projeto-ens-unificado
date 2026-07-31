@@ -13,7 +13,7 @@ test("PipelineStep represents every operation supported by the engine", () => {
     { op: "grain", intensity: 0.05 },
     { op: "vignette", opacity: 0.2 },
     { op: "text", title: "Matrículas abertas" },
-    { op: "compose", overlays: [] },
+    { op: "compose", overlays: [], size: "1080x1350" },
     { op: "upscale", scale: 2 },
   ];
 

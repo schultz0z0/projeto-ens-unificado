@@ -44,7 +44,7 @@ export const PictureWorkspaceActions = ({ workspace, onApprove, onNewPiece, isAp
           <AlertDialogHeader>
             <AlertDialogTitle>Criar uma nova peça?</AlertDialogTitle>
             <AlertDialogDescription>
-              O chat, briefing, arquivos auxiliares, JSONs e versões intermediárias deste trabalho serão apagados permanentemente. A peça final aprovada continuará disponível em Trabalhos Validados.
+              O chat, briefing, arquivos auxiliares, JSONs e versões intermediárias deste trabalho serão apagados permanentemente. Se a peça final tiver sido aprovada, ela continuará disponível em Trabalhos Validados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

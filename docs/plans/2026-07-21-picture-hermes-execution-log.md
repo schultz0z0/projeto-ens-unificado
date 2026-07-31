@@ -228,3 +228,35 @@
 - Delegação: além de substituir token truncado/redigido pelo token do turno imediatamente antes da tool, Picture agora renova uma delegação expirada somente para o mesmo run ativo e contexto completo. Isso cobre chamadas MiniMax observadas entre 93 e 167 segundos sem aumentar escopo.
 - Env: `.env` real, `.env.example`, Compose, sincronizador e mapa receberam chave dedicada de refresh, janela de 900 s e timeout de 3000 ms. Nenhum segredo foi exibido ou rastreado.
 - RED/GREEN: a regressão reproduziu o objeto `{item: [...]}` e falhou antes da correção; depois, 77 testes focais Hermes passaram. Bridge completa 85/85, Picture 53/53, skill 1/1 (1 skip POSIX) e typecheck passaram. O Docker CLI continua ausente no host Windows; `docker compose config/build` permanece gate obrigatório na VPS.
+
+### Etapa 20 — hardening após validação real no app
+
+- Validação: uma geração determinística real concluiu, mas publicou texto
+  cortado à direita; a revisão corrigiu texto e deixou a forma do CTA cortada à
+  esquerda. Logs registraram tentativas MCP inválidas e payloads de job com
+  aproximadamente 5–6 KB.
+- Causa posicional: `{x,y}` misturava porcentagem e pixel por heurística. O MCP
+  agora exige `unit: "px" | "percent"`; o engine mantém compatibilidade
+  unitless somente para CLI legado.
+- Geometria: formas receberam `anchor`, `rotation` e `allowBleed`; imagens
+  receberam bleed explícito. A caixa efetiva pós-rotação é validada, texto nunca
+  sangra e overflow não intencional falha sem retry.
+- Determinístico: FAL passou a ser configurada somente quando o pipeline possui
+  operação paga; compose-first aceita `size` e formatos não quadrados.
+- MCP: start/revise/get devolvem allowlist compacta e não repetem
+  `specification`, idempotência nem lease no contexto.
+- Hermes: a injeção de token ausente já estava coberta no runtime e foi
+  preservada. Skill 1.2.0 e template passaram a explicar todos os campos
+  obrigatórios, unidade, âncora, bleed, canvas e caminho sem FAL.
+- Frontend: mudança de candidata abre a revisão automaticamente; arquivos
+  homônimos recebem versão estável; o selo final não aparece quando a candidata
+  é ausente.
+- Dependências: Zod foi alinhado à major 4 já usada pelo MCP SDK; a dependência
+  direta não utilizada de `zod-to-json-schema` foi removida.
+- Limites: upload local pelo Chrome ficou bloqueado pela permissão da extensão;
+  nenhuma chamada FAL paga foi feita. O caminho híbrido permanece como smoke
+  manual após crédito.
+- Verificação final: Picture 70/70 + typecheck + build; Hermes 4 pass/1 skip
+  POSIX; frontend 205/205 + typecheck + build; JSON, `git diff --check` e
+  `docker compose ... config --quiet` passaram. Permaneceram apenas warnings
+  preexistentes do build Vite.

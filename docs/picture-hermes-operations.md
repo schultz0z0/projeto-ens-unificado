@@ -17,8 +17,9 @@ fluxo normal é:
 - lease expirado pode ser retomado por outro worker sem criar outro job;
 - aprovação promove somente a candidata final e cria `validated_works` do tipo
   `peca_visual` de forma idempotente;
-- Criar nova peça exige aprovação, apaga chat e artefatos temporários e mantém a
-  final promovida;
+- Criar nova peça não exige aprovação prévia: encerra o workspace atual, apaga
+  chat e artefatos temporários e cria um workspace vazio. Se a peça tiver sido
+  aprovada, a final promovida continua preservada em Trabalhos Validados;
 - `data/designer`, buckets e tabelas legadas não participam do runtime novo e
   devem permanecer preservados até uma decisão de retenção separada.
 
@@ -27,7 +28,8 @@ fluxo normal é:
 Use a raiz `.env.example` como contrato. Em produção são obrigatórios:
 
 - `NEXUS_SUPABASE_DATABASE_URL` com Session Pooler IPv4;
-- `NEXUS_PICTURE_FAL_KEY` real;
+- `NEXUS_PICTURE_FAL_KEY` real somente para operações FAL. Pipelines
+  determinísticos compose-first funcionam com a variável vazia;
 - `NEXUS_PICTURE_INTERNAL_KEY` com pelo menos 32 caracteres;
 - `NEXUS_PICTURE_DELEGATION_ACTIVE_KID` e
   `NEXUS_PICTURE_DELEGATION_ACTIVE_KEY` com pelo menos 32 caracteres;
@@ -39,6 +41,32 @@ Use a raiz `.env.example` como contrato. Em produção são obrigatórios:
 O Bridge falha ao iniciar em produção se URL, chaves ou audience/issuer do
 Picture estiverem ausentes ou forem placeholders. Nunca exponha `FAL_KEY`,
 service role, chave interna ou delegação no frontend, logs ou tickets.
+
+## Contrato determinístico endurecido
+
+O contrato Hermes/Picture exige unidade explícita em toda zona numérica:
+
+```json
+{ "zone": { "x": 72, "y": 80, "unit": "px" }, "anchor": "top-left" }
+```
+
+```json
+{ "zone": { "x": 7, "y": 82, "unit": "percent" }, "anchor": "top-left" }
+```
+
+- nunca envie `{ "x": 72, "y": 80 }` pelo MCP;
+- em compose-first, informe `size` no passo `compose`;
+- `shape` aceita `anchor`, `rotation` e `allowBleed`;
+- `image` aceita `allowBleed`;
+- texto nunca pode ultrapassar o canvas;
+- forma/imagem só podem ultrapassar o canvas com `allowBleed: true`;
+- overflow não intencional encerra o job com
+  `picture_overlay_out_of_bounds` e não é retentado;
+- `generate`, `edit`, `remove-bg`, `replace-bg` e `upscale` exigem FAL;
+  `compose`, `crop`, `grade`, `grain`, `vignette` e `text` são locais.
+
+As respostas MCP de job são resumos operacionais. `specification`, token de
+idempotência e dados de lease não voltam ao contexto do Hermes.
 
 ## Saúde e prontidão
 
@@ -123,6 +151,51 @@ explícita para uma chamada paga, execute uma geração mínima dentro do contai
 
 Não rode esse comando em CI nem como healthcheck.
 
+## Deploy seletivo deste hardening
+
+Não há migration. Publique juntos `picture-it`, `hermes-api`,
+`hermes-kanban` e `app-frontend`; Bridge, Artifact Server e banco não mudaram.
+
+```bash
+git fetch origin
+git switch main
+git pull --ff-only origin main
+
+DC=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml)
+"${DC[@]}" config --quiet
+"${DC[@]}" build --pull --no-cache picture-it hermes-api hermes-kanban app-frontend
+
+"${DC[@]}" up -d --no-deps --force-recreate picture-it
+"${DC[@]}" exec -T picture-it curl -fsS http://127.0.0.1:8090/ready
+
+"${DC[@]}" up -d --no-deps --force-recreate hermes-api
+"${DC[@]}" exec -T hermes-api curl -fsS http://127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}/health
+
+"${DC[@]}" up -d --no-deps --force-recreate hermes-kanban app-frontend
+"${DC[@]}" ps
+"${DC[@]}" logs --since=10m picture-it hermes-api hermes-kanban app-frontend
+```
+
+O `--no-cache` é intencional porque o build do Hermes precisa copiar a skill
+1.2.0 e o frontend precisa produzir assets com hash novo. A recriação do
+Hermes executa `ensure-nexus-skills.sh`, atualizando também os profiles
+persistidos. Confirme:
+
+```bash
+"${DC[@]}" exec -T hermes-api grep -n 'version: 1.2.0' /opt/data/skills/picture-hermes/SKILL.md
+"${DC[@]}" exec -T hermes-api grep -n 'unit.*percent' /opt/data/skills/picture-hermes/templates/picture-start-job.json
+```
+
+Depois de todos os healthchecks, a limpeza opcional segura é:
+
+```bash
+docker image prune -f
+```
+
+Não use `docker system prune --volumes`; os volumes contêm dados persistentes.
+No navegador, faça um hard refresh uma vez. O Vite usa nomes com hash, então
+não é necessário limpar dados do site nem cookies.
+
 ## Teste manual do produto
 
 1. Entre como usuário autorizado e abra Geração de Imagem.
@@ -138,14 +211,46 @@ Não rode esse comando em CI nem como healthcheck.
 7. Verifique `brief.json`, prompt, plano, steps, overlays, referências,
    intermediários e a candidata final conforme produzidos.
 8. Abra previews JSON/texto/imagem e faça download da final.
-9. Peça uma revisão; a candidata anterior deve continuar disponível se falhar.
-10. Em `review`, aprove a peça; confirme o toast e o status Aprovada.
-11. Clique Criar nova peça, leia o aviso completo e cancele; nada deve sumir.
-12. Abra novamente e confirme; o chat/pasta antigos somem e surge workspace vazio.
-13. Abra Trabalhos Validados, localize a peça visual, valide dimensões, preview e
+9. Peça uma revisão; a nova candidata deve abrir automaticamente. Arquivos com
+   nome repetido devem aparecer como `v1`, `v2`, sem apagar versões anteriores.
+10. Se a revisão falhar, a candidata anterior deve continuar disponível.
+11. Em `review`, aprove a peça; confirme o toast e o status Aprovada.
+12. Clique Criar nova peça, leia o aviso completo e cancele; nada deve sumir.
+13. Abra novamente e confirme; o chat/pasta antigos somem e surge workspace vazio.
+14. Abra Trabalhos Validados, localize a peça visual, valide dimensões, preview e
     download.
-14. Confirme que um chat normal ainda oferece o gerador padrão do Hermes e não
+15. Confirme que um chat normal ainda oferece o gerador padrão do Hermes e não
     usa o workspace Picture.
+
+### Cenário obrigatório sem FAL
+
+Solicite uma peça Instagram 1080 × 1080 com texto exato e diga:
+
+> Use 100% determinístico. Não use generate, edit, remove-bg, replace-bg nem
+> upscale. Use compose-first com size 1080x1080, gradientes, formas e
+> satori-text.
+
+Nos logs, confirme:
+
+- uma chamada válida a `picture_get_workspace`;
+- uma chamada válida a `picture_start_job`, sem repetição por schema;
+- nenhuma mensagem de chave FAL ausente;
+- `picture_get_job` com resposta compacta;
+- ausência de `unrecognized_keys`, `expected string, received undefined` e
+  `picture_overlay_out_of_bounds`;
+- job `succeeded` e workspace `review`;
+- todos os textos e CTAs dentro da safe area.
+
+### Cenário híbrido FAL, executar somente após crédito
+
+1. Configure `NEXUS_PICTURE_FAL_KEY` e recrie somente `picture-it`.
+2. Solicite um fundo fotográfico sem texto via `generate`.
+3. Exija que logo, textos e CTA sejam adicionados deterministicamente no
+   `compose`.
+4. Confirme uma única operação paga no plano, dimensões exatas e preservação dos
+   textos.
+5. Execute depois uma revisão somente determinística para provar que ela não
+   consome nova chamada FAL.
 
 ## Rollback sem apagar dados
 
