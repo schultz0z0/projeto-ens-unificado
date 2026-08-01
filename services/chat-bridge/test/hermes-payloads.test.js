@@ -255,6 +255,22 @@ test("Picture payload is system-only delegated and explicitly forbids image_gene
   assert.doesNotMatch(JSON.stringify(request.message), /data:image\/png/);
 });
 
+test("Picture payload prescribes the minimal deterministic happy path with literal tool arguments", () => {
+  const request = buildHermesSessionChatRequest({
+    messageText: "gere sem FAL",
+    attachments: [],
+    experience: "picture",
+    pictureWorkspaceId: "workspace-deterministic",
+    pictureWorkspaceSummary: { id: "workspace-deterministic", status: "drafting", files: [] },
+    pictureDelegation: "picture.header.payload.signature",
+  });
+
+  assert.match(request.system_message, /workspace_id deve ser exatamente a string workspace-deterministic/);
+  assert.match(request.system_message, /picture_get_workspace -> picture_start_job -> picture_get_job/);
+  assert.match(request.system_message, /compose como primeira e única operação/);
+  assert.match(request.system_message, /background, midground, foreground, overlay ou frame/);
+});
+
 test("buildHermesSessionChatRequest prepends native memory routing without disabling Hermes memory", () => {
 
   const request = buildHermesSessionChatRequest({

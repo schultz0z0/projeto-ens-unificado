@@ -121,6 +121,7 @@ export const PictureWorkspace = ({ client: providedClient }: PictureWorkspacePro
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,11fr)_minmax(22rem,9fr)]">
         <main className="min-h-0 border-r border-slate-200 bg-white">
           <ChatInterface
+            key={state.workspace.chat_session_id}
             experience="picture"
             fixedSessionId={state.workspace.chat_session_id}
             pictureWorkspaceId={state.workspace.id}

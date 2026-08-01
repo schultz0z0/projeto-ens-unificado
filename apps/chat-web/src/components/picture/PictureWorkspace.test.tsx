@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
@@ -25,7 +26,19 @@ vi.mock("@/hooks/usePictureWorkspace", () => ({
   }),
 }));
 vi.mock("@/components/ChatInterface", () => ({
-  ChatInterface: (props: Record<string, unknown>) => <div data-testid="picture-chat">chat:{String(props.experience)}:{String(props.fixedSessionId)}</div>,
+  ChatInterface: (props: Record<string, unknown>) => {
+    const [draft, setDraft] = useState("");
+    return (
+      <div data-testid="picture-chat">
+        chat:{String(props.experience)}:{String(props.fixedSessionId)}
+        <input
+          aria-label="Rascunho do chat Picture"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+      </div>
+    );
+  },
 }));
 
 import { PictureWorkspace } from "./PictureWorkspace";
@@ -52,6 +65,23 @@ describe("PictureWorkspace", () => {
     expect(screen.getAllByText("Arquivos da peça").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Converse com o Hermes e envie suas referências/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/modo de geração/i)).toBeNull();
+  });
+  it("starts a clean chat immediately when a new workspace replaces the current session", async () => {
+    const user = userEvent.setup();
+    const view = render(<PictureWorkspace />);
+    const draft = screen.getByRole("textbox", { name: "Rascunho do chat Picture" });
+    await user.type(draft, "mensagem da peça anterior");
+
+    state.workspace = {
+      ...workspace("drafting"),
+      id: "workspace-2",
+      chat_session_id: "session-2",
+      title: "Nova peça",
+    };
+    view.rerender(<PictureWorkspace />);
+
+    expect(screen.getByTestId("picture-chat").textContent).toContain("session-2");
+    expect((screen.getByRole("textbox", { name: "Rascunho do chat Picture" }) as HTMLInputElement).value).toBe("");
   });
 });
 

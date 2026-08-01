@@ -15,6 +15,7 @@ SCRIPT = RUNTIME_ROOT / "docker" / "ensure-nexus-skills.sh"
 SKILL = RUNTIME_ROOT / "skills" / "picture-hermes" / "SKILL.md"
 START_JOB_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-start-job.json"
 REFERENCE_REVISION_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-revise-reference.json"
+DETERMINISTIC_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-start-deterministic.json"
 DOCKERFILE = RUNTIME_ROOT / "docker" / "hermes.Dockerfile"
 
 
@@ -71,6 +72,16 @@ def test_picture_skill_contract_and_runtime_wiring():
     assert not {"generate", "edit", "remove-bg", "replace-bg", "upscale"}.intersection(
         step["op"] for step in revision_pipeline
     )
+
+    assert DETERMINISTIC_TEMPLATE.exists()
+    deterministic = json.loads(DETERMINISTIC_TEMPLATE.read_text(encoding="utf-8"))
+    deterministic_pipeline = deterministic["composition_plan"]["pipeline"]
+    assert [step["op"] for step in deterministic_pipeline] == ["compose"]
+    assert deterministic_pipeline[0]["size"] == "1080x1080"
+    deterministic_overlays = deterministic_pipeline[0]["overlays"]
+    assert deterministic_overlays[0]["type"] == "gradient-overlay"
+    assert len([overlay for overlay in deterministic_overlays if overlay["type"] == "shape"]) <= 2
+    assert all(overlay.get("depth") in {"background", "midground", "foreground", "overlay", "frame"} for overlay in deterministic_overlays)
 
     script = SCRIPT.read_text(encoding="utf-8")
     assert "HERMES_HOME" in script

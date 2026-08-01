@@ -1,7 +1,7 @@
 ---
 name: picture-hermes
 description: Planejar, gerar e revisar peças visuais complexas no modo Picture-Hermes com workspace persistente e tools nexus_picture.
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Picture-Hermes
@@ -34,6 +34,8 @@ Você pode planejar, iniciar, revisar e consultar jobs. Você não é a autorida
 6. Consulte `picture_get_job` sempre com `workspace_id` e `job_id` para o estado real. Não invente progresso, artefatos ou conclusão.
 7. Em `succeeded`, informe que a candidata está pronta para revisão humana. Somente o estado `validated` significa peça aprovada.
 
+O caminho feliz da primeira geração é `picture_get_workspace` → `picture_start_job` → `picture_get_job`. Use sempre o `workspace_id` literal fornecido pela mensagem de sistema; nunca envie o objeto `workspace_atual` no lugar da string. Depois que `picture_start_job` aceitar o job, não o repita: consulte somente `picture_get_job` até um estado terminal.
+
 ## Regra crítica de serialização
 
 As chamadas MCP usam **objetos e arrays JSON nativos**. Nunca escreva XML, `<item>`, tags por tipo de overlay, atributos `type="array"` ou JSON convertido em string.
@@ -42,7 +44,8 @@ As chamadas MCP usam **objetos e arrays JSON nativos**. Nunca escreva XML, `<ite
 - Cada passo é um objeto do array e possui exatamente um `op`.
 - Em um passo `compose`, `overlays` é outro array JSON; cada overlay é um objeto irmão dentro desse array.
 - Em geral, reúna os overlays determinísticos em um único `compose`. Use vários passos somente quando o resultado intermediário realmente alimentar o próximo passe.
-- Use o payload canônico de `templates/picture-start-job.json` como referência literal de estrutura. Substitua valores, não a forma dos arrays.
+- Use `templates/picture-start-deterministic.json` como forma canônica quando o pedido for determinístico ou o FAL estiver indisponível. Use `templates/picture-start-job.json` somente quando o pipeline generativo estiver autorizado. Substitua valores, não a forma dos arrays.
+- `depth` aceita somente `background`, `midground`, `foreground`, `overlay` ou `frame`.
 
 ## CreativeBrief completo
 
