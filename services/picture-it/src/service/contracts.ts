@@ -54,17 +54,17 @@ const zone = z.union([
 ]);
 
 
-const satoriNode: z.ZodType<unknown> = z.lazy(() =>
-  z.union([
-    z.string(),
-    z.number().transform(String),
-    z.object({
-      tag: z.string().min(1).max(80),
-      props: z.record(z.string(), z.unknown()).optional(),
-      children: z.union([z.array(satoriNode), satoriNode]).optional(),
-    }).passthrough(),
-  ])
-);
+const satoriNode: z.ZodType<unknown> = z.lazy(() => z.union([
+  z.string(),
+  z.number().transform(String),
+  satoriElement,
+]));
+
+const satoriElement: z.ZodType<unknown> = z.lazy(() => z.object({
+  tag: z.string().min(1).max(80),
+  props: z.record(z.string(), z.unknown()).optional(),
+  children: z.union([z.array(satoriNode), satoriNode]).optional(),
+}).passthrough());
 
 const imageOverlay = z.object({
   type: z.literal("image"),
@@ -76,13 +76,17 @@ const imageOverlay = z.object({
   opacity: z.number().min(0).max(1).optional(),
   borderRadius: z.number().nonnegative().optional(),
   rotation: z.number().finite().optional(),
+  fit: z.enum(["cover", "contain", "fill", "inside", "outside"]).optional(),
+  position: z.enum(["center", "left", "right", "top", "bottom", "attention", "entropy"]).optional(),
   depth: depth.optional(),
   allowBleed: z.boolean().optional(),
 }).strict();
 
 const textOverlay = z.object({
   type: z.literal("satori-text"),
-  jsx: satoriNode,
+  jsx: satoriElement.describe(
+    "A JSON Satori element object with tag/props/children. Never send HTML or JSX source as a string.",
+  ),
   zone: zone.optional(),
   width: z.number().positive().optional(),
   height: z.number().positive().optional(),
@@ -110,7 +114,14 @@ const shapeOverlay = z.object({
   anchor: z.enum(["center", "top-left", "top-right", "bottom-left", "bottom-right"]).optional(),
   rotation: z.number().finite().optional(),
   allowBleed: z.boolean().optional(),
-}).strict();
+}).strict().superRefine((value, context) => {
+  if ((value.shape === "line" || value.shape === "arrow") && !value.from) {
+    context.addIssue({ code: "custom", path: ["from"], message: `${value.shape} requires from coordinates` });
+  }
+  if ((value.shape === "line" || value.shape === "arrow") && !value.to) {
+    context.addIssue({ code: "custom", path: ["to"], message: `${value.shape} requires to coordinates` });
+  }
+});
 
 const gradientOverlay = z.object({
   type: z.literal("gradient-overlay"),

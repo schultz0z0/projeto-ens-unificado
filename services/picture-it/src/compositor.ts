@@ -120,7 +120,11 @@ async function compositeImage(
   }
 
   // Resize
-  asset = asset.resize(targetW, targetH, { fit: "cover" });
+  asset = asset.resize(targetW, targetH, {
+    fit: overlay.fit || "cover",
+    position: overlay.position || "center",
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  });
 
   // Apply rotation
   if (overlay.rotation) {
@@ -444,8 +448,6 @@ async function compositeGradient(
   canvasHeight: number,
   verbose: boolean
 ): Promise<Buffer> {
-  const fonts = await loadFonts();
-
   const jsx = {
     type: "div",
     props: {
@@ -462,7 +464,7 @@ async function compositeGradient(
   const svg = await satori(jsx as any, {
     width: canvasWidth,
     height: canvasHeight,
-    fonts,
+    fonts: [],
   });
 
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: canvasWidth } });

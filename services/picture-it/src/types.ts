@@ -110,6 +110,8 @@ export interface ImageOverlay {
   anchor?: AnchorPosition;
   opacity?: number;
   borderRadius?: number;
+  fit?: "cover" | "contain" | "fill" | "inside" | "outside";
+  position?: "center" | "left" | "right" | "top" | "bottom" | "attention" | "entropy";
   shadow?: ShadowConfig | "auto";
   glow?: GlowConfig;
   reflection?: ReflectionConfig;

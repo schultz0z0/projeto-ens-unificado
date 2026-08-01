@@ -14,6 +14,7 @@ RUNTIME_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = RUNTIME_ROOT / "docker" / "ensure-nexus-skills.sh"
 SKILL = RUNTIME_ROOT / "skills" / "picture-hermes" / "SKILL.md"
 START_JOB_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-start-job.json"
+REFERENCE_REVISION_TEMPLATE = RUNTIME_ROOT / "skills" / "picture-hermes" / "templates" / "picture-revise-reference.json"
 DOCKERFILE = RUNTIME_ROOT / "docker" / "hermes.Dockerfile"
 
 
@@ -55,6 +56,21 @@ def test_picture_skill_contract_and_runtime_wiring():
     shapes = [overlay for overlay in compose["overlays"] if overlay["type"] == "shape"]
     assert all("anchor" in shape for shape in shapes)
     assert example["creative_brief"]["brand_profile"] == "ENS"
+
+    revision = json.loads(REFERENCE_REVISION_TEMPLATE.read_text(encoding="utf-8"))
+    revision_pipeline = revision["composition_plan"]["pipeline"]
+    assert [step["op"] for step in revision_pipeline] == ["compose"]
+    revision_overlays = revision_pipeline[0]["overlays"]
+    assert revision_overlays[0]["type"] == "image"
+    assert revision_overlays[0]["src"] == "references/kv-curso.png"
+    assert revision_overlays[0]["fit"] in {"cover", "contain"}
+    assert revision_overlays[1]["type"] == "gradient-overlay"
+    text_overlays = [overlay for overlay in revision_overlays if overlay["type"] == "satori-text"]
+    assert text_overlays
+    assert all(isinstance(overlay["jsx"], dict) for overlay in text_overlays)
+    assert not {"generate", "edit", "remove-bg", "replace-bg", "upscale"}.intersection(
+        step["op"] for step in revision_pipeline
+    )
 
     script = SCRIPT.read_text(encoding="utf-8")
     assert "HERMES_HOME" in script

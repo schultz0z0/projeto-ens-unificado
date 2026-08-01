@@ -1,4 +1,7 @@
 import { expect, test } from "bun:test";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import sharp from "sharp";
 
 import { composite } from "../src/compositor.ts";
@@ -21,6 +24,15 @@ const alphaAt = async (image: Buffer, x: number, y: number) => {
     .raw()
     .toBuffer({ resolveWithObject: true });
   return data[3];
+};
+
+const rgbaAt = async (image: Buffer, x: number, y: number) => {
+  const { data } = await sharp(image)
+    .extract({ left: x, top: y, width: 1, height: 1 })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return [...data] as [number, number, number, number];
 };
 
 test("shape top-left anchor starts at the requested pixel coordinate", async () => {
@@ -106,4 +118,49 @@ test("text outside the canvas fails with a layout error before loading fonts", a
     expect(error).toBeInstanceOf(PictureError);
     expect((error as PictureError).code).toBe("picture_overlay_out_of_bounds");
   }
+});
+
+test("image contain fit preserves the full reference without filling transparent letterbox bands", async () => {
+  const root = await mkdtemp(join(tmpdir(), "picture-fit-"));
+  try {
+    const source = await sharp({
+      create: {
+        width: 200,
+        height: 100,
+        channels: 4,
+        background: { r: 0, g: 85, b: 99, alpha: 1 },
+      },
+    }).png().toBuffer();
+    await writeFile(join(root, "reference.png"), source);
+
+    const output = await composite(await canvas(100, 100), [{
+      type: "image",
+      src: "reference.png",
+      zone: { x: 0, y: 0, unit: "px" },
+      anchor: "top-left",
+      width: 100,
+      height: 100,
+      fit: "contain",
+      position: "center",
+    } as Overlay], 100, 100, root);
+
+    expect(await alphaAt(output, 50, 10)).toBe(0);
+    expect(await alphaAt(output, 50, 50)).toBe(255);
+    expect(await alphaAt(output, 50, 90)).toBe(0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("gradient overlay renders a KV color-to-transparent fade without installed fonts", async () => {
+  const output = await composite(await canvas(100, 40), [{
+    type: "gradient-overlay",
+    gradient: "linear-gradient(90deg, rgba(0,85,99,1) 0%, rgba(0,85,99,0) 100%)",
+  }], 100, 40, process.cwd());
+
+  const left = await rgbaAt(output, 2, 20);
+  const right = await rgbaAt(output, 97, 20);
+  expect(left[3]).toBeGreaterThan(240);
+  expect(left[1]).toBeGreaterThan(70);
+  expect(right[3]).toBeLessThan(20);
 });

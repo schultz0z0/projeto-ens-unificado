@@ -97,6 +97,69 @@ test("CompositionPlan requires explicit units for numeric overlay positions", as
   })).toThrow();
 });
 
+test("CompositionPlan requires a JSON Satori element at the text overlay root", async () => {
+  const { CompositionPlanSchema } = await loadContracts();
+  expect(() => CompositionPlanSchema.parse({
+    ...validPlan,
+    pipeline: [{
+      op: "compose",
+      size: "1080x1080",
+      overlays: [{
+        type: "satori-text",
+        jsx: "<div style={{fontSize:72}}>Pós-graduação</div>",
+        zone: "left-third",
+      }],
+    }],
+  })).toThrow();
+});
+
+test("CompositionPlan rejects line and arrow shapes without endpoints", async () => {
+  const { CompositionPlanSchema } = await loadContracts();
+  for (const shape of ["line", "arrow"]) {
+    expect(() => CompositionPlanSchema.parse({
+      ...validPlan,
+      pipeline: [{
+        op: "compose",
+        size: "1080x1080",
+        overlays: [{
+          type: "shape",
+          shape,
+          zone: { x: 72, y: 275, unit: "px" },
+          width: 150,
+          height: 5,
+          fill: "#005563",
+        }],
+      }],
+    })).toThrow();
+  }
+});
+
+test("CompositionPlan accepts explicit image fit and focal position", async () => {
+  const { CompositionPlanSchema } = await loadContracts();
+  const parsed = CompositionPlanSchema.parse({
+    ...validPlan,
+    pipeline: [{
+      op: "compose",
+      size: "1080x1080",
+      overlays: [{
+        type: "image",
+        src: "references/kv-curso.png",
+        zone: { x: 0, y: 0, unit: "px" },
+        anchor: "top-left",
+        width: 1080,
+        height: 1080,
+        fit: "contain",
+        position: "left",
+      }],
+    }],
+  });
+
+  expect((parsed.pipeline[0] as any).overlays[0]).toMatchObject({
+    fit: "contain",
+    position: "left",
+  });
+});
+
 test("CompositionPlan rejects unknown operations", async () => {
   const { CompositionPlanSchema } = await loadContracts();
   expect(() => CompositionPlanSchema.parse({
@@ -140,4 +203,15 @@ test("ManifestEntry validates safe relative artifacts", async () => {
     created_at: "2026-07-21T19:45:00.000Z",
   });
   expect(entry.relative_path).toBe("planning/steps.json");
+});
+
+test("managed Hermes reference revision template satisfies the Picture composition contract", async () => {
+  const { CompositionPlanSchema } = await loadContracts();
+  const templatePath = new URL(
+    "../../hermes-runtime/skills/picture-hermes/templates/picture-revise-reference.json",
+    import.meta.url,
+  );
+  const template = await Bun.file(templatePath).json();
+
+  expect(() => CompositionPlanSchema.parse(template.composition_plan)).not.toThrow();
 });

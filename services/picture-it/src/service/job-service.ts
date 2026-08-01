@@ -278,6 +278,7 @@ export class JobService {
       "picture_contract_invalid",
       "picture_overlay_out_of_bounds",
       "picture_reference_not_owned",
+      "picture_reference_path_invalid",
       "picture_package_path_invalid",
     ].includes(code);
     return this.options.repository.fail({ jobId, workerId, errorCode: code, errorMessage: message, retryable });

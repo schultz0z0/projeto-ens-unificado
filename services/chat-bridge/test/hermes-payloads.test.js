@@ -199,6 +199,9 @@ test("Picture session preloads only the Picture planner and ENS brand contract",
   assert.deepEqual(request.skills, ["picture-hermes", "nexusai-ens-design-system"]);
   assert.match(request.system_message, /entrega continua sendo uma imagem/i);
   assert.match(request.system_message, /emoji/i);
+  assert.match(request.system_message, /relative_path.*manifest/i);
+  assert.match(request.system_message, /satori-text.*JSON/i);
+  assert.match(request.system_message, /RAG.*KV.*curso/i);
   assert.doesNotMatch(request.system_message, /use.*pptx/i);
 });
 

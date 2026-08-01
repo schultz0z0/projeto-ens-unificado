@@ -141,8 +141,8 @@ test("heartbeat extends only a matching active lease", async () => {
   expect(new Date(extended!.lease_expires_at!).getTime()).toBeGreaterThanOrEqual(new Date(before!).getTime());
 });
 
-test("layout contract failures are not retried", async () => {
-  let observed: Record<string, unknown> | undefined;
+test("deterministic contract and reference path failures are not retried", async () => {
+  const observed: Record<string, unknown>[] = [];
   const { JobService } = await import("../src/service/job-service.ts");
   const service = new JobService({
     repository: {
@@ -151,7 +151,7 @@ test("layout contract failures are not retried", async () => {
       async heartbeat() { return null; },
       async complete() { return null; },
       async fail(input: Record<string, unknown>) {
-        observed = input;
+        observed.push(input);
         return null;
       },
     } as any,
@@ -162,9 +162,14 @@ test("layout contract failures are not retried", async () => {
     "worker-1",
     new PictureError("picture_overlay_out_of_bounds", "shape exceeds canvas", 400),
   );
+  await service.fail(
+    "22222222-2222-4222-8222-222222222222",
+    "worker-1",
+    new PictureError("picture_reference_path_invalid", "reference path escapes references", 400),
+  );
 
-  expect(observed).toMatchObject({
-    errorCode: "picture_overlay_out_of_bounds",
-    retryable: false,
-  });
+  expect(observed).toEqual([
+    expect.objectContaining({ errorCode: "picture_overlay_out_of_bounds", retryable: false }),
+    expect.objectContaining({ errorCode: "picture_reference_path_invalid", retryable: false }),
+  ]);
 });

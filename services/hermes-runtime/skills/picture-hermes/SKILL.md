@@ -1,7 +1,7 @@
 ---
 name: picture-hermes
 description: Planejar, gerar e revisar peças visuais complexas no modo Picture-Hermes com workspace persistente e tools nexus_picture.
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Picture-Hermes
@@ -25,7 +25,9 @@ Você pode planejar, iniciar, revisar e consultar jobs. Você não é a autorida
 ## Fluxo obrigatório
 
 1. Chame `picture_get_workspace` antes de planejar uma revisão ou afirmar o estado atual.
+   Copie cada `relative_path` necessário exatamente do manifest retornado. Nunca reconstrua, translitere, normalize ou adivinhe o nome de referência.
 2. Reúna no chat somente o briefing que estiver faltando. Não peça ao usuário nomes de tools, IDs, JSON ou detalhes internos.
+   Quando um curso ENS estiver identificado, consulte `ens_rag_get_course_context` (ou `ens_rag_search` quando necessário) e combine o contexto oficial com os tokens do `nexusai-ens-design-system`, inclusive o KV específico quando disponível.
 3. Escolha a técnica e o menor pipeline capaz de entregar a direção aprovada. Preserve referências reais de produto e logos com composição determinística.
 4. Na primeira geração, envie `workspace_id`, `CreativeBrief`, `CompositionPlan`, `reference_artifact_ids` e `idempotency_key` completos a `picture_start_job`, uma única vez, com chave de idempotência estável no turno.
 5. Para alterações após existir uma candidata, consulte o workspace, produza novamente um plano completo e chame `picture_revise` com `workspace_id`, `revision_request`, `composition_plan` e `idempotency_key`.
@@ -87,7 +89,28 @@ Zonas nomeadas incluem `hero-center`, `title-area`, `top-bar`, `bottom-bar`, `le
 
 `anchor` descreve qual ponto do elemento coincide com a zona: use `top-left` quando `x/y` representam a margem esquerda/superior e `center` quando representam o centro. `allowBleed: true` é permitido somente para imagem ou forma decorativa que deva sangrar intencionalmente; texto nunca deve ultrapassar o canvas. Em compose-first, `compose.size` deve ser igual a `creative_brief.output`.
 
-Para texto preciso, use `satori-text`; preserve o texto literalmente. O `jsx` aceita string ou nó `{ "tag", "props", "children" }`, e `children` também é array JSON nativo. Não peça ao modelo generativo para reconstruir logos. Para referências, use somente paths relativos presentes no manifest, normalmente sob `references/`. Nunca use path absoluto, `..` ou barra invertida.
+Para texto preciso, use `satori-text`; preserve o texto literalmente. O `jsx` raiz deve ser sempre um nó JSON `{ "tag", "props", "children" }`; strings são permitidas apenas dentro de `children`. Nunca envie HTML, código JSX ou `style={{...}}` em uma string. Não peça ao modelo generativo para reconstruir logos. Para referências, use somente paths relativos presentes no manifest, normalmente sob `references/`, copiados byte a byte. Nunca use path absoluto, `..` ou barra invertida.
+
+Em overlays `image`, use `fit` (`cover`, `contain`, `fill`, `inside` ou `outside`) e `position` (`center`, `left`, `right`, `top`, `bottom`, `attention` ou `entropy`) quando a proporção ou o foco importarem. Use `contain` para preservar integralmente referência/logo e `cover` somente quando o corte for seguro. Em `shape` do tipo `line` ou `arrow`, sempre forneça `from` e `to`.
+
+## Receita KV para fundos
+
+### Referência fotográfica disponível
+
+1. Use a referência como primeiro overlay `image`, em `depth: "background"`, com o `src` exato do manifest.
+2. Preserve logo, pessoa e elementos essenciais escolhendo `fit` e `position`; se o usuário pediu para manter a referência, não a substitua por formas genéricas.
+3. Se a referência ainda não tiver uma faixa de leitura adequada, aplique em seguida `gradient-overlay`: cor primária do KV na área de texto e transparente sobre a pessoa/produto. Se a referência já trouxer o degradê desejado, não o duplique. Se houver logo embutida sob a área do degradê, mantenha a opacidade suficiente para a logo continuar legível. Para texto à esquerda, use como ponto de partida `linear-gradient(90deg, rgba(PRIMARIA,0.78) 0%, rgba(PRIMARIA,0.64) 38%, rgba(PRIMARIA,0.14) 68%, rgba(PRIMARIA,0) 100%)` e ajuste ao asset real.
+4. Componha texto/CTA com nós JSON Satori e não duplique uma logo já embutida na referência.
+
+Use `templates/picture-revise-reference.json` como forma canônica dessa revisão.
+
+### Sem referência e sem crédito FAL
+
+Use `compose` como primeira e única operação: gradiente multistop com as cores oficiais do KV, área negativa para leitura e no máximo duas formas de apoio do design system. Não invente fotografia ou persona. Evite o fundo creme genérico quando o KV recuperado indicar outra direção.
+
+### Com crédito FAL
+
+Use FAL somente para criar cenário, textura, fotografia ou persona sem texto, logo, CTA ou elementos legais. O prompt deve reservar a área negativa definida pelo layout e usar o contexto visual do curso. Depois aplique localmente o degradê KV, tipografia, logo e CTA. Assim, a camada generativa complementa o KV; ela não substitui a composição determinística.
 
 ## Qualidade visual
 

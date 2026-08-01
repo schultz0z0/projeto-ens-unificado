@@ -231,6 +231,14 @@ The `compose` command accepts a JSON array of overlay objects. Each overlay has 
 
 **Positioning:** Use named zones (`hero-center`, `title-area`, `top-bar`, `bottom-bar`, etc.) or explicit coordinates such as `{ "x": 8, "y": 12, "unit": "percent" }` and `{ "x": 72, "y": 80, "unit": "px" }`. Unitless `{x, y}` remains a legacy CLI format and should not be emitted by agents.
 
+**Workspace references:** When an artifact manifest is available, copy an image or watermark `src` exactly from its `relative_path`. Never slugify, normalize, transliterate, or reconstruct the filename. A Picture package materializes references at that canonical path.
+
+**Reference framing:** Image overlays accept `fit` (`cover`, `contain`, `fill`, `inside`, `outside`) and `position` (`center`, `left`, `right`, `top`, `bottom`, `attention`, `entropy`). Use `contain` when the full logo/reference must survive; use `cover` only when cropping is safe.
+
+**Satori root:** `satori-text.jsx` must be a JSON element object with `tag`, optional `props`, and optional `children`. Strings and numbers are valid inside `children`, not as the root. HTML/JSX source strings are not interpreted.
+
+**Lines and arrows:** `shape: "line"` and `shape: "arrow"` require both `from` and `to` coordinates.
+
 **Depth layers:** `background` → `midground` → `foreground` → `overlay` → `frame` (composited in this order)
 
 Example overlay for a badge + title + subtitle:
@@ -265,7 +273,7 @@ Example overlay for a badge + title + subtitle:
 ]
 ```
 
-**Available fonts:** Inter (400, 600, 700), Space Grotesk (500, 700), DM Serif Display (400)
+**Available fonts:** Inter (400, 600, 700), Space Grotesk (500, 700), Outfit (400, 500, 700), DM Serif Display (400)
 
 **Satori CSS subset:** flexbox, fontSize, fontFamily, fontWeight, color, backgroundColor, backgroundImage (linear-gradient), textShadow, letterSpacing, lineHeight, borderRadius, border, padding, margin, opacity, gap.
 

@@ -153,8 +153,9 @@ Não rode esse comando em CI nem como healthcheck.
 
 ## Deploy seletivo deste hardening
 
-Não há migration. Publique juntos `picture-it`, `hermes-api`,
-`hermes-kanban` e `app-frontend`; Bridge, Artifact Server e banco não mudaram.
+Não há migration. Para o hardening de referência/degradê de 2026-08-01,
+publique juntos `picture-it`, `hermes-api`, `hermes-kanban` e `app-bridge`.
+Artifact Server, banco e frontend não mudaram nesta rodada.
 
 ```bash
 git fetch origin
@@ -163,27 +164,29 @@ git pull --ff-only origin main
 
 DC=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml)
 "${DC[@]}" config --quiet
-"${DC[@]}" build --pull --no-cache picture-it hermes-api hermes-kanban app-frontend
+"${DC[@]}" build --pull --no-cache picture-it hermes-api hermes-kanban app-bridge
 
 "${DC[@]}" up -d --no-deps --force-recreate picture-it
 "${DC[@]}" exec -T picture-it curl -fsS http://127.0.0.1:8090/ready
 
-"${DC[@]}" up -d --no-deps --force-recreate hermes-api
+"${DC[@]}" up -d --no-deps --force-recreate hermes-api hermes-kanban
 "${DC[@]}" exec -T hermes-api curl -fsS http://127.0.0.1:${NEXUS_HERMES_API_PORT:-8652}/health
 
-"${DC[@]}" up -d --no-deps --force-recreate hermes-kanban app-frontend
+"${DC[@]}" up -d --no-deps --force-recreate app-bridge
+"${DC[@]}" exec -T app-bridge wget -qO- http://127.0.0.1:8080/health
 "${DC[@]}" ps
-"${DC[@]}" logs --since=10m picture-it hermes-api hermes-kanban app-frontend
+"${DC[@]}" logs --since=10m picture-it hermes-api hermes-kanban app-bridge
 ```
 
 O `--no-cache` é intencional porque o build do Hermes precisa copiar a skill
-1.2.0 e o frontend precisa produzir assets com hash novo. A recriação do
-Hermes executa `ensure-nexus-skills.sh`, atualizando também os profiles
-persistidos. Confirme:
+1.3.0 e o Bridge precisa incorporar o contrato efêmero atualizado. A
+recriação do Hermes executa `ensure-nexus-skills.sh`, atualizando também os
+profiles persistidos. Confirme:
 
 ```bash
-"${DC[@]}" exec -T hermes-api grep -n 'version: 1.2.0' /opt/data/skills/picture-hermes/SKILL.md
+"${DC[@]}" exec -T hermes-api grep -n 'version: 1.3.0' /opt/data/skills/picture-hermes/SKILL.md
 "${DC[@]}" exec -T hermes-api grep -n 'unit.*percent' /opt/data/skills/picture-hermes/templates/picture-start-job.json
+"${DC[@]}" exec -T hermes-api test -f /opt/data/skills/picture-hermes/templates/picture-revise-reference.json
 ```
 
 Depois de todos os healthchecks, a limpeza opcional segura é:
@@ -193,8 +196,10 @@ docker image prune -f
 ```
 
 Não use `docker system prune --volumes`; os volumes contêm dados persistentes.
-No navegador, faça um hard refresh uma vez. O Vite usa nomes com hash, então
-não é necessário limpar dados do site nem cookies.
+Como o frontend não mudou, não é necessário limpar cache, dados do site ou
+cookies. Um refresh normal basta para abrir um novo turno após a recriação do
+Hermes/Bridge. Se o navegador mantiver uma requisição antiga em andamento,
+faça um hard refresh uma vez.
 
 ## Teste manual do produto
 
@@ -241,12 +246,31 @@ Nos logs, confirme:
 - job `succeeded` e workspace `review`;
 - todos os textos e CTAs dentro da safe area.
 
+### Cenário obrigatório com referência e degradê KV, sem FAL
+
+1. Crie uma nova peça e anexe uma imagem PNG cujo nome tenha espaço ou acento.
+2. Confirme em **Referências** o `relative_path` efetivamente publicado (o nome
+   pode ser normalizado pelo Artifact Server).
+3. Peça para preservar foto e logo da referência, adicionar somente o texto e,
+   se necessário, um degradê da cor do KV na lateral de leitura.
+4. Exija modo 100% determinístico.
+5. Nos logs, confirme que o Hermes consultou o RAG ENS/contexto do curso,
+   carregou `nexusai-ens-design-system`, copiou o `relative_path` do manifest e
+   enviou `satori-text.jsx` como objeto JSON.
+6. Confirme que não aparece `Image asset not found`, que o job termina
+   `succeeded` e que a referência não precisou ser reimportada.
+7. Abra a final e verifique: foto/pessoa preservada, logo legível, texto visível,
+   degradê sem faixa dura e nenhuma forma creme genérica substituindo o KV.
+8. Peça uma revisão textual; a nova candidata deve reutilizar a mesma
+   referência sem chamada FAL.
+
 ### Cenário híbrido FAL, executar somente após crédito
 
 1. Configure `NEXUS_PICTURE_FAL_KEY` e recrie somente `picture-it`.
-2. Solicite um fundo fotográfico sem texto via `generate`.
-3. Exija que logo, textos e CTA sejam adicionados deterministicamente no
-   `compose`.
+2. Solicite uma fotografia/persona de apoio sem texto, logo ou CTA via
+   `generate`, usando o contexto oficial do curso e reservando a área negativa.
+3. Exija que degradê KV, logo, textos e CTA sejam adicionados
+   deterministicamente no `compose`.
 4. Confirme uma única operação paga no plano, dimensões exatas e preservação dos
    textos.
 5. Execute depois uma revisão somente determinística para provar que ela não

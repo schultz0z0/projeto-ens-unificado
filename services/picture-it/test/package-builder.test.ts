@@ -41,8 +41,12 @@ const plan = {
     {
       op: "compose" as const,
       overlays: [
-        { type: "image" as const, src: "references/ens-logo-white.png", zone: "top-left-safe" as const },
-        { type: "satori-text" as const, jsx: "Graduação que transforma", zone: "title-area" as const },
+        { type: "image" as const, src: "references/ENS Logo White.PNG", zone: "top-left-safe" as const },
+        {
+          type: "satori-text" as const,
+          jsx: { tag: "div", children: ["Graduação que transforma"] },
+          zone: "title-area" as const,
+        },
       ],
     },
   ],
@@ -84,7 +88,7 @@ test("builds a deterministic complex briefing package", async () => {
     "planning/composition-plan.json",
     "planning/steps.json",
     "planning/overlays.json",
-    "references/ens-logo-white.png",
+    "references/ENS Logo White.PNG",
   ];
   for (const path of expected) await access(join(result.root, path));
   expect(result.finalPath).toBe(join(result.root, "final", "peca-final.png"));
@@ -103,4 +107,79 @@ test("only materializes references present in the owned manifest", async () => {
     referenceArtifactIds: [REFERENCE],
     manifest: [],
   })).rejects.toMatchObject({ code: "picture_reference_not_owned" });
+});
+
+test("materializes a reference at the exact manifest path consumed by the composition plan", async () => {
+  const { PicturePackageBuilder } = await loadBuilder();
+  const builder = new PicturePackageBuilder({
+    artifactClient: {
+      async downloadArtifact() {
+        return { bytes: Buffer.from("reference"), contentType: "image/png" };
+      },
+    },
+  });
+  const referencePath = "references/Modelos P_s.png";
+  const result = await builder.build({
+    workspaceId: WORKSPACE,
+    jobId: "job-reference-path",
+    creativeBrief: brief,
+    compositionPlan: {
+      ...plan,
+      pipeline: [{
+        op: "compose" as const,
+        size: "1080x1350",
+        overlays: [{
+          type: "image" as const,
+          src: referencePath,
+          zone: { x: 0, y: 0, unit: "px" as const },
+          anchor: "top-left" as const,
+          width: 1080,
+          height: 1350,
+        }],
+      }],
+    },
+    referenceArtifactIds: [REFERENCE],
+    manifest: [{
+      artifact_id: REFERENCE,
+      workspace_id: WORKSPACE,
+      relative_path: referencePath,
+      category: "reference",
+      content_type: "image/png",
+      size: 9,
+      lifecycle: "workspace",
+      created_at: "2026-08-01T16:39:00.000Z",
+    }],
+  });
+  roots.push(result.root);
+
+  await access(join(result.root, ...referencePath.split("/")));
+});
+
+test("rejects reference metadata whose path is outside the references directory", async () => {
+  const { PicturePackageBuilder } = await loadBuilder();
+  const builder = new PicturePackageBuilder({
+    artifactClient: {
+      async downloadArtifact() {
+        return { bytes: Buffer.from("reference"), contentType: "image/png" };
+      },
+    },
+  });
+
+  await expect(builder.build({
+    workspaceId: WORKSPACE,
+    jobId: "job-invalid-reference-path",
+    creativeBrief: brief,
+    compositionPlan: plan,
+    referenceArtifactIds: [REFERENCE],
+    manifest: [{
+      artifact_id: REFERENCE,
+      workspace_id: WORKSPACE,
+      relative_path: "final/overwrite.png",
+      category: "reference",
+      content_type: "image/png",
+      size: 9,
+      lifecycle: "workspace",
+      created_at: "2026-08-01T16:39:00.000Z",
+    }],
+  })).rejects.toMatchObject({ code: "picture_reference_path_invalid" });
 });

@@ -240,8 +240,6 @@ export async function createGradientBackground(
   width: number,
   height: number
 ): Promise<Buffer> {
-  const fonts = await loadFonts();
-
   const jsx = {
     type: "div",
     props: {
@@ -250,7 +248,7 @@ export async function createGradientBackground(
     },
   };
 
-  const svg = await satori(jsx as any, { width, height, fonts });
+  const svg = await satori(jsx as any, { width, height, fonts: [] });
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: width } });
   return Buffer.from(resvg.render().asPng());
 }
