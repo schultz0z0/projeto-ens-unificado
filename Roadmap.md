@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1, 2 e 3 `production_validated`
-- **Atualização:** 20 de julho de 2026
+- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `approved` para preparação técnica
+- **Atualização:** 5 de agosto de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -276,6 +276,10 @@ de julho de 2026.
 
 ### Fase 4: Hermes Campaign Operator
 
+**Estado:** `production_validated` — escopo funcional, segurança, correlação,
+confirmação contextual e deep links homologados na VPS; fase concluída em 29
+de julho de 2026.
+
 **Objetivo:** permitir que o Hermes leia e opere objetos reais do produto.
 
 **Entregas:**
@@ -295,6 +299,10 @@ de julho de 2026.
 
 ### Fase 5: Governança e Aprovações
 
+**Estado:** `approved` — PRD e desenho-base aprovados em 5 de agosto de 2026;
+pacote técnico e plano de implementação em preparação. A implementação ainda
+não foi iniciada.
+
 **Objetivo:** criar controle editorial e institucional sem bloquear a criação.
 
 **Entregas:**
@@ -311,6 +319,8 @@ de julho de 2026.
 **Saída:** nenhum material ou pacote sensível avança sem governança adequada.
 
 **PRD:** [Fase 5 — Governança e Aprovações](docs/prds/phase-5-governanca-aprovacoes.md)
+
+**Documentação técnica:** [Pacote da Fase 5](docs/phase-5/README.md)
 
 ### Fase 6: Execução Assistida Piloto
 

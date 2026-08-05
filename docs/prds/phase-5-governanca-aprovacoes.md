@@ -1,12 +1,18 @@
 # PRD — Fase 5: Governança e Aprovações
 
-- **Status:** draft
+- **Status:** approved
+- **Aprovação do desenho-base:** 2026-08-05
 - **Dependências:** Fases 3–4 concluídas
 - **Resultado:** conteúdo e ações sensíveis avançam somente após decisão humana rastreável
 
 ## Resumo
 
 A fase cria dois fluxos de negócio: aprovação editorial de uma versão e autorização operacional de um pacote sensível. Eles permanecem separados da aprovação técnica de comandos do Hermes.
+
+O primeiro corte usa uma decisão por solicitação. `manager` e `admin`
+elegíveis podem decidir solicitações editoriais; a autorização operacional
+sempre exige um decisor diferente do solicitante. Políticas de quórum e um
+motor genérico de workflows permanecem fora do escopo inicial.
 
 ## Problema
 
