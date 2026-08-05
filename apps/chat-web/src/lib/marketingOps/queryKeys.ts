@@ -3,7 +3,8 @@ import type {
   MarketingOpsNotificationFilters,
   MarketingOpsProductionScheduleFilters,
   MarketingOpsParticipantCandidateFilters,
-  MarketingOpsTimelineFilters
+  MarketingOpsTimelineFilters,
+  MarketingOpsApprovalFilters
 } from './types';
 
 export const marketingOpsKeys = {
@@ -38,5 +39,9 @@ export const marketingOpsKeys = {
   productionItemArtifacts: (itemId: string) =>
     ['marketing-ops', 'production', 'item', itemId, 'artifacts'] as const,
   notifications: (filters: MarketingOpsNotificationFilters = {}) =>
-    ['marketing-ops', 'notifications', { ...filters }] as const
+    ['marketing-ops', 'notifications', { ...filters }] as const,
+  approvals: (filters: MarketingOpsApprovalFilters = {}) =>
+    ['marketing-ops', 'approvals', { ...filters }] as const,
+  approval: (requestId: string) =>
+    ['marketing-ops', 'approval', requestId] as const
 };

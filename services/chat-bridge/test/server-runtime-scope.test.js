@@ -87,6 +87,13 @@ test("Bridge gets the contextual decision before signing a Marketing Ops delegat
   assert.doesNotMatch(source, /isExplicitMarketingOpsConfirmation/);
 });
 
+test("Marketing Ops delegation can submit approval requests but never decide them", () => {
+  const delegationBlock = extractBlock(source, "const issueRunMarketingOpsDelegation", "const issueRunPictureDelegation");
+
+  assert.match(delegationBlock, /"approval:submit"/);
+  assert.doesNotMatch(delegationBlock, /approval:(decide|approve|reject)/);
+});
+
 test("bridge exposes authenticated memory diagnostics with graph health", () => {
   const diagnosticsRouteBlock = extractBlock(
     source,

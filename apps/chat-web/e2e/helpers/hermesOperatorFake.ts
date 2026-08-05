@@ -17,6 +17,7 @@ import {
 } from './hermesOperatorFixtures';
 
 export const enabled = process.env.MARKETING_OPS_HERMES_E2E_FAKE === 'true';
+export const APPROVAL_REQUEST = 'abababab-abab-4bab-8bab-abababababab';
 
 const cors = {
   'access-control-allow-origin': 'http://127.0.0.1:8088',
@@ -192,6 +193,37 @@ async function installBridgeFakes(page: Page) {
 }
 
 async function installMarketingOpsFakes(page: Page) {
+  let approval = {
+    id: APPROVAL_REQUEST,
+    campaignId: CAMPAIGN,
+    kind: 'operational',
+    status: 'pending',
+    requestedBy: 'abababab-abab-4bab-8bab-abababababab',
+    reason: 'Autorizar envio de homologação',
+    riskLevel: 'critical',
+    contentAssetId: null,
+    contentVersionNumber: null,
+    actionPackageId: 'cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd',
+    targetHash: 'a'.repeat(64),
+    supersedesRequestId: null,
+    expiresAt: '2026-08-10T13:00:00.000Z',
+    version: 1,
+    createdAt: '2026-08-05T13:00:00.000Z',
+    updatedAt: '2026-08-05T13:00:00.000Z',
+    decision: null,
+    editorialTarget: null,
+    actionPackage: {
+      id: 'cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd', campaignId: CAMPAIGN,
+      actionType: 'campaign.channel_dispatch', channel: 'email', audienceSnapshot: { count: 10 },
+      scheduledFor: null, timeZone: 'America/Sao_Paulo', configuration: { mode: 'sandbox' },
+      successCriteria: null, riskSummary: 'homologation only', payload: { template: 'test' },
+      payloadHash: 'a'.repeat(64), status: 'pending_approval', authorizedByRequestId: null,
+      authorizedAt: null, expiresAt: '2026-08-10T13:00:00.000Z', invalidatedAt: null,
+      invalidationReason: null, version: 1, createdBy: USER,
+      createdAt: '2026-08-05T13:00:00.000Z', updatedAt: '2026-08-05T13:00:00.000Z'
+    },
+    capabilities: { decide: true, cancel: false }
+  };
   await page.route('http://127.0.0.1:19091/**', async (route) => {
     const request = route.request();
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
@@ -227,6 +259,25 @@ async function installMarketingOpsFakes(page: Page) {
 
     if (path === '/v1/in-app-notifications') {
       return ok([], { limit: 25, count: 0, nextCursor: null });
+    }
+
+    if (path === '/v1/approval-requests' && request.method() === 'GET') {
+      return ok([approval], { limit: 25, count: 1, nextCursor: null });
+    }
+
+    if (path === `/v1/approval-requests/${APPROVAL_REQUEST}` && request.method() === 'GET') {
+      return ok(approval);
+    }
+
+    if (path === `/v1/approval-requests/${APPROVAL_REQUEST}/decisions` && request.method() === 'POST') {
+      const body = request.postDataJSON() as { decision: string; comment?: string };
+      approval = { ...approval, status: body.decision as typeof approval.status, version: 2,
+        capabilities: { decide: false, cancel: false },
+        decision: { id: 'efefefef-efef-4fef-8fef-efefefefefef', requestId: APPROVAL_REQUEST,
+          decision: body.decision, decidedBy: USER, deciderRole: 'manager', origin: 'human', comment: body.comment ?? null,
+          eligibilitySnapshot: { separationOfDuties: true }, correlationId: 'edededed-eded-4ded-8ded-edededededed',
+          createdAt: '2026-08-05T14:00:00.000Z' } };
+      return ok(approval);
     }
 
     return json(route, { error: { code: 'not_found', message: 'not found' } }, 404, {

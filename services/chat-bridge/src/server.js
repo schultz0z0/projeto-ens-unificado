@@ -797,6 +797,7 @@ const issueRunMarketingOpsDelegation = async (run) => {
     "content:read",
     "content:write",
     "artifact:write",
+    "approval:submit",
   ];
   if (run.user_role === "manager" || run.user_role === "admin") scopes.push("audit:read");
   return issueMarketingOpsDelegation({

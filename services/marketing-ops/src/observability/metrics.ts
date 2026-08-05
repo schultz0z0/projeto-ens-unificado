@@ -49,7 +49,10 @@ const mcpTool = oneOf(
 );
 const mcpResult = oneOf('success', 'partial', 'failed', 'error');
 const mcpIdempotency = oneOf('hit', 'miss');
-const mcpResource = oneOf('campaign', 'campaign_item', 'content_asset');
+const mcpResource = oneOf('campaign', 'campaign_item', 'content_asset', 'approval_request');
+const approvalKind = oneOf('editorial', 'operational');
+const approvalStatus = oneOf('pending', 'approved', 'rejected', 'changes_requested', 'cancelled', 'expired');
+const approvalRisk = oneOf('low', 'medium', 'high', 'critical');
 
 const metricDefinitions: Record<string, MetricDefinition> = {
   marketing_ops_requests_total: { labels: { route: staticRoute, status: httpStatus } },
@@ -104,6 +107,9 @@ const metricDefinitions: Record<string, MetricDefinition> = {
   },
   marketing_ops_content_versions_created_total: { labels: {} },
   marketing_ops_notifications_produced_total: { labels: {} },
+  marketing_ops_approval_transitions_total: {
+    labels: { kind: approvalKind, status: approvalStatus, risk: approvalRisk, result: operationStatus }
+  },
   marketing_ops_readiness_total: { labels: { result: readinessResult } },
   marketing_ops_readiness_duration_seconds_count: { labels: { result: readinessResult } },
   marketing_ops_readiness_duration_seconds_sum: { labels: { result: readinessResult } },

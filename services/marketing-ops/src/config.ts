@@ -33,7 +33,8 @@ export interface AppConfig {
     url: string;
     timeoutMs: number;
   };
-  features: { read: boolean; write: boolean };
+  features: { read: boolean; write: boolean; approvals: boolean };
+  approvalExpiry: { intervalMs: number; batchSize: number };
 }
 
 const placeholderPattern = /^(?:(?:change|replace)[-_]?me|example|placeholder|secret|postgres)(?:[-_].*)?$/i;
@@ -132,7 +133,14 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
     },
     features: {
       read: booleanValue(env.MARKETING_OPS_FEATURE_READ),
-      write: booleanValue(env.MARKETING_OPS_FEATURE_WRITE)
+      write: booleanValue(env.MARKETING_OPS_FEATURE_WRITE),
+      approvals: booleanValue(env.MARKETING_OPS_FEATURE_APPROVALS)
+    },
+    approvalExpiry: {
+      intervalMs: z.coerce.number().int().min(5_000).max(3_600_000)
+        .parse(env.MARKETING_OPS_APPROVAL_EXPIRY_INTERVAL_MS ?? 30_000),
+      batchSize: z.coerce.number().int().min(1).max(100)
+        .parse(env.MARKETING_OPS_APPROVAL_EXPIRY_BATCH_SIZE ?? 100)
     }
   };
 }

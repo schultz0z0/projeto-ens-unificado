@@ -319,9 +319,9 @@ describe('Marketing Ops frontend contracts', () => {
   });
 
   it('keeps read and write off by default and honors the kill switch', () => {
-    expect(marketingOpsFlags({})).toEqual({ enabled: false, read: false, write: false });
+    expect(marketingOpsFlags({})).toEqual({ enabled: false, read: false, write: false, approvals: false });
     expect(marketingOpsFlags({ VITE_MARKETING_OPS_ENABLED: 'true', VITE_MARKETING_OPS_READ: 'true', VITE_MARKETING_OPS_WRITE: 'true', VITE_MARKETING_OPS_KILL_SWITCH: 'true' }))
-      .toEqual({ enabled: false, read: false, write: false });
+      .toEqual({ enabled: false, read: false, write: false, approvals: false });
   });
 
   it('round-trips campaign IDs without embedding state', () => {

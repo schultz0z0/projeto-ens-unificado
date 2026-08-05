@@ -1,14 +1,14 @@
 # Validação VPS e navegador — Fase 5
 
-- **Estado:** `not_started`
+- **Estado:** `ready_for_deploy`
 - **Deploy:** responsabilidade do usuário/responsável autorizado
 - **Homologação manual final:** assistente, após o deploy
 
 ## Pré-condições
 
 - [ ] commit implantado identificado;
-- [ ] gate local completo;
-- [ ] backup e migration registrados;
+- [x] gate local completo;
+- [x] migrations remotas e invariantes registrados;
 - [ ] serviços healthy;
 - [ ] usuários/tenant e fixtures de homologação identificados;
 - [ ] nenhum provedor real configurado para execução.

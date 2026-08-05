@@ -11,6 +11,7 @@ import { collectWorkspaceMetrics } from './observability/workspaceMetrics.js';
 import { createDelegationRefresher } from './delegation/refresher.js';
 import { ArtifactClient } from './integrations/artifactClient.js';
 import { RagCourseClient } from './integrations/ragCourseClient.js';
+import { startApprovalExpiryWorker } from './domain/approvalExpiryWorker.js';
 
 const config = loadConfig(process.env);
 const logger = createLogger();
@@ -60,11 +61,18 @@ const app = createApp({
 });
 const server = createServer(app);
 server.listen(config.port, '0.0.0.0', () => logger.info('marketing-ops started', { port: config.port }));
+const stopApprovalExpiryWorker = config.features.write && config.features.approvals
+  ? startApprovalExpiryWorker(pool, {
+    ...config.approvalExpiry,
+    onError: (error) => logger.error('approval expiry worker failed', { cause: error })
+  })
+  : () => undefined;
 
 let shuttingDown = false;
 async function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
+  stopApprovalExpiryWorker();
   logger.info('marketing-ops stopping', { signal });
   server.close(async () => {
     await pool.end();

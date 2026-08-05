@@ -1,43 +1,34 @@
 # Rollback — Fase 5
 
-- **Estado:** `draft`
-- **Estratégia:** flags + imagem anterior + forward-fix
+- **Estado:** `ready`
+- **Estratégia:** flags + imagens anteriores + forward-fix
 
-## Princípios
+## Ação imediata
 
-- não apagar solicitações, decisões, pacotes, auditoria ou migrations;
-- desabilitar escrita antes de trocar imagens;
-- preservar leitura quando segura;
-- migration aplicada recebe forward-fix;
-- restore só com backup validado e autorização explícita.
+1. definir `NEXUS_MARKETING_OPS_FEATURE_APPROVALS=false`;
+2. definir `NEXUS_MARKETING_OPS_FRONTEND_APPROVALS=false`;
+3. reconstruir/recriar `marketing-ops` e `app-frontend`;
+4. se houver regressão conversacional, voltar também `app-bridge` e
+   `hermes-api` para a imagem/commit anterior;
+5. confirmar `/ready`, `/health`, logs e campanhas das Fases 1–4.
 
-## Cenários
+Não executar `docker compose down`, não remover volumes e não apagar requests,
+decisões, action packages, auditoria ou migrations. O schema é aditivo e a
+aplicação anterior ignora os objetos novos.
 
-### Falha de frontend
+## Por cenário
 
-Desabilitar rota/flag da Fase 5 e reimplantar imagem anterior. O backend pode
-continuar sem exposição visual.
+- **Frontend:** flag pública off + imagem anterior do `app-frontend`.
+- **API/domínio:** flag backend off + imagem anterior do `marketing-ops`.
+- **MCP/Hermes:** retirar a skill/actions por rollback de `hermes-api` e
+  `app-bridge`; REST permanece isolado.
+- **Schema:** bloquear escrita, preservar dados e aplicar forward-fix. Restore
+  completo somente com backup validado e autorização explícita.
 
-### Falha de API/domínio
+## Verificação
 
-Desabilitar submissão e decisão, manter leitura diagnóstica autorizada e
-reimplantar `marketing-ops` anterior. Pacotes não são executáveis na Fase 5.
-
-### Falha de MCP/Hermes
-
-Retirar actions de submissão do catálogo/flag e reimplantar runtime anterior.
-REST manual permanece separado.
-
-### Falha de schema
-
-Bloquear tráfego de escrita. Preferir forward-fix aditivo. Restore completo
-somente se o impacto justificar perda do delta e houver autorização.
-
-## Verificação pós-rollback
-
-- serviços healthy;
-- campanhas, itens, conteúdo e chat das Fases 1–4 preservados;
+- serviços healthy e readiness verde;
+- Fases 1–4 preservadas;
+- capability/rota da Fase 5 invisível com flags off;
 - nenhuma execução externa;
-- flags efetivas confirmadas;
-- logs e correlation IDs registrados;
-- incidente e decisão documentados.
+- correlation IDs e incidente registrados.

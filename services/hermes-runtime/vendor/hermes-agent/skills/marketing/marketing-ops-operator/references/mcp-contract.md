@@ -22,7 +22,13 @@ types inside `marketing_ops_prepare_plan_v1`:
 
 `campaign.create_draft`, `campaign.update`, `campaign_item.create`,
 `campaign_item.reschedule`, `content.create_draft`,
-`content.version_create`, `artifact.link_existing`, `campaign.note_add`.
+`content.version_create`, `artifact.link_existing`, `campaign.note_add`,
+`approval.submit_editorial`, `approval.submit_operational`.
+
+There is no decision action. Never invent or send `approval.approve`,
+`approval.reject`, `approval.decide`, a request status mutation, or any alias.
+The plan confirmation only authorizes submission of the request; it is not the
+business approval. Only a human using the authenticated UI can decide.
 
 ## Content reads and contextual capabilities
 
@@ -151,6 +157,49 @@ version value to the user.
 - `artifact.link_existing` links only an authorized existing artifact to an
   item.
 - `campaign.note_add` appends a bounded note; it does not replace history.
+
+### Approval submissions
+
+Editorial submission points to an exact frozen content version and never
+copies the body into the action:
+
+```json
+{
+  "actions": [{
+    "type": "approval.submit_editorial",
+    "campaign_id": "00000000-0000-4000-8000-000000000000",
+    "asset_id": "00000000-0000-4000-8000-000000000000",
+    "version_number": 2,
+    "reason": "Revisao institucional",
+    "expires_at": "2026-08-10T13:00:00.000Z"
+  }]
+}
+```
+
+Operational submission freezes the complete action package. It authorizes no
+provider call and executes no external effect:
+
+```json
+{
+  "actions": [{
+    "type": "approval.submit_operational",
+    "campaign_id": "00000000-0000-4000-8000-000000000000",
+    "reason": "Autorizar envio",
+    "expires_at": "2026-08-10T13:00:00.000Z",
+    "action_package": {
+      "actionType": "campaign.channel_dispatch",
+      "channel": "email",
+      "audienceSnapshot": { "segment": "alumni" },
+      "scheduledFor": null,
+      "timeZone": "America/Sao_Paulo",
+      "configuration": { "mode": "sandbox" },
+      "successCriteria": null,
+      "riskSummary": null,
+      "payload": { "template": "launch" }
+    }
+  }]
+}
+```
 
 For a new content asset plus its initial version, first read the target item
 and use this exact wire shape in one plan:

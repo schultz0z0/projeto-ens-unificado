@@ -13,6 +13,7 @@ import {
 } from '../domain/itemArtifacts.js';
 import type { ArtifactClient } from '../integrations/artifactClient.js';
 import type { MarketingOpsPlanAction } from './contracts.js';
+import { submitEditorialApproval, submitOperationalApproval } from '../domain/approvals.js';
 import type { MarketingOpsPlan } from './token.js';
 import {
   deepLinkForCompletedAction,
@@ -32,6 +33,8 @@ export interface PlanExecutorDependencies {
   createContentVersion: typeof createContentVersion;
   linkExistingItemArtifact: typeof linkExistingItemArtifact;
   appendCampaignNote: typeof appendCampaignNote;
+  submitEditorialApproval: typeof submitEditorialApproval;
+  submitOperationalApproval: typeof submitOperationalApproval;
 }
 
 const defaultDependencies: PlanExecutorDependencies = {
@@ -42,7 +45,9 @@ const defaultDependencies: PlanExecutorDependencies = {
   createContentAsset,
   createContentVersion,
   linkExistingItemArtifact,
-  appendCampaignNote
+  appendCampaignNote,
+  submitEditorialApproval,
+  submitOperationalApproval
 };
 
 type ActionType = MarketingOpsPlanAction['type'];
@@ -219,7 +224,7 @@ export async function executeMarketingOpsPlan(
           },
           idempotencyKey
         );
-      } else {
+      } else if (action.type === 'campaign.note_add') {
         resource = await dependencies.appendCampaignNote(
           actionContext,
           action.campaign_id,
@@ -227,6 +232,25 @@ export async function executeMarketingOpsPlan(
           action.note,
           idempotencyKey
         );
+      } else if (action.type === 'approval.submit_editorial') {
+        resource = await dependencies.submitEditorialApproval(actionContext, {
+          campaignId: action.campaign_id,
+          assetId: action.asset_id,
+          versionNumber: action.version_number,
+          reason: action.reason,
+          expiresAt: action.expires_at,
+          idempotencyKey
+        });
+      } else if (action.type === 'approval.submit_operational') {
+        resource = await dependencies.submitOperationalApproval(actionContext, {
+          campaignId: action.campaign_id,
+          actionPackage: action.action_package,
+          reason: action.reason,
+          expiresAt: action.expires_at,
+          idempotencyKey
+        });
+      } else {
+        throw appError('plan_invalid', 400, 'Unsupported plan action');
       }
       completed.push({
         action_index: index,

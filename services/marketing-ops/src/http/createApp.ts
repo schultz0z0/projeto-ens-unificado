@@ -115,6 +115,14 @@ interface ProductionLocals {
   notificationsProduced?: number;
 }
 
+interface ApprovalLocals {
+  approvalTransition?: {
+    kind: 'editorial' | 'operational';
+    status: 'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled' | 'expired';
+    risk: 'low' | 'medium' | 'high' | 'critical';
+  };
+}
+
 function itemConflictOperation(route: string): ItemConflictOperation | null {
   if (route === '/v1/campaign-items/batch') return 'batch';
   if (route.endsWith('/transition')) return 'transition';
@@ -143,7 +151,9 @@ export function createApp(deps: AppDependencies) {
   app.use((request: Request, response: Response, next: NextFunction) => {
     const startedAt = process.hrtime.bigint();
     const supplied = request.header('x-correlation-id')?.trim();
-    request.correlationId = supplied && supplied.length <= 128 ? supplied : randomUUID();
+    request.correlationId = supplied && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(supplied)
+      ? supplied
+      : randomUUID();
     response.setHeader('X-Correlation-Id', request.correlationId);
     response.on('finish', () => {
       const route = routePattern(request);
@@ -189,7 +199,7 @@ export function createApp(deps: AppDependencies) {
       if (route === '/v1/references/courses') {
         deps.metrics.increment('marketing_ops_reference_lookup_total', { result: referenceResult(status) });
       }
-      const productionLocals = response.locals as ProductionLocals;
+      const productionLocals = response.locals as ProductionLocals & ApprovalLocals;
       if (route === '/v1/campaign-items' && request.method === 'GET') {
         const view = productionLocals.productionScheduleView ?? 'list';
         const result = operationStatus(status);
@@ -221,6 +231,12 @@ export function createApp(deps: AppDependencies) {
           {},
           productionLocals.notificationsProduced
         );
+      }
+      if (productionLocals.approvalTransition) {
+        deps.metrics.increment('marketing_ops_approval_transitions_total', {
+          ...productionLocals.approvalTransition,
+          result: operationStatus(status)
+        });
       }
       if (status === 409) {
         const itemOperation = itemConflictOperation(route);

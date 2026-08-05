@@ -10,6 +10,33 @@ const assetId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const artifactId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 describe('phase 4 plan contracts', () => {
+  it('accepts submission-only approval actions and rejects every decision action', () => {
+    const actions = marketingOpsPlanActionsSchema.parse([
+      {
+        type: 'approval.submit_editorial', campaign_id: campaignId,
+        asset_id: assetId, version_number: 2, reason: 'Revisão',
+        expires_at: '2026-08-10T13:00:00.000Z'
+      },
+      {
+        type: 'approval.submit_operational', campaign_id: campaignId,
+        reason: 'Autorizar envio', expires_at: '2026-08-10T13:00:00.000Z',
+        action_package: {
+          actionType: 'campaign.channel_dispatch', channel: 'email',
+          audienceSnapshot: {}, scheduledFor: null, timeZone: 'UTC',
+          configuration: {}, payload: {}
+        }
+      }
+    ]);
+    expect(actions.map((action) => action.type)).toEqual([
+      'approval.submit_editorial', 'approval.submit_operational'
+    ]);
+    expect(requiredScopesForPlan(actions)).toEqual(['approval:submit']);
+    for (const type of ['approval.approve', 'approval.reject', 'approval.decide']) {
+      expect(marketingOpsPlanActionsSchema.safeParse([{ type, request_id: campaignId }]).success)
+        .toBe(false);
+    }
+  });
+
   it('accepts the frozen action catalog with strict normalized fields', () => {
     const actions = marketingOpsPlanActionsSchema.parse([
       { type: 'campaign.create_draft', ref: 'new-campaign', name: 'Campanha ENS' },

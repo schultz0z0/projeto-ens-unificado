@@ -391,21 +391,18 @@ export interface MarketingOpsItemArtifactRemoval {
   itemVersion: number;
 }
 
-export type MarketingOpsNotificationType = 'assignment' | 'due_soon' | 'overdue';
+export type MarketingOpsNotificationType =
+  | 'assignment' | 'due_soon' | 'overdue' | 'approval_review' | 'approval_status';
 
 export interface MarketingOpsInAppNotification {
   id: string;
   eventKey: string;
   notificationType: MarketingOpsNotificationType;
   campaignId: string;
-  itemId: string;
+  itemId: string | null;
+  approvalRequestId: string | null;
   label: string;
-  payload: {
-    campaignId: string;
-    itemId: string;
-    dueAt: string | null;
-    priority: MarketingOpsItemPriority;
-  };
+  payload: Record<string, unknown> & { campaignId: string };
   occurredAt: string;
   readAt: string | null;
   createdAt: string;
@@ -449,4 +446,115 @@ export interface MarketingOpsProductionBatchResult {
   results: MarketingOpsProductionBatchItemResult[];
   succeeded: number;
   failed: number;
+}
+
+export type MarketingOpsApprovalKind = 'editorial' | 'operational';
+export type MarketingOpsApprovalStatus =
+  | 'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled' | 'expired';
+export type MarketingOpsApprovalRisk = 'low' | 'medium' | 'high' | 'critical';
+
+export interface MarketingOpsCanonicalActionPackageInput {
+  actionType: string;
+  channel: string;
+  audienceSnapshot: Record<string, unknown>;
+  scheduledFor?: string | null;
+  timeZone: string;
+  configuration: Record<string, unknown>;
+  successCriteria?: string | null;
+  riskSummary?: string | null;
+  payload: Record<string, unknown>;
+}
+
+export interface MarketingOpsActionPackage extends Required<MarketingOpsCanonicalActionPackageInput> {
+  id: string;
+  campaignId: string;
+  payloadHash: string;
+  status: 'pending_approval' | 'authorized' | 'invalidated' | 'expired';
+  authorizedByRequestId: string | null;
+  authorizedAt: string | null;
+  expiresAt: string;
+  invalidatedAt: string | null;
+  invalidationReason: string | null;
+  version: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingOpsApprovalDecision {
+  id: string;
+  requestId: string;
+  decision: Exclude<MarketingOpsApprovalStatus, 'pending'>;
+  decidedBy: string | null;
+  deciderRole: MarketingOpsTenantRole | null;
+  origin: 'human' | 'system';
+  comment: string | null;
+  eligibilitySnapshot: Record<string, unknown>;
+  correlationId: string;
+  createdAt: string;
+}
+
+export interface MarketingOpsApprovalRequest {
+  id: string;
+  campaignId: string;
+  kind: MarketingOpsApprovalKind;
+  status: MarketingOpsApprovalStatus;
+  requestedBy: string;
+  reason: string;
+  riskLevel: MarketingOpsApprovalRisk;
+  contentAssetId: string | null;
+  contentVersionNumber: number | null;
+  actionPackageId: string | null;
+  targetHash: string;
+  supersedesRequestId: string | null;
+  expiresAt: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  decision: MarketingOpsApprovalDecision | null;
+  actionPackage: MarketingOpsActionPackage | null;
+  editorialTarget?: {
+    assetKind: string;
+    title: string;
+    body: string | null;
+    metadata: Record<string, unknown>;
+    frozenAt: string;
+  } | null;
+  capabilities: { decide: boolean; cancel: boolean };
+}
+
+export interface MarketingOpsApprovalFilters {
+  status?: MarketingOpsApprovalStatus;
+  kind?: MarketingOpsApprovalKind;
+  riskLevel?: MarketingOpsApprovalRisk;
+  campaignId?: string;
+  requestedBy?: string;
+  expiresBefore?: string;
+  expiresAfter?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+interface MarketingOpsApprovalSubmissionBase {
+  campaignId: string;
+  reason: string;
+  riskLevel?: MarketingOpsApprovalRisk;
+  expiresAt: string;
+  supersedesRequestId?: string;
+}
+
+export interface MarketingOpsEditorialApprovalSubmission
+  extends MarketingOpsApprovalSubmissionBase {
+  assetId: string;
+  versionNumber: number;
+}
+
+export interface MarketingOpsOperationalApprovalSubmission
+  extends MarketingOpsApprovalSubmissionBase {
+  actionPackage: MarketingOpsCanonicalActionPackageInput;
+}
+
+export interface MarketingOpsApprovalDecisionInput {
+  decision: 'approved' | 'rejected' | 'changes_requested';
+  comment?: string;
 }

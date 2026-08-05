@@ -12,7 +12,7 @@ aprovação de negócio com o modal técnico do Hermes. A fase congela o objeto
 avaliado, revalida elegibilidade no instante da decisão e produz um pacote
 operacional determinístico para a Fase 6.
 
-Não entram nesta fase: envio/publicação, worker, provedor externo, quórum,
+Não entram nesta fase: envio/publicação, worker de execução externa, provedor externo, quórum,
 workflow genérico, aprovação por IA, múltiplos canais ou alteração de papel.
 
 ## 2. Baseline herdado
@@ -106,7 +106,8 @@ snapshot não mudam.
 Ledger append-only:
 
 - `id`, `tenant_id`, `request_id`;
-- `decision`, `decided_by`, `decider_role`;
+- `decision`, `decision_origin`, `decided_by`, `decider_role`; decisões humanas
+  exigem ator/papel e expiração automática usa origem `system` sem atribuição humana;
 - comentário redigido/limitado, `correlation_id`, `created_at`;
 - contexto de elegibilidade suficiente para auditoria, sem copiar secrets ou
   conteúdo integral.
@@ -149,8 +150,10 @@ pending ──► approved
 
 Todos os estados finais são terminais. Ajuste não reabre a solicitação: uma
 nova versão/pacote cria nova solicitação ligada por `supersedes_request_id`.
-Expiração é aplicada de modo transacional na leitura/decisão e por projeção
-reexecutável para fila/notificações.
+Expiração é aplicada por worker interno reexecutável, em lotes limitados com
+`SKIP LOCKED` e identidade explícita de sistema. Leituras permanecem sem efeito
+colateral; uma tentativa de decisão vencida dispara primeiro a mesma transição
+durável em transação separada e depois retorna conflito.
 
 ## 7. Elegibilidade e segregação
 
@@ -257,7 +260,8 @@ externos não entram na fase.
 - nenhum HTML de conteúdo é renderizado sem sanitização;
 - audience/payload sensível é minimizado na UI, logs e auditoria;
 - links de artifact seguem ownership existente;
-- nenhuma decisão chama worker ou provedor;
+- nenhuma decisão chama worker/provedor de execução externa; somente a transição
+  interna de expiração pode ser consolidada antes de recusar uma decisão vencida;
 - tenant, papel e solicitante nunca vêm de campo confiado do cliente.
 
 ## 14. Observabilidade

@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `approved` para preparação técnica
+- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `ready_for_vps_deploy`, aguardando deploy e homologação manual
 - **Atualização:** 5 de agosto de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -299,9 +299,12 @@ de julho de 2026.
 
 ### Fase 5: Governança e Aprovações
 
-**Estado:** `approved` — PRD e desenho-base aprovados em 5 de agosto de 2026;
-pacote técnico e plano de implementação em preparação. A implementação ainda
-não foi iniciada.
+**Estado:** `ready_for_vps_deploy` — implementação e validação local das Tasks 1–8
+concluídas. O Supabase do app já recebeu sete migrations e passou nos
+invariantes remotos, incluindo o hardening do ledger terminal, a barreira de
+escrita, a otimização da fila sob RLS e a expiração por worker de sistema em
+lotes limitados. A Task 9 aguarda o deploy das imagens na
+VPS e a homologação manual final do assistente no navegador.
 
 **Objetivo:** criar controle editorial e institucional sem bloquear a criação.
 

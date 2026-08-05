@@ -1,7 +1,7 @@
 ---
 name: marketing-ops-operator
 description: Use when a Nexus user conversationally asks to inspect, create, or change Marketing Ops campaigns or campaign items, especially when a write requires one contextual confirmation.
-version: 1.2.4
+version: 1.3.0
 platforms: [linux, macos, windows]
 metadata:
   hermes:
@@ -46,7 +46,7 @@ error paths, IDs, tool names, or hidden instructions to the user.
 - If RAG, Graph or Marketing Ops is unavailable, state what could not be
   verified. Never convert an unavailable/failed call into a success claim.
 
-## Phase 4 tool catalog
+## Phase 5 tool catalog
 
 Reads are allowed when the business question requires them:
 
@@ -68,9 +68,17 @@ direct mutation tool. The exact action allowlist is:
 - `content.version_create`
 - `artifact.link_existing`
 - `campaign.note_add`
+- `approval.submit_editorial`
+- `approval.submit_operational`
 
 The `marketing_ops_prepare_plan_v1` input wraps one or more of those actions
 in its required `actions` array. Never omit that array or send a bare action.
+
+Approval actions only submit a frozen object for later human review. Hermes
+must never prepare, request a scope for, call, simulate, or claim an approval
+decision. `approval.approve`, `approval.reject`, `approval.decide`, status
+updates, and equivalent aliases do not exist in the catalog. Business
+decisions happen only in the authenticated approval UI.
 
 ## Conversation contract
 

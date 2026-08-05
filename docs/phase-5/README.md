@@ -6,12 +6,12 @@ estado de implementação, deploy ou homologação.
 
 ## Status
 
-- **Fase:** `design_approved`
+- **Fase:** `ready_for_vps_deploy`
 - **Snapshot:** 2026-08-05
 - **Branch canônica e única:** `main`
 - **Dependências:** Fases 3 e 4 `production_validated`
-- **Implementação:** não iniciada
-- **Gate local:** pendente
+- **Implementação:** Tasks 1–8 concluídas, endurecidas e validadas; Task 9 aguarda deploy
+- **Gate local:** aprovado com substituição remota documentada para Postgres/pgTAP
 - **Homologação VPS:** pendente
 - **PRD:** [phase-5-governanca-aprovacoes.md](../prds/phase-5-governanca-aprovacoes.md)
 - **Design:** [design.md](design.md)
@@ -40,23 +40,24 @@ estado de implementação, deploy ou homologação.
 - alterar versão ou payload cria novo ciclo, sem reaproveitar decisão anterior;
 - Hermes pode preparar e submeter após confirmação, mas não decide;
 - o modal técnico do Hermes não é reutilizado;
-- nenhum endpoint da Fase 5 executa provedor, worker ou efeito externo.
+- nenhum endpoint da Fase 5 executa provedor, worker de ação ou efeito externo;
+  existe apenas o worker interno de ciclo de vida para expiração.
 
 ## Pacote documental
 
 | Documento | Estado inicial |
 |---|---|
 | [Design técnico](design.md) | `approved` |
-| [Plano de implementação](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md) | `planned` |
-| [Progresso](implementation-progress.md) | `not_started` |
-| [Rastreabilidade](requirements-traceability.md) | `seeded` |
-| [Riscos](risk-register.md) | `seeded` |
-| [Validação local](local-validation.md) | `not_started` |
-| [Deploy Supabase](supabase-deployment.md) | `not_started` |
-| [Runbook](runbook.md) | `draft` |
-| [Rollback](rollback.md) | `draft` |
-| [Validação VPS](vps-validation.md) | `not_started` |
-| [Handoff](continuation-handoff.md) | `phase_5_planned` |
+| [Plano de implementação](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md) | `executed_locally` |
+| [Progresso](implementation-progress.md) | `ready_for_vps_deploy` |
+| [Rastreabilidade](requirements-traceability.md) | `implemented_local_validated` |
+| [Riscos](risk-register.md) | `mitigated_locally_pending_production_validation` |
+| [Validação local](local-validation.md) | `passed_with_documented_environment_substitution` |
+| [Deploy Supabase](supabase-deployment.md) | `deployed_and_verified` |
+| [Runbook](runbook.md) | `ready_for_execution` |
+| [Rollback](rollback.md) | `ready` |
+| [Validação VPS](vps-validation.md) | `ready_for_deploy` |
+| [Handoff](continuation-handoff.md) | `ready_for_vps_deploy` |
 
 ## Responsabilidade pela validação
 

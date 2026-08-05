@@ -44,7 +44,12 @@ import type {
   MarketingOpsProductionBatchResult,
   MarketingOpsTimelineEvent,
   MarketingOpsTimelineFilters,
-  MarketingOpsTransitionTarget
+  MarketingOpsTransitionTarget,
+  MarketingOpsApprovalDecisionInput,
+  MarketingOpsApprovalFilters,
+  MarketingOpsApprovalRequest,
+  MarketingOpsEditorialApprovalSubmission,
+  MarketingOpsOperationalApprovalSubmission
 } from './types';
 
 function conflictVersion(details: unknown): number | null {
@@ -471,7 +476,53 @@ export function createMarketingOpsClient(options: MarketingOpsClientOptions) {
     ) => request<MarketingOpsMaterialAccessLink>(
       `${productionItemPath(itemId)}/artifacts/${encodeURIComponent(artifactLinkId)}/access-link`,
       { method: 'POST' }
-    )
+    ),
+
+    listApprovalRequests: (filters: MarketingOpsApprovalFilters = {}) =>
+      request<MarketingOpsApprovalRequest[]>(withQuery('/v1/approval-requests', filters)),
+
+    getApprovalRequest: (requestId: string) =>
+      request<MarketingOpsApprovalRequest>(
+        `/v1/approval-requests/${encodeURIComponent(requestId)}`
+      ),
+
+    submitEditorialApproval: (
+      input: MarketingOpsEditorialApprovalSubmission,
+      idempotencyKey: string
+    ) => request<MarketingOpsApprovalRequest>('/v1/approval-requests/editorial', {
+      method: 'POST',
+      headers: mutationHeaders(idempotencyKey),
+      body: JSON.stringify(input)
+    }),
+
+    submitOperationalApproval: (
+      input: MarketingOpsOperationalApprovalSubmission,
+      idempotencyKey: string
+    ) => request<MarketingOpsApprovalRequest>('/v1/approval-requests/operational', {
+      method: 'POST',
+      headers: mutationHeaders(idempotencyKey),
+      body: JSON.stringify(input)
+    }),
+
+    decideApproval: (
+      requestId: string,
+      version: number,
+      input: MarketingOpsApprovalDecisionInput,
+      idempotencyKey: string
+    ) => request<MarketingOpsApprovalRequest>(
+      `/v1/approval-requests/${encodeURIComponent(requestId)}/decisions`,
+      {
+        method: 'POST',
+        headers: mutationHeaders(idempotencyKey, version),
+        body: JSON.stringify(input)
+      }
+    ),
+
+    cancelApproval: (requestId: string, version: number, idempotencyKey: string) =>
+      request<MarketingOpsApprovalRequest>(
+        `/v1/approval-requests/${encodeURIComponent(requestId)}/cancel`,
+        { method: 'POST', headers: mutationHeaders(idempotencyKey, version) }
+      )
   };
 }
 

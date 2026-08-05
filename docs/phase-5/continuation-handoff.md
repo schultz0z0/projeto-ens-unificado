@@ -1,35 +1,38 @@
 # Handoff de continuação — Fase 5
 
-- **Estado:** `phase_5_planned`
+- **Estado:** `ready_for_vps_deploy`
 - **Snapshot:** 2026-08-05
-- **Implementação:** não iniciada
-- **Dependências:** Fases 3–4 `production_validated`
+- **Implementação:** Tasks 1–8 concluídas e validadas
+- **Supabase:** implantado e verificado
+- **Pendente:** deploy das imagens na VPS e homologação manual pelo assistente
 
 ## Ponto exato de continuação
 
-O PRD e o design técnico estão aprovados. O próximo passo é executar o plano
-task a task, começando por contratos/migration e testes RED do banco. Nenhuma
-migration, rota, action MCP ou componente da Fase 5 foi implementado neste
-snapshot.
+Publicar o commit final em `main`, seguir `runbook.md` e informar ao assistente
+a URL/credenciais de homologação já autorizadas. Não reaplicar migrations: as
+sete migrations da Fase 5 já constam no projeto `murxwqdevpwjtnnuzzxi`.
 
-## Ordem de leitura
+## Flags obrigatórias
 
-1. [README](README.md);
-2. [PRD](../prds/phase-5-governanca-aprovacoes.md);
-3. [design](design.md);
-4. [plano de implementação](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md);
-5. [rastreabilidade](requirements-traceability.md);
-6. [riscos](risk-register.md);
-7. [validação local](local-validation.md).
+```text
+NEXUS_MARKETING_OPS_FEATURE_APPROVALS=true
+NEXUS_MARKETING_OPS_FRONTEND_APPROVALS=true
+NEXUS_MARKETING_OPS_APPROVAL_EXPIRY_INTERVAL_MS=30000
+NEXUS_MARKETING_OPS_APPROVAL_EXPIRY_BATCH_SIZE=100
+```
 
-## Regras permanentes
+As demais flags de Marketing Ops das Fases anteriores continuam `true`. A flag
+do frontend é build-time e exige rebuild de `app-frontend`.
 
-- manter approval técnico, editorial e operacional separados;
-- não expor decisão ao Hermes;
-- não criar worker/provedor na Fase 5;
-- não alterar versão/payload aprovado;
-- não permitir autoaprovação operacional;
-- atualizar progresso/rastreabilidade/evidência junto de cada task;
-- testes e validações de task são executados pelo assistente neste workspace;
-- pós-deploy, homologação final é executada pelo assistente no navegador;
-- somente o gate VPS permite marcar a fase como concluída.
+## Serviços afetados
+
+- `marketing-ops`: domínio, REST, MCP, métricas e dependência atualizada;
+- `app-frontend`: fila/detalhe, SDK, notificações e flag build-time;
+- `app-bridge`: scope técnico `approval:submit`;
+- `hermes-api`: skill Marketing Ops 1.3.0.
+
+## Gate seguinte
+
+Executar exatamente `vps-validation.md`. Somente o assistente marca
+`production_validated` após testar manualmente o site e conferir as evidências
+no Supabase/VPS.

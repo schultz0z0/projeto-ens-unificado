@@ -12,12 +12,15 @@ interface InAppNotificationsProps {
   canMarkRead?: boolean;
   createIdempotencyKey?: () => string;
   onOpenItem?: (itemId: string) => void;
+  onOpenApproval?: (requestId: string) => void;
 }
 
 const typeLabel: Record<MarketingOpsInAppNotification['notificationType'], string> = {
   assignment: 'Atribuição',
   due_soon: 'Prazo próximo',
-  overdue: 'Atraso'
+  overdue: 'Atraso',
+  approval_review: 'Aprovação pendente',
+  approval_status: 'Atualização de aprovação'
 };
 
 function defaultIdempotencyKey(): string {
@@ -37,7 +40,8 @@ export function InAppNotifications({
   client = marketingOpsClient,
   canMarkRead = true,
   createIdempotencyKey = defaultIdempotencyKey,
-  onOpenItem
+  onOpenItem,
+  onOpenApproval
 }: InAppNotificationsProps) {
   const queryClient = useQueryClient();
   const filters = { limit: 25 };
@@ -62,7 +66,8 @@ export function InAppNotifications({
     if (canMarkRead && notification.readAt === null && !markRead.isPending) {
       markRead.mutate([notification.id]);
     }
-    onOpenItem?.(notification.itemId);
+    if (notification.approvalRequestId) onOpenApproval?.(notification.approvalRequestId);
+    else if (notification.itemId) onOpenItem?.(notification.itemId);
   };
 
   return (

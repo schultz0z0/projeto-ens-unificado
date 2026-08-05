@@ -13,6 +13,7 @@ export type Permission =
   | 'content.read' | 'content.manage'
   | 'item_artifact.read' | 'item_artifact.manage'
   | 'notification.read' | 'notification.update'
+  | 'approval.submit' | 'approval.read' | 'approval.decide' | 'approval.expire'
   | 'item.batch'
   | 'audit.read' | 'membership.manage';
 
@@ -42,6 +43,10 @@ const matrix: Record<Permission, readonly ActorRole[]> = {
   'item_artifact.manage': ['member', 'manager', 'admin'],
   'notification.read': ['member', 'manager', 'admin'],
   'notification.update': ['member', 'manager', 'admin'],
+  'approval.submit': ['member', 'manager', 'admin'],
+  'approval.read': ['member', 'manager', 'admin'],
+  'approval.decide': ['manager', 'admin'],
+  'approval.expire': ['manager', 'admin'],
   'item.batch': ['manager', 'admin'],
   'audit.read': ['manager', 'admin'],
   'membership.manage': ['admin']

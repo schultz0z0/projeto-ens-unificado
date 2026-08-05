@@ -231,6 +231,21 @@ export const Sidebar = ({ activeTab, onTabChange, isMobile, onMobileClose }: Sid
             >
               <CalendarRange className="w-5 h-5" />
             </Button>
+            {marketingOps.approvals ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "w-12 h-12 rounded-full glass-surface shadow-glass hover:scale-105 transition-transform",
+                  location.pathname.startsWith("/marketing-ops/approvals") && "bg-brand-primary/20 text-brand-primary"
+                )}
+                onClick={() => { navigate("/marketing-ops/approvals"); onMobileClose?.(); }}
+                aria-label="Abrir aprovações de negócio"
+                title="Aprovações"
+              >
+                <ClipboardCheck className="w-5 h-5" />
+              </Button>
+            ) : null}
           </>
         ) : null}
 

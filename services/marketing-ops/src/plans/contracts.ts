@@ -142,6 +142,35 @@ const addCampaignNoteAction = z.object({
   note: z.string().trim().min(1).max(2_000)
 }).strict();
 
+const canonicalActionPackage = z.object({
+  actionType: z.string().trim().min(1).max(100),
+  channel: z.string().trim().min(1).max(64),
+  audienceSnapshot: z.record(z.string(), z.unknown()),
+  scheduledFor: instant.nullable().default(null),
+  timeZone: z.string().trim().min(1).max(100),
+  configuration: z.record(z.string(), z.unknown()),
+  successCriteria: z.string().trim().max(2000).nullable().default(null),
+  riskSummary: z.string().trim().max(2000).nullable().default(null),
+  payload: z.record(z.string(), z.unknown())
+}).strict();
+
+const submitEditorialApprovalAction = z.object({
+  type: z.literal('approval.submit_editorial'),
+  campaign_id: uuid,
+  asset_id: uuid,
+  version_number: positiveInteger,
+  reason: z.string().trim().min(1).max(4000),
+  expires_at: instant
+}).strict();
+
+const submitOperationalApprovalAction = z.object({
+  type: z.literal('approval.submit_operational'),
+  campaign_id: uuid,
+  action_package: canonicalActionPackage,
+  reason: z.string().trim().min(1).max(4000),
+  expires_at: instant
+}).strict();
+
 export const marketingOpsPlanActionSchema = z.discriminatedUnion('type', [
   createCampaignAction,
   updateCampaignAction,
@@ -150,7 +179,9 @@ export const marketingOpsPlanActionSchema = z.discriminatedUnion('type', [
   createContentAction,
   createContentVersionAction,
   linkArtifactAction,
-  addCampaignNoteAction
+  addCampaignNoteAction,
+  submitEditorialApprovalAction,
+  submitOperationalApprovalAction
 ]);
 
 export const marketingOpsPlanActionsSchema = z.array(marketingOpsPlanActionSchema)
@@ -186,7 +217,8 @@ export type MarketingOpsPlanAction = z.infer<typeof marketingOpsPlanActionSchema
 export function requiredScopesForPlan(actions: MarketingOpsPlanAction[]): string[] {
   const scopes = new Set<string>();
   for (const action of actions) {
-    if (action.type.startsWith('campaign_item.')) scopes.add('item:write');
+    if (action.type.startsWith('approval.')) scopes.add('approval:submit');
+    else if (action.type.startsWith('campaign_item.')) scopes.add('item:write');
     else if (action.type.startsWith('content.')) scopes.add('content:write');
     else if (action.type.startsWith('artifact.')) scopes.add('artifact:write');
     else scopes.add('campaign:write');

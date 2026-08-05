@@ -29,6 +29,7 @@ export default defineConfig({
       VITE_MARKETING_OPS_ENABLED: 'true',
       VITE_MARKETING_OPS_READ: 'true',
       VITE_MARKETING_OPS_WRITE: 'true',
+      VITE_MARKETING_OPS_APPROVALS: 'true',
       VITE_CHAT_STREAM_FILE_HOSTS: '127.0.0.1,localhost',
     },
   } : undefined,

@@ -10,13 +10,16 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "vitest run --exclude src/campaignList.performance.test.ts --exclude src/schedule.performance.test.ts",
+    "test": "vitest run --exclude src/campaignList.performance.test.ts --exclude src/schedule.performance.test.ts --exclude src/approvals.performance.test.ts",
     "test:campaign-list-performance": "vitest run src/campaignList.performance.test.ts --pool=forks --maxWorkers=1",
     "test:schedule-performance": "vitest run src/schedule.performance.test.ts --pool=forks --maxWorkers=1",
+    "test:approvals-performance": "vitest run src/approvals.performance.test.ts --pool=forks --maxWorkers=1",
+    "test:approvals-concurrency": "node scripts/test_approval_decision_concurrency.mjs",
+    "test:approvals-expiry-worker": "node scripts/test_approval_expiry_worker.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "express": "4.22.2",
     "jose": "6.2.3",
     "pg": "8.22.0",

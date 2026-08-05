@@ -8,7 +8,9 @@ import type { CommandContext } from './context.js';
 import { writeDomainEvent } from './events.js';
 import { executeIdempotentCommand } from './idempotency.js';
 
-export const NotificationTypeSchema = z.enum(['assignment', 'due_soon', 'overdue']);
+export const NotificationTypeSchema = z.enum([
+  'assignment', 'due_soon', 'overdue', 'approval_review', 'approval_status'
+]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 
 export interface InAppNotification {
@@ -16,14 +18,10 @@ export interface InAppNotification {
   eventKey: string;
   notificationType: NotificationType;
   campaignId: string;
-  itemId: string;
+  itemId: string | null;
+  approvalRequestId: string | null;
   label: string;
-  payload: {
-    campaignId: string;
-    itemId: string;
-    dueAt: string | null;
-    priority: string;
-  };
+  payload: Record<string, unknown> & { campaignId: string };
   occurredAt: string;
   readAt: string | null;
   createdAt: string;
@@ -39,7 +37,8 @@ interface NotificationRow {
   event_key: string;
   notification_type: NotificationType;
   campaign_id: string;
-  item_id: string;
+  item_id: string | null;
+  approval_request_id: string | null;
   label: string;
   payload: InAppNotification['payload'];
   occurred_at: Date | string;
@@ -84,6 +83,7 @@ function mapNotification(row: NotificationRow): InAppNotification {
     notificationType: row.notification_type,
     campaignId: row.campaign_id,
     itemId: row.item_id,
+    approvalRequestId: row.approval_request_id,
     label: row.label,
     payload: row.payload,
     occurredAt: iso(row.occurred_at),

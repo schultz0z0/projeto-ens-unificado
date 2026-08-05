@@ -29,7 +29,7 @@ Uma fase só entra em implementação quando:
 | 2 | [Workspace Operacional MVP](phase-2-workspace-operacional-mvp.md) | Primeiro release utilizável | Fase 1 | `completed` |
 | 3 | [Calendário e Esteira de Produção](phase-3-calendario-esteira-producao.md) | Operação diária planejada | Fase 2 | `completed` |
 | 4 | [Hermes Campaign Operator](phase-4-hermes-campaign-operator.md) | Hermes opera objetos reais | Fases 1–3 | `completed` |
-| 5 | [Governança e Aprovações](phase-5-governanca-aprovacoes.md) | Decisões editoriais e sensíveis rastreáveis | Fases 3–4 | `approved` |
+| 5 | [Governança e Aprovações](phase-5-governanca-aprovacoes.md) | Decisões editoriais e sensíveis rastreáveis | Fases 3–4 | `ready_for_production` |
 | 6 | [Execução Assistida Piloto](phase-6-execucao-assistida-piloto.md) | Um canal real executado com controle | Fase 5 | `draft` |
 | 7 | [Performance, Diagnóstico e Aprendizado](phase-7-performance-diagnostico-aprendizado.md) | Resultado convertido em decisão | Fase 6 | `draft` |
 | 8 | [Hermes Proativo e Escala Operacional](phase-8-hermes-proativo-escala.md) | Alertas e recomendações controlados | Fase 7 | `draft` |

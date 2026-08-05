@@ -189,6 +189,7 @@ export default function ProductionListPage({
                 canMarkRead={canWrite}
                 createIdempotencyKey={createIdempotencyKey}
                 onOpenItem={openItem}
+                onOpenApproval={(requestId) => navigate(`/marketing-ops/approvals/${requestId}`)}
               />
               {canBatch ? (
                 <Button

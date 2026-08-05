@@ -24,6 +24,9 @@ Rules:
 - If an exact label was not returned or multiple exact candidates remain, do
   not show a plan preview. Ask for the missing business context.
 - Do not promise a deep link before execution returns one.
+- For approval submission, state the exact version or operational package
+  summary and explicitly say that this confirmation submits for human review;
+  it does not approve or execute the underlying action.
 - Keep every planned action visible; a vague “confirmar?” is insufficient for
   multiple actions.
 - If the user changes any detail, do not execute this preview. Prepare and

@@ -4,11 +4,11 @@ import type { MarketingOpsPlanAction } from './contracts.js';
 const uuid = z.string().uuid();
 
 export interface MarketingOpsDeepLink {
-  resource_type: 'campaign' | 'campaign_item' | 'content_asset';
+  resource_type: 'campaign' | 'campaign_item' | 'content_asset' | 'approval_request';
   resource_id: string;
   label: string;
   href: string;
-  open_in: 'campaign_workspace' | 'campaign_item' | 'content_asset';
+  open_in: 'campaign_workspace' | 'campaign_item' | 'content_asset' | 'approval_request';
 }
 
 export function campaignDeepLink(campaignId: string): MarketingOpsDeepLink {
@@ -45,6 +45,17 @@ export function contentDeepLink(itemId: string, assetId: string): MarketingOpsDe
   };
 }
 
+export function approvalDeepLink(requestId: string): MarketingOpsDeepLink {
+  const id = uuid.parse(requestId);
+  return {
+    resource_type: 'approval_request',
+    resource_id: id,
+    label: 'Abrir solicitação de aprovação',
+    href: `/marketing-ops/approvals/${id}`,
+    open_in: 'approval_request'
+  };
+}
+
 function object(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? value as Record<string, unknown> : null;
 }
@@ -55,6 +66,9 @@ export function deepLinkForCompletedAction(
 ): MarketingOpsDeepLink | null {
   const value = object(resource);
   if (!value) return null;
+  if (actionType.startsWith('approval.submit_') && typeof value.id === 'string') {
+    return approvalDeepLink(value.id);
+  }
   if (actionType.startsWith('campaign.') && typeof value.id === 'string') {
     return campaignDeepLink(value.id);
   }

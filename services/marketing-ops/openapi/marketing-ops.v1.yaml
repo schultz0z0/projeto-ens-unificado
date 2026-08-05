@@ -783,6 +783,100 @@ paths:
         '200':
           description: Detailed minimized audit events for authorized manager or admin
         default: { $ref: '#/components/responses/Error' }
+  /approval-requests:
+    get:
+      operationId: listApprovalRequests
+      summary: List the tenant approval queue
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/ApprovalStatus' } }
+        - { name: kind, in: query, schema: { $ref: '#/components/schemas/ApprovalKind' } }
+        - { name: riskLevel, in: query, schema: { $ref: '#/components/schemas/ApprovalRisk' } }
+        - { name: campaignId, in: query, schema: { type: string, format: uuid } }
+        - { name: requestedBy, in: query, schema: { type: string, format: uuid } }
+        - { name: expiresBefore, in: query, schema: { type: string, format: date-time } }
+        - { name: expiresAfter, in: query, schema: { type: string, format: date-time } }
+        - { name: cursor, in: query, schema: { type: string, maxLength: 1024 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        '200':
+          description: Authorized approval queue
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalPageResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
+  /approval-requests/{requestId}:
+    get:
+      operationId: getApprovalRequest
+      summary: Read approval detail and minimized history
+      parameters:
+        - { $ref: '#/components/parameters/ApprovalRequestId' }
+      responses:
+        '200':
+          description: Approval request
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalRequestResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
+  /approval-requests/editorial:
+    post:
+      operationId: submitEditorialApproval
+      summary: Submit an exact frozen content version
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EditorialApprovalSubmission' }
+      responses:
+        '201':
+          description: Editorial request created
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalRequestResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
+  /approval-requests/operational:
+    post:
+      operationId: submitOperationalApproval
+      summary: Submit an immutable operational action package
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OperationalApprovalSubmission' }
+      responses:
+        '201':
+          description: Operational request created without external execution
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalRequestResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
+  /approval-requests/{requestId}/decisions:
+    post:
+      operationId: decideApprovalRequest
+      summary: Record the single effective human decision
+      parameters:
+        - { $ref: '#/components/parameters/ApprovalRequestId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApprovalDecisionInput' }
+      responses:
+        '200':
+          description: Decision recorded
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalRequestResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
+  /approval-requests/{requestId}/cancel:
+    post:
+      operationId: cancelApprovalRequest
+      summary: Cancel a pending request by its requester
+      parameters:
+        - { $ref: '#/components/parameters/ApprovalRequestId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200':
+          description: Request cancelled
+          content: { application/json: { schema: { $ref: '#/components/schemas/ApprovalRequestResponse' } } }
+        default: { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -798,6 +892,7 @@ components:
     ArtifactLinkId: { name: artifactLinkId, in: path, required: true, schema: { type: string, format: uuid } }
     MaterialId: { name: materialId, in: path, required: true, schema: { type: string, format: uuid } }
     UserId: { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    ApprovalRequestId: { name: requestId, in: path, required: true, schema: { type: string, format: uuid } }
     Filename: { name: X-Nexus-Filename, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 255 } }
     FilenameOptional: { name: X-Nexus-Filename, in: header, required: false, schema: { type: string, minLength: 1, maxLength: 255 } }
     AssetIdOptional: { name: X-Nexus-Asset-Id, in: header, required: false, schema: { type: string, format: uuid } }
@@ -810,6 +905,153 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
   schemas:
+    ApprovalKind: { type: string, enum: [editorial, operational] }
+    ApprovalStatus: { type: string, enum: [pending, approved, rejected, changes_requested, cancelled, expired] }
+    ApprovalRisk: { type: string, enum: [low, medium, high, critical] }
+    ApprovalSubmissionBase:
+      type: object
+      required: [campaignId, reason, expiresAt]
+      properties:
+        campaignId: { type: string, format: uuid }
+        reason: { type: string, minLength: 1, maxLength: 4000 }
+        riskLevel: { $ref: '#/components/schemas/ApprovalRisk' }
+        expiresAt: { type: string, format: date-time }
+        supersedesRequestId: { type: string, format: uuid }
+    EditorialApprovalSubmission:
+      allOf:
+        - { $ref: '#/components/schemas/ApprovalSubmissionBase' }
+        - type: object
+          additionalProperties: false
+          required: [campaignId, reason, expiresAt, assetId, versionNumber]
+          properties:
+            campaignId: { type: string, format: uuid }
+            reason: { type: string, minLength: 1, maxLength: 4000 }
+            riskLevel: { $ref: '#/components/schemas/ApprovalRisk' }
+            expiresAt: { type: string, format: date-time }
+            supersedesRequestId: { type: string, format: uuid }
+            assetId: { type: string, format: uuid }
+            versionNumber: { type: integer, minimum: 1 }
+    CanonicalActionPackage:
+      type: object
+      additionalProperties: false
+      required: [actionType, channel, audienceSnapshot, timeZone, configuration, payload]
+      properties:
+        actionType: { type: string, minLength: 1, maxLength: 100 }
+        channel: { type: string, minLength: 1, maxLength: 64 }
+        audienceSnapshot: { type: object }
+        scheduledFor: { type: [string, 'null'], format: date-time }
+        timeZone: { type: string, minLength: 1, maxLength: 100 }
+        configuration: { type: object }
+        successCriteria: { type: [string, 'null'], maxLength: 2000 }
+        riskSummary: { type: [string, 'null'], maxLength: 2000 }
+        payload: { type: object }
+    OperationalApprovalSubmission:
+      allOf:
+        - { $ref: '#/components/schemas/ApprovalSubmissionBase' }
+        - type: object
+          additionalProperties: false
+          required: [campaignId, reason, expiresAt, actionPackage]
+          properties:
+            campaignId: { type: string, format: uuid }
+            reason: { type: string, minLength: 1, maxLength: 4000 }
+            riskLevel: { $ref: '#/components/schemas/ApprovalRisk' }
+            expiresAt: { type: string, format: date-time }
+            supersedesRequestId: { type: string, format: uuid }
+            actionPackage: { $ref: '#/components/schemas/CanonicalActionPackage' }
+    ApprovalDecisionInput:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approved, rejected, changes_requested] }
+        comment: { type: string, maxLength: 4000 }
+    ApprovalDecision:
+      type: object
+      required: [id, requestId, decision, decidedBy, deciderRole, origin, comment, eligibilitySnapshot, correlationId, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        requestId: { type: string, format: uuid }
+        decision: { type: string, enum: [approved, rejected, changes_requested, cancelled, expired] }
+        decidedBy: { type: [string, "null"], format: uuid }
+        deciderRole: { type: [string, "null"], enum: [member, manager, admin, null] }
+        origin: { type: string, enum: [human, system] }
+        comment: { type: [string, 'null'], maxLength: 4000 }
+        eligibilitySnapshot: { type: object }
+        correlationId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+    ActionPackage:
+      allOf:
+        - { $ref: '#/components/schemas/CanonicalActionPackage' }
+        - type: object
+          required: [id, campaignId, payloadHash, status, version, createdBy, createdAt, updatedAt, expiresAt]
+          properties:
+            id: { type: string, format: uuid }
+            campaignId: { type: string, format: uuid }
+            payloadHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+            status: { type: string, enum: [pending_approval, authorized, invalidated, expired] }
+            authorizedByRequestId: { type: [string, 'null'], format: uuid }
+            authorizedAt: { type: [string, 'null'], format: date-time }
+            expiresAt: { type: string, format: date-time }
+            invalidatedAt: { type: [string, 'null'], format: date-time }
+            invalidationReason: { type: [string, 'null'] }
+            version: { type: integer, minimum: 1 }
+            createdBy: { type: string, format: uuid }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    EditorialTarget:
+      type: object
+      required: [assetKind, title, body, metadata, frozenAt]
+      properties:
+        assetKind: { type: string }
+        title: { type: string }
+        body: { type: [string, 'null'] }
+        metadata: { type: object }
+        frozenAt: { type: string, format: date-time }
+    ApprovalRequest:
+      type: object
+      required: [id, campaignId, kind, status, requestedBy, reason, riskLevel, targetHash, expiresAt, version, createdAt, updatedAt, decision, actionPackage, editorialTarget, capabilities]
+      properties:
+        id: { type: string, format: uuid }
+        campaignId: { type: string, format: uuid }
+        kind: { $ref: '#/components/schemas/ApprovalKind' }
+        status: { $ref: '#/components/schemas/ApprovalStatus' }
+        requestedBy: { type: string, format: uuid }
+        reason: { type: string }
+        riskLevel: { $ref: '#/components/schemas/ApprovalRisk' }
+        contentAssetId: { type: [string, 'null'], format: uuid }
+        contentVersionNumber: { type: [integer, 'null'] }
+        actionPackageId: { type: [string, 'null'], format: uuid }
+        targetHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        supersedesRequestId: { type: [string, 'null'], format: uuid }
+        expiresAt: { type: string, format: date-time }
+        version: { type: integer, minimum: 1 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        decision: { oneOf: [{ $ref: '#/components/schemas/ApprovalDecision' }, { type: 'null' }] }
+        actionPackage: { oneOf: [{ $ref: '#/components/schemas/ActionPackage' }, { type: 'null' }] }
+        editorialTarget: { oneOf: [{ $ref: '#/components/schemas/EditorialTarget' }, { type: 'null' }] }
+        capabilities:
+          type: object
+          required: [decide, cancel]
+          properties:
+            decide: { type: boolean }
+            cancel: { type: boolean }
+    ApprovalRequestResponse:
+      type: object
+      required: [data]
+      properties: { data: { $ref: '#/components/schemas/ApprovalRequest' } }
+    ApprovalPageResponse:
+      type: object
+      required: [data, page]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/ApprovalRequest' } }
+        page:
+          type: object
+          required: [limit, count, nextCursor]
+          properties:
+            limit: { type: integer }
+            count: { type: integer }
+            nextCursor: { type: [string, 'null'] }
     PublicErrorCode:
       type: string
       enum:
@@ -826,6 +1068,12 @@ components:
         - payload_too_large
         - idempotency_conflict
         - idempotency_in_progress
+        - approval_conflict
+        - approval_expired
+        - approval_target_changed
+        - self_approval_forbidden
+        - invalid_supersession
+        - version_conflict
         - invalid_transition
         - campaign_requirements_missing
         - campaign_read_only

@@ -61,4 +61,13 @@ describe('Marketing Ops query keys', () => {
       'marketing-ops', 'notifications', { unreadOnly: true, limit: 25 }
     ]);
   });
+
+  it('separates approval queue filters from immutable request detail', () => {
+    expect(marketingOpsKeys.approvals({ status: 'pending', kind: 'operational' })).toEqual([
+      'marketing-ops', 'approvals', { status: 'pending', kind: 'operational' }
+    ]);
+    expect(marketingOpsKeys.approval('request-1')).toEqual([
+      'marketing-ops', 'approval', 'request-1'
+    ]);
+  });
 });

@@ -8,5 +8,6 @@ export function marketingOpsFlags(env: PublicEnv) {
     enabled: master,
     read: master && enabled(env.VITE_MARKETING_OPS_READ),
     write: master && enabled(env.VITE_MARKETING_OPS_WRITE),
+    approvals: master && enabled(env.VITE_MARKETING_OPS_APPROVALS),
   };
 }

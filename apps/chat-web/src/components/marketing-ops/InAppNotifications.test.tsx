@@ -19,6 +19,7 @@ const notification = (
   notificationType: 'assignment',
   campaignId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   itemId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  approvalRequestId: null,
   label: 'Novo item atribuído',
   payload: {
     campaignId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -56,6 +57,31 @@ function renderNotifications(client: MarketingOpsClient) {
 afterEach(() => cleanup());
 
 describe('InAppNotifications', () => {
+  it('opens a safe approval deep link without content or audience data', async () => {
+    const approvalRequestId = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+    const approval = notification({
+      notificationType: 'approval_review' as never,
+      itemId: null as never,
+      approvalRequestId,
+      label: 'Aprovação aguardando decisão',
+      payload: { campaignId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', approvalRequestId } as never
+    });
+    const onOpenApproval = vi.fn();
+    const client = {
+      listInAppNotifications: vi.fn().mockResolvedValue(result([approval])),
+      markInAppNotificationsRead: vi.fn().mockResolvedValue(result([]))
+    } as unknown as MarketingOpsClient;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const user = userEvent.setup();
+    render(<QueryClientProvider client={queryClient}>
+      <InAppNotifications client={client} onOpenApproval={onOpenApproval} />
+    </QueryClientProvider>);
+    await user.click(await screen.findByRole('button', { name: /notifica/i }));
+    await user.click(await screen.findByText('Aprovação aguardando decisão'));
+    expect(onOpenApproval).toHaveBeenCalledWith(approvalRequestId);
+    expect(JSON.stringify(approval.payload)).not.toMatch(/audience|content|body/i);
+  });
+
   it('announces unread events and marks only unread notifications with an idempotency key', async () => {
     const unread = notification();
     const read = notification({

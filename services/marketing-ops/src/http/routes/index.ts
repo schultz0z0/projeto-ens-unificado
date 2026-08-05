@@ -13,6 +13,7 @@ import { registerParticipants } from './participants.js';
 import { registerReferences } from './references.js';
 import { registerTimeline } from './timeline.js';
 import { registerNotifications } from './notifications.js';
+import { registerApprovals } from './approvals.js';
 import type { ArtifactClient } from '../../integrations/artifactClient.js';
 import type { RagCourseClient } from '../../integrations/ragCourseClient.js';
 import type { DelegationKeyring } from '../../delegation/claims.js';
@@ -23,7 +24,7 @@ import type { MetricsRegistry } from '../../observability/metrics.js';
 export interface ApiRouterDependencies {
   pool: Pool;
   corsOrigins: string[];
-  features: { read: boolean; write: boolean };
+  features: { read: boolean; write: boolean; approvals?: boolean };
   verifyToken: (token: string) => Promise<SupabaseUser>;
   artifactClient: ArtifactClient;
   ragCourseClient: RagCourseClient;
@@ -52,6 +53,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   registerNotifications(router, deps.pool, deps.features);
   registerDependencies(router, deps.pool, deps.features);
   registerContent(router, deps.pool, deps.artifactClient, deps.features);
+  registerApprovals(router, deps.pool, deps.features);
   registerAudit(router, deps.pool, deps.features);
   if (deps.keyring) router.use(createMcpRouter({
     pool: deps.pool,

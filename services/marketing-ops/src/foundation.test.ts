@@ -74,7 +74,7 @@ describe('runtime foundation', () => {
   it('provides harmless defaults only in tests', () => {
     const config = loadConfig({ NODE_ENV: 'test' });
     expect(config.port).toBe(8091);
-    expect(config.features).toEqual({ read: false, write: false });
+    expect(config.features).toEqual({ read: false, write: false, approvals: false });
   });
 
   it('uses the repository local Supabase port block outside Windows exclusions', () => {
@@ -324,6 +324,19 @@ describe('runtime foundation', () => {
     expect(response.headers['x-correlation-id']).toBe('2f6bcb89-5ef3-4d83-80c8-530fcb369773');
   });
 
+  it('replaces a non-UUID correlation id before it reaches UUID audit columns', async () => {
+    const app = createApp({
+      readiness: async () => true,
+      logger: createLogger(() => undefined),
+      metrics: createMetrics()
+    });
+    const response = await request(app).get('/health').set('X-Correlation-Id', 'not-a-uuid');
+    expect(response.status).toBe(200);
+    expect(response.headers['x-correlation-id']).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+  });
+
   it('writes a bounded structured request log without headers or payloads', async () => {
     const entries: Record<string, unknown>[] = [];
     const app = createApp({
@@ -334,13 +347,13 @@ describe('runtime foundation', () => {
     const response = await request(app)
       .get('/health')
       .set('Authorization', 'Bearer never-log-this')
-      .set('X-Correlation-Id', 'request-log-correlation');
+      .set('X-Correlation-Id', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
     expect(response.status).toBe(200);
     expect(entries).toContainEqual(expect.objectContaining({
       level: 'info',
       message: 'request completed',
       data: expect.objectContaining({
-        correlationId: 'request-log-correlation',
+        correlationId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
         route: '/health',
         operation: 'health',
         status: 200,
@@ -433,6 +446,33 @@ describe('runtime foundation', () => {
     expect(output).not.toMatch(/tenant|user_id|11111111-1111-4111-8111-111111111111/);
   });
 
+  it('records bounded approval transitions without request or actor identifiers', async () => {
+    const metrics = createMetrics();
+    const router = Router();
+    router.post('/v1/approval-requests/:requestId/decisions', (_request, response) => {
+      response.locals.approvalTransition = {
+        kind: 'operational', status: 'approved', risk: 'high'
+      };
+      response.json({ data: {} });
+    });
+    const app = createApp({
+      readiness: async () => true,
+      logger: createLogger(() => undefined),
+      metrics,
+      router
+    });
+
+    await request(app)
+      .post('/v1/approval-requests/11111111-1111-4111-8111-111111111111/decisions')
+      .expect(200);
+
+    const output = metrics.render();
+    expect(output).toContain(
+      'marketing_ops_approval_transitions_total{kind="operational",result="success",risk="high",status="approved"} 1'
+    );
+    expect(output).not.toContain('11111111-1111-4111-8111-111111111111');
+  });
+
   it('protects Prometheus metrics with the internal key', async () => {
     const app = createApp({
       readiness: async () => true,
@@ -501,6 +541,7 @@ describe('production Compose contract', () => {
   it('gates Marketing Ops on composite readiness and keeps dependencies private', () => {
     const compose = parse(readFileSync(new URL('../../../docker-compose.yml', import.meta.url), 'utf8')) as {
       services: Record<string, {
+        build?: { args?: Record<string, string> };
         environment?: Record<string, string>;
         healthcheck?: { test?: string[] };
         depends_on?: Record<string, { condition?: string }>;
@@ -525,8 +566,17 @@ describe('production Compose contract', () => {
       MARKETING_OPS_RAG_URL: '${NEXUS_MARKETING_OPS_RAG_URL:-http://rag-mcp:8000/mcp}',
       MARKETING_OPS_RAG_TIMEOUT_MS: '${NEXUS_MARKETING_OPS_RAG_TIMEOUT_MS:-5000}',
       MARKETING_OPS_TENANT_TIME_ZONE:
-        '${NEXUS_MARKETING_OPS_TENANT_TIME_ZONE:-America/Sao_Paulo}'
+        '${NEXUS_MARKETING_OPS_TENANT_TIME_ZONE:-America/Sao_Paulo}',
+      MARKETING_OPS_FEATURE_APPROVALS: '${NEXUS_MARKETING_OPS_FEATURE_APPROVALS:-false}'
     });
+    expect(compose.services['app-frontend']?.build?.args).toMatchObject({
+      VITE_MARKETING_OPS_APPROVALS: '${NEXUS_MARKETING_OPS_FRONTEND_APPROVALS:-false}'
+    });
+    const frontendDockerfile = readFileSync(
+      new URL('../../../apps/chat-web/Dockerfile', import.meta.url), 'utf8'
+    );
+    expect(frontendDockerfile).toContain('ARG VITE_MARKETING_OPS_APPROVALS');
+    expect(frontendDockerfile).toContain('VITE_MARKETING_OPS_APPROVALS=$VITE_MARKETING_OPS_APPROVALS');
     expect(production.services['marketing-ops']?.labels).toEqual(expect.arrayContaining([
       expect.stringContaining('loadbalancer.healthcheck.path=/ready'),
       expect.stringContaining('loadbalancer.healthcheck.interval=30s'),

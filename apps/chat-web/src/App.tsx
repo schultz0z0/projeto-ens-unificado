@@ -20,6 +20,8 @@ const CampaignWorkspacePage = lazy(() => import("./pages/marketing-ops/CampaignW
 const ProductionListPage = lazy(() => import("./pages/marketing-ops/ProductionListPage"));
 const ProductionWeekPage = lazy(() => import("./pages/marketing-ops/ProductionWeekPage"));
 const ProductionMonthPage = lazy(() => import("./pages/marketing-ops/ProductionMonthPage"));
+const ApprovalQueuePage = lazy(() => import("./pages/marketing-ops/ApprovalQueuePage"));
+const ApprovalDetailPage = lazy(() => import("./pages/marketing-ops/ApprovalDetailPage"));
 const marketingOps = marketingOpsFlags(import.meta.env);
 
 const CampaignRouteLoading = () => (
@@ -128,6 +130,18 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                {marketingOps.approvals ? (
+                  <>
+                    <Route
+                      path="/marketing-ops/approvals"
+                      element={<ProtectedRoute><Suspense fallback={<CampaignRouteLoading />}><ApprovalQueuePage /></Suspense></ProtectedRoute>}
+                    />
+                    <Route
+                      path="/marketing-ops/approvals/:requestId"
+                      element={<ProtectedRoute><Suspense fallback={<CampaignRouteLoading />}><ApprovalDetailPage /></Suspense></ProtectedRoute>}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
 

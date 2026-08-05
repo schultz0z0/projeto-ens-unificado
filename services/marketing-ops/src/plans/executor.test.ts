@@ -57,11 +57,49 @@ function dependencies(overrides: Partial<PlanExecutorDependencies> = {}): PlanEx
     }),
     linkExistingItemArtifact: vi.fn().mockResolvedValue({ artifact: { id: ids.artifact } }),
     appendCampaignNote: vi.fn().mockResolvedValue({ id: ids.otherCampaign, version: 3 }),
+    submitEditorialApproval: vi.fn().mockResolvedValue({
+      id: ids.asset, kind: 'editorial', status: 'pending'
+    }),
+    submitOperationalApproval: vi.fn().mockResolvedValue({
+      id: ids.artifact, kind: 'operational', status: 'pending'
+    }),
     ...overrides
   };
 }
 
 describe('Marketing Ops plan executor', () => {
+  it('submits approval requests but exposes no decision dependency', async () => {
+    const deps = dependencies();
+    const result = await executeMarketingOpsPlan(context, plan([
+      {
+        type: 'approval.submit_editorial', campaign_id: ids.campaign,
+        asset_id: ids.asset, version_number: 2, reason: 'Revisão',
+        expires_at: '2026-08-10T13:00:00.000Z'
+      },
+      {
+        type: 'approval.submit_operational', campaign_id: ids.campaign,
+        reason: 'Autorizar envio', expires_at: '2026-08-10T13:00:00.000Z',
+        action_package: {
+          actionType: 'campaign.channel_dispatch', channel: 'email',
+          audienceSnapshot: {}, scheduledFor: null, timeZone: 'UTC',
+          configuration: {}, successCriteria: null, riskSummary: null, payload: {}
+        }
+      }
+    ]), deps);
+
+    expect(deps.submitEditorialApproval).toHaveBeenCalledWith(
+      expect.objectContaining({ planActionIndex: 0 }),
+      expect.objectContaining({ assetId: ids.asset, versionNumber: 2 })
+    );
+    expect(deps.submitOperationalApproval).toHaveBeenCalledWith(
+      expect.objectContaining({ planActionIndex: 1 }),
+      expect.objectContaining({ campaignId: ids.campaign })
+    );
+    expect(result.deep_links).toEqual(expect.arrayContaining([
+      expect.objectContaining({ resource_type: 'approval_request' })
+    ]));
+  });
+
   it('maps every frozen action and resolves earlier campaign/content references', async () => {
     const deps = dependencies();
     const result = await executeMarketingOpsPlan(context, plan([

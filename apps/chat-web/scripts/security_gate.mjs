@@ -76,6 +76,21 @@ const scan = () => {
   }
 }
 
+const validateApprovalSurface = () => {
+  const files = [
+    'src/pages/marketing-ops/ApprovalQueuePage.tsx',
+    'src/pages/marketing-ops/ApprovalDetailPage.tsx',
+    'src/components/marketing-ops/ApprovalDecisionDialog.tsx',
+  ]
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(root, file), 'utf8')
+    if (/chat\/ApprovalModal|executeProvider|provider\.send|externalExecution/i.test(content)) {
+      console.error(`Approval surface crossed the Phase 5 execution boundary: ${file}`)
+      process.exit(1)
+    }
+  }
+}
+
 const run = (cmd, args) => {
   const npmExecPath = cmd === 'npm' ? process.env.npm_execpath : undefined
   const tryRun = (bin, a, options) => {
@@ -101,6 +116,7 @@ const run = (cmd, args) => {
 }
 
 scan()
+validateApprovalSurface()
 run('npm', ['run', 'validate:rls'])
 run('npm', ['run', 'validate:rag-rls'])
 run('npm', ['run', 'lint'])

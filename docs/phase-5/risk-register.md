@@ -1,39 +1,31 @@
 # Registro de riscos — Fase 5
 
-- **Estado:** `seeded`
+- **Estado:** `mitigated_locally_pending_production_validation`
 - **Revisão:** 2026-08-05
 
-| ID | Risco | Impacto | Mitigação/gate | Estado |
-|---|---|---|---|---|
-| F5-R-01 | approval técnico ser confundido com decisão de negócio | crítico | nomes, rotas, componentes e ledger separados; regressão do modal Hermes | `open` |
-| F5-R-02 | versão/payload mudar depois da decisão | crítico | alvo imutável, hash canônico, triggers e revalidação transacional | `open` |
-| F5-R-03 | autoaprovação operacional | crítico | `decided_by <> requested_by` no domínio e banco | `open` |
-| F5-R-04 | papel revogado ainda decidir | crítico | revalidar membership/papel dentro da transação | `open` |
-| F5-R-05 | duas decisões concorrentes vencerem | alto | row lock, versão otimista e estado terminal | `open` |
-| F5-R-06 | retry duplicar solicitação/decisão/pacote | alto | idempotência por ator/operação/hash | `open` |
-| F5-R-07 | expiração liberar pacote | crítico | expiração revalidada na decisão e consumo futuro | `open` |
-| F5-R-08 | comentário causar XSS ou vazamento | alto | limite, sanitização, texto puro e redaction | `open` |
-| F5-R-09 | fila vazar solicitações cross-tenant/escopo | crítico | RLS, queries autorizadas e testes negativos | `open` |
-| F5-R-10 | payload sensível aparecer em logs/auditoria | alto | snapshots minimizados, hashes e scan de logs | `open` |
-| F5-R-11 | Hermes decidir ou contornar UI | crítico | nenhuma action de decisão no MCP; catálogo e runtime testados | `open` |
-| F5-R-12 | endpoint de aprovação causar efeito externo | crítico | ausência de provider/worker; E2E e inspeção de outbox | `open` |
-| F5-R-13 | workflow genérico ampliar escopo | médio | dois tipos e decisão única no primeiro corte | `mitigated_by_design` |
-| F5-R-14 | fila virar gargalo | médio | filtros, risco, expiração e métricas de tempo | `open` |
-| F5-R-15 | timezone expirar solicitação incorretamente | alto | UTC no banco, ISO/IANA na UI e relógio controlado | `open` |
-| F5-R-16 | pacote aprovado não servir à Fase 6 | alto | contrato canônico, hash e gate de saída explícito | `open` |
+| ID | Risco | Mitigação comprovada | Estado |
+|---|---|---|---|
+| F5-R-01 | approval técnico confundido com decisão de negócio | rotas/componentes/contratos separados | `mitigated_local` |
+| F5-R-02 | versão/payload mudar após decisão | alvo/hash imutáveis, triggers e revalidação | `mitigated_local_remote_db` |
+| F5-R-03 | autoaprovação operacional | domínio + helper/RLS; smoke remoto negativo | `mitigated_local_remote_db` |
+| F5-R-04 | papel revogado ainda decidir | membership/papel revalidados dentro da transação | `mitigated_local` |
+| F5-R-05 | duas decisões vencerem | row lock, versão e unique append-only | `mitigated_local_remote_db` |
+| F5-R-06 | retry duplicar | idempotência por ator/operação/payload | `mitigated_local` |
+| F5-R-07 | expiração liberar pacote | worker limitado com `SKIP LOCKED`, ledger `system` e invalidação atômica; smoke remoto | `mitigated_local_remote_db` |
+| F5-R-08 | comentário causar XSS/vazamento | texto React, limites strict e redaction | `mitigated_local` |
+| F5-R-09 | fila vazar cross-tenant | RLS forçada, grants mínimos e smoke | `mitigated_local_remote_db` |
+| F5-R-10 | payload sensível em logs | auditoria minimizada e logger redigido | `mitigated_local` |
+| F5-R-11 | Hermes decidir/contornar UI | sem action/scope de decisão | `mitigated_local` |
+| F5-R-12 | endpoint executar efeito externo | guard estático/E2E; sem provider/worker | `mitigated_local` |
+| F5-R-13 | workflow genérico ampliar escopo | dois tipos explícitos e decisão única | `accepted` |
+| F5-R-14 | fila virar gargalo | índice/cursor e gate remoto de 10 mil linhas com p95 de 16,01 ms | `mitigated_local_remote_db` |
+| F5-R-15 | timezone expirar incorretamente | UTC/ISO e validação temporal | `mitigated_local` |
+| F5-R-16 | pacote não servir à Fase 6 | payload canônico e autorização explícita | `accepted_for_phase_6_gate` |
+| F5-R-17 | advisories legados do Supabase | 37 achados preexistentes fora dos objetos F5 | `accepted_out_of_scope` |
+| F5-R-18 | React Router sem versão sem advisory no registry | mantido 6.30.4 client-only; 2 moderados, zero high; upgrade 7.18.2 introduz advisory high | `accepted_monitor` |
 
-## Bloqueadores de promoção
+## Bloqueadores remanescentes
 
-- qualquer acesso cross-tenant ou elevação de papel;
-- autoaprovação operacional;
-- decisão sobre versão/payload diferente do preview;
-- mais de uma decisão efetiva para a mesma solicitação;
-- Hermes capaz de decidir;
-- execução externa causada por endpoint da Fase 5;
-- segredo, audiência integral ou conteúdo sensível indevido em logs;
-- gate local ou VPS sem evidência.
-
-## Critério de fechamento
-
-`closed_with_accepted_residuals` exige mitigação comprovada dos riscos
-altos/críticos, resíduos nomeados com owner e gate VPS aprovado.
+Somente evidência de produção: flags efetivas, health/readiness, papéis reais,
+restart/persistência e fluxo completo no navegador. Qualquer falha alta/crítica
+mantém a fase fora de `production_validated`.

@@ -42,7 +42,7 @@ function normalizeMiniMaxActionArray(value: unknown): unknown {
 }
 
 export interface MarketingOpsMcpDependencies {
-  pool: Pool; features: { read: boolean; write: boolean }; keyring: DelegationKeyring;
+  pool: Pool; features: { read: boolean; write: boolean; approvals?: boolean }; keyring: DelegationKeyring;
   refreshDelegation?: (token: string) => Promise<string>;
   rateLimiter?: ReturnType<typeof createMcpRateLimiter>;
   artifactClient?: ArtifactClient;
@@ -290,6 +290,9 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
     })
   }, async (input) => runTool('marketing_ops_prepare_plan_v1', async (_toolCallId, setActor) => {
       if (!deps.features.write) throw appError('feature_disabled', 503, 'Feature write is disabled');
+      if (input.actions.some((action) => action.type.startsWith('approval.')) && !deps.features.approvals) {
+        throw appError('feature_disabled', 503, 'Governance approvals are disabled');
+      }
       const scopes = requiredScopesForPlan(input.actions);
       const actor = await verifyDelegation(input.delegation_token, scopes, deps);
       setActor(actor);
@@ -321,6 +324,9 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
       setActor(actor);
       rateLimiter.consume(actor.userId, 'marketing_ops_execute_plan_v1', 'execute');
       const plan = await verifyMarketingOpsPlan(input.plan_token, actor, deps.keyring);
+      if (plan.actions.some((action) => action.type.startsWith('approval.')) && !deps.features.approvals) {
+        throw appError('feature_disabled', 503, 'Governance approvals are disabled');
+      }
       const planLatencySeconds = Math.max(0, Math.floor(Date.now() / 1000) - plan.iat);
       deps.metrics?.increment('marketing_ops_mcp_plan_latency_seconds_count');
       deps.metrics?.increment(
@@ -345,7 +351,9 @@ export function createMarketingOpsMcpServer(deps: MarketingOpsMcpDependencies): 
         deps.metrics?.increment('marketing_ops_mcp_idempotency_total', {
           result: completed.idempotency_hit ? 'hit' : 'miss'
         });
-        const resource = completed.action_type.startsWith('campaign_item.')
+        const resource = completed.action_type.startsWith('approval.')
+          ? 'approval_request'
+          : completed.action_type.startsWith('campaign_item.')
           || completed.action_type.startsWith('artifact.')
           ? 'campaign_item'
           : completed.action_type.startsWith('content.')

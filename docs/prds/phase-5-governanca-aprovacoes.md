@@ -1,6 +1,6 @@
 # PRD — Fase 5: Governança e Aprovações
 
-- **Status:** approved
+- **Status:** implemented_local_validated — produção pendente
 - **Aprovação do desenho-base:** 2026-08-05
 - **Dependências:** Fases 3–4 concluídas
 - **Resultado:** conteúdo e ações sensíveis avançam somente após decisão humana rastreável

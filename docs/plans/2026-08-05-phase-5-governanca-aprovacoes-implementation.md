@@ -1,5 +1,8 @@
 # Phase 5 Governance and Approvals Implementation Plan
 
+**Execution status:** `executed_locally` em 2026-08-05; Supabase implantado;
+deploy das imagens e homologação manual na VPS pendentes.
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Entregar aprovação editorial e autorização operacional rastreáveis,
