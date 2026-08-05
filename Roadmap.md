@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `ready_for_vps_deploy`, aguardando deploy e homologação manual
+- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `hotfix_ready_for_redeploy`, aguardando redeploy e retomada da homologação
 - **Atualização:** 5 de agosto de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -299,12 +299,16 @@ de julho de 2026.
 
 ### Fase 5: Governança e Aprovações
 
-**Estado:** `ready_for_vps_deploy` — implementação e validação local das Tasks 1–8
-concluídas. O Supabase do app já recebeu sete migrations e passou nos
-invariantes remotos, incluindo o hardening do ledger terminal, a barreira de
-escrita, a otimização da fila sob RLS e a expiração por worker de sistema em
-lotes limitados. A Task 9 aguarda o deploy das imagens na
-VPS e a homologação manual final do assistente no navegador.
+**Estado:** `hotfix_ready_for_redeploy` — implementação e validação local
+das Tasks 1–8 concluídas e deploy acessível. A homologação real de 5 de agosto
+de 2026 confirmou autenticação dos três papéis, fila, filtros, deep link seguro
+e o fluxo de preview/confirmação do Hermes, mas encontrou falha transacional na
+submissão editorial. O PostgreSQL rejeita `approval_request_id` como `text` em
+coluna `uuid` durante `notifyReviewers`, causando `500 internal_error` e rollback
+integral. O hotfix adiciona casts `::uuid` em `notifyReviewers` e
+`notifyRequester`, possui regressão RED/GREEN, 52/52 testes dirigidos, typecheck,
+build e contrato SQL remoto aprovados. A Task 9 permanece aberta até novo deploy
+e reexecução do gate manual completo.
 
 **Objetivo:** criar controle editorial e institucional sem bloquear a criação.
 

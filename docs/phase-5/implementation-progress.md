@@ -1,12 +1,12 @@
 # Progresso de implementação — Fase 5
 
-- **Estado:** `ready_for_vps_deploy`
-- **Snapshot:** 2026-08-05 17:07 BRT
+- **Estado:** `hotfix_ready_for_redeploy`
+- **Snapshot:** 2026-08-05 18:16 BRT
 - **Design:** aprovado
-- **Implementação:** Tasks 1–8 concluídas; Task 9 pronta para deploy/homologação VPS
+- **Implementação:** Tasks 1–8 concluídas; Task 9 aguarda redeploy do hotfix de submissão
 
-Os estados abaixo refletem evidência executada nesta sessão. A fase continua
-aberta até o deploy e a homologação real na VPS.
+Os estados abaixo refletem evidência executada nesta sessão. O deploy está
+acessível, mas a fase continua aberta até corrigir e revalidar a submissão real.
 
 | Task | Escopo | Estado | Evidência atual |
 |---:|---|---|---|
@@ -18,9 +18,34 @@ aberta até o deploy e a homologação real na VPS.
 | 6 | Ajustes, expiração, notificações e observabilidade | `completed` | ajustes/rejeição com comentário, cancelamento/expiração, projeções mínimas de notificação, logs redigidos e métrica allowlisted/instrumentada. |
 | 7 | Hermes/MCP para submissão controlada | `completed` | somente `approval.submit_editorial` e `approval.submit_operational`; scope `approval:submit`; nenhuma decisão; contratos/executor e Bridge verdes. |
 | 8 | E2E, segurança, performance e gate local | `completed` | frontend 212/212, Bridge 89/89, serviço dirigido 52/52, contrato de navegador local 2/2, fila RLS remota de 10 mil linhas com p95 de 16,01 ms, security gate, builds/typechecks e audits aprovados. |
-| 9 | Deploy controlado e homologação VPS no navegador | `ready_for_vps_deploy` | Supabase implantado, revisão e regressão local aprovadas; aguarda execução do runbook na VPS e homologação manual. |
+| 9 | Deploy controlado e homologação VPS no navegador | `hotfix_ready_for_redeploy` | Deploy acessível; autenticação member/manager/admin, fila, filtros, deep link seguro e preview/confirmação do Hermes aprovados. Falha `500` diagnosticada; casts `::uuid` corrigidos e validados local/remotamente, aguardando redeploy. |
 
 ## Evidências acumuladas
+
+- homologação real iniciada em `https://app.solucoes-nexus.tech/` com os três
+  papéis fornecidos; o e-mail member confirmado é `rodrigolinhares@ens.edu.br`;
+- fixture controlada criada pelo navegador: campanha
+  `[PHASE5-HOMOLOG] Governança`, item `[PHASE5-HOMOLOG] Aprovação editorial` e
+  conteúdo `[PHASE5-HOMOLOG] Email institucional`;
+- Hermes recusou alvo não resolvido, preparou preview nominal, aguardou
+  confirmação em turno posterior e preservou a ausência de envio/publicação;
+- versão editorial 2 congelada pela API autenticada, hash
+  `5f887fc0958cc15c90b571ab831bbf1ad133979edd0088cba0bf50cb1586b943`;
+- submissão editorial reproduzida pelo Hermes e diretamente no REST, ambas com
+  rollback. Correlação REST: `db29bfa3-8c16-423a-84f4-75c7898670a0`;
+- logs PostgreSQL: `column "approval_request_id" is of type uuid but expression
+  is of type text`; causa localizada nos parâmetros sem cast de
+  `notifyReviewers` e com risco equivalente em `notifyRequester`;
+- manager/admin carregam a fila; filtros sincronizam corretamente com a URL;
+  deep link inexistente termina em erro seguro e o console do frontend não
+  registrou erro JavaScript;
+- nenhuma solicitação, decisão, notificação de aprovação ou efeito externo foi
+  persistido pela tentativa falha.
+- hotfix TDD: o novo teste falhou com os casts ausentes e passou após a correção;
+  suíte dirigida 8 arquivos / 52 testes, typecheck e build aprovados;
+- contrato das duas instruções SQL corrigidas preparado com sucesso no
+  PostgreSQL remoto dentro de transação revertida, resultado
+  `notification_uuid_cast_contract = ok`.
 
 - serviço dirigido após revisão: 8 arquivos, 52 testes aprovados;
 - contrato de migrations: 8/8, sendo 7 contratos específicos da Fase 5;
@@ -74,6 +99,9 @@ aberta até o deploy e a homologação real na VPS.
 
 ## Próximo ponto exato
 
-1. publicar o commit da implementação;
-2. executar o runbook na VPS;
-3. liberar a URL ao assistente para o gate manual no navegador.
+1. corrigir os casts de UUID em `notifyReviewers` e `notifyRequester`, com teste
+   de regressão contra PostgreSQL real;
+2. publicar o hotfix e repetir o deploy do serviço Marketing Ops;
+3. reexecutar a Task 9 desde a submissão editorial e então cobrir decisão,
+   rejeição/ajustes, segundo ciclo, operacional, autoaprovação, expiração,
+   notificação, persistência e ausência de efeito externo.

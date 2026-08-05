@@ -359,7 +359,7 @@ async function notifyReviewers(client: PoolClient, context: CommandContext, requ
       item_id, approval_request_id, label, payload, occurred_at
     )
     select $1, membership.user_id, 'approval-review:' || $2::text,
-      'approval_review', $3, null, $2, 'Aprovação aguardando decisão',
+      'approval_review', $3, null, $2::uuid, 'Aprovação aguardando decisão',
       jsonb_build_object('campaignId', $3::uuid, 'approvalRequestId', $2::uuid), now()
     from marketing_ops.memberships as membership
     where membership.tenant_id = $1 and membership.active
@@ -380,7 +380,7 @@ async function notifyRequester(
       tenant_id, user_id, event_key, notification_type, campaign_id,
       item_id, approval_request_id, label, payload, occurred_at
     ) values ($1, $2, 'approval-status:' || $3::text || ':' || $4,
-      'approval_status', $5, null, $3, 'Solicitação de aprovação atualizada',
+      'approval_status', $5, null, $3::uuid, 'Solicitação de aprovação atualizada',
       jsonb_build_object('campaignId', $5::uuid, 'approvalRequestId', $3::uuid,
         'status', $4::text), now())
     on conflict (tenant_id, user_id, event_key) do nothing

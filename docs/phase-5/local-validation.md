@@ -87,6 +87,20 @@ apps/chat-web: npm run security:gate                              OK
 
 ## Parecer atual
 
+### Hotfix da homologação real — 2026-08-05 18:16 BRT
+
+- regressão RED confirmou que `approval_request_id` era inserido sem cast nas
+  notificações de revisão e de status;
+- correção mínima: `$2::uuid` em `notifyReviewers` e `$3::uuid` em
+  `notifyRequester`;
+- teste dirigido após GREEN: 8 arquivos / 52 testes;
+- `npm run typecheck` e `npm run build`: aprovados;
+- suíte ampla foi tentada e permaneceu indisponível exclusivamente porque o
+  PostgreSQL local esperado em `127.0.0.1:55322` não está ativo, limitação já
+  registrada neste documento;
+- as duas instruções corrigidas foram compiladas pelo PostgreSQL remoto em uma
+  transação revertida: `notification_uuid_cast_contract = ok`.
+
 Tasks 1–8 e o deploy do Supabase estão concluídos. A suíte ampla do serviço que
 depende do Postgres local não pôde executar porque `127.0.0.1:55322` não está
 disponível; não houve falha funcional diferente dessa conexão. O gate de banco

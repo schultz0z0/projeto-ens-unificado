@@ -6,13 +6,13 @@ estado de implementação, deploy ou homologação.
 
 ## Status
 
-- **Fase:** `ready_for_vps_deploy`
+- **Fase:** `hotfix_ready_for_redeploy`
 - **Snapshot:** 2026-08-05
 - **Branch canônica e única:** `main`
 - **Dependências:** Fases 3 e 4 `production_validated`
-- **Implementação:** Tasks 1–8 concluídas, endurecidas e validadas; Task 9 aguarda deploy
+- **Implementação:** Tasks 1–8 concluídas; Task 9 iniciada, hotfix validado e pronto para redeploy
 - **Gate local:** aprovado com substituição remota documentada para Postgres/pgTAP
-- **Homologação VPS:** pendente
+- **Homologação VPS:** executada parcialmente em produção; bloqueada antes das decisões
 - **PRD:** [phase-5-governanca-aprovacoes.md](../prds/phase-5-governanca-aprovacoes.md)
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-08-05-phase-5-governanca-aprovacoes-implementation.md](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md)
@@ -49,15 +49,15 @@ estado de implementação, deploy ou homologação.
 |---|---|
 | [Design técnico](design.md) | `approved` |
 | [Plano de implementação](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md) | `executed_locally` |
-| [Progresso](implementation-progress.md) | `ready_for_vps_deploy` |
+| [Progresso](implementation-progress.md) | `hotfix_ready_for_redeploy` |
 | [Rastreabilidade](requirements-traceability.md) | `implemented_local_validated` |
 | [Riscos](risk-register.md) | `mitigated_locally_pending_production_validation` |
 | [Validação local](local-validation.md) | `passed_with_documented_environment_substitution` |
 | [Deploy Supabase](supabase-deployment.md) | `deployed_and_verified` |
 | [Runbook](runbook.md) | `ready_for_execution` |
 | [Rollback](rollback.md) | `ready` |
-| [Validação VPS](vps-validation.md) | `ready_for_deploy` |
-| [Handoff](continuation-handoff.md) | `ready_for_vps_deploy` |
+| [Validação VPS](vps-validation.md) | `blocked_by_submission_500` |
+| [Handoff](continuation-handoff.md) | `requires_redeploy_and_revalidation` |
 
 ## Responsabilidade pela validação
 
