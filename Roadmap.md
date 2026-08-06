@@ -1,7 +1,7 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `hotfix_ready_for_redeploy`, aguardando redeploy e retomada da homologação
-- **Atualização:** 5 de agosto de 2026
+- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `production_validation_blocked`, aguardando correções e nova homologação
+- **Atualização:** 6 de agosto de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
 
@@ -299,16 +299,15 @@ de julho de 2026.
 
 ### Fase 5: Governança e Aprovações
 
-**Estado:** `hotfix_ready_for_redeploy` — implementação e validação local
-das Tasks 1–8 concluídas e deploy acessível. A homologação real de 5 de agosto
-de 2026 confirmou autenticação dos três papéis, fila, filtros, deep link seguro
-e o fluxo de preview/confirmação do Hermes, mas encontrou falha transacional na
-submissão editorial. O PostgreSQL rejeita `approval_request_id` como `text` em
-coluna `uuid` durante `notifyReviewers`, causando `500 internal_error` e rollback
-integral. O hotfix adiciona casts `::uuid` em `notifyReviewers` e
-`notifyRequester`, possui regressão RED/GREEN, 52/52 testes dirigidos, typecheck,
-build e contrato SQL remoto aprovados. A Task 9 permanece aberta até novo deploy
-e reexecução do gate manual completo.
+**Estado:** `production_validation_blocked` — implementação e validação local
+das Tasks 1–8 concluídas. O hotfix `acb5bae` foi implantado em 6 de agosto e a
+submissão editorial real pelo Hermes passou, assim como preview, fila, filtros,
+deep links, diálogos e cancelamento auditado pelo solicitante. A Task 9 encontrou
+dois bloqueadores altos: resposta autenticada com capability reutilizada entre
+member, manager e admin no mesmo URL; e `POST /decisions` retornando `500` com
+rollback porque a projeção para `in_app_notifications` viola RLS. O frontend
+também mascara esse erro interno como conflito. A fase aguarda correções, novo
+deploy e reexecução integral do gate manual.
 
 **Objetivo:** criar controle editorial e institucional sem bloquear a criação.
 

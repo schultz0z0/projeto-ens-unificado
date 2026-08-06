@@ -1,16 +1,19 @@
 # Handoff de continuação — Fase 5
 
-- **Estado:** `ready_for_vps_deploy`
-- **Snapshot:** 2026-08-05
+- **Estado:** `production_validation_blocked`
+- **Snapshot:** 2026-08-06
 - **Implementação:** Tasks 1–8 concluídas e validadas
 - **Supabase:** implantado e verificado
-- **Pendente:** deploy das imagens na VPS e homologação manual pelo assistente
+- **Pendente:** corrigir dois bloqueadores de produção, redeploy e repetir homologação
 
 ## Ponto exato de continuação
 
-Publicar o commit final em `main`, seguir `runbook.md` e informar ao assistente
-a URL/credenciais de homologação já autorizadas. Não reaplicar migrations: as
-sete migrations da Fase 5 já constam no projeto `murxwqdevpwjtnnuzzxi`.
+Corrigir primeiro a RLS/projeção de notificação que reverte decisões por
+manager/admin e o cache compartilhado de respostas autenticadas. Também
+diferenciar erros de mutação na UI. Depois publicar o hotfix, seguir
+`runbook.md` e repetir `vps-validation.md`. Não reaplicar cegamente as sete
+migrations existentes; qualquer ajuste de RLS deve ser uma migration aditiva e
+versionada no projeto `murxwqdevpwjtnnuzzxi`.
 
 ## Flags obrigatórias
 
@@ -33,6 +36,7 @@ do frontend é build-time e exige rebuild de `app-frontend`.
 
 ## Gate seguinte
 
-Executar exatamente `vps-validation.md`. Somente o assistente marca
-`production_validated` após testar manualmente o site e conferir as evidências
-no Supabase/VPS.
+Executar regressões PostgreSQL reais para decisão/notificação e troca de conta
+no mesmo deep link, fazer redeploy e então repetir exatamente
+`vps-validation.md`. Somente o assistente marca `production_validated` após
+testar manualmente o site e conferir as evidências no Supabase/VPS.

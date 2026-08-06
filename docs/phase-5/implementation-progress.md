@@ -1,12 +1,13 @@
 # Progresso de implementação — Fase 5
 
-- **Estado:** `hotfix_ready_for_redeploy`
-- **Snapshot:** 2026-08-05 18:16 BRT
+- **Estado:** `production_validation_blocked`
+- **Snapshot:** 2026-08-06 12:05 BRT
 - **Design:** aprovado
-- **Implementação:** Tasks 1–8 concluídas; Task 9 aguarda redeploy do hotfix de submissão
+- **Implementação:** Tasks 1–8 concluídas; Task 9 bloqueada por dois defeitos de produção
 
 Os estados abaixo refletem evidência executada nesta sessão. O deploy está
-acessível, mas a fase continua aberta até corrigir e revalidar a submissão real.
+acessível, mas a fase continua aberta até corrigir a decisão humana e o cache
+de respostas autenticadas e repetir o gate real.
 
 | Task | Escopo | Estado | Evidência atual |
 |---:|---|---|---|
@@ -18,7 +19,7 @@ acessível, mas a fase continua aberta até corrigir e revalidar a submissão re
 | 6 | Ajustes, expiração, notificações e observabilidade | `completed` | ajustes/rejeição com comentário, cancelamento/expiração, projeções mínimas de notificação, logs redigidos e métrica allowlisted/instrumentada. |
 | 7 | Hermes/MCP para submissão controlada | `completed` | somente `approval.submit_editorial` e `approval.submit_operational`; scope `approval:submit`; nenhuma decisão; contratos/executor e Bridge verdes. |
 | 8 | E2E, segurança, performance e gate local | `completed` | frontend 212/212, Bridge 89/89, serviço dirigido 52/52, contrato de navegador local 2/2, fila RLS remota de 10 mil linhas com p95 de 16,01 ms, security gate, builds/typechecks e audits aprovados. |
-| 9 | Deploy controlado e homologação VPS no navegador | `hotfix_ready_for_redeploy` | Deploy acessível; autenticação member/manager/admin, fila, filtros, deep link seguro e preview/confirmação do Hermes aprovados. Falha `500` diagnosticada; casts `::uuid` corrigidos e validados local/remotamente, aguardando redeploy. |
+| 9 | Deploy controlado e homologação VPS no navegador | `production_validation_blocked` | Hotfix de submissão implantado e submissão real aprovada. Fila, preview, filtros, deep links, diálogos e cancelamento passaram. Decisão por admin retorna `500` por RLS em `in_app_notifications`; respostas autenticadas também vazam capabilities em cache entre contas. |
 
 ## Evidências acumuladas
 
@@ -97,11 +98,32 @@ acessível, mas a fase continua aberta até corrigir e revalidar a submissão re
 - mutações editoriais preservam o alvo congelado no cache e revalidam o detalhe;
   solicitante operacional não recebe notificação para uma decisão inelegível.
 
+## Retomada em produção — 2026-08-06
+
+- o commit `acb5bae` foi implantado; readiness `200` e submissão editorial real
+  pelo Hermes comprovaram que o cast UUID resolveu o bloqueio anterior;
+- a solicitação `d51d3f4d-0d2f-4f7a-bd3a-eebc51bc5779` foi criada com a versão
+  e o hash esperados e depois cancelada pelo solicitante com ledger, auditoria,
+  outbox e notificação íntegros;
+- a solicitação nova `ffa5209e-2a9a-4134-96b9-2709b72743e7`, aberta primeiro
+  pelo admin, expôs corretamente os controles de decisão, mas `Aprovar` fez
+  rollback. Correlação REST: `e41eba94-e23d-4efe-883a-1e826d8397ca`;
+- o log PostgreSQL confirmou RLS negando a projeção em
+  `in_app_notifications`; a UI mascarou o `500` como conflito;
+- o mesmo detalhe previamente aberto pelo member preservou capability de member
+  após login como manager/admin. REST sem cache retornou as capabilities certas,
+  confirmando contaminação de resposta autenticada entre sessões.
+
 ## Próximo ponto exato
 
-1. corrigir os casts de UUID em `notifyReviewers` e `notifyRequester`, com teste
-   de regressão contra PostgreSQL real;
-2. publicar o hotfix e repetir o deploy do serviço Marketing Ops;
-3. reexecutar a Task 9 desde a submissão editorial e então cobrir decisão,
-   rejeição/ajustes, segundo ciclo, operacional, autoaprovação, expiração,
-   notificação, persistência e ausência de efeito externo.
+1. corrigir a política/caminho de projeção de `notifyRequester` para permitir a
+   notificação auditada do solicitante por decisor elegível sem ampliar escrita
+   arbitrária, com teste real de RLS e rollback;
+2. impedir cache compartilhado em todas as respostas autenticadas (`private,
+   no-store`, `Vary` adequado e política do proxy/cliente) e testar troca de
+   identidade no mesmo URL;
+3. fazer a UI preservar status/código/correlation ID e só rotular `409` como
+   conflito;
+4. publicar o próximo hotfix e repetir a Task 9 completa: decisão, ajustes,
+   novo ciclo, operacional/SoD, expiração, idempotência, notificações,
+   persistência, mobile e ausência de efeito externo.
