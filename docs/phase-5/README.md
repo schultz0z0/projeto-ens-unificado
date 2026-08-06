@@ -6,13 +6,13 @@ estado de implementação, deploy ou homologação.
 
 ## Status
 
-- **Fase:** `production_validation_blocked`
+- **Fase:** `ready_for_production_revalidation`
 - **Snapshot:** 2026-08-06
 - **Branch canônica e única:** `main`
 - **Dependências:** Fases 3 e 4 `production_validated`
-- **Implementação:** Tasks 1–8 concluídas; Task 9 bloqueada por defeitos de produção
+- **Implementação:** Tasks 1–8 concluídas; hotfix dos quatro achados concluído; Task 9 aguarda redeploy e revalidação
 - **Gate local:** aprovado com substituição remota documentada para Postgres/pgTAP
-- **Homologação VPS:** retomada após hotfix; submissão e cancelamento aprovados, decisão humana bloqueada
+- **Homologação VPS:** primeira rodada identificou quatro achados; correções prontas para novo deploy
 - **PRD:** [phase-5-governanca-aprovacoes.md](../prds/phase-5-governanca-aprovacoes.md)
 - **Design:** [design.md](design.md)
 - **Plano:** [2026-08-05-phase-5-governanca-aprovacoes-implementation.md](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md)
@@ -49,15 +49,15 @@ estado de implementação, deploy ou homologação.
 |---|---|
 | [Design técnico](design.md) | `approved` |
 | [Plano de implementação](../plans/2026-08-05-phase-5-governanca-aprovacoes-implementation.md) | `executed_locally` |
-| [Progresso](implementation-progress.md) | `production_validation_blocked` |
-| [Rastreabilidade](requirements-traceability.md) | `production_validation_blocked` |
-| [Riscos](risk-register.md) | `production_validation_blocked` |
+| [Progresso](implementation-progress.md) | `ready_for_production_revalidation` |
+| [Rastreabilidade](requirements-traceability.md) | `ready_for_production_revalidation` |
+| [Riscos](risk-register.md) | `ready_for_production_revalidation` |
 | [Validação local](local-validation.md) | `passed_with_documented_environment_substitution` |
 | [Deploy Supabase](supabase-deployment.md) | `deployed_and_verified` |
 | [Runbook](runbook.md) | `ready_for_execution` |
 | [Rollback](rollback.md) | `ready` |
-| [Validação VPS](vps-validation.md) | `blocked_by_decision_500_and_auth_cache` |
-| [Handoff](continuation-handoff.md) | `requires_hotfix_redeploy_and_revalidation` |
+| [Validação VPS](vps-validation.md) | `awaiting_hotfix_redeploy` |
+| [Handoff](continuation-handoff.md) | `requires_redeploy_and_revalidation` |
 
 ## Responsabilidade pela validação
 

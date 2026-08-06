@@ -8,7 +8,7 @@
 
 - [x] migrations aditivas e sem `DROP`;
 - [x] migrations aplicadas no Supabase remoto do app;
-- [x] sete migrations remotas, incluindo barreira de escrita, ledger terminal, performance da fila, worker de expiração e advisor follow-up;
+- [x] oito migrations remotas, incluindo barreira de escrita, ledger terminal, performance da fila, worker de expiração, advisor follow-up e forward-fix de RLS;
 - [x] `supabase migration list --linked` sem drift: 23/23 versions locais e remotos alinhados;
 - [x] smoke remoto de hardening com rollback;
 - [x] imutabilidade de versão/payload/decisão;
@@ -106,3 +106,21 @@ depende do Postgres local não pôde executar porque `127.0.0.1:55322` não est�
 disponível; não houve falha funcional diferente dessa conexão. O gate de banco
 foi executado no Supabase remoto autorizado com transação/rollback. A
 homologação real continua separada em `vps-validation.md`.
+
+### Revalidação dos quatro follow-ups — 2026-08-06 12:36 BRT
+
+```text
+services/marketing-ops: hotfix dirigido                         15/15
+services/marketing-ops: typecheck + build                       OK
+apps/chat-web: vitest                                           214/214
+apps/chat-web: typecheck + build                                OK
+services/chat-bridge: node --test                               90/90
+services/hermes-runtime/docker/tests: pytest                    32 passed / 2 skipped
+Supabase: migration 5.0.5 + probe parametrizado com rollback    OK
+```
+
+A suíte integral do Marketing Ops que depende do Postgres local foi tentada e
+falhou apenas porque `127.0.0.1:55322` não estava disponível. A regressão do
+hotfix não foi inferida desse resultado: os 15 testes dirigidos passaram e o
+caminho SQL corrigido foi exercitado no projeto remoto dentro de transação com
+rollback, sem persistir a notificação de prova.

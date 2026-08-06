@@ -1,19 +1,18 @@
 # Handoff de continuação — Fase 5
 
-- **Estado:** `production_validation_blocked`
+- **Estado:** `ready_for_production_revalidation`
 - **Snapshot:** 2026-08-06
 - **Implementação:** Tasks 1–8 concluídas e validadas
-- **Supabase:** implantado e verificado
-- **Pendente:** corrigir dois bloqueadores de produção, redeploy e repetir homologação
+- **Supabase:** migration `5.0.5` implantada e verificada
+- **Pendente:** redeploy do hotfix e repetição integral da homologação
 
 ## Ponto exato de continuação
 
-Corrigir primeiro a RLS/projeção de notificação que reverte decisões por
-manager/admin e o cache compartilhado de respostas autenticadas. Também
-diferenciar erros de mutação na UI. Depois publicar o hotfix, seguir
-`runbook.md` e repetir `vps-validation.md`. Não reaplicar cegamente as sete
-migrations existentes; qualquer ajuste de RLS deve ser uma migration aditiva e
-versionada no projeto `murxwqdevpwjtnnuzzxi`.
+Publicar o hotfix, seguir `runbook.md` e repetir `vps-validation.md`. A migration
+`20260806152536_phase_5_notification_rls_parameterized_fix.sql` já está aplicada
+no projeto `murxwqdevpwjtnnuzzxi`; não a reaplicar nem reaplicar cegamente as
+migrations anteriores. O deploy ainda precisa atualizar Marketing Ops,
+frontend, Bridge e Hermes runtime.
 
 ## Flags obrigatórias
 

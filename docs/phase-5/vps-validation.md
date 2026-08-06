@@ -1,6 +1,6 @@
 # Validação VPS e navegador — Fase 5
 
-- **Estado:** `production_validation_blocked`
+- **Estado:** `awaiting_hotfix_redeploy`
 - **Deploy:** responsabilidade do usuário/responsável autorizado
 - **Homologação manual final:** assistente, após o deploy
 
@@ -18,7 +18,7 @@
 - [x] Compose efetivo e imagens corretas: rebuild de `rag-mcp`, `artifact-server` e `marketing-ops` concluído em 2026-08-06;
 - [x] health/readiness: dependências healthy e `GET /ready` do Marketing Ops retornando `200`;
 - [ ] rede, TLS, CORS e envs;
-- [ ] Supabase do app com migration e RLS;
+- [x] Supabase do app com migration `5.0.5` e RLS verificadas;
 - [x] logs/correlation ID;
 - [ ] restart e persistência;
 - [ ] backup e rollback verificáveis.
@@ -155,3 +155,19 @@ O controle de viewport não alterou visualmente o Chrome e, portanto, não foi
 aceito como evidência mobile. Cross-tenant manual também depende de uma segunda
 credencial de tenant. A Fase 5 permanece aberta até correção, novo deploy e
 reexecução integral desses casos.
+
+## Correções prontas para o segundo deploy — 2026-08-06
+
+- F5-PROD-01: headers privados/no-store no serviço e cache React Query isolado
+  por identidade;
+- F5-PROD-02: inserts de notificação de aprovação sem `ON CONFLICT`, preservando
+  a policy privada de leitura; migration aditiva `5.0.5` aplicada;
+- F5-PROD-03: UI diferencia `409`, `403` e `5xx` e exibe correlation ID;
+- F5-PROD-04: confirmação explícita do plano exato aceita contexto verboso e
+  turnos `clarify/reject/revise` proíbem retry de execute-plan;
+- probe remoto do statement parametrizado corrigido passou com rollback;
+- regressões: frontend 214/214, Bridge 90/90, Hermes 32 passed/2 skipped,
+  hotfix Marketing Ops 15/15, typechecks e builds aprovados.
+
+Esses itens ainda não contam como aceite de produção. Todos os checkboxes
+pendentes devem ser repetidos no navegador após o novo deploy.

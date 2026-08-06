@@ -15,4 +15,14 @@ describe('approval notification contracts', () => {
     expect(source).toMatch(/'approval_review', \$3, null, \$2::uuid,/);
     expect(source).toMatch(/'approval_status', \$5, null, \$3::uuid,/);
   });
+
+  it('does not use ON CONFLICT while writing notifications for another user under RLS', () => {
+    const source = readFileSync(new URL('./approvals.ts', import.meta.url), 'utf8');
+    const approvalNotifications = source.slice(
+      source.indexOf('async function notifyReviewers'),
+      source.indexOf('async function insertRequest')
+    );
+
+    expect(approvalNotifications).not.toMatch(/on conflict/i);
+  });
 });

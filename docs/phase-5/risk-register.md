@@ -1,6 +1,6 @@
 # Registro de riscos — Fase 5
 
-- **Estado:** `production_validation_blocked`
+- **Estado:** `ready_for_production_revalidation`
 - **Revisão:** 2026-08-06
 
 | ID | Risco | Mitigação comprovada | Estado |
@@ -23,14 +23,14 @@
 | F5-R-16 | pacote não servir à Fase 6 | payload canônico e autorização explícita | `accepted_for_phase_6_gate` |
 | F5-R-17 | advisories legados do Supabase | 37 achados preexistentes fora dos objetos F5 | `accepted_out_of_scope` |
 | F5-R-18 | React Router sem versão sem advisory no registry | mantido 6.30.4 client-only; 2 moderados, zero high; upgrade 7.18.2 introduz advisory high | `accepted_monitor` |
-| F5-R-19 | resposta autenticada/capability reutilizada entre contas | reproduzido member → manager → admin no mesmo deep link; REST nova confirmou capability correta | `open_high` |
-| F5-R-20 | decisão terminal revertida ao notificar outro usuário | `POST /decisions` 500; PostgreSQL confirmou RLS em `in_app_notifications`; zero decisão persistida | `open_high` |
-| F5-R-21 | frontend mascara erro interno como conflito | UI mostrou conflito para HTTP 500, dificultando operação e diagnóstico | `open_medium` |
-| F5-R-22 | confirmação verbosa do Hermes entra em retry no mesmo turno | barreira evitou execução indevida; confirmação curta concluiu o plano | `open_low` |
+| F5-R-19 | resposta autenticada/capability reutilizada entre contas | cache HTTP privado/no-store + QueryClient isolado por identidade; regressão verde | `mitigated_local_awaiting_production` |
+| F5-R-20 | decisão terminal revertida ao notificar outro usuário | removido `ON CONFLICT` incompatível com a policy de leitura; migration 5.0.5 e probe remoto com rollback | `mitigated_local_remote_db_awaiting_runtime` |
+| F5-R-21 | frontend mascara erro interno como conflito | somente 409 usa conflito; 403/5xx e correlation ID preservados; regressão verde | `mitigated_local_awaiting_production` |
+| F5-R-22 | confirmação verbosa do Hermes entra em retry no mesmo turno | confirmação exata verbosa aceita; decisões não aprovadas proíbem execute-plan no turno; regressões verdes | `mitigated_local_awaiting_production` |
 
 ## Bloqueadores remanescentes
 
-F5-R-19 e F5-R-20 são bloqueadores altos comprovados em produção. Eles exigem
-correção, regressão automatizada, novo deploy e repetição do gate manual.
+F5-R-19 e F5-R-20 foram corrigidos e têm regressão automatizada. Eles exigem
+novo deploy e repetição do gate manual para fechamento em produção.
 Restart/persistência, fluxo operacional, expiração, mobile e cross-tenant manual
 continuam pendentes. A fase permanece fora de `production_validated`.

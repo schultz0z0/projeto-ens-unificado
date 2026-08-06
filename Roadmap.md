@@ -1,6 +1,6 @@
 # Roadmap Nexus AI ENS — Marketing Operations
 
-- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `production_validation_blocked`, aguardando correções e nova homologação
+- **Status:** Fases 0, 1, 2, 3 e 4 `production_validated`; Fase 5 `ready_for_production_revalidation`, aguardando redeploy e nova homologação
 - **Atualização:** 6 de agosto de 2026
 - **Produto:** Nexus AI ENS
 - **Primeiro release de valor:** Workspace Operacional
@@ -299,15 +299,17 @@ de julho de 2026.
 
 ### Fase 5: Governança e Aprovações
 
-**Estado:** `production_validation_blocked` — implementação e validação local
+**Estado:** `ready_for_production_revalidation` — implementação e validação local
 das Tasks 1–8 concluídas. O hotfix `acb5bae` foi implantado em 6 de agosto e a
 submissão editorial real pelo Hermes passou, assim como preview, fila, filtros,
 deep links, diálogos e cancelamento auditado pelo solicitante. A Task 9 encontrou
 dois bloqueadores altos: resposta autenticada com capability reutilizada entre
 member, manager e admin no mesmo URL; e `POST /decisions` retornando `500` com
 rollback porque a projeção para `in_app_notifications` viola RLS. O frontend
-também mascara esse erro interno como conflito. A fase aguarda correções, novo
-deploy e reexecução integral do gate manual.
+também mascarava esse erro interno como conflito. Os quatro follow-ups foram
+corrigidos localmente em 6 de agosto, a migration `5.0.5` foi aplicada e
+verificada no Supabase, e os gates dirigidos/builds passaram. A fase aguarda
+somente o redeploy e a reexecução integral do gate manual.
 
 **Objetivo:** criar controle editorial e institucional sem bloquear a criação.
 

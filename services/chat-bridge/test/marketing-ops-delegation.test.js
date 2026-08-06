@@ -4,6 +4,7 @@ import { decodeProtectedHeader, decodeJwt, jwtVerify, SignJWT } from "jose";
 
 import { validateBridgeRuntimeConfig } from "../src/runtime-config.js";
 import {
+  buildMarketingOpsDelegationSystemMessage,
   confirmationIntentForMarketingOpsDecision,
   issueMarketingOpsDelegation,
   redactMarketingOpsDelegation,
@@ -153,6 +154,19 @@ test("only the internal approve decision grants confirmation intent", () => {
   for (const decision of ["reject", "revise", "clarify", "none", "unknown", "", null]) {
     assert.equal(confirmationIntentForMarketingOpsDecision(decision), false, String(decision));
   }
+});
+
+test("clarify turns explicitly forbid execute-plan retries", () => {
+  const message = buildMarketingOpsDelegationSystemMessage("delegation-token", "clarify");
+  assert.match(message, /confirmation was not granted/i);
+  assert.match(message, /do not call marketing_ops_execute_plan_v1/i);
+
+  const embeddedMessage = withMarketingOpsDelegation("Confirmação ambígua", "delegation-token", "clarify");
+  assert.match(embeddedMessage, /confirmation was not granted/i);
+  assert.match(embeddedMessage, /do not call marketing_ops_execute_plan_v1/i);
+
+  const approved = buildMarketingOpsDelegationSystemMessage("delegation-token", "approve");
+  assert.doesNotMatch(approved, /confirmation was not granted/i);
 });
 
 test("contextual decision timeout accommodates the real classifier latency", () => {

@@ -510,13 +510,14 @@ export const buildHermesSessionChatRequest = ({
 
   nexusContext = {},
   marketingOpsDelegation = "",
+  marketingOpsDecision = "none",
   experience = "normal",
   pictureWorkspaceId = "",
   pictureWorkspaceSummary = null,
   pictureDelegation = "",
 
 }) => {
-  const delegationMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation);
+  const delegationMessage = buildMarketingOpsDelegationSystemMessage(marketingOpsDelegation, marketingOpsDecision);
   const pictureSystemMessage = experience === "picture"
     ? [
         "[Modo Picture-Hermes]",
@@ -592,6 +593,7 @@ export const buildHermesResponsesRequest = ({
   nexusContext = {},
   imageTransport = "inline",
   marketingOpsDelegation = "",
+  marketingOpsDecision = "none",
 }) => ({
   model: modelName,
   store: true,
@@ -607,7 +609,7 @@ export const buildHermesResponsesRequest = ({
     source: "nexus-ai-bridge",
   },
   input: buildHermesResponsesInput({
-    messageText: withMarketingOpsDelegation(messageText, marketingOpsDelegation),
+    messageText: withMarketingOpsDelegation(messageText, marketingOpsDelegation, marketingOpsDecision),
     attachments,
     replayContextMessages,
 
@@ -624,12 +626,14 @@ export const buildHermesRunRequest = ({
 
   nexusContext = {},
   marketingOpsDelegation = "",
+  marketingOpsDecision = "none",
 }) => ({
   session_id: sessionId,
   input: buildHermesRunInput({
     messageText: withMarketingOpsDelegation(
       withNexusMemoryRoutingContract(messageText, nexusContext),
       marketingOpsDelegation,
+      marketingOpsDecision,
     ),
     attachments,
     replayContextMessages,

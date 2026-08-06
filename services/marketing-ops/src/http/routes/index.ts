@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { SupabaseUser } from '../../auth/supabaseAuth.js';
-import { authMiddleware, corsMiddleware } from '../middleware.js';
+import { authMiddleware, corsMiddleware, privateResponseMiddleware } from '../middleware.js';
 import { registerAudit } from './audit.js';
 import { registerCampaigns } from './campaigns.js';
 import { registerCapabilities } from './capabilities.js';
@@ -38,6 +38,7 @@ export function createApiRouter(deps: ApiRouterDependencies): Router {
   const router = Router();
   router.use(corsMiddleware(deps.corsOrigins));
   registerCapabilities(router, deps.features);
+  router.use('/v1', privateResponseMiddleware);
   router.use('/v1', authMiddleware(deps.pool, deps.verifyToken));
   registerCampaigns(router, deps.pool, deps.ragCourseClient, deps.features);
   registerParticipants(router, deps.pool, deps.features);

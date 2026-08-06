@@ -9,7 +9,7 @@ import { MarketingOpsMobileBar } from '@/components/marketing-ops/MarketingOpsMo
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { MarketingOpsClient } from '@/lib/marketingOps/client';
+import { MarketingOpsApiError, type MarketingOpsClient } from '@/lib/marketingOps/client';
 import { marketingOpsKeys } from '@/lib/marketingOps/queryKeys';
 import { marketingOpsClient } from '@/lib/marketingOps/runtime';
 import type { MarketingOpsApprovalDecisionInput } from '@/lib/marketingOps/types';
@@ -53,6 +53,17 @@ export default function ApprovalDetailPage({ client = marketingOpsClient, idempo
     }
   });
   const approval = query.data?.data;
+  const operationError = mutation.error ?? cancelMutation.error;
+  const apiError = operationError instanceof MarketingOpsApiError ? operationError : null;
+  const isConflict = apiError?.status === 409;
+  const errorTitle = isConflict
+    ? 'Conflito ao atualizar a aprovação'
+    : 'Não foi possível concluir a decisão';
+  const errorDescription = isConflict
+    ? 'Atualize a solicitação e confira o estado já registrado.'
+    : apiError?.status === 403
+      ? 'Seu perfil não tem permissão para realizar esta decisão.'
+      : 'O serviço não concluiu a operação. Tente novamente e use a correlação abaixo caso o erro persista.';
   return <div className="min-h-screen text-text-primary"><Sidebar />
     <MarketingOpsMobileBar label="Detalhe da aprovação" icon={<ClipboardCheck className="h-4 w-4 text-brand-primary" />} />
     <main className="min-h-screen md:ml-20"><div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 md:py-8">
@@ -71,7 +82,7 @@ export default function ApprovalDetailPage({ client = marketingOpsClient, idempo
                     <p>{approval.decision.origin === 'system' ? 'Pelo sistema' : `Por ${approval.decision.decidedBy} (${approval.decision.deciderRole})`}</p>
                     {approval.decision.comment ? <p>Comentário: {approval.decision.comment}</p> : null}</li> : null}
                   {approval.actionPackage?.invalidationReason ? <li>Pacote invalidado: {approval.actionPackage.invalidationReason}</li> : null}</ol></section>
-              {mutation.isError || cancelMutation.isError ? <Alert variant="destructive" className="mt-4"><AlertCircle className="h-4 w-4" /><AlertTitle>Conflito ao atualizar a aprovação</AlertTitle><AlertDescription>Atualize a solicitação e confira o estado já registrado.</AlertDescription></Alert> : null}
+              {operationError ? <Alert variant="destructive" className="mt-4"><AlertCircle className="h-4 w-4" /><AlertTitle>{errorTitle}</AlertTitle><AlertDescription>{errorDescription}{apiError?.correlationId ? <span className="mt-1 block font-mono text-xs">Correlação: {apiError.correlationId}</span> : null}</AlertDescription></Alert> : null}
               {approval.capabilities.decide ? <div className="mt-5 flex flex-wrap gap-2">
                 <Button onClick={() => setDecision('approved')}><Check className="mr-2 h-4 w-4" />Aprovar</Button>
                 <Button variant="outline" onClick={() => setDecision('changes_requested')}><MessageSquareWarning className="mr-2 h-4 w-4" />Solicitar ajustes</Button>

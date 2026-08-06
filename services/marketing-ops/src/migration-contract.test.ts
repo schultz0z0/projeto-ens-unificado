@@ -41,6 +41,11 @@ const phase5AuditAdvisorMigration = new URL(
   import.meta.url
 );
 
+const phase5NotificationRlsFixMigration = new URL(
+  '../../../apps/chat-web/supabase/migrations/20260806152536_phase_5_notification_rls_parameterized_fix.sql',
+  import.meta.url
+);
+
 describe('Phase 4 audit migration contract', () => {
   it('adds every nullable correlation field and tenant-scoped index', async () => {
     const sql = (await readFile(migration, 'utf8')).toLowerCase();
@@ -138,6 +143,18 @@ describe('Phase 5 governance migration contract', () => {
     expect(sql).toContain('(select auth.uid())');
     expect(sql).toContain('(select marketing_ops_private.current_actor_role(tenant_id))');
     expect(sql).toContain("values ('5.0.4'");
+    expect(sql).not.toContain('drop table');
+  });
+
+  it('evaluates row-dependent notification authorization per inserted row', async () => {
+    const sql = (await readFile(phase5NotificationRlsFixMigration, 'utf8')).toLowerCase();
+    expect(sql).toContain('drop policy in_app_notifications_insert');
+    expect(sql).toContain('marketing_ops_private.can_edit_campaign_item(item_id)');
+    expect(sql).toContain('marketing_ops_private.can_access_approval_request(approval_request_id)');
+    expect(sql).not.toContain('(select marketing_ops_private.can_edit_campaign_item(item_id))');
+    expect(sql).not.toContain('(select marketing_ops_private.can_access_approval_request(approval_request_id))');
+    expect(sql).toContain("values ('5.0.5'");
+    expect(sql).not.toContain('security definer');
     expect(sql).not.toContain('drop table');
   });
 });

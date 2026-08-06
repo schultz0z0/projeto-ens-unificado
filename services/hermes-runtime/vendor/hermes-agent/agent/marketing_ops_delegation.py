@@ -158,13 +158,25 @@ def parse_marketing_ops_confirmation_decision(value: Any) -> str:
 
 
 def unambiguous_marketing_ops_confirmation_decision(value: Any) -> str | None:
-    """Resolve only complete, short replies whose intent cannot carry qualifiers."""
+    """Resolve only confirmations that cannot change the prepared plan."""
     if not isinstance(value, str):
         return None
     normalized = re.sub(r"[.!]+$", "", value.strip().casefold()).strip()
     for decision, replies in _UNAMBIGUOUS_CONFIRMATION_REPLIES.items():
         if normalized in replies:
             return decision
+    if "?" in normalized:
+        return None
+    change_qualifier = re.search(
+        r"\b(mas|por[eé]m|exceto|salvo|altere|alterar|mude|mudar|troque|trocar|desde que)\b",
+        normalized,
+    )
+    exact_plan_confirmation = re.match(r"^(confirmo|aprovo)\b", normalized) and re.search(
+        r"\bexatamente como (?:foi )?preparad[ao]\b",
+        normalized,
+    )
+    if exact_plan_confirmation and not change_qualifier:
+        return "approve"
     return None
 
 

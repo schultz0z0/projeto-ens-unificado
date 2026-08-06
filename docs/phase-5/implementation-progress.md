@@ -1,17 +1,18 @@
 # Progresso de implementação — Fase 5
 
-- **Estado:** `production_validation_blocked`
-- **Snapshot:** 2026-08-06 12:05 BRT
+- **Estado:** `ready_for_production_revalidation`
+- **Snapshot:** 2026-08-06 12:36 BRT
 - **Design:** aprovado
-- **Implementação:** Tasks 1–8 concluídas; Task 9 bloqueada por dois defeitos de produção
+- **Implementação:** Tasks 1–8 e hotfix dos quatro achados concluídos; Task 9 aguarda redeploy
 
-Os estados abaixo refletem evidência executada nesta sessão. O deploy está
-acessível, mas a fase continua aberta até corrigir a decisão humana e o cache
-de respostas autenticadas e repetir o gate real.
+Os estados abaixo refletem evidência executada nesta sessão. Os defeitos da
+primeira homologação foram corrigidos e validados localmente, e a migration
+aditiva foi aplicada no Supabase. A fase continua aberta até o novo deploy e a
+repetição do gate real.
 
 | Task | Escopo | Estado | Evidência atual |
 |---:|---|---|---|
-| 1 | Contratos, migration, RLS e pgTAP | `completed` | 7 migrations aditivas; contrato estático ampliado; migrations remotas; catálogo/RLS e smoke transacional remoto aprovados. Extensão pgTAP não está instalada no projeto, portanto os mesmos invariantes foram executados por SQL transacional com rollback. |
+| 1 | Contratos, migration, RLS e pgTAP | `completed` | 8 migrations aditivas; contrato estático ampliado; migrations remotas; catálogo/RLS e smoke transacional remoto aprovados. Extensão pgTAP não está instalada no projeto, portanto os mesmos invariantes foram executados por SQL transacional com rollback. |
 | 2 | Domínio editorial e fila de leitura | `completed` | schemas estritos, versão congelada, cursores estáveis, filtros, detalhe e histórico; testes dirigidos verdes. |
 | 3 | Pacote operacional, decisão e concorrência | `completed` | payload/hash canônicos e imutáveis, autoaprovação bloqueada, decisão única, `If-Match`, expiração e idempotência; testes unitários e smoke concorrencial/invariantes remotos verdes. |
 | 4 | REST, OpenAPI, SDK e capabilities | `completed` | 6 rotas REST, OpenAPI, feature flag, capability, SDK/query keys; testes de contratos e typecheck verdes. |
@@ -19,7 +20,7 @@ de respostas autenticadas e repetir o gate real.
 | 6 | Ajustes, expiração, notificações e observabilidade | `completed` | ajustes/rejeição com comentário, cancelamento/expiração, projeções mínimas de notificação, logs redigidos e métrica allowlisted/instrumentada. |
 | 7 | Hermes/MCP para submissão controlada | `completed` | somente `approval.submit_editorial` e `approval.submit_operational`; scope `approval:submit`; nenhuma decisão; contratos/executor e Bridge verdes. |
 | 8 | E2E, segurança, performance e gate local | `completed` | frontend 212/212, Bridge 89/89, serviço dirigido 52/52, contrato de navegador local 2/2, fila RLS remota de 10 mil linhas com p95 de 16,01 ms, security gate, builds/typechecks e audits aprovados. |
-| 9 | Deploy controlado e homologação VPS no navegador | `production_validation_blocked` | Hotfix de submissão implantado e submissão real aprovada. Fila, preview, filtros, deep links, diálogos e cancelamento passaram. Decisão por admin retorna `500` por RLS em `in_app_notifications`; respostas autenticadas também vazam capabilities em cache entre contas. |
+| 9 | Deploy controlado e homologação VPS no navegador | `awaiting_redeploy` | Primeira rodada encontrou quatro achados. Correções de decisão/notificação, cache, UX de erro e confirmação Hermes estão verdes localmente; migration `5.0.5` já está no remoto. Falta publicar as imagens/web e repetir a matriz manual. |
 
 ## Evidências acumuladas
 
@@ -57,7 +58,7 @@ de respostas autenticadas e repetir o gate real.
 - typecheck: `marketing-ops` e `chat-web` aprovados;
 - ESLint global: aprovado, somente 10 warnings legados;
 - security gate completo: aprovado;
-- Supabase: sete migrations remotas da Fase 5 aplicadas, incluindo barreira de
+- Supabase: oito migrations remotas da Fase 5 aplicadas, incluindo barreira de
   escrita, ledger de todas as transições terminais, otimização da fila sob RLS e
   expiração limitada com identidade explícita de sistema.
 - advisor follow-up adicionou cobertura à FK de ator da auditoria e eliminou a
@@ -116,14 +117,37 @@ de respostas autenticadas e repetir o gate real.
 
 ## Próximo ponto exato
 
-1. corrigir a política/caminho de projeção de `notifyRequester` para permitir a
-   notificação auditada do solicitante por decisor elegível sem ampliar escrita
-   arbitrária, com teste real de RLS e rollback;
-2. impedir cache compartilhado em todas as respostas autenticadas (`private,
-   no-store`, `Vary` adequado e política do proxy/cliente) e testar troca de
-   identidade no mesmo URL;
-3. fazer a UI preservar status/código/correlation ID e só rotular `409` como
-   conflito;
-4. publicar o próximo hotfix e repetir a Task 9 completa: decisão, ajustes,
+1. publicar o hotfix nos serviços `marketing-ops`, `chat-web`, `chat-bridge` e
+   `hermes-api/runtime`;
+2. confirmar `Cache-Control: private, no-store`, `Pragma: no-cache` e `Vary:
+   Origin, Authorization` no tráfego real;
+3. repetir a Task 9 completa: decisão, ajustes,
    novo ciclo, operacional/SoD, expiração, idempotência, notificações,
-   persistência, mobile e ausência de efeito externo.
+   persistência, mobile e ausência de efeito externo;
+4. somente então marcar `production_validated` e liberar a Fase 6.
+
+## Hotfix dos quatro achados — 2026-08-06 12:36 BRT
+
+- **Decisão/RLS:** a reprodução isolou que `INSERT ... ON CONFLICT DO NOTHING`
+  também exige visibilidade de `SELECT` sobre a notificação candidata. Como o
+  decisor grava para o solicitante, a policy de leitura corretamente nega essa
+  visibilidade e o comando inteiro fazia rollback. Os dois inserts de aprovação
+  não usam mais `ON CONFLICT`; a idempotência da operação e a unique constraint
+  continuam fechando retries/duplicatas. A migration `5.0.5` também removeu
+  initPlans das funções de autorização dependentes da linha. O statement
+  parametrizado corrigido passou no Supabase dentro de transação revertida.
+- **Cache autenticado:** todas as rotas `/v1` retornam `private, no-store`,
+  `no-cache` e variam por `Authorization`; CORS preserva `Vary: Origin`. O
+  frontend agora mantém um `QueryClient` isolado por `user.id` e cancela/limpa o
+  cache anterior na troca de identidade.
+- **Erro na UI:** somente HTTP `409` é rotulado como conflito; `403` e `5xx`
+  recebem mensagens próprias e o correlation ID fica visível para suporte.
+- **Hermes:** confirmações explícitas do plano exato podem conter contexto de
+  negócio sem cair em `clarify`; perguntas e qualificadores de mudança continuam
+  negados. Quando o classificador retorna `clarify/reject/revise`, o contrato
+  efêmero do turno proíbe nova chamada a `marketing_ops_execute_plan_v1`.
+- **Regressões:** frontend 214/214, Bridge 90/90, Hermes docker 32 passed/2
+  skipped, testes dirigidos do hotfix 15/15, typechecks e builds de produção
+  aprovados. A suíte integral do Marketing Ops dependente de banco permaneceu
+  indisponível por `ECONNREFUSED 127.0.0.1:55322`, substituída pelos testes
+  dirigidos e pelo probe remoto transacional documentado.

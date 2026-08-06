@@ -365,7 +365,6 @@ async function notifyReviewers(client: PoolClient, context: CommandContext, requ
     where membership.tenant_id = $1 and membership.active
       and membership.role in ('manager', 'admin')
       and ($4::marketing_ops.approval_kind = 'editorial' or membership.user_id <> $5::uuid)
-    on conflict (tenant_id, user_id, event_key) do nothing
   `, [context.actor.tenantId, request.id, request.campaignId, request.kind, request.requestedBy]);
 }
 
@@ -383,7 +382,6 @@ async function notifyRequester(
       'approval_status', $5, null, $3::uuid, 'Solicitação de aprovação atualizada',
       jsonb_build_object('campaignId', $5::uuid, 'approvalRequestId', $3::uuid,
         'status', $4::text), now())
-    on conflict (tenant_id, user_id, event_key) do nothing
   `, [context.actor.tenantId, request.requestedBy, request.id, status, request.campaignId]);
 }
 

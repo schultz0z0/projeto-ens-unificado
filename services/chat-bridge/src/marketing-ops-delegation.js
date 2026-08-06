@@ -131,15 +131,28 @@ export const isValidDelegationRefreshKey = (provided, expected) => {
     timingSafeEqual(providedDigest, expectedDigest);
 };
 
-export const withMarketingOpsDelegation = (message, token) => {
-  const normalized = String(message ?? "").trim();
-  if (!token) return normalized;
-  return `${normalized}\n\n[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse this token only as the delegation_token argument for nexus_marketing_ops tools.\n[/MARKETING_OPS_DELEGATION]`;
+const marketingOpsConfirmationGuard = (decision) => {
+  if (decision === "approve" || decision === "none") return "";
+  if (decision === "revise") {
+    return "confirmation was not granted: the user requested revisions. Do not call marketing_ops_execute_plan_v1 in this turn; revise or explain the plan first.";
+  }
+  if (decision === "reject") {
+    return "confirmation was not granted: the user rejected the plan. Do not call marketing_ops_execute_plan_v1 in this turn.";
+  }
+  return "confirmation was not granted: the response requires clarification. Do not call marketing_ops_execute_plan_v1 in this turn; ask for an unambiguous confirmation.";
 };
 
-export const buildMarketingOpsDelegationSystemMessage = (token) => {
+export const withMarketingOpsDelegation = (message, token, decision = "none") => {
+  const normalized = String(message ?? "").trim();
+  if (!token) return normalized;
+  const confirmationGuard = marketingOpsConfirmationGuard(decision);
+  return `${normalized}\n\n[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse this token only as the delegation_token argument for nexus_marketing_ops tools.${confirmationGuard ? `\n${confirmationGuard}` : ""}\n[/MARKETING_OPS_DELEGATION]`;
+};
+
+export const buildMarketingOpsDelegationSystemMessage = (token, decision = "none") => {
   if (!token) return "";
-  return `[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse apenas a delegacao deste turno como delegation_token nas tools nexus_marketing_ops.\nNunca reutilize delegation_token de tool calls ou do historico; valores redigidos sao invalidos.\n[/MARKETING_OPS_DELEGATION]`;
+  const confirmationGuard = marketingOpsConfirmationGuard(decision);
+  return `[MARKETING_OPS_DELEGATION]\ndelegation_token: ${token}\nUse apenas a delegacao deste turno como delegation_token nas tools nexus_marketing_ops.\nNunca reutilize delegation_token de tool calls ou do historico; valores redigidos sao invalidos.${confirmationGuard ? `\n${confirmationGuard}` : ""}\n[/MARKETING_OPS_DELEGATION]`;
 };
 
 export const redactMarketingOpsDelegation = (input, seen = new WeakSet()) => {

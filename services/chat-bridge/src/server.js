@@ -1156,6 +1156,7 @@ class HermesBridge {
       replayContextMessages: run.replay_context_messages,
       nexusContext: buildRunNexusContext(run),
       marketingOpsDelegation,
+      marketingOpsDecision: run.marketing_ops_decision,
     });
     run.input = redactMarketingOpsDelegation(requestPayload.input);
 
@@ -1353,6 +1354,7 @@ class HermesBridge {
         imageOptions: run.image_options,
         nexusContext: buildRunNexusContext(run),
         marketingOpsDelegation,
+        marketingOpsDecision: run.marketing_ops_decision,
         experience: run.experience,
         pictureWorkspaceId: run.picture_workspace_id,
         pictureWorkspaceSummary: run.picture_workspace_summary,
@@ -1534,6 +1536,7 @@ class HermesBridge {
       imageTransport,
       nexusContext: buildRunNexusContext(run),
       marketingOpsDelegation,
+      marketingOpsDecision: run.marketing_ops_decision,
     });
     run.input = redactMarketingOpsDelegation(JSON.stringify(requestPayload.input));
 

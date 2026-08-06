@@ -14,6 +14,13 @@ export const asyncRoute = (handler: AsyncRoute) => (request: Request, response: 
   void handler(request, response, next).catch(next);
 };
 
+export function privateResponseMiddleware(_request: Request, response: Response, next: NextFunction) {
+  response.setHeader('Cache-Control', 'private, no-store');
+  response.setHeader('Pragma', 'no-cache');
+  response.vary('Authorization');
+  next();
+}
+
 export function corsMiddleware(origins: string[]) {
   return (request: Request, response: Response, next: NextFunction) => {
     const origin = request.header('origin');
@@ -22,7 +29,7 @@ export function corsMiddleware(origins: string[]) {
     response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     response.setHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type,Idempotency-Key,If-Match,X-Correlation-Id,X-Nexus-Filename,X-Nexus-Asset-Id,X-Tenant-Id');
     response.setHeader('Access-Control-Max-Age', '600');
-    response.setHeader('Vary', 'Origin');
+    response.vary('Origin');
     if (request.method === 'OPTIONS') return response.status(204).end();
     next();
   };

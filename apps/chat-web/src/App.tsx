@@ -1,7 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -10,11 +9,11 @@ import Login from "./pages/Login";
 import UserManagement from "./pages/admin/UserManagement";
 import ValidatedWorks from "./pages/manager/ValidatedWorks";
 import NotFound from "./pages/NotFound";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthenticatedQueryProvider } from "./components/AuthenticatedQueryProvider";
 import { marketingOpsFlags } from "./lib/marketingOps/flags";
 
-const queryClient = new QueryClient();
 const CampaignListPage = lazy(() => import("./pages/marketing-ops/CampaignListPage"));
 const CampaignWorkspacePage = lazy(() => import("./pages/marketing-ops/CampaignWorkspacePage"));
 const ProductionListPage = lazy(() => import("./pages/marketing-ops/ProductionListPage"));
@@ -31,12 +30,13 @@ const CampaignRouteLoading = () => (
   </div>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const AuthenticatedApp = () => {
+  const { user } = useAuth();
+  return (
+    <AuthenticatedQueryProvider identity={user?.id ?? null}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -149,9 +149,15 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
     </TooltipProvider>
-  </QueryClientProvider>
+    </AuthenticatedQueryProvider>
+  );
+};
+
+const App = () => (
+  <AuthProvider>
+    <AuthenticatedApp />
+  </AuthProvider>
 );
 
 export default App;

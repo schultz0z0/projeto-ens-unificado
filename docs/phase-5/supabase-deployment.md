@@ -3,7 +3,7 @@
 - **Estado:** `deployed_and_verified`
 - **Projeto alvo:** `murxwqdevpwjtnnuzzxi` — Nexus AI - Marketing ENS
 - **Região/Postgres:** `sa-east-1` / PostgreSQL 17.6
-- **Data:** 2026-08-05
+- **Data:** 2026-08-05; forward-fix 2026-08-06
 - **Executor:** assistente, com autorização explícita do responsável
 
 ## Migrations aplicadas
@@ -17,9 +17,10 @@
 | `20260805191130_phase_5_queue_rls_performance.sql` | `phase_5_queue_rls_performance` | aplicada/alinhada |
 | `20260805194650_phase_5_system_expiry_worker.sql` | `phase_5_system_expiry_worker` | aplicada/alinhada |
 | `20260805195732_phase_5_audit_advisor_followup.sql` | `phase_5_audit_advisor_followup` | aplicada/alinhada |
+| `20260806152536_phase_5_notification_rls_parameterized_fix.sql` | `phase_5_notification_rls_parameterized_fix` (`20260806152536`) | aplicada/alinhada |
 
 O `supabase migration list --linked` foi executado após alinhar os filenames aos
-versions gerados no deploy: todas as 23 migrations do repositório apresentam
+versions gerados no deploy: todas as 24 migrations do repositório apresentam
 `local = remote`, sem linha pendente ou drift.
 
 A segunda migration foi criada após o advisor apontar nove foreign keys sem
@@ -40,11 +41,16 @@ A sétima migration cobre a FK `audit_events.actor_user_id` e otimiza a policy d
 inserção para avaliar identidade uma vez por statement. Depois dela, o advisor
 de performance ficou apenas com `unused_index` informativo em índices novos.
 
+A oitava migration mantém a identidade/tenant como initPlan, mas avalia os
+helpers que dependem de `item_id` e `approval_request_id` para cada linha. O
+catálogo remoto foi conferido e um insert parametrizado sem o `ON CONFLICT`
+incompatível com a policy privada de leitura passou dentro de transação revertida.
+
 ## Invariantes verificadas no remoto
 
 - 3 tabelas, 8 policies, 12 triggers nomeadas da Fase 5 e RLS forçada nas 3 tabelas;
 - `anon` não possui leitura das tabelas da Fase 5;
-- schema versions `5.0.0`, `5.0.1`, `5.0.2`, `5.0.3` e `5.0.4` presentes;
+- schema versions `5.0.0`, `5.0.1`, `5.0.2`, `5.0.3`, `5.0.4` e `5.0.5` presentes;
 - `approval_decisions` não concede `UPDATE` nem `DELETE`;
 - autoaprovação operacional pelo solicitante negada;
 - segundo aprovador elegível permitido;

@@ -229,6 +229,21 @@ def test_unambiguous_confirmation_fast_path_accepts_only_complete_short_replies(
         assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(reply) is None
 
 
+def test_explicit_exact_plan_confirmation_accepts_verbose_business_context() -> None:
+    reply = (
+        "Confirmo a submissão editorial exatamente como preparada, com risco baixo, "
+        "vencimento em 24 horas e sem publicar, enviar ou executar efeitos externos."
+    )
+
+    assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(reply) == "approve"
+    for changed_reply in (
+        "Confirmo, mas altere o vencimento para 48 horas.",
+        "Confirmo exatamente como preparada?",
+        "Confirmo exatamente como preparada, exceto o canal.",
+    ):
+        assert marketing_ops.unambiguous_marketing_ops_confirmation_decision(changed_reply) is None
+
+
 def test_confirmation_output_contract_reports_every_accepted_closed_json_shape() -> None:
     assert hasattr(marketing_ops, "has_marketing_ops_confirmation_decision_contract")
     assert marketing_ops.has_marketing_ops_confirmation_decision_contract(
